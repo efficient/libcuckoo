@@ -900,7 +900,7 @@ private:
 
                 // No empty slots were found, so we push this onto the
                 // queue
-                if (y.depth != MAX_BFS_DEPTH) {
+                if (y.depth != static_cast<int>(MAX_BFS_DEPTH)) {
                     q.enqueue(y);
                 }
             }
@@ -1850,11 +1850,14 @@ public:
         }
 
         // Other error messages
-        const char* end_dereference = "Cannot dereference: iterator points past the end of the table";
-        const char* end_increment = "Cannot increment: iterator points past the end of the table";
-        const char* begin_decrement = "Cannot decrement: iterator points to the beginning of the table";
-
+        static constexpr char end_dereference[] =
+            "Cannot dereference: iterator points past the end of the table";
+        static constexpr char end_increment[] =
+            "Cannot increment: iterator points past the end of the table";
+        static constexpr char begin_decrement[] =
+            "Cannot decrement: iterator points to the beginning of the table";
     };
+
 
     /*! An iterator supports the same operations as the const_iterator
      *  and provides an additional \ref set_value method to allow
@@ -1972,5 +1975,14 @@ template <class Key, class T, class Hash, class Pred>
 const size_t cuckoohash_map<Key, T, Hash, Pred>::kNumCores =
     std::thread::hardware_concurrency() == 0 ?
     sysconf(_SC_NPROCESSORS_ONLN) : std::thread::hardware_concurrency();
+
+template <class Key, class T, class Hash, class Pred>
+constexpr char cuckoohash_map<Key, T, Hash, Pred>::const_iterator::end_dereference[62];
+
+template <class Key, class T, class Hash, class Pred>
+constexpr char cuckoohash_map<Key, T, Hash, Pred>::const_iterator::end_increment[60];
+
+template <class Key, class T, class Hash, class Pred>
+constexpr char cuckoohash_map<Key, T, Hash, Pred>::const_iterator::begin_decrement[64];
 
 #endif
