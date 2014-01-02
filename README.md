@@ -1,7 +1,7 @@
 libcuckoo
 =========
 
-libcuckoo provides a compact hash table that allows multiple
+libcuckoo provides a high-performance, compact hash table that allows multiple
 concurrent reader and writer threads.
 
 The Doxygen-generated documentation is available at the
@@ -9,7 +9,7 @@ The Doxygen-generated documentation is available at the
 
 Authors: Manu Goyal, Bin Fan, Xiaozhou Li, David G. Andersen, and Michael Kaminsky
 
-For details about this algorithm and citations, please refer to [our paper in NSDI 2013][1].
+For details about this algorithm and citations, please refer to [our paper in NSDI 2013][1].  Some of the details of the hashing algorithm have been improved since that work, however, and this source code is now the definitive reference.
 
    [1]: http://www.cs.cmu.edu/~dga/papers/memc3-nsdi2013.pdf "MemC3: Compact and Concurrent Memcache with Dumber Caching and Smarter Hashing"
 
