@@ -11,7 +11,9 @@ Authors: Manu Goyal, Bin Fan, Xiaozhou Li, David G. Andersen, and Michael Kamins
 
 For details about this algorithm and citations, please refer to
 [our paper in NSDI 2013][1]. Some of the details of the hashing
-algorithm have been improved since that work, however, and this source
+algorithm have been improved since that work (e.g., the previous algorithm
+in [1] serializes all writer threads, while our current
+implementation supports multiple concurrent writers), however, and this source
 code is now the definitive reference.
 
    [1]: http://www.cs.cmu.edu/~dga/papers/memc3-nsdi2013.pdf "MemC3: Compact and Concurrent Memcache with Dumber Caching and Smarter Hashing"
