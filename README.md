@@ -1,15 +1,18 @@
 libcuckoo
 =========
 
-libcuckoo provides a high-performance, compact hash table that allows multiple
-concurrent reader and writer threads.
+libcuckoo provides a high-performance, compact hash table that allows
+multiple concurrent reader and writer threads.
 
 The Doxygen-generated documentation is available at the
 [project page](http://efficient.github.io/libcuckoo/).
 
 Authors: Manu Goyal, Bin Fan, Xiaozhou Li, David G. Andersen, and Michael Kaminsky
 
-For details about this algorithm and citations, please refer to [our paper in NSDI 2013][1].  Some of the details of the hashing algorithm have been improved since that work, however, and this source code is now the definitive reference.
+For details about this algorithm and citations, please refer to
+[our paper in NSDI 2013][1]. Some of the details of the hashing
+algorithm have been improved since that work, however, and this source
+code is now the definitive reference.
 
    [1]: http://www.cs.cmu.edu/~dga/papers/memc3-nsdi2013.pdf "MemC3: Compact and Concurrent Memcache with Dumber Caching and Smarter Hashing"
 
@@ -18,7 +21,7 @@ Requirements
 
 This library has been tested on Mac OSX >= 10.8 and Ubuntu >= 12.04.
 
-It compiles with clang++ >= 3.1 and g++ >= 4.6, however we strongly
+It compiles with clang++ >= 3.1 and g++ >= 4.6.3, however we strongly
 suggest using the latest versions of both compilers, as they have
 greatly improved support for atomic operations. Building the library
 requires the autotools.
