@@ -13,7 +13,7 @@
 #include <thread>
 #include <utility>
 
-typedef uint16_t KeyType;
+typedef uint32_t KeyType;
 typedef cuckoohash_map<KeyType, size_t, CityHasher<KeyType> > Table;
 const size_t thread_num = 8;
 const size_t total_inserts = 10000000;
@@ -34,6 +34,7 @@ void do_inserts(Table& freq_map) {
 
 int main() {
     Table freq_map;
+    freq_map.reserve(total_inserts);
     // Run the inserts in thread_num threads
     std::vector<std::thread> threads;
     for (size_t i = 0; i < thread_num; i++) {

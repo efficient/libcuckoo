@@ -364,6 +364,9 @@ public:
         size_t hv = hashed_key(key);
         TableInfo *ti;
         size_t i1, i2;
+
+        bool res;
+        do {
         snapshot_and_lock_two(hv, ti, i1, i2);
 
         const cuckoo_status st = cuckoo_update_fn(key, fn, hv, ti, i1, i2);
@@ -374,11 +377,14 @@ public:
         }
 
         // We run an insert, since the update failed
-        const bool res = cuckoo_insert_loop(key, val, hv, ti, i1, i2);
-        // res should be true, since if there was a duplicate key, the
-        // above update should have succeeded.
-        assert(res);
-        return res;
+        res = cuckoo_insert_loop(key, val, hv, ti, i1, i2);
+
+        // The only valid reason for res being false is if insert
+        // encountered a duplicate key after releasing the locks and
+        // performing cuckoo hashing. In this case, we retry the
+        // entire upsert operation.
+        } while (!res);
+        return true;
     }
 
     /*! rehash will size the table using a hashpower of \p n. Note
@@ -1321,6 +1327,7 @@ private:
              * either i1 or i2, so we check for that before doing the
              * insert. */
             if (cuckoo_find(key, oldval, hv, ti, i1, i2) == ok) {
+                unlock_two(ti, i1, i2);
                 return failure_key_duplicated;
             }
             add_to_bucket(ti, partial, key, val, insert_bucket, insert_slot);
