@@ -497,7 +497,7 @@ private:
         // unique pointer to the array of buckets
         Bucket* buckets_;
 
-        // unique pointer to the array of mutexes
+        // unique pointer to the array of locks
         locktype* locks_;
 
         // per-core counters for the number of inserts and deletes
@@ -702,8 +702,8 @@ private:
     /* snapshot_and_lock_all is similar to snapshot_and_lock_two,
      * except that functions that call this are expected to hold the
      * expansion_lock mutex, so multiple calls to this function cannot
-     * take place at the same time. Therefore, we don't need to check
-     * for expanded tables. */
+     * take place at the same time. Therefore, we don't need to
+     * re-check the loaded table_info. */
     TableInfo *snapshot_and_lock_all() {
         assert(!expansion_lock.try_lock());
         TableInfo *ti = table_info.load();
@@ -1571,7 +1571,7 @@ public:
          * end of the table, based on the boolean argument. We keep
          * this constructor private (but expose it to the
          * cuckoohash_map class), since we don't want users calling
-         * it.*/
+         * it. */
         const_iterator(cuckoohash_map<Key, T, Hash, Pred> *hm, bool is_end) {
             cuckoohash_map<Key, T, Hash, Pred>::check_hazard_pointer();
             hm_ = hm;
@@ -1651,9 +1651,15 @@ public:
         }
 
     protected:
-        // The data_pair stores the key-value pair currently under the
-        // iterator. It is updated and returned during operator->.
-        value_type data_pair;
+        // For the arrow dereference operator, we return a pointer to
+        // a lightweight pair consisting of const references to the
+        // key and value under the iterator.
+        typedef std::pair<const Key&, const T&> ref_pair;
+        // Since we can't initialize a ref_pair before knowing what it
+        // points to, we use std::aligned_storage to reserve
+        // unititialized space for the object, which we then construct
+        // with placement new.
+        typename std::aligned_storage<sizeof(ref_pair), std::alignment_of<ref_pair>::value>::type data;
 
     public:
         /*! The dereference operator returns a value_type copied from
@@ -1667,19 +1673,18 @@ public:
             return {ti_->buckets_[index_].keys[slot_], ti_->buckets_[index_].vals[slot_]};
         }
 
-        /*! The arrow dereference operator updates and returns a
-         *  pointer to an internal value_type. Since the data in the
-         *  returned pointer is a copy of the key-value pair in the
-         *  table, any modifications won't affect the data in the
-         *  table. */
-        value_type* operator->() {
+        /*! The arrow dereference operator returns a pointer to an
+         *  internal std::pair which contains const references to the
+         *  key and value under the iterator. */
+        ref_pair* operator->() {
             check_lock();
             if (is_end()) {
                 throw std::out_of_range(end_dereference);
             }
             assert(ti_->buckets_[index_].occupied[slot_]);
-            data_pair = {ti_->buckets_[index_].keys[slot_], ti_->buckets_[index_].vals[slot_]};
-            return &data_pair;
+            ref_pair *data_ptr = static_cast<ref_pair*>(static_cast<void*>(&data));
+            new (data_ptr) ref_pair(ti_->buckets_[index_].keys[slot_], ti_->buckets_[index_].vals[slot_]);
+            return data_ptr;
         }
 
         /*! The prefix increment operator moves the iterator forwards

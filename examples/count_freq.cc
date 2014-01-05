@@ -49,10 +49,9 @@ int main() {
     KeyType maxkey;
     size_t maxval = 0;
     for (auto it = freq_map.cbegin(); !it.is_end(); it++) {
-        auto pair = *it;
-        if (pair.second > maxval) {
-            maxkey = pair.first;
-            maxval = pair.second;
+        if (it->second > maxval) {
+            maxkey = it->first;
+            maxval = it->second;
         }
     }
 
