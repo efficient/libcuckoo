@@ -19,11 +19,11 @@ typedef uint32_t ValType;
 typedef std::pair<KeyType, ValType> KVPair;
 
 const size_t power = 19;
-const size_t numkeys = (1 << power) * SLOT_PER_BUCKET;
+const size_t numkeys = (1U << power) * SLOT_PER_BUCKET;
 
 class InsertFindEnvironment {
 public:
-    InsertFindEnvironment() : smalltable(power), bigtable(power + 1) {
+    InsertFindEnvironment() : smalltable(numkeys), bigtable(2*numkeys) {
         // Sets up the random number generator
         uint64_t seed = std::chrono::system_clock::now().time_since_epoch().count();
         std::cout << "seed = " << seed << std::endl;

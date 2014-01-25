@@ -23,7 +23,7 @@ const size_t size = (1L << power) * SLOT_PER_BUCKET;
 
 class IteratorEnvironment {
 public:
-    IteratorEnvironment(): emptytable(power), table(power), items_end(items+size) {
+    IteratorEnvironment(): emptytable(size), table(size), items_end(items+size) {
         // Fills up table and items with random values
         uint64_t seed = std::chrono::system_clock::now().time_since_epoch().count();
         std::cout << "seed = " << seed << std::endl;
@@ -45,7 +45,7 @@ public:
 IteratorEnvironment* iter_env;
 
 void EmptyTableBeginEndIterator() {
-    Table emptytable(power);
+    Table emptytable(size);
     Table::const_iterator t = iter_env->emptytable.cbegin();
     ASSERT_TRUE(t.is_begin() && t.is_end());
     t.release();

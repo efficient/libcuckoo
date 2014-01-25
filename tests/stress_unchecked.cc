@@ -72,7 +72,7 @@ template <class KType>
 class AllEnvironment {
 public:
     AllEnvironment()
-        : table(power), table2(power), finished(false) {
+        : numkeys((1U << power) * SLOT_PER_BUCKET), table(numkeys), table2(numkeys), finished(false) {
         // Sets up the random number generator
         if (seed == 0) {
             seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -81,6 +81,7 @@ public:
         gen_seed = seed;
     }
 
+    const size_t numkeys;
     cuckoohash_map<KType, ValType> table;
     cuckoohash_map<KType, ValType2> table2;
     size_t gen_seed;

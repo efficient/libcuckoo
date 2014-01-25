@@ -68,7 +68,7 @@ public:
     // We allocate the vectors with the total amount of space in the
     // table, which is bucket_count() * SLOT_PER_BUCKET
     InsertEnvironment()
-        : table(power), numkeys(table.bucket_count()*SLOT_PER_BUCKET), keys(numkeys) {
+        : numkeys((1U << power) * SLOT_PER_BUCKET), table(numkeys), keys(numkeys) {
         // Sets up the random number generator
         if (seed == 0) {
             seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -102,8 +102,8 @@ public:
         std::cout << "Table with capacity " << numkeys << " prefilled to a load factor of " << table.load_factor() << std::endl;
     }
 
-    cuckoohash_map<KType, ValType> table;
     size_t numkeys;
+    cuckoohash_map<KType, ValType> table;
     std::vector<KType> keys;
     std::mt19937_64 gen;
     size_t init_size;

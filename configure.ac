@@ -24,22 +24,15 @@ AX_CHECK_COMPILE_FLAG([-O4], [CPPFLAGS="$CPPFLAGS -O4"],
                       )
 AX_CHECK_COMPILE_FLAG([-DNDEBUG], [CPPFLAGS="$CPPFLAGS -DNDEBUG"])
 
-# Determine flags specific to C or C++
-AC_LANG_PUSH([C])
-AX_CHECK_COMPILE_FLAG([-std=c99], [CFLAGS="$CFLAGS -std=c99"])
-AX_CHECK_COMPILE_FLAG([-Wall], [CFLAGS="$CFLAGS -Wall"])
-#AX_CHECK_COMPILE_FLAG([-pthread], [CFLAGS="$CFLAGS -pthread"])
-AC_LANG_POP([C])
+# Determine flags specific to C++
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-std=c++0x], [CXXFLAGS="$CXXFLAGS -std=c++0x"])
 AX_CHECK_COMPILE_FLAG([-stdlib=libc++], [CXXFLAGS="$CXXFLAGS -stdlib=libc++"])
 AX_CHECK_COMPILE_FLAG([-Wall], [CXXFLAGS="$CXXFLAGS -Wall"])
-#AX_CHECK_COMPILE_FLAG([-pthread], [CXXFLAGS="$CXXFLAGS -pthread"])
 AC_LANG_POP([C++])
 
 # Checks for programs.
 AC_PROG_CXX
-AC_PROG_CC
 
 #AC_DISABLE_SHARED
 AC_PROG_LIBTOOL

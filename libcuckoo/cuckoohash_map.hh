@@ -172,15 +172,20 @@ public:
     //! and upsert.
     typedef std::function<mapped_type(const mapped_type&)> updater;
 
-    /*! The constructor creates a new hash table with a hashpower of
-     * \p hashpower_init. The number of buckets in the new hash table
-     * will be 2<SUP>\p hashpower_init</SUP>. Since each bucket can
-     * hold \ref SLOT_PER_BUCKET items, the table will have 2<SUP>\p
-     * hashpower_init</SUP> &times; \ref SLOT_PER_BUCKET slots to
-     * store items in. If the constructor fails, it will throw an
+    /* reserve_calc takes in a parameter specifying a certain number
+     * of slots for a table and returns the smallest hashpower that
+     * will hold n elements. */
+    size_t reserve_calc(size_t n) {
+        size_t new_hashpower = (size_t)ceil(log2((double)n / (double)SLOT_PER_BUCKET));
+        assert(n <= hashsize(new_hashpower) * SLOT_PER_BUCKET);
+        return new_hashpower;
+    }
+
+    /*! The constructor creates a new hash table with enough space for
+     * \p n elements. If the constructor fails, it will throw an
      * exception. */
-    explicit cuckoohash_map(size_t hashpower_init = HASHPOWER_DEFAULT) {
-        cuckoo_init(hashpower_init);
+    explicit cuckoohash_map(size_t n = DEFAULT_SIZE) {
+        cuckoo_init(reserve_calc(n));
     }
 
     /*! The destructor deletes any remaining table pointers managed by
@@ -389,12 +394,12 @@ public:
 
     /*! rehash will size the table using a hashpower of \p n. Note
      * that the number of buckets in the table will be 2<SUP>\p
-     * n</SUP> after expansion, so the table has 2<SUP>\p n</SUP>
-     * &times; \ref SLOT_PER_BUCKET slots to store items in. If \p n
-     * is not larger than the current hashpower, then the function
-     * does nothing. It returns true if the table expansion succeeded,
-     * and false otherwise. rehash can throw an exception if the
-     * expansion fails to allocate enough memory for the larger
+     * n</SUP> after expansion, so the table will have 2<SUP>\p
+     * n</SUP> &times; \ref SLOT_PER_BUCKET slots to store items in.
+     * If \p n is not larger than the current hashpower, then the
+     * function does nothing. It returns true if the table expansion
+     * succeeded, and false otherwise. rehash can throw an exception
+     * if the expansion fails to allocate enough memory for the larger
      * table. */
     bool rehash(size_t n) {
         check_hazard_pointer();
@@ -421,9 +426,7 @@ public:
         if (n <= hashsize(ti->hashpower_) * SLOT_PER_BUCKET) {
             return false;
         }
-        size_t new_hashpower = (size_t)ceil(log2((double)n / 8.0));
-        assert(n <= hashsize(new_hashpower) * SLOT_PER_BUCKET);
-        const cuckoo_status st = cuckoo_expand_simple(new_hashpower);
+        const cuckoo_status st = cuckoo_expand_simple(reserve_calc(n));
         unset_hazard_pointer();
         return (st == ok);
     }
@@ -1503,7 +1506,7 @@ private:
         try {
             // Creates a new hash table with hashpower n and adds all
             // the elements from the old buckets
-            cuckoohash_map<Key, T, Hash> new_map(n);
+            cuckoohash_map<Key, T, Hash> new_map(hashsize(n) * SLOT_PER_BUCKET);
             const size_t threadnum = kNumCores;
             const size_t buckets_per_thread = hashsize(ti->hashpower_) / threadnum;
             std::vector<std::thread> insertion_threads(threadnum);

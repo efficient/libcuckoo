@@ -74,7 +74,8 @@ template <class KType>
 class AllEnvironment {
 public:
     AllEnvironment()
-        : table(power), table2(power), keys(numkeys), vals(numkeys), vals2(numkeys), in_table(new bool[numkeys]), in_use(numkeys),
+        : table((1U << power) * SLOT_PER_BUCKET), table2((1U << power) * SLOT_PER_BUCKET), 
+          keys(numkeys), vals(numkeys), vals2(numkeys), in_table(new bool[numkeys]), in_use(numkeys),
           val_dist(std::numeric_limits<ValType>::min(), std::numeric_limits<ValType>::max()),
           val_dist2(std::numeric_limits<ValType2>::min(), std::numeric_limits<ValType2>::max()),
           ind_dist(0, numkeys-1), finished(false) {
