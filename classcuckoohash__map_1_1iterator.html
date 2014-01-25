@@ -94,7 +94,7 @@ $(document).ready(function(){initNavTree('classcuckoohash__map_1_1iterator.html'
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -173,7 +173,7 @@ class cuckoohash_map&lt; Key, T, Hash, Pred &gt;::iterator</h3>
 
 <p>An iterator supports the same operations as the <a class="el" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a> and provides an additional <a class="el" href="classcuckoohash__map_1_1iterator.html#a3318f88a345dd463acd7bd74db879964">set_value</a> method to allow changing values in the table. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01877">1877</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01880">1880</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="ae08a2adc5611de416e1c1de7702435e5"></a>
 <div class="memitem">
@@ -200,7 +200,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>This constructor is identical to the rvalue-reference constructor of <a class="el" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01889">1889</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01892">1892</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -229,7 +229,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>This constructor allows converting from a <a class="el" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a> to an iterator. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01894">1894</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01897">1897</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -259,7 +259,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>set_value sets the value pointed to by the iterator to <code>val</code>. This involves modifying the hash table itself, but since we have a lock on the table, we are okay. We are only changing the value in the bucket, so the element will retain it's position in the table. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01913">1913</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01916">1916</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -272,7 +272,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a></li><li class="navelem"><a class="el" href="classcuckoohash__map_1_1iterator.html">iterator</a></li>
-    <li class="footer">Generated on Sun Jan 5 2014 19:00:50 for libcuckoo by
+    <li class="footer">Generated on Fri Jan 24 2014 17:16:06 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

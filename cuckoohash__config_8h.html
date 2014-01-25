@@ -92,7 +92,7 @@ $(document).ready(function(){initNavTree('cuckoohash__config_8h.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -103,7 +103,8 @@ $(document).ready(function(){initNavTree('cuckoohash__config_8h.html','');});
 
 <div class="header">
   <div class="summary">
-<a href="#define-members">Macros</a>  </div>
+<a href="#define-members">Macros</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
 <div class="title">cuckoohash_config.h File Reference</div>  </div>
 </div><!--header-->
@@ -113,26 +114,43 @@ $(document).ready(function(){initNavTree('cuckoohash__config_8h.html','');});
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:a151f0f142ae5f66c1486dde4bb95c71a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a151f0f142ae5f66c1486dde4bb95c71a"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__config_8h.html#a151f0f142ae5f66c1486dde4bb95c71a">SLOT_PER_BUCKET</a>&#160;&#160;&#160;8</td></tr>
-<tr class="memdesc:a151f0f142ae5f66c1486dde4bb95c71a"><td class="mdescLeft">&#160;</td><td class="mdescRight">SLOT_PER_BUCKET defines the maximum number of keys per bucket. <br/></td></tr>
-<tr class="separator:a151f0f142ae5f66c1486dde4bb95c71a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeed3842d4e783549da57b74557b79fae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeed3842d4e783549da57b74557b79fae"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__config_8h.html#aeed3842d4e783549da57b74557b79fae">HASHPOWER_DEFAULT</a>&#160;&#160;&#160;16</td></tr>
-<tr class="memdesc:aeed3842d4e783549da57b74557b79fae"><td class="mdescLeft">&#160;</td><td class="mdescRight">HASHPOWER_DEFAULT is the default hash table size. <br/></td></tr>
-<tr class="separator:aeed3842d4e783549da57b74557b79fae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adadf6ca6ff8002ce9c3bbcdc18e5ff9c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adadf6ca6ff8002ce9c3bbcdc18e5ff9c"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__config_8h.html#adadf6ca6ff8002ce9c3bbcdc18e5ff9c">LIBCUCKOO_DEBUG</a>&#160;&#160;&#160;0</td></tr>
 <tr class="memdesc:adadf6ca6ff8002ce9c3bbcdc18e5ff9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">set LIBCUCKOO_DEBUG to 1 to enable debug output <br/></td></tr>
 <tr class="separator:adadf6ca6ff8002ce9c3bbcdc18e5ff9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:af9fa239753671f0cf754e17a37bb911d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af9fa239753671f0cf754e17a37bb911d"></a>
+const size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__config_8h.html#af9fa239753671f0cf754e17a37bb911d">SLOT_PER_BUCKET</a> = 8</td></tr>
+<tr class="memdesc:af9fa239753671f0cf754e17a37bb911d"><td class="mdescLeft">&#160;</td><td class="mdescRight">SLOT_PER_BUCKET is the maximum number of keys per bucket. <br/></td></tr>
+<tr class="separator:af9fa239753671f0cf754e17a37bb911d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54977b4b1551a03c6a0a8b8f95fc68b6"><td class="memItemLeft" align="right" valign="top">const size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__config_8h.html#a54977b4b1551a03c6a0a8b8f95fc68b6">DEFAULT_SIZE</a> = (1U &lt;&lt; 16) * SLOT_PER_BUCKET</td></tr>
+<tr class="separator:a54977b4b1551a03c6a0a8b8f95fc68b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Variable Documentation</h2>
+<a class="anchor" id="a54977b4b1551a03c6a0a8b8f95fc68b6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const size_t DEFAULT_SIZE = (1U &lt;&lt; 16) * SLOT_PER_BUCKET</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>DEFAULT_SIZE is the default number of elements in an empty hash table </p>
+
+<p>Definition at line <a class="el" href="cuckoohash__config_8h_source.html#l00011">11</a> of file <a class="el" href="cuckoohash__config_8h_source.html">cuckoohash_config.h</a>.</p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_e4efb664af72a21142a7864d180da0f4.html">libcuckoo</a></li><li class="navelem"><a class="el" href="cuckoohash__config_8h.html">cuckoohash_config.h</a></li>
-    <li class="footer">Generated on Sun Jan 5 2014 19:00:49 for libcuckoo by
+    <li class="footer">Generated on Fri Jan 24 2014 17:16:06 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

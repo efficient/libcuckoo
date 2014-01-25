@@ -1,6 +1,6 @@
 var cuckoohash__config_8h =
 [
-    [ "HASHPOWER_DEFAULT", "cuckoohash__config_8h.html#aeed3842d4e783549da57b74557b79fae", null ],
     [ "LIBCUCKOO_DEBUG", "cuckoohash__config_8h.html#adadf6ca6ff8002ce9c3bbcdc18e5ff9c", null ],
-    [ "SLOT_PER_BUCKET", "cuckoohash__config_8h.html#a151f0f142ae5f66c1486dde4bb95c71a", null ]
+    [ "DEFAULT_SIZE", "cuckoohash__config_8h.html#a54977b4b1551a03c6a0a8b8f95fc68b6", null ],
+    [ "SLOT_PER_BUCKET", "cuckoohash__config_8h.html#af9fa239753671f0cf754e17a37bb911d", null ]
 ];

@@ -94,7 +94,7 @@ $(document).ready(function(){initNavTree('classcuckoohash__map_1_1const__iterato
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -163,7 +163,7 @@ class cuckoohash_map&lt; Key, T, Hash, Pred &gt;::const_iterator</h3>
 
 <p>A <a class="el" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a> is an iterator through the table that is thread safe. For the duration of its existence, it takes all the locks on the table it is given, thereby ensuring that no other threads can modify the table while the iterator is in use. Note that this also means that only one iterator can be active on a table at one time and furthermore that all operations on the table, except the <a class="el" href="classcuckoohash__map.html#a9df95e5908ddd3629b8179c9124081a3">size</a>, <a class="el" href="classcuckoohash__map.html#a53545a47a5bf74c2907a4dd111000b5f">empty</a>, <a class="el" href="classcuckoohash__map.html#ad794e8675891e86437b058a95241715d">hashpower</a>, <a class="el" href="classcuckoohash__map.html#a0a3f7e2bb8786eaaed3c1b18e8953f49">bucket_count</a>, and <a class="el" href="classcuckoohash__map.html#abf81ab6b24692773c3dc368a4c619af8">load_factor</a> methods, will stall until the iterator loses its lock. For this reason, we suggest using the <a class="el" href="classcuckoohash__map.html#a932465423d5c935b8cd793313abe2a84">snapshot_table</a> method if possible, since it is less error-prone. The iterator allows movement forward and backward through the table as well as dereferencing items in the table. It maintains the invariant that the iterator is either an end iterator (which points past the end of the table), or points to a filled slot. As soon as the iterator looses its lock on the table, all dereference and movement operations will throw an exception. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01567">1567</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01570">1570</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a827e61381946c3fbb3e2d8dbeaa87812"></a>
 <div class="memitem">
@@ -190,7 +190,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>This is an rvalue-reference constructor that takes the lock from <code>it</code> and copies its state. To create an iterator from scratch, call the <a class="el" href="classcuckoohash__map.html#a8e3a65a5d68a1631a728f8a3dd79ce71">cbegin</a> or <a class="el" href="classcuckoohash__map.html#a6a021e201b509120df3a56bd2ded35f5">cend</a> methods of <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01605">1605</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01608">1608</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -218,7 +218,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>The destructor simply calls <a class="el" href="classcuckoohash__map_1_1const__iterator.html#aedb52efd2858b25b7547e93af345c356">release</a>. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01637">1637</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01640">1640</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -247,7 +247,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>is_begin returns true if the iterator is at begin_pos, which means it is at the first item in the table. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01649">1649</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01652">1652</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -275,7 +275,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>is_end returns true if the iterator is at end_pos, which means it is past the end of the table. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01643">1643</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01646">1646</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -303,7 +303,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>The dereference operator returns a value_type copied from the key-value pair under the iterator. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01667">1667</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01670">1670</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -331,7 +331,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>The prefix increment operator moves the iterator forwards to the next nonempty slot. If it reaches the end of the table, it becomes an end iterator. It throws an exception if the iterator is already at the end of the table. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01694">1694</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01697">1697</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -360,7 +360,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>The postfix increment operator behaves identically to the prefix increment operator. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01705">1705</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01708">1708</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -388,7 +388,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>The prefix decrement operator moves the iterator backwards to the previous nonempty slot. If we aren't at the beginning, then the backward_filled_slot operation should not fail. If we are, it throws an exception. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01718">1718</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01721">1721</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -417,7 +417,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>The postfix decrement operator behaves identically to the prefix decrement operator. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01729">1729</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01732">1732</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -445,7 +445,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>The arrow dereference operator returns a pointer to an internal std::pair which contains const references to the key and value under the iterator. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01679">1679</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01682">1682</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -474,7 +474,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>The assignment operator behaves identically to the rvalue-reference constructor. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01615">1615</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01618">1618</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -502,7 +502,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>release unlocks the table, thereby freeing it up for other operations, but also invalidating all future operations with this iterator. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01627">1627</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01630">1630</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -515,7 +515,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a></li><li class="navelem"><a class="el" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a></li>
-    <li class="footer">Generated on Sun Jan 5 2014 19:00:49 for libcuckoo by
+    <li class="footer">Generated on Fri Jan 24 2014 17:16:06 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>
