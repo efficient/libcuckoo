@@ -27,7 +27,6 @@ var classcuckoohash__map =
     [ "load_factor", "classcuckoohash__map.html#abf81ab6b24692773c3dc368a4c619af8", null ],
     [ "rehash", "classcuckoohash__map.html#aca7e87cbd2bd0d42a66885a4eed2ae67", null ],
     [ "reserve", "classcuckoohash__map.html#a913b068ba69d501cbb3fe0d82d2fe195", null ],
-    [ "reserve_calc", "classcuckoohash__map.html#a0aa9a56581880f41cf8d52253d989c79", null ],
     [ "size", "classcuckoohash__map.html#a9df95e5908ddd3629b8179c9124081a3", null ],
     [ "snapshot_table", "classcuckoohash__map.html#a932465423d5c935b8cd793313abe2a84", null ],
     [ "update", "classcuckoohash__map.html#afb2e9f268b71e60ffedaf4a99e3b72d1", null ],
