@@ -157,6 +157,15 @@ class cuckoohash_map {
         }
     }
 
+    /* reserve_calc takes in a parameter specifying a certain number
+     * of slots for a table and returns the smallest hashpower that
+     * will hold n elements. */
+    size_t reserve_calc(size_t n) {
+        size_t new_hashpower = (size_t)ceil(log2((double)n / (double)SLOT_PER_BUCKET));
+        assert(n <= hashsize(new_hashpower) * SLOT_PER_BUCKET);
+        return new_hashpower;
+    }
+
 public:
     //! key_type is the type of keys.
     typedef Key               key_type;
@@ -171,15 +180,6 @@ public:
     //! updater is the function type for functions passed to update_fn
     //! and upsert.
     typedef std::function<mapped_type(const mapped_type&)> updater;
-
-    /* reserve_calc takes in a parameter specifying a certain number
-     * of slots for a table and returns the smallest hashpower that
-     * will hold n elements. */
-    size_t reserve_calc(size_t n) {
-        size_t new_hashpower = (size_t)ceil(log2((double)n / (double)SLOT_PER_BUCKET));
-        assert(n <= hashsize(new_hashpower) * SLOT_PER_BUCKET);
-        return new_hashpower;
-    }
 
     /*! The constructor creates a new hash table with enough space for
      * \p n elements. If the constructor fails, it will throw an
