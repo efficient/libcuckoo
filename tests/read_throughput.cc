@@ -83,7 +83,7 @@ void read_thread(thread_args<KType> rt_args) {
             if (finished->load(std::memory_order_acquire)) {
                 return;
             }
-            ASSERT_EQ(table.find(*begin, v), in_table);
+            ASSERT_EQ(table.find(*it, v), in_table);
             reads->num++;
         }
         if (finished->load(std::memory_order_acquire)) {
