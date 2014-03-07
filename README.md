@@ -68,7 +68,7 @@ The
 [tests directory](https://github.com/efficient/libcuckoo/tree/master/tests)
 directory contains a number of tests and benchmarks of the hash table,
 which also serve as useful examples of how to use the table's various
-features. The entire test suite can be build with ``make all`` and run
+features. The entire test suite can be built with ``make all`` and run
 with the ``make check`` command. The test executables, which have the
 suffix ``.out``, can be run individually as well.
 
