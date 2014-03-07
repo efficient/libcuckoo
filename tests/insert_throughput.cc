@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include <libcuckoo/cuckoohash_config.h> // for SLOT_PER_BUCKET
 #include <libcuckoo/cuckoohash_map.hh>
 #include "test_util.cc"
 
@@ -29,9 +28,9 @@ typedef uint32_t KeyType;
 typedef std::string KeyType2;
 typedef uint32_t ValType;
 
-// The power argument passed to the hashtable constructor. This can be
-// set with the command line flag --power.
-size_t power = 22;
+// The number of keys to size the table with, expressed as a power of
+// 2. This can be set with the command line flag --power
+size_t power = 25;
 // The number of threads spawned for inserts. This can be set with the
 // command line flag --thread-num
 size_t thread_num = sysconf(_SC_NPROCESSORS_ONLN);
@@ -65,10 +64,8 @@ void insert_thread(cuckoohash_map<KType, ValType>& table,
 template <class KType>
 class InsertEnvironment {
 public:
-    // We allocate the vectors with the total amount of space in the
-    // table, which is bucket_count() * SLOT_PER_BUCKET
     InsertEnvironment()
-        : numkeys((1U << power) * SLOT_PER_BUCKET), table(numkeys), keys(numkeys) {
+        : numkeys(1U << power), table(numkeys), keys(numkeys) {
         // Sets up the random number generator
         if (seed == 0) {
             seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -136,7 +133,7 @@ void InsertThroughputTest(InsertEnvironment<KType> *env) {
 int main(int argc, char** argv) {
     const char* args[] = {"--power", "--thread-num", "--begin-load", "--end-load", "--seed"};
     size_t* arg_vars[] = {&power, &thread_num, &begin_load, &end_load, &seed};
-    const char* arg_help[] = {"The power argument given to the hashtable during initialization",
+    const char* arg_help[] = {"The number of keys to size the table with, expressed as a power of 2",
                               "The number of threads to spawn for each type of operation",
                               "The load factor to fill the table up to before testing throughput",
                               "The maximum load factor to fill the table up to when testing throughput",

@@ -10,7 +10,6 @@
 #include <random>
 #include <utility>
 
-#include <libcuckoo/cuckoohash_config.h> // for SLOT_PER_BUCKET
 #include <libcuckoo/cuckoohash_map.hh>
 #include "test_util.cc"
 
@@ -18,8 +17,8 @@ typedef uint32_t KeyType;
 typedef uint32_t ValType;
 typedef std::pair<KeyType, ValType> KVPair;
 
-const size_t power = 19;
-const size_t numkeys = (1U << power) * SLOT_PER_BUCKET;
+const size_t power = 22;
+const size_t numkeys = 1U << power;
 
 class InsertFindEnvironment {
 public:

@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include <libcuckoo/cuckoohash_config.h> // for SLOT_PER_BUCKET
 #include <libcuckoo/cuckoohash_map.hh>
 #include "test_util.cc"
 
@@ -30,17 +29,10 @@ typedef std::string KeyType2;
 typedef uint32_t ValType;
 typedef int32_t ValType2;
 
-// The number of keys that can be inserted, deleted, and searched on.
-// For expensive keys, like strings, it can take a while to generate
-// keys, so we define numkeys to be 2^max(20, power) *
-// SLOT_PER_BUCKET. It's possible that if no keys are being deleted,
-// insert can insert all the keys and indefinitely stall, but
-// hopefully that shouldn't happen.
-size_t numkeys;
-// The power argument passed to the hashtable constructor. By default
-// it should be enough to hold numkeys elements. This can be set with
-// the command line flag --power
-size_t power =  22;
+// The number of keys to size the table with, expressed as a power of
+// 2. This can be set with the command line flag --power
+size_t power = 25;
+size_t numkeys; // Holds 2^power
 // The number of threads spawned for each type of operation. This can
 // be set with the command line flag --thread-num
 size_t thread_num = 4;
@@ -74,8 +66,8 @@ template <class KType>
 class AllEnvironment {
 public:
     AllEnvironment()
-        : table((1U << power) * SLOT_PER_BUCKET), table2((1U << power) * SLOT_PER_BUCKET), 
-          keys(numkeys), vals(numkeys), vals2(numkeys), in_table(new bool[numkeys]), in_use(numkeys),
+        : table(numkeys), table2(numkeys), keys(numkeys), vals(numkeys), 
+          vals2(numkeys), in_table(new bool[numkeys]), in_use(numkeys),
           val_dist(std::numeric_limits<ValType>::min(), std::numeric_limits<ValType>::max()),
           val_dist2(std::numeric_limits<ValType2>::min(), std::numeric_limits<ValType2>::max()),
           ind_dist(0, numkeys-1), finished(false) {
@@ -312,7 +304,7 @@ void StressTest(AllEnvironment<KType> *env) {
 int main(int argc, char** argv) {
     const char* args[] = {"--power", "--thread-num", "--time", "--seed"};
     size_t* arg_vars[] = {&power, &thread_num, &test_len, &seed};
-    const char* arg_help[] = {"The power argument given to the hashtable during initialization",
+    const char* arg_help[] = {"The number of keys to size the table with, expressed as a power of 2",
                               "The number of threads to spawn for each type of operation",
                               "The number of seconds to run the test for",
                               "The seed for the random number generator"};
@@ -326,7 +318,7 @@ int main(int argc, char** argv) {
     parse_flags(argc, argv, "Runs a stress test on inserts, deletes, and finds",
                 args, arg_vars, arg_help, sizeof(args)/sizeof(const char*), flags,
                 flag_vars, flag_help, sizeof(flags)/sizeof(const char*));
-    numkeys = (1L << std::max(20uL, power)) * SLOT_PER_BUCKET;
+    numkeys = 1U << power;
 
     if (use_strings) {
         auto *env = new AllEnvironment<KeyType2>;

@@ -10,7 +10,6 @@
 #include <random>
 #include <utility>
 
-#include <libcuckoo/cuckoohash_config.h> // for SLOT_PER_BUCKET
 #include <libcuckoo/cuckoohash_map.hh>
 #include "test_util.cc"
 
@@ -18,8 +17,8 @@ typedef uint32_t KeyType;
 typedef uint32_t ValType;
 typedef cuckoohash_map<KeyType, ValType> Table;
 
-const size_t power = 1;
-const size_t size = (1L << power) * SLOT_PER_BUCKET;
+const size_t power = 4;
+const size_t size = 1L << power;
 
 class IteratorEnvironment {
 public:

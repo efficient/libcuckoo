@@ -30,8 +30,10 @@ typedef std::string KeyType2;
 typedef uint32_t ValType;
 typedef int32_t ValType2;
 
-// The power argument passed to the hashtable constructor.
-size_t power = 21;
+// The number of keys to size the table with, expressed as a power of
+// 2. This can be set with the command line flag --power
+size_t power = 24;
+size_t numkeys; // Holds 2^power
 // The number of threads spawned for each type of operation. This can
 // be set with the command line flag --thread-num
 size_t thread_num = 4;
@@ -71,8 +73,7 @@ bool use_strings = false;
 template <class KType>
 class AllEnvironment {
 public:
-    AllEnvironment()
-        : numkeys((1U << power) * SLOT_PER_BUCKET), table(numkeys), table2(numkeys), finished(false) {
+    AllEnvironment() : table(numkeys), table2(numkeys), finished(false) {
         // Sets up the random number generator
         if (seed == 0) {
             seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -81,7 +82,6 @@ public:
         gen_seed = seed;
     }
 
-    const size_t numkeys;
     cuckoohash_map<KType, ValType> table;
     cuckoohash_map<KType, ValType2> table2;
     size_t gen_seed;
@@ -268,7 +268,7 @@ void StressTest(AllEnvironment<KType> *env) {
 int main(int argc, char** argv) {
     const char* args[] = {"--power", "--thread-num", "--time", "--seed"};
     size_t* arg_vars[] = {&power, &thread_num, &test_len, &seed};
-    const char* arg_help[] = {"The power argument given to the hashtable during initialization",
+    const char* arg_help[] = {"The number of keys to size the table with, expressed as a power of 2",
                               "The number of threads to spawn for each type of operation",
                               "The number of seconds to run the test for",
                               "The seed for the random number generator"};
@@ -290,6 +290,7 @@ int main(int argc, char** argv) {
     parse_flags(argc, argv, "Runs a stress test on inserts, deletes, and finds",
                 args, arg_vars, arg_help, sizeof(args)/sizeof(const char*), flags,
                 flag_vars, flag_help, sizeof(flags)/sizeof(const char*));
+    numkeys = 1U << power;
 
     if (use_strings) {
         auto *env = new AllEnvironment<KeyType2>;
