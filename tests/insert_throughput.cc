@@ -47,22 +47,9 @@ size_t seed = 0;
 // Whether to use strings as the key
 bool use_strings = false;
 
-// Inserts the keys in the given range (with value 0), exiting if there is an expansion
-template <class KType>
-void insert_thread(cuckoohash_map<KType, ValType>& table,
-                   typename std::vector<KType>::iterator begin,
-                   typename std::vector<KType>::iterator end) {
-    for (;begin != end; begin++) {
-        if (table.hashpower() > power) {
-            std::cerr << "Expansion triggered" << std::endl;
-            exit(1);
-        }
-        ASSERT_TRUE(table.insert(*begin, 0));
-    }
-}
-
-template <class KType>
+template <class T>
 class InsertEnvironment {
+    using KType = typename T::key_type;
 public:
     InsertEnvironment()
         : numkeys(1U << power), table(numkeys), keys(numkeys) {
@@ -87,7 +74,9 @@ public:
         std::vector<std::thread> threads;
         size_t keys_per_thread = numkeys * (begin_load / 100.0) / thread_num;
         for (size_t i = 0; i < thread_num; i++) {
-            threads.emplace_back(insert_thread<KType>, std::ref(table), keys.begin()+i*keys_per_thread, keys.begin()+(i+1)*keys_per_thread);
+            threads.emplace_back(insert_thread<KType, ValType>, std::ref(table),
+                                 keys.begin()+i*keys_per_thread,
+                                 keys.begin()+(i+1)*keys_per_thread);
         }
         for (size_t i = 0; i < threads.size(); i++) {
             threads[i].join();
@@ -96,24 +85,28 @@ public:
         init_size = table.size();
         ASSERT_TRUE(init_size == keys_per_thread * thread_num);
 
-        std::cout << "Table with capacity " << numkeys << " prefilled to a load factor of " << table.load_factor() << std::endl;
+        std::cout << "Table with capacity " << numkeys <<
+            " prefilled to a load factor of " << begin_load << "%" << std::endl;
     }
 
     size_t numkeys;
-    cuckoohash_map<KType, ValType> table;
+    T table;
     std::vector<KType> keys;
     std::mt19937_64 gen;
     size_t init_size;
 };
 
-template <class KType>
-void InsertThroughputTest(InsertEnvironment<KType> *env) {
+template <class T>
+void InsertThroughputTest(InsertEnvironment<T> *env) {
+    using KType = typename T::key_type;
     std::vector<std::thread> threads;
     size_t keys_per_thread = env->numkeys * ((end_load-begin_load) / 100.0) / thread_num;
     timeval t1, t2;
     gettimeofday(&t1, NULL);
     for (size_t i = 0; i < thread_num; i++) {
-        threads.emplace_back(insert_thread<KType>, std::ref(env->table), env->keys.begin()+(i*keys_per_thread)+env->init_size, env->keys.begin()+((i+1)*keys_per_thread)+env->init_size);
+        threads.emplace_back(insert_thread<KType, ValType>, std::ref(env->table), 
+                             env->keys.begin()+(i*keys_per_thread)+env->init_size, 
+                             env->keys.begin()+((i+1)*keys_per_thread)+env->init_size);
     }
     for (size_t i = 0; i < threads.size(); i++) {
         threads[i].join();
@@ -124,7 +117,7 @@ void InsertThroughputTest(InsertEnvironment<KType> *env) {
     size_t num_inserts = env->table.size() - env->init_size;
     // Reports the results
     std::cout << "----------Results----------" << std::endl;
-    std::cout << "Final load factor:\t" << env->table.load_factor() << std::endl;
+    std::cout << "Final load factor:\t" << end_load << "%" << std::endl;
     std::cout << "Number of inserts:\t" << num_inserts << std::endl;
     std::cout << "Time elapsed:\t" << elapsed_time/1000 << " seconds" << std::endl;
     std::cout << "Throughput: " << std::fixed << (double)num_inserts / (elapsed_time/1000) << " inserts/sec" << std::endl;
@@ -154,11 +147,11 @@ int main(int argc, char** argv) {
     }
 
     if (use_strings) {
-        auto *env = new InsertEnvironment<KeyType2>;
+        auto *env = new InsertEnvironment<cuckoohash_map<KeyType2, ValType>>;
         InsertThroughputTest(env);
         delete env;
     } else {
-        auto *env = new InsertEnvironment<KeyType>;
+        auto *env = new InsertEnvironment<cuckoohash_map<KeyType, ValType>>;
         InsertThroughputTest(env);
         delete env;
     }

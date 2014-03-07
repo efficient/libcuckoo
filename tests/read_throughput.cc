@@ -47,70 +47,9 @@ size_t test_len = 10;
 // Whether to use strings as the key
 bool use_strings = false;
 
-/* cacheint is a cache-aligned integer type. */
-struct cacheint {
-    size_t num;
-    cacheint() {
-        num = 0;
-    }
-} __attribute__((aligned(64)));
-
-template <class KType>
-struct thread_args {
-    typename std::vector<KType>::iterator begin;
-    typename std::vector<KType>::iterator end;
-    cuckoohash_map<KType, ValType>& table;
-    cacheint* reads;
-    bool in_table;
-    std::atomic<bool>* finished;
-};
-
-// Repeatedly searches for the keys in the given range until the time
-// is up. All the keys in the given range should either be in the
-// table or not in the table.
-template <class KType>
-void read_thread(thread_args<KType> rt_args) {
-    auto begin = rt_args.begin;
-    auto end = rt_args.end;
-    cuckoohash_map<KType, ValType>& table = rt_args.table;
-    auto *reads = rt_args.reads;
-    auto in_table = rt_args.in_table;
-    std::atomic<bool>* finished = rt_args.finished;
-    ValType v;
-    while (true) {
-        for (auto it = begin; it != end; it++) {
-            if (finished->load(std::memory_order_acquire)) {
-                return;
-            }
-            ASSERT_EQ(table.find(*it, v), in_table);
-            reads->num++;
-        }
-        if (finished->load(std::memory_order_acquire)) {
-            return;
-        }
-    }
-}
-
-// Inserts the keys in the given range in a random order, avoiding
-// inserting duplicates
-template <class KType>
-void insert_thread(thread_args<KType> it_args) {
-    auto begin = it_args.begin;
-    auto end = it_args.end;
-    cuckoohash_map<KType, ValType>& table = it_args.table;
-    for (;begin != end; begin++) {
-        if (table.hashpower() > power) {
-            print_lock.lock();
-            std::cerr << "Expansion triggered" << std::endl;
-            print_lock.unlock();
-            exit(1);
-        }
-        ASSERT_TRUE(table.insert(*begin, 0));
-    }
-}
-
-template <class KType>
+template <class T>
 class ReadEnvironment {
+    using KType = typename T::key_type;
 public:
     // We allocate the vectors with 2^power keys.
     ReadEnvironment()
@@ -136,9 +75,9 @@ public:
         std::vector<std::thread> threads;
         size_t keys_per_thread = numkeys * (load / 100.0) / thread_num;
         for (size_t i = 0; i < thread_num; i++) {
-            threads.emplace_back(insert_thread<KType>, thread_args<KType>{keys.begin()+i*keys_per_thread,
-                        keys.begin()+(i+1)*keys_per_thread, std::ref(table),
-                        nullptr, false, nullptr});
+            threads.emplace_back(insert_thread<KType, ValType>, std::ref(table),
+                                 keys.begin()+i*keys_per_thread,
+                                 keys.begin()+(i+1)*keys_per_thread);
         }
         for (size_t i = 0; i < threads.size(); i++) {
             threads[i].join();
@@ -147,18 +86,19 @@ public:
         init_size = table.size();
         ASSERT_TRUE(init_size == keys_per_thread * thread_num);
 
-        std::cout << "Table with capacity " << numkeys << " prefilled to a load factor of " << table.load_factor() << std::endl;
+        std::cout << "Table with capacity " << numkeys << " prefilled to a load factor of " << load << "%" << std::endl;
     }
 
     size_t numkeys;
-    cuckoohash_map<KType, ValType> table;
+    T table;
     std::vector<KType> keys;
     std::mt19937_64 gen;
     size_t init_size;
 };
 
-template <class KType>
-void ReadThroughputTest(ReadEnvironment<KType> *env) {
+template <class T>
+void ReadThroughputTest(ReadEnvironment<T> *env) {
+    using KType = typename T::key_type;
     std::vector<std::thread> threads;
     std::vector<cacheint> counters(thread_num);
     // We use the first half of the threads to read the init_size
@@ -171,13 +111,16 @@ void ReadThroughputTest(ReadEnvironment<KType> *env) {
     // When set to true, it signals to the threads to stop running
     std::atomic<bool> finished(false);
     for (size_t i = 0; i < first_threadnum; i++) {
-        threads.emplace_back(read_thread<KType>, thread_args<KType>{env->keys.begin() + (i*in_keys_per_thread),
-                    env->keys.begin() + ((i+1)*in_keys_per_thread), std::ref(env->table), &counters[i], true, &finished});
+        threads.emplace_back(read_thread<KType, ValType>, std::ref(env->table),
+                             env->keys.begin() + (i*in_keys_per_thread),
+                             env->keys.begin() + ((i+1)*in_keys_per_thread),
+                             std::ref(counters[i]), true, std::ref(finished));
     }
     for (size_t i = 0; i < second_threadnum; i++) {
-        threads.emplace_back(read_thread<KType>, thread_args<KType>{env->keys.begin() + (i*out_keys_per_thread) + env->init_size,
-                    env->keys.begin() + (i+1)*out_keys_per_thread + env->init_size, std::ref(env->table),
-                    &counters[first_threadnum+i], false, &finished});
+        threads.emplace_back(read_thread<KType, ValType>, std::ref(env->table),
+                             env->keys.begin() + (i*out_keys_per_thread) + env->init_size,
+                             env->keys.begin() + (i+1)*out_keys_per_thread + env->init_size,
+                             std::ref(counters[first_threadnum+i]), false, std::ref(finished));
     }
     sleep(test_len);
     finished.store(true, std::memory_order_release);
@@ -211,11 +154,11 @@ int main(int argc, char** argv) {
                 flag_vars, flag_help, sizeof(flags)/sizeof(const char*));
 
     if (use_strings) {
-        auto *env = new ReadEnvironment<KeyType2>;
+        auto *env = new ReadEnvironment<cuckoohash_map<KeyType2, ValType>>;
         ReadThroughputTest(env);
         delete env;
     } else {
-        auto *env = new ReadEnvironment<KeyType>;
+        auto *env = new ReadEnvironment<cuckoohash_map<KeyType, ValType>>;
         ReadThroughputTest(env);
         delete env;
     }
