@@ -161,7 +161,8 @@ class cuckoohash_map {
      * of slots for a table and returns the smallest hashpower that
      * will hold n elements. */
     size_t reserve_calc(size_t n) {
-        size_t new_hashpower = (size_t)ceil(log2((double)n / (double)SLOT_PER_BUCKET));
+        double nhd = ceil(log2((double)n / (double)SLOT_PER_BUCKET));
+        size_t new_hashpower = (size_t) (nhd <= 0 ? 1.0 : nhd);
         assert(n <= hashsize(new_hashpower) * SLOT_PER_BUCKET);
         return new_hashpower;
     }
