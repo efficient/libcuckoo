@@ -10,13 +10,14 @@ The Doxygen-generated documentation is available at the
 Authors: Manu Goyal, Bin Fan, Xiaozhou Li, David G. Andersen, and Michael Kaminsky
 
 For details about this algorithm and citations, please refer to
-[our paper in NSDI 2013][1]. Some of the details of the hashing
+our papers in [NSDI 2013][1] and [EuroSys 2014][2]. Some of the details of the hashing
 algorithm have been improved since that work (e.g., the previous algorithm
 in [1] serializes all writer threads, while our current
 implementation supports multiple concurrent writers), however, and this source
 code is now the definitive reference.
 
    [1]: http://www.cs.cmu.edu/~dga/papers/memc3-nsdi2013.pdf "MemC3: Compact and Concurrent Memcache with Dumber Caching and Smarter Hashing"
+   [2]: http://www.cs.princeton.edu/~mfreed/docs/cuckoo-eurosys14.pdf "Algorithmic Improvements for Fast Concurrent Cuckoo Hashing"
 
 Requirements
 ================
