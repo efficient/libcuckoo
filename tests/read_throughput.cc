@@ -49,7 +49,7 @@ bool use_strings = false;
 
 template <class T>
 class ReadEnvironment {
-    using KType = typename T::key_type;
+    typedef typename T::key_type KType;
 public:
     // We allocate the vectors with 2^power keys.
     ReadEnvironment()
@@ -98,7 +98,7 @@ public:
 
 template <class T>
 void ReadThroughputTest(ReadEnvironment<T> *env) {
-    using KType = typename T::key_type;
+    typedef typename T::key_type KType;
     std::vector<std::thread> threads;
     std::vector<cacheint> counters(thread_num);
     // We use the first half of the threads to read the init_size

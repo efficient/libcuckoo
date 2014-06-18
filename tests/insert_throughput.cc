@@ -49,7 +49,7 @@ bool use_strings = false;
 
 template <class T>
 class InsertEnvironment {
-    using KType = typename T::key_type;
+    typedef typename T::key_type KType;
 public:
     InsertEnvironment()
         : numkeys(1U << power), table(numkeys), keys(numkeys) {
@@ -98,7 +98,7 @@ public:
 
 template <class T>
 void InsertThroughputTest(InsertEnvironment<T> *env) {
-    using KType = typename T::key_type;
+    typedef typename T::key_type KType;
     std::vector<std::thread> threads;
     size_t keys_per_thread = env->numkeys * ((end_load-begin_load) / 100.0) / thread_num;
     timeval t1, t2;
