@@ -1,6 +1,7 @@
 #ifndef _CUCKOOHASH_MAP_HH
 #define _CUCKOOHASH_MAP_HH
 
+#include <algorithm>
 #include <atomic>
 #include <bitset>
 #include <cassert>
@@ -27,6 +28,21 @@
 template <class Key, class T, class Hash = std::hash<Key>,
           class Pred = std::equal_to<Key> >
 class cuckoohash_map {
+public:
+    //! key_type is the type of keys.
+    typedef Key               key_type;
+    //! value_type is the type of key-value pairs.
+    typedef std::pair<Key, T> value_type;
+    //! mapped_type is the type of values.
+    typedef T                 mapped_type;
+    //! hasher is the type of the hash function.
+    typedef Hash              hasher;
+    //! key_equal is the type of the equality predicate.
+    typedef Pred              key_equal;
+    //! updater is the function type for functions passed to update_fn and
+    //! upsert.
+    typedef std::function<mapped_type(const mapped_type&)> updater;
+
 private:
     // Structs and functions used internally
     class spinlock {
@@ -61,6 +77,107 @@ private:
         failure_under_expansion = 7,
     } cuckoo_status;
 
+    /* The Bucket type holds SLOT_PER_BUCKET keys and values, and a occupied
+     * bitset, which indicates whether the slot at the given bit index is in the
+     * table or not. It allows constructing and destroying key-value pairs
+     * separate from allocating and deallocating the memory. */
+    typedef char partial_t;
+    struct Bucket {
+        std::bitset<SLOT_PER_BUCKET> occupied;
+        partial_t partials[SLOT_PER_BUCKET];
+        key_type keys[SLOT_PER_BUCKET];
+        mapped_type vals[SLOT_PER_BUCKET];
+
+        void setKV(size_t pos, const key_type& k, const mapped_type& v) {
+            occupied.set(pos);
+            new (keys+pos) key_type(k);
+            new (vals+pos) mapped_type(v);
+        }
+
+        void eraseKV(size_t pos) {
+            occupied.reset(pos);
+            (keys+pos)->~key_type();
+            (vals+pos)->~mapped_type();
+        }
+
+        void clear() {
+            for (size_t i = 0; i < SLOT_PER_BUCKET; ++i) {
+                if (occupied[i]) {
+                    eraseKV(i);
+                }
+            }
+        }
+    };
+
+    /* cacheint is a cache-aligned atomic integer type. */
+    struct cacheint {
+        std::atomic<size_t> num;
+        cacheint() {}
+        cacheint(cacheint&& x) {
+            num.store(x.num.load());
+        }
+    } __attribute__((aligned(64)));
+
+    // An alias for the type of lock we are using
+    typedef spinlock locktype;
+
+    /* TableInfo contains the entire state of the hashtable. We allocate one
+     * TableInfo pointer per hash table and store all of the table memory in it,
+     * so that all the data can be atomically swapped during expansion. */
+    struct TableInfo {
+        // 2**hashpower is the number of buckets
+        size_t hashpower_;
+
+        // unique pointer to the array of buckets
+        Bucket* buckets_;
+
+        // unique pointer to the array of locks
+        locktype* locks_;
+
+        // per-core counters for the number of inserts and deletes
+        std::vector<cacheint> num_inserts;
+        std::vector<cacheint> num_deletes;
+
+        // An allocator for Buckets that allows us to separate constructing the
+        // Buckets from allocating and freeing the memory they are stored in
+        static std::allocator<Bucket> bucket_allocator;
+
+        /* The constructor allocates the memory for the table. For buckets, it
+         * uses the bucket_allocator, so that we can free memory independently
+         * of calling its destructor. It allocates one cacheint for each core in
+         * num_inserts and num_deletes. */
+        TableInfo(const size_t hashtable_init) {
+            buckets_ = nullptr;
+            locks_ = nullptr;
+            try {
+                hashpower_ = hashtable_init;
+                buckets_ = bucket_allocator.allocate(hashsize(hashpower_));
+                for (size_t i = 0; i < hashsize(hashpower_); ++i) {
+                    bucket_allocator.construct(buckets_+i);
+                }
+                locks_ = new locktype[kNumLocks];
+                num_inserts.resize(kNumCores);
+                num_deletes.resize(kNumCores);
+            } catch (const std::bad_alloc&) {
+                if (buckets_ != nullptr) {
+                    bucket_allocator.deallocate(buckets_, hashsize(hashpower_));
+                }
+                if (locks_ != nullptr) {
+                    delete[] locks_;
+                }
+                throw;
+            }
+        }
+
+        ~TableInfo() {
+            for (size_t i = 0; i < hashsize(hashpower_); ++i) {
+                buckets_[i].clear();
+            }
+            bucket_allocator.deallocate(buckets_, hashsize(hashpower_));
+            delete[] locks_;
+        }
+    };
+
     /* This is a hazard pointer, used to indicate which version of the TableInfo
      * is currently being used in the thread. Since cuckoohash_map operations
      * can run simultaneously in different threads, this variable is thread
@@ -69,49 +186,34 @@ private:
      * simultaneously in one thread. The hazard pointer variable points to a
      * pointer inside a global list of pointers, that each map checks before
      * deleting any old TableInfo pointers. */
-    static __thread void** hazard_pointer;
+    static __thread TableInfo** hazard_pointer;
 
     /* A GlobalHazardPointerList stores a list of pointers that cannot be
      * deleted by an expansion thread. Each thread gets its own node in the
      * list, whose data pointer it can modify without contention. */
     class GlobalHazardPointerList {
-        std::list<void*> hp_;
+        std::list<TableInfo*> hp_;
         std::mutex lock_;
+        typedef std::unique_lock<std::mutex> HPUniqueLock;
     public:
         /* new_hazard_pointer creates and returns a new hazard pointer for a
          * thread. */
-        void** new_hazard_pointer() {
-            lock_.lock();
+        TableInfo** new_hazard_pointer() {
+            HPUniqueLock ul(lock_);
             hp_.emplace_back(nullptr);
-            void** ret = &hp_.back();
-            lock_.unlock();
-            return ret;
+            return &hp_.back();
         }
 
         /* delete_unused scans the list of hazard pointers, deleting any
          * pointers in old_pointers that aren't in this list. If it does delete
          * a pointer in old_pointers, it deletes that node from the list. */
-        template <class Ptr>
-        void delete_unused(std::list<Ptr*>& old_pointers) {
-            lock_.lock();
-            auto it = old_pointers.begin();
-            while (it != old_pointers.end()) {
-                bool deleteable = true;
-                for (auto hpit = hp_.cbegin(); hpit != hp_.cend(); hpit++) {
-                    if (*hpit == *it) {
-                        deleteable = false;
-                        break;
-                    }
-                }
-                if (deleteable) {
-                    LIBCUCKOO_DBG("deleting %p\n", *it);
-                    delete *it;
-                    it = old_pointers.erase(it);
-                } else {
-                    it++;
-                }
-            }
-            lock_.unlock();
+        void delete_unused(std::list<std::unique_ptr<TableInfo>>&
+                           old_pointers) {
+            HPUniqueLock ul(lock_);
+            old_pointers.remove_if(
+                [this](const std::unique_ptr<TableInfo>& ptr) {
+                    return std::find(hp_.begin(), hp_.end(), ptr.get()) != hp_.end();
+                });
         }
     };
 
@@ -161,35 +263,17 @@ private:
     }
 
 public:
-    //! key_type is the type of keys.
-    typedef Key               key_type;
-    //! value_type is the type of key-value pairs.
-    typedef std::pair<Key, T> value_type;
-    //! mapped_type is the type of values.
-    typedef T                 mapped_type;
-    //! hasher is the type of the hash function.
-    typedef Hash              hasher;
-    //! key_equal is the type of the equality predicate.
-    typedef Pred              key_equal;
-    //! updater is the function type for functions passed to update_fn and
-    //! upsert.
-    typedef std::function<mapped_type(const mapped_type&)> updater;
-
     /*! The constructor creates a new hash table with enough space for \p n
      * elements. If the constructor fails, it will throw an exception. */
     explicit cuckoohash_map(size_t n = DEFAULT_SIZE) {
         cuckoo_init(reserve_calc(n));
     }
 
-    /*! The destructor deletes any remaining table pointers managed by the hash
-     * table, also destroying all remaining elements in the table. */
+    /*! The destructor explicitly deletes the current table info. */
     ~cuckoohash_map() {
         TableInfo *ti = table_info.load();
         if (ti != nullptr) {
             delete ti;
-        }
-        for (auto it = old_table_infos.cbegin(); it != old_table_infos.cend(); it++) {
-            delete *it;
         }
     }
 
@@ -350,7 +434,8 @@ public:
     /*! upsert is a combined update_fn-insert function. It first tries updating
      *  the value associated with \p key using \p fn. If \p key is not in the
      *  table, then it runs an insert with \p key and \p val. */
-    bool upsert(const key_type& key, const updater& fn, const mapped_type& val) {
+    bool upsert(const key_type& key, const updater& fn,
+                const mapped_type& val) {
         check_hazard_pointer();
         check_counterid();
         size_t hv = hashed_key(key);
@@ -424,114 +509,16 @@ public:
     }
 
 private:
-    /* The Bucket type holds SLOT_PER_BUCKET keys and values, and a occupied
-     * bitset, which indicates whether the slot at the given bit index is in the
-     * table or not. It allows constructing and destroying key-value pairs
-     * separate from allocating and deallocating the memory. */
-    typedef char partial_t;
-    struct Bucket {
-        std::bitset<SLOT_PER_BUCKET> occupied;
-        partial_t partials[SLOT_PER_BUCKET];
-        key_type keys[SLOT_PER_BUCKET];
-        mapped_type vals[SLOT_PER_BUCKET];
-
-        void setKV(size_t pos, const key_type& k, const mapped_type& v) {
-            occupied.set(pos);
-            new (keys+pos) key_type(k);
-            new (vals+pos) mapped_type(v);
-        }
-
-        void eraseKV(size_t pos) {
-            occupied.reset(pos);
-            (keys+pos)->~key_type();
-            (vals+pos)->~mapped_type();
-        }
-
-        void clear() {
-            for (size_t i = 0; i < SLOT_PER_BUCKET; i++) {
-                if (occupied[i]) {
-                    eraseKV(i);
-                }
-            }
-        }
-    };
-
-    /* cacheint is a cache-aligned atomic integer type. */
-    struct cacheint {
-        std::atomic<size_t> num;
-        cacheint() {}
-        cacheint(cacheint&& x) {
-            num.store(x.num.load());
-        }
-    } __attribute__((aligned(64)));
-
-    // An alias for the type of lock we are using
-    typedef spinlock locktype;
-
-    /* TableInfo contains the entire state of the hashtable. We allocate one
-     * TableInfo pointer per hash table and store all of the table memory in it,
-     * so that all the data can be atomically swapped during expansion. */
-    struct TableInfo {
-        // 2**hashpower is the number of buckets
-        size_t hashpower_;
-
-        // unique pointer to the array of buckets
-        Bucket* buckets_;
-
-        // unique pointer to the array of locks
-        locktype* locks_;
-
-        // per-core counters for the number of inserts and deletes
-        std::vector<cacheint> num_inserts;
-        std::vector<cacheint> num_deletes;
-
-        /* The constructor allocates the memory for the table. For buckets, it
-         * uses the bucket_allocator, so that we can free memory independently
-         * of calling its destructor. It allocates one cacheint for each core in
-         * num_inserts and num_deletes. */
-        TableInfo(const size_t hashtable_init) {
-            buckets_ = nullptr;
-            locks_ = nullptr;
-            try {
-                hashpower_ = hashtable_init;
-                buckets_ = bucket_allocator.allocate(hashsize(hashpower_));
-                for (size_t i = 0; i < hashsize(hashpower_); i++) {
-                    bucket_allocator.construct(buckets_+i);
-                }
-                locks_ = new locktype[kNumLocks];
-                num_inserts.resize(kNumCores);
-                num_deletes.resize(kNumCores);
-            } catch (const std::bad_alloc&) {
-                if (buckets_ != nullptr) {
-                    bucket_allocator.deallocate(buckets_, hashsize(hashpower_));
-                }
-                if (locks_ != nullptr) {
-                    delete[] locks_;
-                }
-                throw;
-            }
-        }
-
-        ~TableInfo() {
-            for (size_t i = 0; i < hashsize(hashpower_); i++) {
-                buckets_[i].clear();
-            }
-            bucket_allocator.deallocate(buckets_, hashsize(hashpower_));
-            delete[] locks_;
-        }
-
-    };
     std::atomic<TableInfo*> table_info;
 
     /* old_table_infos holds pointers to old TableInfos that were replaced
      * during expansion. This keeps the memory alive for any leftover
      * operations, until they are deleted by the global hazard pointer
      * manager. */
-    std::list<TableInfo*> old_table_infos;
+    std::list<std::unique_ptr<TableInfo>> old_table_infos;
 
     static hasher hashfn;
     static key_equal eqfn;
-    static std::allocator<Bucket> bucket_allocator;
 
     /* lock locks the given bucket index. */
     static inline void lock(const TableInfo *ti, const size_t i) {
@@ -644,12 +631,13 @@ private:
      * be looking at the most recent table_info in that case. */
     TableInfo* snapshot_table_nolock() {
         TableInfo *ti;
-    TryAcquire:
-        ti = table_info.load();
-        *hazard_pointer = static_cast<void*>(ti);
-        if (ti != table_info.load()) {
-            goto TryAcquire;
-        }
+        do {
+            ti = table_info.load();
+            *hazard_pointer = ti;
+            if (ti != table_info.load()) {
+                continue;
+            }
+        } while (false);
         return ti;
     }
 
@@ -660,19 +648,24 @@ private:
      * table_info pointer needs to be grabbed first. */
     void snapshot_and_lock_two(const size_t hv, TableInfo*& ti,
                                size_t& i1, size_t& i2) {
-    TryAcquire:
-        ti = table_info.load();
-        *hazard_pointer = static_cast<void*>(ti);
-        if (ti != table_info.load()) {
-            goto TryAcquire;
-        }
-        i1 = index_hash(ti, hv);
-        i2 = alt_index(ti, hv, i1);
-        lock_two(ti, i1, i2);
-        if (ti != table_info.load()) {
-            unlock_two(ti, i1, i2);
-            goto TryAcquire;
-        }
+        do {
+            ti = table_info.load();
+            *hazard_pointer = ti;
+            // If the table info has changed in the time we set the hazard
+            // pointer, try again.
+            if (ti != table_info.load()) {
+                continue;
+            }
+            i1 = index_hash(ti, hv);
+            i2 = alt_index(ti, hv, i1);
+            lock_two(ti, i1, i2);
+            // If the table info has changed in the time it took to get the
+            // locks, try again.
+            if (ti != table_info.load()) {
+                unlock_two(ti, i1, i2);
+                continue;
+            }
+        } while (false);
     }
 
     /* snapshot_and_lock_all is similar to snapshot_and_lock_two, except that
@@ -682,8 +675,8 @@ private:
     TableInfo *snapshot_and_lock_all() {
         assert(!expansion_lock.try_lock());
         TableInfo *ti = table_info.load();
-        *hazard_pointer = static_cast<void*>(ti);
-        for (size_t i = 0; i < kNumLocks; i++) {
+        *hazard_pointer = ti;
+        for (size_t i = 0; i < kNumLocks; ++i) {
             ti->locks_[i].lock();
         }
         return ti;
@@ -691,7 +684,7 @@ private:
 
     /* unlock_all releases all the locks */
     inline void unlock_all(TableInfo *ti) {
-        for (size_t i = 0; i < kNumLocks; i++) {
+        for (size_t i = 0; i < kNumLocks; ++i) {
             ti->locks_[i].unlock();
         }
     }
@@ -845,7 +838,7 @@ private:
         while (q.not_full()) {
             b_slot x = q.dequeue();
             // Picks a random slot to start from
-            for (size_t slot = 0; slot < SLOT_PER_BUCKET && q.not_full(); slot++) {
+            for (size_t slot = 0; slot < SLOT_PER_BUCKET && q.not_full(); ++slot) {
                 lock(ti, x.bucket);
                 if (!ti->buckets_[x.bucket].occupied[slot]) {
                     // We can terminate the search here
@@ -864,7 +857,7 @@ private:
                 // empty, and, if so, return that b_slot. We lock the bucket so
                 // that no changes occur while iterating.
                 lock(ti, y.bucket);
-                for (size_t j = 0; j < SLOT_PER_BUCKET; j++) {
+                for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
                     if (!ti->buckets_[y.bucket].occupied.test(j)) {
                         y.pathcode = y.pathcode * SLOT_PER_BUCKET + j;
                         unlock(ti, y.bucket);
@@ -929,7 +922,7 @@ private:
             curr->key = ti->buckets_[curr->bucket].keys[curr->slot];
             unlock(ti, curr->bucket);
         }
-        for (int i = 1; i <= x.depth; i++) {
+        for (int i = 1; i <= x.depth; ++i) {
             CuckooRecord *prev = curr++;
             const size_t prevhv = hashed_key(prev->key);
             assert(prev->bucket == index_hash(ti, prevhv) ||
@@ -1103,7 +1096,7 @@ private:
     static bool try_read_from_bucket(const TableInfo *ti, const partial_t partial,
                                      const key_type &key, mapped_type &val,
                                      const size_t i) {
-        for (size_t j = 0; j < SLOT_PER_BUCKET; j++) {
+        for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
             if (!ti->buckets_[i].occupied[j]) {
                 continue;
             }
@@ -1139,7 +1132,7 @@ private:
                                   const size_t i, int& j) {
         j = -1;
         bool found_empty = false;
-        for (size_t k = 0; k < SLOT_PER_BUCKET; k++) {
+        for (size_t k = 0; k < SLOT_PER_BUCKET; ++k) {
             if (ti->buckets_[i].occupied[k]) {
                 if (!is_simple && partial != ti->buckets_[i].partials[k]) {
                     continue;
@@ -1161,7 +1154,7 @@ private:
      * slot of the key to empty if it finds it. */
     static bool try_del_from_bucket(TableInfo *ti, const partial_t partial,
                                     const key_type &key, const size_t i) {
-        for (size_t j = 0; j < SLOT_PER_BUCKET; j++) {
+        for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
             if (!ti->buckets_[i].occupied[j]) {
                 continue;
             }
@@ -1182,7 +1175,7 @@ private:
     static bool try_update_bucket(TableInfo *ti, const partial_t partial,
                                   const key_type &key, const mapped_type &value,
                                   const size_t i) {
-        for (size_t j = 0; j < SLOT_PER_BUCKET; j++) {
+        for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
             if (!ti->buckets_[i].occupied[j]) {
                 continue;
             }
@@ -1202,7 +1195,7 @@ private:
     static bool try_update_bucket_fn(TableInfo *ti, const partial_t partial,
                                      const key_type &key, const updater& fn,
                                      const size_t i) {
-        for (size_t j = 0; j < SLOT_PER_BUCKET; j++) {
+        for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
             if (!ti->buckets_[i].occupied[j]) {
                 continue;
             }
@@ -1387,10 +1380,10 @@ private:
      * elements it removes from the table. It assumes the locks are taken as
      * necessary. */
     cuckoo_status cuckoo_clear(TableInfo *ti) {
-        for (size_t i = 0; i < hashsize(ti->hashpower_); i++) {
+        for (size_t i = 0; i < hashsize(ti->hashpower_); ++i) {
             ti->buckets_[i].clear();
         }
-        for (size_t i = 0; i < ti->num_inserts.size(); i++) {
+        for (size_t i = 0; i < ti->num_inserts.size(); ++i) {
             ti->num_inserts[i].num.store(0);
             ti->num_deletes[i].num.store(0);
         }
@@ -1401,7 +1394,7 @@ private:
     size_t cuckoo_size(const TableInfo *ti) {
         size_t inserts = 0;
         size_t deletes = 0;
-        for (size_t i = 0; i < ti->num_inserts.size(); i++) {
+        for (size_t i = 0; i < ti->num_inserts.size(); ++i) {
             inserts += ti->num_inserts[i].num.load();
             deletes += ti->num_deletes[i].num.load();
         }
@@ -1416,8 +1409,8 @@ private:
     /* insert_into_table is a helper function used by cuckoo_expand_simple to
      * fill up the new table. */
     static void insert_into_table(cuckoohash_map<Key, T, Hash>& new_map, const TableInfo *old_ti, size_t i, size_t end) {
-        for (;i < end; i++) {
-            for (size_t j = 0; j < SLOT_PER_BUCKET; j++) {
+        for (;i < end; ++i) {
+            for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
                 if (old_ti->buckets_[i].occupied[j]) {
                     new_map.insert(old_ti->buckets_[i].keys[j], old_ti->buckets_[i].vals[j]);
                 }
@@ -1458,7 +1451,7 @@ private:
             const size_t threadnum = kNumCores;
             const size_t buckets_per_thread = hashsize(ti->hashpower_) / threadnum;
             std::vector<std::thread> insertion_threads(threadnum);
-            for (size_t i = 0; i < threadnum-1; i++) {
+            for (size_t i = 0; i < threadnum-1; ++i) {
                 insertion_threads[i] = std::thread(
                     insert_into_table, std::ref(new_map),
                     ti, i*buckets_per_thread, (i+1)*buckets_per_thread);
@@ -1466,7 +1459,7 @@ private:
             insertion_threads[threadnum-1] = std::thread(
                 insert_into_table, std::ref(new_map), ti,
                 (threadnum-1)*buckets_per_thread, hashsize(ti->hashpower_));
-            for (size_t i = 0; i < threadnum; i++) {
+            for (size_t i = 0; i < threadnum; ++i) {
                 insertion_threads[i].join();
             }
             // Sets this table_info to new_map's. It then sets new_map's
@@ -1485,7 +1478,7 @@ private:
         // Rather than deleting ti now, we store it in old_table_infos. The
         // hazard pointer manager will delete it if no other threads are using
         // the pointer.
-        old_table_infos.push_back(ti);
+        old_table_infos.push_back(std::move(std::unique_ptr<TableInfo>(ti)));
         unlock_all(ti);
         unset_hazard_pointer();
         global_hazard_pointers.delete_unused(old_table_infos);
@@ -1904,7 +1897,8 @@ public:
 
 // Initializing the static members
 template <class Key, class T, class Hash, class Pred>
-__thread void** cuckoohash_map<Key, T, Hash, Pred>::hazard_pointer = nullptr;
+__thread typename cuckoohash_map<Key, T, Hash, Pred>::TableInfo**
+cuckoohash_map<Key, T, Hash, Pred>::hazard_pointer = nullptr;
 
 template <class Key, class T, class Hash, class Pred>
 __thread int cuckoohash_map<Key, T, Hash, Pred>::counterid = -1;
@@ -1919,7 +1913,7 @@ cuckoohash_map<Key, T, Hash, Pred>::eqfn;
 
 template <class Key, class T, class Hash, class Pred>
 typename std::allocator<typename cuckoohash_map<Key, T, Hash, Pred>::Bucket>
-cuckoohash_map<Key, T, Hash, Pred>::bucket_allocator;
+cuckoohash_map<Key, T, Hash, Pred>::TableInfo::bucket_allocator;
 
 
 template <class Key, class T, class Hash, class Pred>
