@@ -24,9 +24,10 @@
 #include "cuckoohash_util.h"
 
 /*! cuckoohash_map is the hash table class. */
-template <class Key, class T, class Hash = std::hash<Key>, class Pred = std::equal_to<Key> >
+template <class Key, class T, class Hash = std::hash<Key>,
+          class Pred = std::equal_to<Key> >
 class cuckoohash_map {
-
+private:
     // Structs and functions used internally
     class spinlock {
         std::atomic_flag lock_;
