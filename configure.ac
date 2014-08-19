@@ -19,9 +19,7 @@ dnl Profiling
 dnl AX_CHECK_COMPILE_FLAG([-pg], [CPPFLAGS="$CPPFLAGS -pg"])
 
 dnl Optimized
-AX_CHECK_COMPILE_FLAG([-O4], [CPPFLAGS="$CPPFLAGS -O4"],
-                      [AX_CHECK_COMPILE_FLAG([-O3], [CPPFLAGS="$CPPFLAGS -O3"])]
-                      )
+AX_CHECK_COMPILE_FLAG([-O3], [CPPFLAGS="$CPPFLAGS -O3"])
 AX_CHECK_COMPILE_FLAG([-DNDEBUG], [CPPFLAGS="$CPPFLAGS -DNDEBUG"])
 
 # Determine flags specific to C++
