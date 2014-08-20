@@ -1885,13 +1885,10 @@ public:
     /*! snapshot_table allocates a vector and, using a const_iterator stores all
      * the elements currently in the table. */
     std::vector<value_type> snapshot_table() {
-        const_iterator it = cbegin();
-        size_t table_size = size();
-        std::vector<value_type> items(table_size);
-        size_t ind = 0;
-        while (!it.is_end()) {
-            items[ind++] = *it;
-            it++;
+        std::vector<value_type> items;
+        items.reserve(size());
+        for (auto it = cbegin(); !it.is_end(); ++it) {
+            items.push_back(*it);
         }
         return items;
     }
