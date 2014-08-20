@@ -239,7 +239,8 @@ private:
             HPUniqueLock ul(lock_);
             old_pointers.remove_if(
                 [this](const std::unique_ptr<TableInfo>& ptr) {
-                    return std::find(hp_.begin(), hp_.end(), ptr.get()) != hp_.end();
+                    return std::find(hp_.begin(), hp_.end(), ptr.get()) ==
+                        hp_.end();
                 });
         }
     };
