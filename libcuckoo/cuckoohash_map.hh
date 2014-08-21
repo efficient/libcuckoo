@@ -712,7 +712,7 @@ private:
                 unlock_two(ti, i1, i2);
                 continue;
             }
-            return {ti, i1, i2};
+            return std::make_tuple(ti, i1, i2);
         }
     }
 
