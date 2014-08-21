@@ -1,6 +1,6 @@
-/* Tests all operations and iterators concurrently. It doesn't check
- * any operation for correctness, only making sure that everything
- * completes without crashing. */
+// Tests all operations and iterators concurrently. It doesn't check any
+// operation for correctness, only making sure that everything completes without
+// crashing.
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -135,11 +135,14 @@ void update_thread(AllEnvironment<KType> *env, size_t seed) {
         case 1:
             // update_fn
             env->table.update_fn(k, updatefn);
-            env->table2.update_fn(k, [](const ValType2& v) -> ValType2 { return v+10; });
+            env->table2.update_fn(
+                k, [](const ValType2& v) -> ValType2 { return v+10; });
             break;
         case 2:
             env->table.upsert(k, updatefn, val_dist(gen));
-            env->table2.upsert(k, [](const ValType2& v) -> ValType2 { return v-50; }, val_dist2(gen));
+            env->table2.upsert(
+                k, [](const ValType2& v) -> ValType2 { return v-50; },
+                val_dist2(gen));
         }
     }
 }
@@ -268,28 +271,34 @@ void StressTest(AllEnvironment<KType> *env) {
 int main(int argc, char** argv) {
     const char* args[] = {"--power", "--thread-num", "--time", "--seed"};
     size_t* arg_vars[] = {&power, &thread_num, &test_len, &seed};
-    const char* arg_help[] = {"The number of keys to size the table with, expressed as a power of 2",
-                              "The number of threads to spawn for each type of operation",
-                              "The number of seconds to run the test for",
-                              "The seed for the random number generator"};
-    const char* flags[] = {"--disable-inserts", "--disable-deletes", "--disable-updates",
-                           "--disable-finds", "--disable-resizes", "--disable-iterators",
-                           "--disable-statistics", "--disable-clears", "--use-strings"};
+    const char* arg_help[] = {
+        "The number of keys to size the table with, expressed as a power of 2",
+        "The number of threads to spawn for each type of operation",
+        "The number of seconds to run the test for",
+        "The seed for the random number generator"
+    };
+    const char* flags[] = {
+        "--disable-inserts", "--disable-deletes", "--disable-updates",
+        "--disable-finds", "--disable-resizes", "--disable-iterators",
+        "--disable-statistics", "--disable-clears", "--use-strings"
+    };
     bool* flag_vars[] = {&disable_inserts, &disable_deletes, &disable_updates,
                          &disable_finds, &disable_resizes, &disable_iterators,
                          &disable_statistics, &disable_clears, &use_strings};
-    const char* flag_help[] = {"If set, no inserts will be run",
-                               "If set, no deletes will be run",
-                               "If set, no updates will be run",
-                               "If set, no finds will be run",
-                               "If set, no resize operations will be run",
-                               "If set, no iterator operations will be run",
-                               "If set, no statistics functions will be run",
-                               "If set, no clears will be run",
-                               "If set, the key type of the map will be std::string"};
+    const char* flag_help[] = {
+        "If set, no inserts will be run",
+        "If set, no deletes will be run",
+        "If set, no updates will be run",
+        "If set, no finds will be run",
+        "If set, no resize operations will be run",
+        "If set, no iterator operations will be run",
+        "If set, no statistics functions will be run",
+        "If set, no clears will be run",
+        "If set, the key type of the map will be std::string"
+    };
     parse_flags(argc, argv, "Runs a stress test on inserts, deletes, and finds",
-                args, arg_vars, arg_help, sizeof(args)/sizeof(const char*), flags,
-                flag_vars, flag_help, sizeof(flags)/sizeof(const char*));
+                args, arg_vars, arg_help, sizeof(args)/sizeof(const char*),
+                flags, flag_vars, flag_help, sizeof(flags)/sizeof(const char*));
     numkeys = 1U << power;
 
     if (use_strings) {

@@ -24,9 +24,12 @@ class InsertFindEnvironment {
 public:
     InsertFindEnvironment() : smalltable(numkeys), bigtable(2*numkeys) {
         // Sets up the random number generator
-        uint64_t seed = std::chrono::system_clock::now().time_since_epoch().count();
+        uint64_t seed =
+            std::chrono::system_clock::now().time_since_epoch().count();
         std::cout << "seed = " << seed << std::endl;
-        std::uniform_int_distribution<ValType> v_dist(std::numeric_limits<ValType>::min(), std::numeric_limits<ValType>::max());
+        std::uniform_int_distribution<ValType> v_dist(
+            std::numeric_limits<ValType>::min(),
+            std::numeric_limits<ValType>::max());
         std::mt19937_64 gen(seed);
 
         // Inserting elements into the table
@@ -37,7 +40,9 @@ public:
             EXPECT_TRUE(bigtable.insert(keys[i], vals[i]));
         }
         // Fills up nonkeys with keys that aren't in the table
-        std::uniform_int_distribution<KeyType> k_dist(std::numeric_limits<KeyType>::min(), std::numeric_limits<KeyType>::max());
+        std::uniform_int_distribution<KeyType> k_dist(
+            std::numeric_limits<KeyType>::min(),
+            std::numeric_limits<KeyType>::max());
         for (size_t i = 0; i < numkeys; i++) {
             KeyType k;
             do {
@@ -62,12 +67,9 @@ void FindKeysInTables() {
     ASSERT_EQ(env->smalltable.size(), numkeys);
     ASSERT_EQ(env->bigtable.size(), numkeys);
 
-    ValType retval;
     for (size_t i = 0; i < numkeys; i++) {
-        EXPECT_TRUE(env->smalltable.find(env->keys[i], retval));
-        EXPECT_EQ(retval, env->vals[i]);
-        EXPECT_TRUE(env->bigtable.find(env->keys[i], retval));
-        EXPECT_EQ(retval, env->vals[i]);
+        EXPECT_EQ(env->smalltable.find(env->keys[i]), env->vals[i]);
+        EXPECT_EQ(env->bigtable.find(env->keys[i]), env->vals[i]);
     }
 }
 

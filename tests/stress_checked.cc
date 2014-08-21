@@ -1,6 +1,6 @@
-/* Tests concurrent inserts, deletes, updates, and finds. The test
- * makes sure that multiple operations are not run on the same key, so
- * that the accuracy of the operations can be verified. */
+// Tests concurrent inserts, deletes, updates, and finds. The test makes sure
+// that multiple operations are not run on the same key, so that the accuracy of
+// the operations can be verified.
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -67,10 +67,12 @@ template <class KType>
 class AllEnvironment {
 public:
     AllEnvironment()
-        : table(numkeys), table2(numkeys), keys(numkeys), vals(numkeys), 
+        : table(numkeys), table2(numkeys), keys(numkeys), vals(numkeys),
           vals2(numkeys), in_table(new bool[numkeys]), in_use(numkeys),
-          val_dist(std::numeric_limits<ValType>::min(), std::numeric_limits<ValType>::max()),
-          val_dist2(std::numeric_limits<ValType2>::min(), std::numeric_limits<ValType2>::max()),
+          val_dist(std::numeric_limits<ValType>::min(),
+                   std::numeric_limits<ValType>::max()),
+          val_dist2(std::numeric_limits<ValType2>::min(),
+                    std::numeric_limits<ValType2>::max()),
           ind_dist(0, numkeys-1), finished(false) {
         // Sets up the random number generator
         if (seed == 0) {
@@ -124,12 +126,8 @@ void insert_thread(AllEnvironment<KType> *env) {
             EXPECT_NE(res, env->in_table[ind]);
             EXPECT_NE(res2, env->in_table[ind]);
             if (res) {
-                ValType find_v = 0;
-                ValType2 find_v2 = 0;
-                EXPECT_TRUE(env->table.find(k, find_v));
-                EXPECT_EQ(v, find_v);
-                EXPECT_TRUE(env->table2.find(k, find_v2));
-                EXPECT_EQ(v2, find_v2);
+                EXPECT_EQ(v, env->table.find(k));
+                EXPECT_EQ(v2, env->table2.find(k));
                 env->vals[ind] = v;
                 env->vals2[ind] = v2;
                 env->in_table[ind] = true;
@@ -226,12 +224,8 @@ void update_thread(AllEnvironment<KType> *env) {
                 throw std::logic_error("Impossible");
             }
             if (res) {
-                ValType find_v = 0;
-                ValType2 find_v2 = 0;
-                EXPECT_TRUE(env->table.find(k, find_v));
-                EXPECT_EQ(v, find_v);
-                EXPECT_TRUE(env->table2.find(k, find_v2));
-                EXPECT_EQ(v2, find_v2);
+                EXPECT_EQ(v, env->table.find(k));
+                EXPECT_EQ(v2, env->table2.find(k));
                 env->vals[ind] = v;
                 env->vals2[ind] = v2;
                 num_updates.fetch_add(2, std::memory_order_relaxed);
@@ -250,15 +244,17 @@ void find_thread(AllEnvironment<KType> *env) {
         size_t ind = env->ind_dist(gen);
         if (!env->in_use[ind].test_and_set()) {
             KType k = env->keys[ind];
-            ValType v = 0;
-            ValType2 v2 = 0;
-            bool res = env->table.find(k, v);
-            bool res2 = env->table2.find(k, v2);
-            EXPECT_EQ(env->in_table[ind], res);
-            EXPECT_EQ(env->in_table[ind], res2);
-            if (res) {
-                EXPECT_EQ(v, env->vals[ind]);
-                EXPECT_EQ(v2, env->vals2[ind]);
+            try {
+                EXPECT_EQ(env->vals[ind], env->table.find(k));
+                EXPECT_TRUE(env->in_table[ind]);
+            } catch (const std::out_of_range&) {
+                EXPECT_FALSE(env->in_table[ind]);
+            }
+            try {
+                EXPECT_EQ(env->vals2[ind], env->table2.find(k));
+                EXPECT_TRUE(env->in_table[ind]);
+            } catch (const std::out_of_range&) {
+                EXPECT_FALSE(env->in_table[ind]);
             }
             num_finds.fetch_add(2, std::memory_order_relaxed);
             env->in_use[ind].clear();
@@ -308,20 +304,30 @@ void StressTest(AllEnvironment<KType> *env) {
 int main(int argc, char** argv) {
     const char* args[] = {"--power", "--thread-num", "--time", "--seed"};
     size_t* arg_vars[] = {&power, &thread_num, &test_len, &seed};
-    const char* arg_help[] = {"The number of keys to size the table with, expressed as a power of 2",
-                              "The number of threads to spawn for each type of operation",
-                              "The number of seconds to run the test for",
-                              "The seed for the random number generator"};
-    const char* flags[] = {"--disable-inserts", "--disable-deletes", "--disable-updates", "--disable-finds", "--use-strings"};
-    bool* flag_vars[] = {&disable_inserts, &disable_deletes, &disable_updates, &disable_finds, &use_strings};
-    const char* flag_help[] = {"If set, no inserts will be run",
-                               "If set, no deletes will be run",
-                               "If set, no updates will be run",
-                               "If set, no finds will be run",
-                               "If set, the key type of the map will be std::string"};
+    const char* arg_help[] = {
+        "The number of keys to size the table with, expressed as a power of 2",
+        "The number of threads to spawn for each type of operation",
+        "The number of seconds to run the test for",
+        "The seed for the random number generator"
+    };
+    const char* flags[] = {
+        "--disable-inserts", "--disable-deletes", "--disable-updates",
+        "--disable-finds", "--use-strings"
+    };
+    bool* flag_vars[] = {
+        &disable_inserts, &disable_deletes, &disable_updates,
+        &disable_finds, &use_strings
+    };
+    const char* flag_help[] = {
+        "If set, no inserts will be run",
+        "If set, no deletes will be run",
+        "If set, no updates will be run",
+        "If set, no finds will be run",
+        "If set, the key type of the map will be std::string"
+    };
     parse_flags(argc, argv, "Runs a stress test on inserts, deletes, and finds",
-                args, arg_vars, arg_help, sizeof(args)/sizeof(const char*), flags,
-                flag_vars, flag_help, sizeof(flags)/sizeof(const char*));
+                args, arg_vars, arg_help, sizeof(args)/sizeof(const char*),
+                flags, flag_vars, flag_help, sizeof(flags)/sizeof(const char*));
     numkeys = 1U << power;
 
     if (use_strings) {

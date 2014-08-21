@@ -57,9 +57,11 @@ void EmptyTableBeginEndIterator() {
 }
 
 bool check_table_snapshot() {
-    std::vector<Table::value_type> snapshot_items = iter_env->table.snapshot_table();
+    std::vector<Table::value_type> snapshot_items =
+        iter_env->table.snapshot_table();
     for (size_t i = 0; i < snapshot_items.size(); i++) {
-        if (std::find(iter_env->items, iter_env->items_end, snapshot_items[i]) == iter_env->items_end) {
+        if (std::find(iter_env->items, iter_env->items_end, snapshot_items[i])
+            == iter_env->items_end) {
             return false;
         }
     }
@@ -102,10 +104,11 @@ void FilledTableIncrementItems() {
         iter_env->items[i].second++;
     }
     // Also tests casting from a const iterator to a mutable one
-    for (Table::iterator t_mut = static_cast<Table::iterator>(iter_env->table.cbegin());
+    for (auto t_mut = static_cast<Table::iterator>(iter_env->table.cbegin());
            !t_mut.is_end(); ++t_mut) {
         t_mut.set_value(t_mut->second+1);
-        EXPECT_NE(std::find(iter_env->items, iter_env->items_end, *t_mut), iter_env->items_end);
+        EXPECT_NE(std::find(iter_env->items, iter_env->items_end, *t_mut),
+                  iter_env->items_end);
     }
 }
 
