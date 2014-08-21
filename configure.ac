@@ -29,7 +29,6 @@ AX_CHECK_COMPILE_FLAG([-stdlib=libc++], [CXXFLAGS="$CXXFLAGS -stdlib=libc++"])
 # Enable all warnings across compilers and make them errors
 AX_CHECK_COMPILE_FLAG([-Wall], [CXXFLAGS="$CXXFLAGS -Wall"])
 AX_CHECK_COMPILE_FLAG([-Wextra], [CXXFLAGS="$CXXFLAGS -Wextra"])
-AX_CHECK_COMPILE_FLAG([-Werror], [CXXFLAGS="$CXXFLAGS -Werror"])
 # Disable some warnings we don't need
 AX_CHECK_COMPILE_FLAG([-Wno-sign-conversion],
         [CXXFLAGS="$CXXFLAGS -Wno-sign-conversion"])
