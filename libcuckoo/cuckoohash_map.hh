@@ -323,7 +323,7 @@ public:
 
     //! The destructor explicitly deletes the current table info.
     ~cuckoohash_map() {
-        TableInfo *ti = table_info.load();
+        TableInfo* ti = table_info.load();
         if (ti != nullptr) {
             delete ti;
         }
@@ -333,7 +333,7 @@ public:
     //!  destructors.
     void clear() {
         check_hazard_pointer();
-        TableInfo *ti = snapshot_and_lock_all();
+        TableInfo* ti = snapshot_and_lock_all();
         auto hpu = HazardPointerUnsetter();
         assert(ti == table_info.load());
         cuckoo_clear(ti);
@@ -345,7 +345,7 @@ public:
     //! so the result may not necessarily be exact.
     size_t size() {
         check_hazard_pointer();
-        const TableInfo *ti = snapshot_table_nolock();
+        const TableInfo* ti = snapshot_table_nolock();
         auto hpu = HazardPointerUnsetter();
         const size_t s = cuckoo_size(ti);
         return s;
@@ -369,7 +369,7 @@ public:
     //! bucket_count returns the number of buckets in the table.
     size_t bucket_count() {
         check_hazard_pointer();
-        TableInfo *ti = snapshot_table_nolock();
+        TableInfo* ti = snapshot_table_nolock();
         auto hpu = HazardPointerUnsetter();
         size_t buckets = hashsize(ti->hashpower_);
         return buckets;
@@ -379,7 +379,7 @@ public:
     //! total number of available slots in the table.
     double load_factor() {
         check_hazard_pointer();
-        const TableInfo *ti = snapshot_table_nolock();
+        const TableInfo* ti = snapshot_table_nolock();
         auto hpu = HazardPointerUnsetter();
         return cuckoo_loadfactor(ti);
     }
@@ -389,7 +389,7 @@ public:
     bool find(const key_type& key, mapped_type& val) {
         check_hazard_pointer();
         size_t hv = hashed_key(key);
-        TableInfo *ti;
+        TableInfo* ti;
         size_t i1, i2;
         snapshot_and_lock_two(hv, ti, i1, i2);
         auto hpu = HazardPointerUnsetter();
@@ -421,7 +421,7 @@ public:
         check_hazard_pointer();
         check_counterid();
         size_t hv = hashed_key(key);
-        TableInfo *ti;
+        TableInfo* ti;
         size_t i1, i2;
         snapshot_and_lock_two(hv, ti, i1, i2);
         return cuckoo_insert_loop(key, val, hv, ti, i1, i2);
@@ -433,7 +433,7 @@ public:
         check_hazard_pointer();
         check_counterid();
         size_t hv = hashed_key(key);
-        TableInfo *ti;
+        TableInfo* ti;
         size_t i1, i2;
         snapshot_and_lock_two(hv, ti, i1, i2);
         auto hpu = HazardPointerUnsetter();
@@ -448,7 +448,7 @@ public:
     bool update(const key_type& key, const mapped_type& val) {
         check_hazard_pointer();
         size_t hv = hashed_key(key);
-        TableInfo *ti;
+        TableInfo* ti;
         size_t i1, i2;
         snapshot_and_lock_two(hv, ti, i1, i2);
         auto hpu = HazardPointerUnsetter();
@@ -465,7 +465,7 @@ public:
     bool update_fn(const key_type& key, const updater& fn) {
         check_hazard_pointer();
         size_t hv = hashed_key(key);
-        TableInfo *ti;
+        TableInfo* ti;
         size_t i1, i2;
         snapshot_and_lock_two(hv, ti, i1, i2);
         auto hpu = HazardPointerUnsetter();
@@ -483,7 +483,7 @@ public:
         check_hazard_pointer();
         check_counterid();
         size_t hv = hashed_key(key);
-        TableInfo *ti;
+        TableInfo* ti;
         size_t i1, i2;
 
         bool res;
@@ -565,19 +565,19 @@ private:
     static key_equal eqfn;
 
     // lock locks the given bucket index.
-    static inline void lock(TableInfo *ti, const size_t i) {
+    static inline void lock(TableInfo* ti, const size_t i) {
         ti->locks_[lock_ind(i)].lock();
     }
 
     // unlock unlocks the given bucket index.
-    static inline void unlock(TableInfo *ti, const size_t i) {
+    static inline void unlock(TableInfo* ti, const size_t i) {
         ti->locks_[lock_ind(i)].unlock();
     }
 
     // lock_two locks the two bucket indexes, always locking the earlier index
     // first to avoid deadlock. If the two indexes are the same, it just locks
     // one.
-    static void lock_two(TableInfo *ti, size_t i1, size_t i2) {
+    static void lock_two(TableInfo* ti, size_t i1, size_t i2) {
         i1 = lock_ind(i1);
         i2 = lock_ind(i2);
         if (i1 < i2) {
@@ -593,7 +593,7 @@ private:
 
     // unlock_two unlocks both of the given bucket indexes, or only one if they
     // are equal. Order doesn't matter here.
-    static void unlock_two(TableInfo *ti, size_t i1, size_t i2) {
+    static void unlock_two(TableInfo* ti, size_t i1, size_t i2) {
         i1 = lock_ind(i1);
         i2 = lock_ind(i2);
         ti->locks_[i1].unlock();
@@ -603,8 +603,8 @@ private:
     }
 
     // lock_three locks the three bucket indexes in numerical order.
-    static void lock_three(TableInfo *ti, size_t i1,
-                                  size_t i2, size_t i3) {
+    static void lock_three(TableInfo* ti, size_t i1,
+                           size_t i2, size_t i3) {
         i1 = lock_ind(i1);
         i2 = lock_ind(i2);
         i3 = lock_ind(i3);
@@ -649,8 +649,8 @@ private:
     }
 
     // unlock_three unlocks the three given buckets
-    static void unlock_three(TableInfo *ti, size_t i1,
-                                    size_t i2, size_t i3) {
+    static void unlock_three(TableInfo* ti, size_t i1,
+                             size_t i2, size_t i3) {
         i1 = lock_ind(i1);
         i2 = lock_ind(i2);
         i3 = lock_ind(i3);
@@ -675,7 +675,7 @@ private:
     // be looking at the most recent table_info in that case.
     TableInfo* snapshot_table_nolock() {
         while (true) {
-            TableInfo *ti = table_info.load();
+            TableInfo* ti = table_info.load();
             *hazard_pointer = ti;
             // If the table info has changed in the time we set the hazard
             // pointer, ti could have been deleted, so try again.
@@ -715,9 +715,9 @@ private:
 
     // snapshot_and_lock_all is similar to snapshot_and_lock_two, except that it
     // takes all the locks in the table.
-    TableInfo *snapshot_and_lock_all() {
+    TableInfo* snapshot_and_lock_all() {
         while (true) {
-            TableInfo *ti = table_info.load();
+            TableInfo* ti = table_info.load();
             *hazard_pointer = ti;
             // If the table info has changed, ti could have been deleted, so try
             // again
@@ -737,7 +737,7 @@ private:
     }
 
     // unlock_all releases all the locks
-    inline void unlock_all(TableInfo *ti) {
+    inline void unlock_all(TableInfo* ti) {
         for (size_t i = 0; i < kNumLocks; ++i) {
             ti->locks_[i].unlock();
         }
@@ -767,7 +767,7 @@ private:
 
     // index_hash returns the first possible bucket that the given hashed key
     // could be.
-    static inline size_t index_hash(const TableInfo *ti, const size_t hv) {
+    static inline size_t index_hash(const TableInfo* ti, const size_t hv) {
         return hv & hashmask(ti->hashpower_);
     }
 
@@ -777,7 +777,7 @@ private:
     // second possible bucket, so alt_index(ti, hv, alt_index(ti, hv,
     // index_hash(ti, hv))) == index_hash(ti, hv).
     static inline size_t alt_index(
-        const TableInfo *ti, const size_t hv, const size_t index) {
+        const TableInfo* ti, const size_t hv, const size_t index) {
         // ensure tag is nonzero for the multiply
         const size_t tag = (hv >> ti->hashpower_) + 1;
         // 0x5bd1e995 is the hash constant from MurmurHash2
@@ -859,7 +859,7 @@ private:
     // starts with the i1 and i2 buckets, and, until it finds a bucket with an
     // empty slot, adds each slot of the bucket in the b_slot. If the queue runs
     // out of space, it fails.
-    static b_slot slot_search(TableInfo *ti, const size_t i1, const size_t i2) {
+    static b_slot slot_search(TableInfo* ti, const size_t i1, const size_t i2) {
         b_queue q;
         // The initial pathcode informs cuckoopath_search which bucket the path
         // starts on
@@ -914,7 +914,7 @@ private:
     // the buckets it searches, the data can change between this function and
     // cuckoopath_move. Thus cuckoopath_move checks that the data matches the
     // cuckoo path before changing it.
-    static int cuckoopath_search(TableInfo *ti, CuckooRecord* cuckoo_path,
+    static int cuckoopath_search(TableInfo* ti, CuckooRecord* cuckoo_path,
                                  const size_t i1, const size_t i2) {
         b_slot x = slot_search(ti, i1, i2);
         if (x.depth == -1) {
@@ -930,7 +930,7 @@ private:
         // starts on. Since data could have been modified between slot_search
         // and the computation of the cuckoo path, this could be an invalid
         // cuckoo_path.
-        CuckooRecord *curr = cuckoo_path;
+        CuckooRecord* curr = cuckoo_path;
         if (x.pathcode == 0) {
             curr->bucket = i1;
             lock(ti, curr->bucket);
@@ -954,7 +954,7 @@ private:
             unlock(ti, curr->bucket);
         }
         for (int i = 1; i <= x.depth; ++i) {
-            CuckooRecord *prev = curr++;
+            CuckooRecord* prev = curr++;
             const size_t prevhv = hashed_key(prev->key);
             assert(prev->bucket == index_hash(ti, prevhv) ||
                    prev->bucket == alt_index(ti, prevhv, index_hash(ti,
@@ -983,7 +983,7 @@ private:
     // remains locked. If the function is unsuccessful, then both insert-locked
     // buckets will be unlocked.
     static bool cuckoopath_move(
-        TableInfo *ti, CuckooRecord* cuckoo_path, size_t depth,
+        TableInfo* ti, CuckooRecord* cuckoo_path, size_t depth,
         const size_t i1, const size_t i2) {
         if (depth == 0) {
             // There is a chance that depth == 0, when try_add_to_bucket sees i1
@@ -1004,8 +1004,8 @@ private:
         }
 
         while (depth > 0) {
-            CuckooRecord *from = cuckoo_path + depth - 1;
-            CuckooRecord *to   = cuckoo_path + depth;
+            CuckooRecord* from = cuckoo_path + depth - 1;
+            CuckooRecord* to   = cuckoo_path + depth;
             size_t fb = from->bucket;
             size_t fs = from->slot;
             size_t tb = to->bucket;
@@ -1067,7 +1067,7 @@ private:
     // certain concurrency issues, the details of which are explained in the
     // function. If run_cuckoo returns ok (success), then the slot it freed up
     // is still locked. Otherwise it is unlocked.
-    cuckoo_status run_cuckoo(TableInfo *ti, const size_t i1, const size_t i2,
+    cuckoo_status run_cuckoo(TableInfo* ti, const size_t i1, const size_t i2,
                              size_t &insert_bucket, size_t &insert_slot) {
 
         CuckooRecord cuckoo_path[MAX_BFS_DEPTH+1];
@@ -1126,7 +1126,7 @@ private:
 
     // try_read_from-bucket will search the bucket for the given key and store
     // the associated value if it finds it.
-    static bool try_read_from_bucket(const TableInfo *ti,
+    static bool try_read_from_bucket(const TableInfo* ti,
                                      const partial_t partial,
                                      const key_type &key, mapped_type &val,
                                      const size_t i) {
@@ -1146,7 +1146,7 @@ private:
     }
 
     // add_to_bucket will insert the given key-value pair into the slot.
-    static void add_to_bucket(TableInfo *ti, const partial_t partial,
+    static void add_to_bucket(TableInfo* ti, const partial_t partial,
                               const key_type &key, const mapped_type &val,
                               const size_t i, const size_t j) {
         assert(!ti->buckets_[i].occupied(j));
@@ -1162,7 +1162,7 @@ private:
     // search the entire bucket and return false if it finds the key already in
     // the table (duplicate key error) and true otherwise.
     static bool try_find_insert_bucket(
-        TableInfo *ti, const partial_t partial,
+        TableInfo* ti, const partial_t partial,
         const key_type &key, const size_t i, int& j) {
         j = -1;
         bool found_empty = false;
@@ -1186,7 +1186,7 @@ private:
 
     // try_del_from_bucket will search the bucket for the given key, and set the
     // slot of the key to empty if it finds it.
-    static bool try_del_from_bucket(TableInfo *ti, const partial_t partial,
+    static bool try_del_from_bucket(TableInfo* ti, const partial_t partial,
                                     const key_type &key, const size_t i) {
         for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
             if (!ti->buckets_[i].occupied(j)) {
@@ -1207,7 +1207,7 @@ private:
 
     // try_update_bucket will search the bucket for the given key and change its
     // associated value if it finds it.
-    static bool try_update_bucket(TableInfo *ti, const partial_t partial,
+    static bool try_update_bucket(TableInfo* ti, const partial_t partial,
                                   const key_type &key, const mapped_type &value,
                                   const size_t i) {
         for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
@@ -1227,7 +1227,7 @@ private:
 
     // try_update_bucket_fn will search the bucket for the given key and change
     // its associated value with the given function if it finds it.
-    static bool try_update_bucket_fn(TableInfo *ti, const partial_t partial,
+    static bool try_update_bucket_fn(TableInfo* ti, const partial_t partial,
                                      const key_type &key, const updater& fn,
                                      const size_t i) {
         for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
@@ -1249,7 +1249,7 @@ private:
     // value in the val if it finds the key. It expects the locks to be taken
     // and released outside the function.
     static cuckoo_status cuckoo_find(const key_type& key, mapped_type& val,
-                                     const size_t hv, const TableInfo *ti,
+                                     const size_t hv, const TableInfo* ti,
                                      const size_t i1, const size_t i2) {
         const partial_t partial = partial_key(hv);
         if (try_read_from_bucket(ti, partial, key, val, i1)) {
@@ -1269,7 +1269,7 @@ private:
     // hashing presents multiple concurrency issues, which are explained in the
     // function.
     cuckoo_status cuckoo_insert(const key_type &key, const mapped_type &val,
-                                const size_t hv, TableInfo *ti,
+                                const size_t hv, TableInfo* ti,
                                 const size_t i1, const size_t i2) {
         mapped_type oldval;
         int res1, res2;
@@ -1331,7 +1331,7 @@ private:
     // directly after snapshot_and_lock_two, and by the end of the function, the
     // hazard pointer will have been unset.
     bool cuckoo_insert_loop(const key_type& key, const mapped_type& val,
-                            size_t hv, TableInfo *ti, size_t i1, size_t i2) {
+                            size_t hv, TableInfo* ti, size_t i1, size_t i2) {
         cuckoo_status st = cuckoo_insert(key, val, hv, ti, i1, i2);
         while (st != ok) {
             // If the insert failed with failure_key_duplicated, it returns here
@@ -1358,7 +1358,7 @@ private:
     // that key to empty if it finds it. It expects the locks to be taken and
     // released outside the function.
     cuckoo_status cuckoo_delete(const key_type &key, const size_t hv,
-                                TableInfo *ti, const size_t i1,
+                                TableInfo* ti, const size_t i1,
                                 const size_t i2) {
         const partial_t partial = partial_key(hv);
         if (try_del_from_bucket(ti, partial, key, i1)) {
@@ -1374,7 +1374,7 @@ private:
     // if it finds it. It expects the locks to be taken and released outside the
     // function.
     cuckoo_status cuckoo_update(const key_type &key, const mapped_type &val,
-                                const size_t hv, TableInfo *ti,
+                                const size_t hv, TableInfo* ti,
                                 const size_t i1, const size_t i2) {
         const partial_t partial = partial_key(hv);
         if (try_update_bucket(ti, partial, key, val, i1)) {
@@ -1391,7 +1391,7 @@ private:
     // function to the value. It expects the locks to be taken and released
     // outside the function.
     cuckoo_status cuckoo_update_fn(const key_type &key, const updater& fn,
-                                     const size_t hv, TableInfo *ti,
+                                     const size_t hv, TableInfo* ti,
                                      const size_t i1, const size_t i2) {
         const partial_t partial = partial_key(hv);
         if (try_update_bucket_fn(ti, partial, key, fn, i1)) {
@@ -1414,7 +1414,7 @@ private:
     // cuckoo_clear empties the table, calling the destructors of all the
     // elements it removes from the table. It assumes the locks are taken as
     // necessary.
-    cuckoo_status cuckoo_clear(TableInfo *ti) {
+    cuckoo_status cuckoo_clear(TableInfo* ti) {
         const size_t num_buckets = ti->buckets_.size();
         ti->buckets_.clear();
         ti->buckets_.resize(num_buckets);
@@ -1426,7 +1426,7 @@ private:
     }
 
     // cuckoo_size returns the number of elements in the given table.
-    size_t cuckoo_size(const TableInfo *ti) {
+    size_t cuckoo_size(const TableInfo* ti) {
         size_t inserts = 0;
         size_t deletes = 0;
         for (size_t i = 0; i < ti->num_inserts.size(); ++i) {
@@ -1437,7 +1437,7 @@ private:
     }
 
     // cuckoo_loadfactor returns the load factor of the given table.
-    double cuckoo_loadfactor(const TableInfo *ti) {
+    double cuckoo_loadfactor(const TableInfo* ti) {
         return static_cast<double>(cuckoo_size(ti)) / SLOT_PER_BUCKET /
             hashsize(ti->hashpower_);
     }
@@ -1445,7 +1445,7 @@ private:
     // insert_into_table is a helper function used by cuckoo_expand_simple to
     // fill up the new table.
     static void insert_into_table(
-        cuckoohash_map<Key, T, Hash>& new_map, const TableInfo *old_ti,
+        cuckoohash_map<Key, T, Hash>& new_map, const TableInfo* old_ti,
         size_t i, size_t end) {
         for (;i < end; ++i) {
             for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
@@ -1463,7 +1463,7 @@ private:
     // the table during expansion. If some other thread is holding the expansion
     // thread at the time, then it will return failure_under_expansion.
     cuckoo_status cuckoo_expand_simple(size_t n) {
-        TableInfo *ti = snapshot_and_lock_all();
+        TableInfo* ti = snapshot_and_lock_all();
         assert(ti == table_info.load());
         if (n <= ti->hashpower_) {
             // Most likely another expansion ran before this one could grab the
@@ -1514,8 +1514,8 @@ private:
     // Iterator definitions
     friend class const_iterator;
     friend class iterator;
-public:
 
+public:
     //! A const_iterator is an iterator through the table that is thread safe.
     //! For the duration of its existence, it takes all the locks on the table
     //! it is given, thereby ensuring that no other threads can modify the table
@@ -1538,7 +1538,7 @@ public:
         // table, based on the boolean argument. We keep this constructor
         // private (but expose it to the cuckoohash_map class), since we don't
         // want users calling it.
-        const_iterator(cuckoohash_map<Key, T, Hash, Pred> *hm, bool is_end) {
+        const_iterator(cuckoohash_map<Key, T, Hash, Pred>* hm, bool is_end) {
             cuckoohash_map<Key, T, Hash, Pred>::check_hazard_pointer();
             hm_ = hm;
             ti_ = hm_->snapshot_and_lock_all();
@@ -1562,7 +1562,6 @@ public:
         friend class cuckoohash_map<Key, T, Hash, Pred>;
 
     public:
-
         //! This is an rvalue-reference constructor that takes the lock from \p
         //! it and copies its state. To create an iterator from scratch, call
         //! the \ref cbegin or \ref cend methods of cuckoohash_map.
@@ -1647,7 +1646,7 @@ public:
                 throw end_dereference;
             }
             assert(ti_->buckets_[index_].occupied(slot_));
-            ref_pair *data_ptr =
+            ref_pair* data_ptr =
                 static_cast<ref_pair*>(static_cast<void*>(&data));
             new (data_ptr) ref_pair(ti_->buckets_[index_].key(slot_),
                                     ti_->buckets_[index_].val(slot_));
@@ -1704,10 +1703,10 @@ public:
 
     protected:
         // A pointer to the associated hashmap
-        cuckoohash_map<Key, T, Hash, Pred> *hm_;
+        cuckoohash_map<Key, T, Hash, Pred>* hm_;
 
         // The hashmap's table info
-        typename cuckoohash_map<Key, T, Hash, Pred>::TableInfo *ti_;
+        typename cuckoohash_map<Key, T, Hash, Pred>::TableInfo* ti_;
 
         // Indicates whether the iterator has the table lock
         bool has_table_lock;
@@ -1841,13 +1840,12 @@ public:
     class iterator : public const_iterator {
         // This constructor does the same thing as the private const_iterator
         // one.
-        iterator(cuckoohash_map<Key, T, Hash, Pred> *hm, bool is_end)
+        iterator(cuckoohash_map<Key, T, Hash, Pred>* hm, bool is_end)
             : const_iterator(hm, is_end) {}
 
         friend class cuckoohash_map<Key, T, Hash, Pred>;
 
     public:
-
         //! This constructor is identical to the rvalue-reference constructor of
         //!  const_iterator.
         iterator(iterator&& it)
