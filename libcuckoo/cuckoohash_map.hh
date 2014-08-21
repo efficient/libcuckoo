@@ -98,14 +98,43 @@ private:
         failure_under_expansion = 7,
     } cuckoo_status;
 
+    typedef char partial_t;
+    // Two partial key containers. One for when we're actually using partial
+    // keys and another that mocks partial keys for when the type is simple. The
+    // bucket will derive the correct class depending on whether the type is
+    // simple or not.
+    class RealPartialContainer {
+        std::array<partial_t, SLOT_PER_BUCKET> partials_;
+    public:
+        const partial_t& partial(int ind) const {
+            return partials_[ind];
+        }
+        partial_t& partial(int ind) {
+            return partials_[ind];
+        }
+    };
+
+    class FakePartialContainer {
+    public:
+        // These methods should never be called, so we raise an exception if
+        // they are.
+        const partial_t& partial(int) const {
+            throw std::logic_error(
+                "FakePartialContainer::partial should never be called");
+        }
+        partial_t& partial(int) {
+            throw std::logic_error(
+                "FakePartialContainer::partial should never be called");
+        }
+    };
+
     /* The Bucket type holds SLOT_PER_BUCKET keys and values, and a occupied
      * bitset, which indicates whether the slot at the given bit index is in the
      * table or not. It uses aligned_storage arrays to store the keys and values
      * to allow constructing and destroying key-value pairs in place. */
-    typedef char partial_t;
-    class Bucket {
+    class Bucket : public std::conditional<is_simple, FakePartialContainer,
+                                           RealPartialContainer>::type {
     private:
-        std::array<partial_t, SLOT_PER_BUCKET> partials_;
         std::array<typename std::aligned_storage<
                        sizeof(key_type), alignof(key_type)>::type,
                    SLOT_PER_BUCKET> keys_;
@@ -117,14 +146,6 @@ private:
     public:
         bool occupied(int ind) const {
             return occupied_.test(ind);
-        }
-
-        const partial_t& partial(int ind) const {
-            return partials_[ind];
-        }
-
-        partial_t& partial(int ind) {
-            return partials_[ind];
         }
 
         const key_type& key(int ind) const {
@@ -1303,7 +1324,6 @@ private:
             unlock_two(ti, i1, i2);
             return ok;
         }
-
         assert(st == failure);
         LIBCUCKOO_DBG("hash table is full (hashpower = %zu, hash_items = %zu,"
                       "load factor = %.2f), need to increase hashpower\n",
