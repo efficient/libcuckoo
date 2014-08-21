@@ -49,7 +49,8 @@ private:
 
     // true if the key is small and simple, which means using partial keys would
     // probably slow us down
-    static const bool is_simple = std::is_pod<key_type>::value && sizeof(key_type) <= 8;
+    static const bool is_simple =
+        std::is_pod<key_type>::value && sizeof(key_type) <= 8;
 
     // number of locks in the locks_ array
     static const size_t kNumLocks = 1 << 13;
@@ -357,12 +358,11 @@ public:
 
     /*! load_factor returns the ratio of the number of items in the table to the
      * total number of available slots in the table. */
-    float load_factor() {
+    double load_factor() {
         check_hazard_pointer();
         const TableInfo *ti = snapshot_table_nolock();
         auto hpu = HazardPointerUnsetter();
-        const float lf = cuckoo_loadfactor(ti);
-        return lf;
+        return cuckoo_loadfactor(ti);
     }
 
     /*! find searches through the table for \p key, and stores the associated
@@ -481,9 +481,10 @@ public:
             // We run an insert, since the update failed
             res = cuckoo_insert_loop(key, val, hv, ti, i1, i2);
 
-            // The only valid reason for res being false is if insert encountered a
-            // duplicate key after releasing the locks and performing cuckoo
-            // hashing. In this case, we retry the entire upsert operation.
+            // The only valid reason for res being false is if insert
+            // encountered a duplicate key after releasing the locks and
+            // performing cuckoo hashing. In this case, we retry the entire
+            // upsert operation.
         } while (!res);
         return true;
     }
@@ -558,7 +559,7 @@ private:
     /* lock_two locks the two bucket indexes, always locking the earlier index
      * first to avoid deadlock. If the two indexes are the same, it just locks
      * one. */
-    static inline void lock_two(TableInfo *ti, size_t i1, size_t i2) {
+    static void lock_two(TableInfo *ti, size_t i1, size_t i2) {
         i1 = lock_ind(i1);
         i2 = lock_ind(i2);
         if (i1 < i2) {
@@ -574,7 +575,7 @@ private:
 
     /* unlock_two unlocks both of the given bucket indexes, or only one if they
      * are equal. Order doesn't matter here. */
-    static inline void unlock_two(TableInfo *ti, size_t i1, size_t i2) {
+    static void unlock_two(TableInfo *ti, size_t i1, size_t i2) {
         i1 = lock_ind(i1);
         i2 = lock_ind(i2);
         ti->locks_[i1].unlock();
@@ -584,7 +585,7 @@ private:
     }
 
     /* lock_three locks the three bucket indexes in numerical order. */
-    static inline void lock_three(TableInfo *ti, size_t i1,
+    static void lock_three(TableInfo *ti, size_t i1,
                                   size_t i2, size_t i3) {
         i1 = lock_ind(i1);
         i2 = lock_ind(i2);
@@ -630,7 +631,7 @@ private:
     }
 
     /* unlock_three unlocks the three given buckets */
-    static inline void unlock_three(TableInfo *ti, size_t i1,
+    static void unlock_three(TableInfo *ti, size_t i1,
                                     size_t i2, size_t i3) {
         i1 = lock_ind(i1);
         i2 = lock_ind(i2);
@@ -757,9 +758,8 @@ private:
      * this function will return the first possible bucket if index is the
      * second possible bucket, so alt_index(ti, hv, alt_index(ti, hv,
      * index_hash(ti, hv))) == index_hash(ti, hv). */
-    static inline size_t alt_index(const TableInfo *ti,
-                                   const size_t hv,
-                                   const size_t index) {
+    static inline size_t alt_index(
+        const TableInfo *ti, const size_t hv, const size_t index) {
         // ensure tag is nonzero for the multiply
         const size_t tag = (hv >> ti->hashpower_) + 1;
         // 0x5bd1e995 is the hash constant from MurmurHash2
@@ -771,11 +771,15 @@ private:
      * the key type is POD and small, we don't use partial keys, so we just
      * return 0. */
     template <class Bogus = void*>
-    static inline typename std::enable_if<sizeof(Bogus) && !is_simple, partial_t>::type partial_key(const size_t hv) {
+    static inline
+    typename std::enable_if<sizeof(Bogus) && !is_simple, partial_t>::type
+        partial_key(const size_t hv) {
         return (partial_t)(hv >> ((sizeof(size_t)-sizeof(partial_t)) * 8));
     }
     template <class Bogus = void*>
-    static inline typename std::enable_if<sizeof(Bogus) && is_simple, partial_t>::type partial_key(const size_t&) {
+    static inline
+    typename std::enable_if<sizeof(Bogus) && is_simple, partial_t>::type
+        partial_key(const size_t&) {
         return 0;
     }
 
@@ -846,7 +850,8 @@ private:
         while (q.not_full()) {
             b_slot x = q.dequeue();
             // Picks a random slot to start from
-            for (size_t slot = 0; slot < SLOT_PER_BUCKET && q.not_full(); ++slot) {
+            for (size_t slot = 0; slot < SLOT_PER_BUCKET && q.not_full();
+                 ++slot) {
                 lock(ti, x.bucket);
                 if (!ti->buckets_[x.bucket].occupied(slot)) {
                     // We can terminate the search here
@@ -934,7 +939,8 @@ private:
             CuckooRecord *prev = curr++;
             const size_t prevhv = hashed_key(prev->key);
             assert(prev->bucket == index_hash(ti, prevhv) ||
-                   prev->bucket == alt_index(ti, prevhv, index_hash(ti, prevhv)));
+                   prev->bucket == alt_index(ti, prevhv, index_hash(ti,
+                                                                    prevhv)));
             // We get the bucket that this slot is on by computing the alternate
             // index of the previous bucket
             curr->bucket = alt_index(ti, prevhv, prev->bucket);
@@ -958,8 +964,9 @@ private:
      * the last bucket it looks at (which is either i1 or i2 in run_cuckoo)
      * remains locked. If the function is unsuccessful, then both insert-locked
      * buckets will be unlocked. */
-    static bool cuckoopath_move(TableInfo *ti, CuckooRecord* cuckoo_path,
-                                size_t depth, const size_t i1, const size_t i2) {
+    static bool cuckoopath_move(
+        TableInfo *ti, CuckooRecord* cuckoo_path, size_t depth,
+        const size_t i1, const size_t i2) {
         if (depth == 0) {
             /* There is a chance that depth == 0, when try_add_to_bucket sees i1
              * and i2 as full and cuckoopath_search finds one empty. In this
@@ -1018,13 +1025,15 @@ private:
             if (!is_simple) {
                 ti->buckets_[tb].partial(ts) = ti->buckets_[fb].partial(fs);
             }
-            ti->buckets_[tb].setKV(ts, ti->buckets_[fb].key(fs), ti->buckets_[fb].val(fs));
+            ti->buckets_[tb].setKV(ts, ti->buckets_[fb].key(fs),
+                                   ti->buckets_[fb].val(fs));
             ti->buckets_[fb].eraseKV(fs);
             if (depth == 1) {
                 // Don't unlock fb or ob, since they are needed in
                 // cuckoo_insert. Only unlock tb if it doesn't unlock the same
                 // bucket as fb or ob.
-                if (lock_ind(tb) != lock_ind(fb) && lock_ind(tb) != lock_ind(ob)) {
+                if (lock_ind(tb) != lock_ind(fb) &&
+                    lock_ind(tb) != lock_ind(ob)) {
                     unlock(ti, tb);
                 }
             } else {
@@ -1101,7 +1110,8 @@ private:
 
     /* try_read_from-bucket will search the bucket for the given key and store
      * the associated value if it finds it. */
-    static bool try_read_from_bucket(const TableInfo *ti, const partial_t partial,
+    static bool try_read_from_bucket(const TableInfo *ti,
+                                     const partial_t partial,
                                      const key_type &key, mapped_type &val,
                                      const size_t i) {
         for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
@@ -1120,9 +1130,9 @@ private:
     }
 
     /* add_to_bucket will insert the given key-value pair into the slot. */
-    static inline void add_to_bucket(TableInfo *ti, const partial_t partial,
-                                     const key_type &key, const mapped_type &val,
-                                     const size_t i, const size_t j) {
+    static void add_to_bucket(TableInfo *ti, const partial_t partial,
+                              const key_type &key, const mapped_type &val,
+                              const size_t i, const size_t j) {
         assert(!ti->buckets_[i].occupied(j));
         if (!is_simple) {
             ti->buckets_[i].partial(j) = partial;
@@ -1171,7 +1181,8 @@ private:
             }
             if (eqfn(ti->buckets_[i].key(j), key)) {
                 ti->buckets_[i].eraseKV(j);
-                ti->num_deletes[counterid].num.fetch_add(1, std::memory_order_relaxed);
+                ti->num_deletes[counterid].num.fetch_add(
+                    1, std::memory_order_relaxed);
                 return true;
             }
         }
@@ -1279,7 +1290,8 @@ private:
             assert(!ti->locks_[lock_ind(i1)].try_lock());
             assert(!ti->locks_[lock_ind(i2)].try_lock());
             assert(!ti->buckets_[insert_bucket].occupied(insert_slot));
-            assert(insert_bucket == index_hash(ti, hv) || insert_bucket == alt_index(ti, hv, index_hash(ti, hv)));
+            assert(insert_bucket == index_hash(ti, hv) ||
+                   insert_bucket == alt_index(ti, hv, index_hash(ti, hv)));
             /* Since we unlocked the buckets during run_cuckoo, another insert
              * could have inserted the same key into either i1 or i2, so we
              * check for that before doing the insert. */
@@ -1293,7 +1305,8 @@ private:
         }
 
         assert(st == failure);
-        LIBCUCKOO_DBG("hash table is full (hashpower = %zu, hash_items = %zu, load factor = %.2f), need to increase hashpower\n",
+        LIBCUCKOO_DBG("hash table is full (hashpower = %zu, hash_items = %zu,"
+                      "load factor = %.2f), need to increase hashpower\n",
                       ti->hashpower_, cuckoo_size(ti), cuckoo_loadfactor(ti));
         return failure_table_full;
     }
@@ -1315,7 +1328,8 @@ private:
             // failure_table_full, we have to expand the table before trying
             // again.
             if (st == failure_table_full) {
-                if (cuckoo_expand_simple(ti->hashpower_+1) == failure_under_expansion) {
+                if (cuckoo_expand_simple(ti->hashpower_+1) ==
+                    failure_under_expansion) {
                     LIBCUCKOO_DBG("expansion is on-going\n");
                 }
             }
@@ -1408,17 +1422,21 @@ private:
     }
 
     /* cuckoo_loadfactor returns the load factor of the given table. */
-    float cuckoo_loadfactor(const TableInfo *ti) {
-        return 1.0 * cuckoo_size(ti) / SLOT_PER_BUCKET / hashsize(ti->hashpower_);
+    double cuckoo_loadfactor(const TableInfo *ti) {
+        return static_cast<double>(cuckoo_size(ti)) / SLOT_PER_BUCKET /
+            hashsize(ti->hashpower_);
     }
 
     /* insert_into_table is a helper function used by cuckoo_expand_simple to
      * fill up the new table. */
-    static void insert_into_table(cuckoohash_map<Key, T, Hash>& new_map, const TableInfo *old_ti, size_t i, size_t end) {
+    static void insert_into_table(
+        cuckoohash_map<Key, T, Hash>& new_map, const TableInfo *old_ti,
+        size_t i, size_t end) {
         for (;i < end; ++i) {
             for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
                 if (old_ti->buckets_[i].occupied(j)) {
-                    new_map.insert(old_ti->buckets_[i].key(j), old_ti->buckets_[i].val(j));
+                    new_map.insert(old_ti->buckets_[i].key(j),
+                                   old_ti->buckets_[i].val(j));
                 }
             }
         }
@@ -1444,7 +1462,8 @@ private:
             // elements from the old buckets
             cuckoohash_map<Key, T, Hash> new_map(hashsize(n) * SLOT_PER_BUCKET);
             const size_t threadnum = kNumCores;
-            const size_t buckets_per_thread = hashsize(ti->hashpower_) / threadnum;
+            const size_t buckets_per_thread =
+                hashsize(ti->hashpower_) / threadnum;
             std::vector<std::thread> insertion_threads(threadnum);
             for (size_t i = 0; i < threadnum-1; ++i) {
                 insertion_threads[i] = std::thread(
@@ -1588,7 +1607,8 @@ public:
         // Since we can't initialize a ref_pair before knowing what it points
         // to, we use std::aligned_storage to reserve unititialized space for
         // the object, which we then construct with placement new.
-        typename std::aligned_storage<sizeof(ref_pair), std::alignment_of<ref_pair>::value>::type data;
+        typename std::aligned_storage<sizeof(ref_pair),
+                                      alignof(ref_pair)>::type data;
 
     public:
         /*! The dereference operator returns a value_type copied from the
@@ -1596,10 +1616,11 @@ public:
         value_type operator*() {
             check_lock();
             if (is_end()) {
-                throw std::out_of_range(end_dereference);
+                throw end_dereference;
             }
             assert(ti_->buckets_[index_].occupied(slot_));
-            return {ti_->buckets_[index_].key(slot_), ti_->buckets_[index_].val(slot_)};
+            return {ti_->buckets_[index_].key(slot_),
+                    ti_->buckets_[index_].val(slot_)};
         }
 
         /*! The arrow dereference operator returns a pointer to an internal
@@ -1608,10 +1629,11 @@ public:
         ref_pair* operator->() {
             check_lock();
             if (is_end()) {
-                throw std::out_of_range(end_dereference);
+                throw end_dereference;
             }
             assert(ti_->buckets_[index_].occupied(slot_));
-            ref_pair *data_ptr = static_cast<ref_pair*>(static_cast<void*>(&data));
+            ref_pair *data_ptr =
+                static_cast<ref_pair*>(static_cast<void*>(&data));
             new (data_ptr) ref_pair(ti_->buckets_[index_].key(slot_),
                                     ti_->buckets_[index_].val(slot_));
             return data_ptr;
@@ -1624,7 +1646,7 @@ public:
         const_iterator* operator++() {
             check_lock();
             if (is_end()) {
-                throw std::out_of_range(end_increment);
+                throw end_increment;
             }
             forward_filled_slot(index_, slot_);
             return this;
@@ -1635,7 +1657,7 @@ public:
         const_iterator* operator++(int) {
             check_lock();
             if (is_end()) {
-                throw std::out_of_range(end_increment);
+                throw end_increment;
             }
             forward_filled_slot(index_, slot_);
             return this;
@@ -1648,7 +1670,7 @@ public:
         const_iterator* operator--() {
             check_lock();
             if (is_begin()) {
-                throw std::out_of_range(begin_decrement);
+                throw begin_decrement;
             }
             backward_filled_slot(index_, slot_);
             return this;
@@ -1659,7 +1681,7 @@ public:
         const_iterator* operator--(int) {
             check_lock();
             if (is_begin()) {
-                throw std::out_of_range(begin_decrement);
+                throw begin_decrement;
             }
             backward_filled_slot(index_, slot_);
             return this;
@@ -1786,17 +1808,15 @@ public:
          * lock. */
         void check_lock() {
             if (!has_table_lock) {
-                throw std::runtime_error("Iterator does not have a lock on the table");
+                throw std::runtime_error(
+                    "Iterator does not have a lock on the table");
             }
         }
 
         // Other error messages
-        static constexpr char end_dereference[] =
-            "Cannot dereference: iterator points past the end of the table";
-        static constexpr char end_increment[] =
-            "Cannot increment: iterator points past the end of the table";
-        static constexpr char begin_decrement[] =
-            "Cannot decrement: iterator points to the beginning of the table";
+        static const std::out_of_range end_dereference;
+        static const std::out_of_range end_increment;
+        static const std::out_of_range begin_decrement;
     };
 
 
@@ -1841,7 +1861,7 @@ public:
         void set_value(const mapped_type val) {
             this->check_lock();
             if (this->is_end()) {
-                throw std::out_of_range(this->end_dereference);
+                throw this->end_dereference;
             }
             assert(this->ti_->buckets_[this->index_].occupied(this->slot_));
             this->ti_->buckets_[this->index_].val(this->slot_) = val;
@@ -1885,36 +1905,42 @@ public:
 
 // Initializing the static members
 template <class Key, class T, class Hash, class Pred>
-__thread typename cuckoohash_map<Key, T, Hash, Pred>::TableInfo**
-cuckoohash_map<Key, T, Hash, Pred>::hazard_pointer = nullptr;
+    __thread typename cuckoohash_map<Key, T, Hash, Pred>::TableInfo**
+    cuckoohash_map<Key, T, Hash, Pred>::hazard_pointer = nullptr;
 
 template <class Key, class T, class Hash, class Pred>
-__thread int cuckoohash_map<Key, T, Hash, Pred>::counterid = -1;
+    __thread int cuckoohash_map<Key, T, Hash, Pred>::counterid = -1;
 
 template <class Key, class T, class Hash, class Pred>
-typename cuckoohash_map<Key, T, Hash, Pred>::hasher
-cuckoohash_map<Key, T, Hash, Pred>::hashfn;
+    typename cuckoohash_map<Key, T, Hash, Pred>::hasher
+    cuckoohash_map<Key, T, Hash, Pred>::hashfn;
 
 template <class Key, class T, class Hash, class Pred>
-typename cuckoohash_map<Key, T, Hash, Pred>::key_equal
-cuckoohash_map<Key, T, Hash, Pred>::eqfn;
+    typename cuckoohash_map<Key, T, Hash, Pred>::key_equal
+    cuckoohash_map<Key, T, Hash, Pred>::eqfn;
 
 template <class Key, class T, class Hash, class Pred>
-typename cuckoohash_map<Key, T, Hash, Pred>::GlobalHazardPointerList
-cuckoohash_map<Key, T, Hash, Pred>::global_hazard_pointers;
+    typename cuckoohash_map<Key, T, Hash, Pred>::GlobalHazardPointerList
+    cuckoohash_map<Key, T, Hash, Pred>::global_hazard_pointers;
 
 template <class Key, class T, class Hash, class Pred>
-const size_t cuckoohash_map<Key, T, Hash, Pred>::kNumCores =
+    const size_t cuckoohash_map<Key, T, Hash, Pred>::kNumCores =
     std::thread::hardware_concurrency() == 0 ?
     sysconf(_SC_NPROCESSORS_ONLN) : std::thread::hardware_concurrency();
 
 template <class Key, class T, class Hash, class Pred>
-constexpr char cuckoohash_map<Key, T, Hash, Pred>::const_iterator::end_dereference[62];
+    const std::out_of_range
+    cuckoohash_map<Key, T, Hash, Pred>::const_iterator::end_dereference(
+        "Cannot dereference: iterator points past the end of the table");
 
 template <class Key, class T, class Hash, class Pred>
-constexpr char cuckoohash_map<Key, T, Hash, Pred>::const_iterator::end_increment[60];
+    const std::out_of_range
+    cuckoohash_map<Key, T, Hash, Pred>::const_iterator::end_increment(
+        "Cannot increment: iterator points past the end of the table");
 
 template <class Key, class T, class Hash, class Pred>
-constexpr char cuckoohash_map<Key, T, Hash, Pred>::const_iterator::begin_decrement[64];
+    const std::out_of_range
+    cuckoohash_map<Key, T, Hash, Pred>::const_iterator::begin_decrement(
+        "Cannot decrement: iterator points to the beginning of the table");
 
 #endif
