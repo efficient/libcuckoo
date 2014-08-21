@@ -17,6 +17,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <thread>
+#include <tuple>
 #include <type_traits>
 #include <unistd.h>
 #include <utility>
@@ -334,10 +335,10 @@ public:
     void clear() {
         check_hazard_pointer();
         TableInfo* ti = snapshot_and_lock_all();
-        auto hpu = HazardPointerUnsetter();
         assert(ti == table_info.load());
+        AllUnlocker au(ti);
+        HazardPointerUnsetter hpu;
         cuckoo_clear(ti);
-        unlock_all(ti);
     }
 
     //! size returns the number of items currently in the hash table. Since it
@@ -346,7 +347,7 @@ public:
     size_t size() {
         check_hazard_pointer();
         const TableInfo* ti = snapshot_table_nolock();
-        auto hpu = HazardPointerUnsetter();
+        HazardPointerUnsetter hpu;
         const size_t s = cuckoo_size(ti);
         return s;
     }
@@ -361,7 +362,7 @@ public:
     size_t hashpower() {
         check_hazard_pointer();
         TableInfo* ti = snapshot_table_nolock();
-        auto hpu = HazardPointerUnsetter();
+        HazardPointerUnsetter hpu;
         const size_t hashpower = ti->hashpower_;
         return hashpower;
     }
@@ -370,7 +371,7 @@ public:
     size_t bucket_count() {
         check_hazard_pointer();
         TableInfo* ti = snapshot_table_nolock();
-        auto hpu = HazardPointerUnsetter();
+        HazardPointerUnsetter hpu;
         size_t buckets = hashsize(ti->hashpower_);
         return buckets;
     }
@@ -380,7 +381,7 @@ public:
     double load_factor() {
         check_hazard_pointer();
         const TableInfo* ti = snapshot_table_nolock();
-        auto hpu = HazardPointerUnsetter();
+        HazardPointerUnsetter hpu;
         return cuckoo_loadfactor(ti);
     }
 
@@ -391,8 +392,8 @@ public:
         size_t hv = hashed_key(key);
         TableInfo* ti;
         size_t i1, i2;
-        snapshot_and_lock_two(hv, ti, i1, i2);
-        auto hpu = HazardPointerUnsetter();
+        std::tie(ti, i1, i2) = snapshot_and_lock_two(hv);
+        HazardPointerUnsetter hpu;
 
         const cuckoo_status st = cuckoo_find(key, val, hv, ti, i1, i2);
         unlock_two(ti, i1, i2);
@@ -423,7 +424,8 @@ public:
         size_t hv = hashed_key(key);
         TableInfo* ti;
         size_t i1, i2;
-        snapshot_and_lock_two(hv, ti, i1, i2);
+        std::tie(ti, i1, i2) = snapshot_and_lock_two(hv);
+        HazardPointerUnsetter hpu;
         return cuckoo_insert_loop(key, val, hv, ti, i1, i2);
     }
 
@@ -435,8 +437,8 @@ public:
         size_t hv = hashed_key(key);
         TableInfo* ti;
         size_t i1, i2;
-        snapshot_and_lock_two(hv, ti, i1, i2);
-        auto hpu = HazardPointerUnsetter();
+        std::tie(ti, i1, i2) = snapshot_and_lock_two(hv);
+        HazardPointerUnsetter hpu;
 
         const cuckoo_status st = cuckoo_delete(key, hv, ti, i1, i2);
         unlock_two(ti, i1, i2);
@@ -450,8 +452,8 @@ public:
         size_t hv = hashed_key(key);
         TableInfo* ti;
         size_t i1, i2;
-        snapshot_and_lock_two(hv, ti, i1, i2);
-        auto hpu = HazardPointerUnsetter();
+        std::tie(ti, i1, i2) = snapshot_and_lock_two(hv);
+        HazardPointerUnsetter hpu;
 
         const cuckoo_status st = cuckoo_update(key, val, hv, ti, i1, i2);
         unlock_two(ti, i1, i2);
@@ -467,8 +469,8 @@ public:
         size_t hv = hashed_key(key);
         TableInfo* ti;
         size_t i1, i2;
-        snapshot_and_lock_two(hv, ti, i1, i2);
-        auto hpu = HazardPointerUnsetter();
+        std::tie(ti, i1, i2) = snapshot_and_lock_two(hv);
+        HazardPointerUnsetter hpu;
 
         const cuckoo_status st = cuckoo_update_fn(key, fn, hv, ti, i1, i2);
         unlock_two(ti, i1, i2);
@@ -488,9 +490,8 @@ public:
 
         bool res;
         do {
-            snapshot_and_lock_two(hv, ti, i1, i2);
-            auto hpu = HazardPointerUnsetter();
-
+            std::tie(ti, i1, i2) = snapshot_and_lock_two(hv);
+            HazardPointerUnsetter hpu;
             const cuckoo_status st = cuckoo_update_fn(key, fn, hv, ti, i1, i2);
             if (st == ok) {
                 unlock_two(ti, i1, i2);
@@ -518,7 +519,7 @@ public:
     bool rehash(size_t n) {
         check_hazard_pointer();
         TableInfo* ti = snapshot_table_nolock();
-        auto hpu = HazardPointerUnsetter();
+        HazardPointerUnsetter hpu;
         if (n <= ti->hashpower_) {
             return false;
         }
@@ -535,7 +536,7 @@ public:
     bool reserve(size_t n) {
         check_hazard_pointer();
         TableInfo* ti = snapshot_table_nolock();
-        auto hpu = HazardPointerUnsetter();
+        HazardPointerUnsetter hpu;
         if (n <= hashsize(ti->hashpower_) * SLOT_PER_BUCKET) {
             return false;
         }
@@ -687,12 +688,14 @@ private:
     }
 
     // snapshot_and_lock_two loads the table_info pointer and locks the buckets
-    // associated with the given hash value. It stores the table_info and the
-    // two locked buckets in reference variables. Since the positions of the
-    // bucket locks depends on the number of buckets in the table, the
-    // table_info pointer needs to be grabbed first.
-    void snapshot_and_lock_two(const size_t hv, TableInfo*& ti,
-                               size_t& i1, size_t& i2) {
+    // associated with the given hash value. It returns the table_info and the
+    // two locked buckets as a tuple. Since the positions of the bucket locks
+    // depends on the number of buckets in the table, the table_info pointer
+    // needs to be grabbed first.
+    std::tuple<TableInfo*, size_t, size_t>
+    snapshot_and_lock_two(const size_t hv) {
+        TableInfo* ti;
+        size_t i1, i2;
         while (true) {
             ti = table_info.load();
             *hazard_pointer = ti;
@@ -709,9 +712,24 @@ private:
                 unlock_two(ti, i1, i2);
                 continue;
             }
-            return;
+            return {ti, i1, i2};
         }
     }
+
+    // AllUnlocker is an object which releases all the locks on the given table
+    // info when it's destructor is called.
+    class AllUnlocker {
+        TableInfo* ti_;
+    public:
+        AllUnlocker(TableInfo* ti): ti_(ti) {}
+        ~AllUnlocker() {
+            if (ti_ != nullptr) {
+                for (size_t i = 0; i < kNumLocks; ++i) {
+                    ti_->locks_[i].unlock();
+                }
+            }
+        }
+    };
 
     // snapshot_and_lock_all is similar to snapshot_and_lock_two, except that it
     // takes all the locks in the table.
@@ -729,17 +747,10 @@ private:
             }
             // If the table info has changed, unlock the locks and try again.
             if (ti != table_info.load()) {
-                unlock_all(ti);
+                AllUnlocker au(ti);
                 continue;
             }
             return ti;
-        }
-    }
-
-    // unlock_all releases all the locks
-    inline void unlock_all(TableInfo* ti) {
-        for (size_t i = 0; i < kNumLocks; ++i) {
-            ti->locks_[i].unlock();
         }
     }
 
@@ -1348,7 +1359,7 @@ private:
                     LIBCUCKOO_DBG("expansion is on-going\n");
                 }
             }
-            snapshot_and_lock_two(hv, ti, i1, i2);
+            std::tie(ti, i1, i2) = snapshot_and_lock_two(hv);
             st = cuckoo_insert(key, val, hv, ti, i1, i2);
         }
         return true;
@@ -1465,48 +1476,41 @@ private:
     cuckoo_status cuckoo_expand_simple(size_t n) {
         TableInfo* ti = snapshot_and_lock_all();
         assert(ti == table_info.load());
+        AllUnlocker au(ti);
+        HazardPointerUnsetter hpu;
         if (n <= ti->hashpower_) {
             // Most likely another expansion ran before this one could grab the
             // locks
-            unlock_all(ti);
             return failure_under_expansion;
         }
 
-        try {
-            // Creates a new hash table with hashpower n and adds all the
-            // elements from the old buckets
-            cuckoohash_map<Key, T, Hash> new_map(hashsize(n) * SLOT_PER_BUCKET);
-            const size_t threadnum = kNumCores;
-            const size_t buckets_per_thread =
-                hashsize(ti->hashpower_) / threadnum;
-            std::vector<std::thread> insertion_threads(threadnum);
-            for (size_t i = 0; i < threadnum-1; ++i) {
-                insertion_threads[i] = std::thread(
-                    insert_into_table, std::ref(new_map),
-                    ti, i*buckets_per_thread, (i+1)*buckets_per_thread);
-            }
-            insertion_threads[threadnum-1] = std::thread(
-                insert_into_table, std::ref(new_map), ti,
-                (threadnum-1)*buckets_per_thread, hashsize(ti->hashpower_));
-            for (size_t i = 0; i < threadnum; ++i) {
-                insertion_threads[i].join();
-            }
-            // Sets this table_info to new_map's. It then sets new_map's
-            // table_info to nullptr, so that it doesn't get deleted when
-            // new_map goes out of scope
-            table_info.store(new_map.table_info.load());
-            new_map.table_info.store(nullptr);
-        } catch (const std::bad_alloc&) {
-            // Unlocks resources and rethrows the exception
-            unlock_all(ti);
-            throw;
+        // Creates a new hash table with hashpower n and adds all the
+        // elements from the old buckets
+        cuckoohash_map<Key, T, Hash> new_map(hashsize(n) * SLOT_PER_BUCKET);
+        const size_t threadnum = kNumCores;
+        const size_t buckets_per_thread =
+            hashsize(ti->hashpower_) / threadnum;
+        std::vector<std::thread> insertion_threads(threadnum);
+        for (size_t i = 0; i < threadnum-1; ++i) {
+            insertion_threads[i] = std::thread(
+                insert_into_table, std::ref(new_map),
+                ti, i*buckets_per_thread, (i+1)*buckets_per_thread);
         }
+        insertion_threads[threadnum-1] = std::thread(
+            insert_into_table, std::ref(new_map), ti,
+            (threadnum-1)*buckets_per_thread, hashsize(ti->hashpower_));
+        for (size_t i = 0; i < threadnum; ++i) {
+            insertion_threads[i].join();
+        }
+        // Sets this table_info to new_map's. It then sets new_map's
+        // table_info to nullptr, so that it doesn't get deleted when
+        // new_map goes out of scope
+        table_info.store(new_map.table_info.load());
+        new_map.table_info.store(nullptr);
 
-        // Rather than deleting ti now, we store it in old_table_infos. The
-        // hazard pointer manager will delete it if no other threads are using
-        // the pointer.
+        // Rather than deleting ti now, we store it in old_table_infos. We then
+        // run a delete_unused routine to delete all the old table pointers.
         old_table_infos.push_back(std::move(std::unique_ptr<TableInfo>(ti)));
-        unlock_all(ti);
         global_hazard_pointers.delete_unused(old_table_infos);
         return ok;
     }
@@ -1589,9 +1593,8 @@ public:
         //! iterator.
         void release() {
             if (has_table_lock) {
-                hm_->unlock_all(ti_);
-                auto hpu =
-                    cuckoohash_map<Key, T, Hash, Pred>::HazardPointerUnsetter();
+                AllUnlocker au(ti_);
+                cuckoohash_map<Key, T, Hash, Pred>::HazardPointerUnsetter hpu;
                 has_table_lock = false;
             }
         }
