@@ -10,12 +10,13 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <memory>
 #include <mutex>
 #include <random>
-#include <stdint.h>
+#include <stdexcept>
 #include <thread>
 #include <unistd.h>
 #include <utility>
@@ -220,6 +221,8 @@ void update_thread(AllEnvironment<KType> *env) {
                 EXPECT_TRUE(res);
                 EXPECT_TRUE(res2);
                 env->in_table[ind] = true;
+            default:
+                throw std::logic_error("Impossible");
             }
             if (res) {
                 ValType find_v = 0;
