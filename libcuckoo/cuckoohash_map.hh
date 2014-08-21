@@ -260,11 +260,16 @@ private:
         }
     }
 
-    /* Once a function is finished with a version of the table, it calls
-     * unset_hazard_pointer so that the pointer can be freed if it needs to. */
-    static inline void unset_hazard_pointer() {
-        *hazard_pointer = nullptr;
-    }
+    /* Once a function is finished with a version of the table, it will want to
+     * unset the hazard pointer it set so that it can be freed if it needs to.
+     * This is an object which, upon destruction, will unset the hazard
+     * pointer. */
+    class HazardPointerUnsetter {
+    public:
+        ~HazardPointerUnsetter() {
+            *hazard_pointer = nullptr;
+        }
+    };
 
     /* counterid stores the per-thread counter index of each thread. */
     static __thread int counterid;
@@ -309,10 +314,10 @@ public:
     void clear() {
         check_hazard_pointer();
         TableInfo *ti = snapshot_and_lock_all();
+        auto hpu = HazardPointerUnsetter();
         assert(ti == table_info.load());
         cuckoo_clear(ti);
         unlock_all(ti);
-        unset_hazard_pointer();
     }
 
     /*! size returns the number of items currently in the hash table. Since it
@@ -321,8 +326,8 @@ public:
     size_t size() {
         check_hazard_pointer();
         const TableInfo *ti = snapshot_table_nolock();
+        auto hpu = HazardPointerUnsetter();
         const size_t s = cuckoo_size(ti);
-        unset_hazard_pointer();
         return s;
     }
 
@@ -336,8 +341,8 @@ public:
     size_t hashpower() {
         check_hazard_pointer();
         TableInfo* ti = snapshot_table_nolock();
+        auto hpu = HazardPointerUnsetter();
         const size_t hashpower = ti->hashpower_;
-        unset_hazard_pointer();
         return hashpower;
     }
 
@@ -345,8 +350,8 @@ public:
     size_t bucket_count() {
         check_hazard_pointer();
         TableInfo *ti = snapshot_table_nolock();
+        auto hpu = HazardPointerUnsetter();
         size_t buckets = hashsize(ti->hashpower_);
-        unset_hazard_pointer();
         return buckets;
     }
 
@@ -355,8 +360,8 @@ public:
     float load_factor() {
         check_hazard_pointer();
         const TableInfo *ti = snapshot_table_nolock();
+        auto hpu = HazardPointerUnsetter();
         const float lf = cuckoo_loadfactor(ti);
-        unset_hazard_pointer();
         return lf;
     }
 
@@ -368,11 +373,10 @@ public:
         TableInfo *ti;
         size_t i1, i2;
         snapshot_and_lock_two(hv, ti, i1, i2);
+        auto hpu = HazardPointerUnsetter();
 
         const cuckoo_status st = cuckoo_find(key, val, hv, ti, i1, i2);
         unlock_two(ti, i1, i2);
-        unset_hazard_pointer();
-
         return (st == ok);
     }
 
@@ -382,7 +386,6 @@ public:
     mapped_type find(const key_type& key) {
         mapped_type val;
         bool done = find(key, val);
-
         if (done) {
             return val;
         } else {
@@ -414,11 +417,10 @@ public:
         TableInfo *ti;
         size_t i1, i2;
         snapshot_and_lock_two(hv, ti, i1, i2);
+        auto hpu = HazardPointerUnsetter();
 
         const cuckoo_status st = cuckoo_delete(key, hv, ti, i1, i2);
         unlock_two(ti, i1, i2);
-        unset_hazard_pointer();
-
         return (st == ok);
     }
 
@@ -430,11 +432,10 @@ public:
         TableInfo *ti;
         size_t i1, i2;
         snapshot_and_lock_two(hv, ti, i1, i2);
+        auto hpu = HazardPointerUnsetter();
 
         const cuckoo_status st = cuckoo_update(key, val, hv, ti, i1, i2);
         unlock_two(ti, i1, i2);
-        unset_hazard_pointer();
-
         return (st == ok);
     }
 
@@ -448,11 +449,10 @@ public:
         TableInfo *ti;
         size_t i1, i2;
         snapshot_and_lock_two(hv, ti, i1, i2);
+        auto hpu = HazardPointerUnsetter();
 
         const cuckoo_status st = cuckoo_update_fn(key, fn, hv, ti, i1, i2);
         unlock_two(ti, i1, i2);
-        unset_hazard_pointer();
-
         return (st == ok);
     }
 
@@ -469,21 +469,21 @@ public:
 
         bool res;
         do {
-        snapshot_and_lock_two(hv, ti, i1, i2);
+            snapshot_and_lock_two(hv, ti, i1, i2);
+            auto hpu = HazardPointerUnsetter();
 
-        const cuckoo_status st = cuckoo_update_fn(key, fn, hv, ti, i1, i2);
-        if (st == ok) {
-            unlock_two(ti, i1, i2);
-            unset_hazard_pointer();
-            return true;
-        }
+            const cuckoo_status st = cuckoo_update_fn(key, fn, hv, ti, i1, i2);
+            if (st == ok) {
+                unlock_two(ti, i1, i2);
+                return true;
+            }
 
-        // We run an insert, since the update failed
-        res = cuckoo_insert_loop(key, val, hv, ti, i1, i2);
+            // We run an insert, since the update failed
+            res = cuckoo_insert_loop(key, val, hv, ti, i1, i2);
 
-        // The only valid reason for res being false is if insert encountered a
-        // duplicate key after releasing the locks and performing cuckoo
-        // hashing. In this case, we retry the entire upsert operation.
+            // The only valid reason for res being false is if insert encountered a
+            // duplicate key after releasing the locks and performing cuckoo
+            // hashing. In this case, we retry the entire upsert operation.
         } while (!res);
         return true;
     }
@@ -498,11 +498,11 @@ public:
     bool rehash(size_t n) {
         check_hazard_pointer();
         TableInfo* ti = snapshot_table_nolock();
+        auto hpu = HazardPointerUnsetter();
         if (n <= ti->hashpower_) {
             return false;
         }
         const cuckoo_status st = cuckoo_expand_simple(n);
-        unset_hazard_pointer();
         return (st == ok);
     }
 
@@ -515,11 +515,11 @@ public:
     bool reserve(size_t n) {
         check_hazard_pointer();
         TableInfo* ti = snapshot_table_nolock();
+        auto hpu = HazardPointerUnsetter();
         if (n <= hashsize(ti->hashpower_) * SLOT_PER_BUCKET) {
             return false;
         }
         const cuckoo_status st = cuckoo_expand_simple(reserve_calc(n));
-        unset_hazard_pointer();
         return (st == ok);
     }
 
@@ -1308,7 +1308,6 @@ private:
         while (st != ok) {
             // If the insert failed with failure_key_duplicated, it returns here
             if (st == failure_key_duplicated) {
-                unset_hazard_pointer();
                 return false;
             }
             // If it failed with failure_under_expansion, the insert operated on
@@ -1323,7 +1322,6 @@ private:
             snapshot_and_lock_two(hv, ti, i1, i2);
             st = cuckoo_insert(key, val, hv, ti, i1, i2);
         }
-        unset_hazard_pointer();
         return true;
     }
 
@@ -1475,7 +1473,6 @@ private:
         // the pointer.
         old_table_infos.push_back(std::move(std::unique_ptr<TableInfo>(ti)));
         unlock_all(ti);
-        unset_hazard_pointer();
         global_hazard_pointers.delete_unused(old_table_infos);
         return ok;
     }
@@ -1560,7 +1557,8 @@ public:
         void release() {
             if (has_table_lock) {
                 hm_->unlock_all(ti_);
-                cuckoohash_map<Key, T, Hash, Pred>::unset_hazard_pointer();
+                auto hpu =
+                    cuckoohash_map<Key, T, Hash, Pred>::HazardPointerUnsetter();
                 has_table_lock = false;
             }
         }
