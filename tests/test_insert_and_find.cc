@@ -80,7 +80,7 @@ void FindNonkeysInTables() {
     }
 }
 
-int main(int argc, char **argv) {
+int main() {
     env = new InsertFindEnvironment;
     std::cout << "Running FindKeysInTables" << std::endl;
     FindKeysInTables();

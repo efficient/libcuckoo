@@ -26,7 +26,15 @@ AX_CHECK_COMPILE_FLAG([-DNDEBUG], [CPPFLAGS="$CPPFLAGS -DNDEBUG"])
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-std=c++0x], [CXXFLAGS="$CXXFLAGS -std=c++0x"])
 AX_CHECK_COMPILE_FLAG([-stdlib=libc++], [CXXFLAGS="$CXXFLAGS -stdlib=libc++"])
+# Enable all warnings across compilers and make them errors
 AX_CHECK_COMPILE_FLAG([-Wall], [CXXFLAGS="$CXXFLAGS -Wall"])
+AX_CHECK_COMPILE_FLAG([-Wextra], [CXXFLAGS="$CXXFLAGS -Wextra"])
+AX_CHECK_COMPILE_FLAG([-Werror], [CXXFLAGS="$CXXFLAGS -Werror"])
+# Disable some warnings we don't need
+AX_CHECK_COMPILE_FLAG([-Wno-sign-conversion],
+        [CXXFLAGS="$CXXFLAGS -Wno-sign-conversion"])
+AX_CHECK_COMPILE_FLAG([-Wno-sign-compare],
+        [CXXFLAGS="$CXXFLAGS -Wno-sign-compare"])
 AC_LANG_POP([C++])
 
 # Checks for programs.

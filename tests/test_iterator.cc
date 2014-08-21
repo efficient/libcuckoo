@@ -105,7 +105,7 @@ void FilledTableIncrementItems() {
     }
 }
 
-int main(int argc, char** argv) {
+int main() {
     iter_env = new IteratorEnvironment;
     std::cout << "Running EmptyTableBeginEndIterator" << std::endl;
     EmptyTableBeginEndIterator();

@@ -1141,13 +1141,13 @@ private:
         ti->num_inserts[counterid].num.fetch_add(1, std::memory_order_relaxed);
     }
 
-    /* try_add_to_bucket will search the bucket and store the index of an empty
-     * slot if it finds one, or -1 if it doesn't. Regardless, it will search the
-     * entire bucket and return false if it finds the key already in the table
-     * (duplicate key error) and true otherwise. */
-    static bool try_add_to_bucket(TableInfo *ti, const partial_t partial,
-                                  const key_type &key, const mapped_type &val,
-                                  const size_t i, int& j) {
+    /* try_find_insert_bucket will search the bucket and store the index of an
+     * empty slot if it finds one, or -1 if it doesn't. Regardless, it will
+     * search the entire bucket and return false if it finds the key already in
+     * the table (duplicate key error) and true otherwise. */
+    static bool try_find_insert_bucket(
+        TableInfo *ti, const partial_t partial,
+        const key_type &key, const size_t i, int& j) {
         j = -1;
         bool found_empty = false;
         for (size_t k = 0; k < SLOT_PER_BUCKET; ++k) {
@@ -1258,11 +1258,11 @@ private:
         mapped_type oldval;
         int res1, res2;
         const partial_t partial = partial_key(hv);
-        if (!try_add_to_bucket(ti, partial, key, val, i1, res1)) {
+        if (!try_find_insert_bucket(ti, partial, key, i1, res1)) {
             unlock_two(ti, i1, i2);
             return failure_key_duplicated;
         }
-        if (!try_add_to_bucket(ti, partial, key, val, i2, res2)) {
+        if (!try_find_insert_bucket(ti, partial, key, i2, res2)) {
             unlock_two(ti, i1, i2);
             return failure_key_duplicated;
         }
