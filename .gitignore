@@ -1,4 +1,5 @@
 */*.o
+.DS_Store
 Makefile
 Makefile.in
 aclocal.m4

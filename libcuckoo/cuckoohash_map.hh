@@ -221,12 +221,11 @@ private:
     class GlobalHazardPointerList {
         std::list<TableInfo*> hp_;
         std::mutex lock_;
-        typedef std::unique_lock<std::mutex> HPUniqueLock;
     public:
         /* new_hazard_pointer creates and returns a new hazard pointer for a
          * thread. */
         TableInfo** new_hazard_pointer() {
-            HPUniqueLock ul(lock_);
+            std::unique_lock<std::mutex> ul(lock_);
             hp_.emplace_back(nullptr);
             return &hp_.back();
         }
@@ -236,7 +235,7 @@ private:
          * a pointer in old_pointers, it deletes that node from the list. */
         void delete_unused(std::list<std::unique_ptr<TableInfo>>&
                            old_pointers) {
-            HPUniqueLock ul(lock_);
+            std::unique_lock<std::mutex> ul(lock_);
             old_pointers.remove_if(
                 [this](const std::unique_ptr<TableInfo>& ptr) {
                     return std::find(hp_.begin(), hp_.end(), ptr.get()) ==
@@ -309,12 +308,10 @@ public:
      *  destructors. */
     void clear() {
         check_hazard_pointer();
-        expansion_lock.lock();
         TableInfo *ti = snapshot_and_lock_all();
-        assert(ti != nullptr);
+        assert(ti == table_info.load());
         cuckoo_clear(ti);
         unlock_all(ti);
-        expansion_lock.unlock();
         unset_hazard_pointer();
     }
 
@@ -658,15 +655,16 @@ private:
      * previously deleted one, however it doesn't matter, since we would still
      * be looking at the most recent table_info in that case. */
     TableInfo* snapshot_table_nolock() {
-        TableInfo *ti;
-        do {
-            ti = table_info.load();
+        while (true) {
+            TableInfo *ti = table_info.load();
             *hazard_pointer = ti;
+            // If the table info has changed in the time we set the hazard
+            // pointer, ti could have been deleted, so try again.
             if (ti != table_info.load()) {
                 continue;
             }
-        } while (false);
-        return ti;
+            return ti;
+        }
     }
 
     /* snapshot_and_lock_two loads the table_info pointer and locks the buckets
@@ -676,38 +674,47 @@ private:
      * table_info pointer needs to be grabbed first. */
     void snapshot_and_lock_two(const size_t hv, TableInfo*& ti,
                                size_t& i1, size_t& i2) {
-        do {
+        while (true) {
             ti = table_info.load();
             *hazard_pointer = ti;
             // If the table info has changed in the time we set the hazard
-            // pointer, try again.
+            // pointer, ti could have been deleted, so try again.
             if (ti != table_info.load()) {
                 continue;
             }
             i1 = index_hash(ti, hv);
             i2 = alt_index(ti, hv, i1);
             lock_two(ti, i1, i2);
-            // If the table info has changed in the time it took to get the
-            // locks, try again.
+            // Check the table info again
             if (ti != table_info.load()) {
                 unlock_two(ti, i1, i2);
                 continue;
             }
-        } while (false);
+            return;
+        }
     }
 
-    /* snapshot_and_lock_all is similar to snapshot_and_lock_two, except that
-     * functions that call this are expected to hold the expansion_lock mutex,
-     * so multiple calls to this function cannot take place at the same time.
-     * Therefore, we don't need to re-check the loaded table_info. */
+    /* snapshot_and_lock_all is similar to snapshot_and_lock_two, except that it
+     * takes all the locks in the table. */
     TableInfo *snapshot_and_lock_all() {
-        assert(!expansion_lock.try_lock());
-        TableInfo *ti = table_info.load();
-        *hazard_pointer = ti;
-        for (size_t i = 0; i < kNumLocks; ++i) {
-            ti->locks_[i].lock();
+        while (true) {
+            TableInfo *ti = table_info.load();
+            *hazard_pointer = ti;
+            // If the table info has changed, ti could have been deleted, so try
+            // again
+            if (ti != table_info.load()) {
+                continue;
+            }
+            for (size_t i = 0; i < kNumLocks; ++i) {
+                ti->locks_[i].lock();
+            }
+            // If the table info has changed, unlock the locks and try again.
+            if (ti != table_info.load()) {
+                unlock_all(ti);
+                continue;
+            }
+            return ti;
         }
-        return ti;
     }
 
     /* unlock_all releases all the locks */
@@ -1419,29 +1426,18 @@ private:
         }
     }
 
-    // expansion_lock serializes functions that call snapshot_and_lock_all,
-    // thereby ensuring that multiple expansions and iterator constructions
-    // cannot occur simultaneously.
-    std::mutex expansion_lock;
-
     /* cuckoo_expand_simple is a simpler version of expansion than
      * cuckoo_expand, which will double the size of the existing hash table. It
      * needs to take all the bucket locks, since no other operations can change
      * the table during expansion. If some other thread is holding the expansion
      * thread at the time, then it will return failure_under_expansion. */
     cuckoo_status cuckoo_expand_simple(size_t n) {
-        if (!expansion_lock.try_lock()) {
-            unset_hazard_pointer();
-            return failure_under_expansion;
-        }
         TableInfo *ti = snapshot_and_lock_all();
-        assert(ti != nullptr);
+        assert(ti == table_info.load());
         if (n <= ti->hashpower_) {
             // Most likely another expansion ran before this one could grab the
             // locks
             unlock_all(ti);
-            unset_hazard_pointer();
-            expansion_lock.unlock();
             return failure_under_expansion;
         }
 
@@ -1471,8 +1467,6 @@ private:
         } catch (const std::bad_alloc&) {
             // Unlocks resources and rethrows the exception
             unlock_all(ti);
-            unset_hazard_pointer();
-            expansion_lock.unlock();
             throw;
         }
 
@@ -1483,7 +1477,6 @@ private:
         unlock_all(ti);
         unset_hazard_pointer();
         global_hazard_pointers.delete_unused(old_table_infos);
-        expansion_lock.unlock();
         return ok;
     }
 
@@ -1517,9 +1510,8 @@ public:
         const_iterator(cuckoohash_map<Key, T, Hash, Pred> *hm, bool is_end) {
             cuckoohash_map<Key, T, Hash, Pred>::check_hazard_pointer();
             hm_ = hm;
-            hm->expansion_lock.lock();
             ti_ = hm_->snapshot_and_lock_all();
-            assert(ti_ != nullptr);
+            assert(ti_ == hm_->table_info.load());
 
             has_table_lock = true;
 
@@ -1568,7 +1560,6 @@ public:
         void release() {
             if (has_table_lock) {
                 hm_->unlock_all(ti_);
-                hm_->expansion_lock.unlock();
                 cuckoohash_map<Key, T, Hash, Pred>::unset_hazard_pointer();
                 has_table_lock = false;
             }
