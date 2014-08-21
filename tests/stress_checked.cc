@@ -221,6 +221,7 @@ void update_thread(AllEnvironment<KType> *env) {
                 EXPECT_TRUE(res);
                 EXPECT_TRUE(res2);
                 env->in_table[ind] = true;
+                break;
             default:
                 throw std::logic_error("Impossible");
             }

@@ -22,11 +22,15 @@ const size_t size = 1L << power;
 
 class IteratorEnvironment {
 public:
-    IteratorEnvironment(): emptytable(size), table(size), items_end(items+size) {
+    IteratorEnvironment()
+        : emptytable(size), table(size), items_end(items+size) {
         // Fills up table and items with random values
-        uint64_t seed = std::chrono::system_clock::now().time_since_epoch().count();
+        uint64_t seed =
+            std::chrono::system_clock::now().time_since_epoch().count();
         std::cout << "seed = " << seed << std::endl;
-        std::uniform_int_distribution<ValType> v_dist(std::numeric_limits<ValType>::min(), std::numeric_limits<ValType>::max());
+        std::uniform_int_distribution<ValType> v_dist(
+            std::numeric_limits<ValType>::min(),
+            std::numeric_limits<ValType>::max());
         std::mt19937_64 gen(seed);
         for (size_t i = 0; i < size; i++) {
             items[i].first = i;
