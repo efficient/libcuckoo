@@ -45,6 +45,80 @@ public:
     //! upsert.
     typedef std::function<mapped_type(const mapped_type&)> updater;
 
+
+    //! Class returned by operator[] which wraps an entry in the hash table
+    struct reference {
+      cuckoohash_map* owner = nullptr; // pointer to the hash map instance
+      key_type key; // the referenced key
+      mutable mapped_type value = mapped_type(); // the value at the referenced hash entry
+      mutable bool value_filled = false;
+
+      operator mapped_type() const {
+        // loop find and insert
+        if (value_filled) {
+          return value;
+        } else {
+          // a unified update/insert will be nice. upsert is not doing
+          // anything particularly different from this.
+          while(!owner->find(key, value) && !owner->insert(key, value));
+          value_filled = true;
+          return value;
+        }
+      }
+
+      reference& operator=(const mapped_type& m) {
+        value = m;
+        value_filled = true;
+        // a unified update/insert will be nice. upsert is not doing
+        // anything particularly different from this.
+        // and this is currently biased towards inserting a new value
+        // than updating an existing value
+        while (!owner->insert(key, value) && 
+               !owner->update(key, value));
+        return *this;
+      }
+ 
+      ~reference() {
+        // force an insert 
+        if (!value_filled) owner->insert(key, mapped_type());
+      }
+
+     private:
+      // private constructor
+      reference() { }
+      reference(const reference& m) {
+        owner = m.owner;
+        key = m.key;
+        value = m.value;
+        value_filled = m.value_filled;
+      }
+
+      // private assignment
+      reference& operator=(const reference& m) {
+        // no-op on aliased object
+        if (this == &m) return *this;
+        if (owner == nullptr) {
+          // left hand side is empty. assign and return
+          owner = m.owner;
+          key = m.key;
+          value = m.value;
+          value_filled = m.value_filled;
+          return *this;
+        }
+        // left side has stuff, right side has potentially other stuff.
+        // i.e. this case is a[i] = b[j] (a and b could be the same). 
+        // We get the value from the RHS and assign.
+        value = m;
+        value_filled = true;
+        while (!owner->insert(key, value) && 
+               !owner->update(key, value));
+        return *this;
+      }
+      friend class cuckoohash_map;
+    };
+
+    typedef mapped_type const_reference;
+
 private:
     // Constants used internally
 
@@ -464,7 +538,8 @@ public:
     //!  fn. \p fn should be a function that accepts an argument of type \p
     //!  mapped_type and returns a new value of type \p mapped_type. The exact
     //!  type of \p fn is specified by the \ref updater typedef.
-    bool update_fn(const key_type& key, const updater& fn) {
+    template <typename Updater>
+    bool update_fn(const key_type& key, Updater fn) {
         check_hazard_pointer();
         size_t hv = hashed_key(key);
         TableInfo* ti;
@@ -480,7 +555,8 @@ public:
     //! upsert is a combined update_fn-insert function. It first tries updating
     //!  the value associated with \p key using \p fn. If \p key is not in the
     //!  table, then it runs an insert with \p key and \p val.
-    bool upsert(const key_type& key, const updater& fn,
+    template <typename Updater>
+    bool upsert(const key_type& key, Updater fn,
                 const mapped_type& val) {
         check_hazard_pointer();
         check_counterid();
@@ -554,6 +630,55 @@ public:
         return eqfn;
     }
 
+    //! Returns a reference to the mapped value stored at the given key,
+    //! inserting the key (with default constructed mapped value) if the key
+    //! does not exist. Just like the vector<bool> this returns a reference type 
+    //! which wraps the actual mapped value. Also Note that find() and insert() 
+    //! may be more efficient.
+    //! \code
+    //! \endcode
+    reference operator[](const key_type& key) {
+      // Note that this implementation here is not exactly STL compliant. 
+      // To maintain performance and avoid hitting the hash table too many 
+      // times, The reference object is *lazy*. In other words, 
+      //
+      //  - operator[] does not actually perform an insert. It returns a
+      //    reference object pointing to the requested key.
+      //  - On table[i] = val // reference::operator=(mapped_type)
+      //    an insert / update is called, and the reference becomes eager.
+      //  - On val = table[i] // operator mapped_type()
+      //    an find / insert is called and the reference becomes eager.
+      //  - On table[i] (i.e. no operation performed), the destructor is called
+      //    immediately (reference::~reference()) in which case 
+      //    insert(key, mapped_type()) is called.
+      //
+      // Thus, with normal usage, this should behave pretty much exactly like
+      // a regular reference. However, where issues might occur is when the
+      // lifetime of the reference exceeds its usual lifespan.
+      // 
+      // auto i = table[i]
+      //
+      // in which case the lifetime of reference object is extended beyond
+      // what we would like it to be causing issues. To avoid this issue,
+      // the above is banned. By making the default constructor, 
+      // copy constructor, and assignment operator of the reference object
+      // private, the above will cause a compilation error.
+
+      reference ret;
+      ret.owner = this;
+      ret.key = key;
+      return ret;
+    }
+
+    //! Returns a reference to the mapped value stored at the given key,
+    //! inserting the key (with default constructed mapped value) if the key
+    //! does not exist. Just like the vector<bool> this returns a reference type
+    //! which wraps the actual mapped value. Also Note that find() and insert()
+    //! may be more efficient.
+    const_reference operator[](const key_type& key) const {
+      // find should *really* be a const function
+      return const_cast<cuckoohash_map*>(this)->find(key);
+    }
 private:
     std::atomic<TableInfo*> table_info;
 
@@ -1238,8 +1363,9 @@ private:
 
     // try_update_bucket_fn will search the bucket for the given key and change
     // its associated value with the given function if it finds it.
+    template <typename Updater>
     static bool try_update_bucket_fn(TableInfo* ti, const partial_t partial,
-                                     const key_type &key, const updater& fn,
+                                     const key_type &key, Updater fn,
                                      const size_t i) {
         for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
             if (!ti->buckets_[i].occupied(j)) {
@@ -1401,7 +1527,8 @@ private:
     // function on its value if it finds it, assigning the result of the
     // function to the value. It expects the locks to be taken and released
     // outside the function.
-    cuckoo_status cuckoo_update_fn(const key_type &key, const updater& fn,
+    template <typename Updater>
+    cuckoo_status cuckoo_update_fn(const key_type &key, Updater fn,
                                      const size_t hv, TableInfo* ti,
                                      const size_t i1, const size_t i2) {
         const partial_t partial = partial_key(hv);
