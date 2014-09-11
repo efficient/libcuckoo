@@ -417,7 +417,8 @@ public:
     //! that \p key isn't already in the table, since the table doesn't support
     //! duplicate keys. If the table is out of space, insert will automatically
     //! expand until it can succeed. Note that expansion can throw an exception,
-    //! which insert will propagate.
+    //! which insert will propagate. If \p key is already in the table, it
+    //! returns false, otherwise it returns true.
     bool insert(const key_type& key, const mapped_type& val) {
         check_hazard_pointer();
         check_counterid();
@@ -430,7 +431,8 @@ public:
     }
 
     //! erase removes \p key and it's associated value from the table, calling
-    //! their destructors. If \p key is not there, it returns false.
+    //! their destructors. If \p key is not there, it returns false, otherwise
+    //! it returns true.
     bool erase(const key_type& key) {
         check_hazard_pointer();
         check_counterid();
@@ -446,7 +448,7 @@ public:
     }
 
     //! update changes the value associated with \p key to \p val. If \p key is
-    //! not there, it returns false.
+    //! not there, it returns false, otherwise it returns true.
     bool update(const key_type& key, const mapped_type& val) {
         check_hazard_pointer();
         size_t hv = hashed_key(key);
@@ -461,9 +463,10 @@ public:
     }
 
     //! update_fn changes the value associated with \p key with the function \p
-    //!  fn. \p fn should be a function that accepts an argument of type \p
-    //!  mapped_type and returns a new value of type \p mapped_type. The exact
-    //!  type of \p fn is specified by the \ref updater typedef.
+    //! fn. \p fn should be a function that accepts an argument of type \p
+    //! mapped_type and returns a new value of type \p mapped_type. The exact
+    //! type of \p fn is specified by the \ref updater typedef. If \p key is not
+    //! there, it returns false, otherwise it returns true.
     bool update_fn(const key_type& key, const updater& fn) {
         check_hazard_pointer();
         size_t hv = hashed_key(key);
@@ -478,9 +481,11 @@ public:
     }
 
     //! upsert is a combined update_fn-insert function. It first tries updating
-    //!  the value associated with \p key using \p fn. If \p key is not in the
-    //!  table, then it runs an insert with \p key and \p val.
-    bool upsert(const key_type& key, const updater& fn,
+    //! the value associated with \p key using \p fn. If \p key is not in the
+    //! table, then it runs an insert with \p key and \p val. This upsert will
+    //! always succeed, since if the insert encounters finds the key already
+    //! inserted, it can retry the update.
+    void upsert(const key_type& key, const updater& fn,
                 const mapped_type& val) {
         check_hazard_pointer();
         check_counterid();
@@ -495,7 +500,7 @@ public:
             const cuckoo_status st = cuckoo_update_fn(key, fn, hv, ti, i1, i2);
             if (st == ok) {
                 unlock_two(ti, i1, i2);
-                return true;
+                return;
             }
 
             // We run an insert, since the update failed
@@ -506,7 +511,7 @@ public:
             // performing cuckoo hashing. In this case, we retry the entire
             // upsert operation.
         } while (!res);
-        return true;
+        return;
     }
 
     //! rehash will size the table using a hashpower of \p n. Note that the
@@ -1850,12 +1855,12 @@ public:
 
     public:
         //! This constructor is identical to the rvalue-reference constructor of
-        //!  const_iterator.
+        //! const_iterator.
         iterator(iterator&& it)
             : const_iterator(std::move(it)) {}
 
         //! This constructor allows converting from a const_iterator to an
-        //!  iterator.
+        //! iterator.
         iterator(const_iterator&& it)
             : const_iterator(std::move(it)) {}
 

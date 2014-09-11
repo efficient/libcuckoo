@@ -214,10 +214,8 @@ void update_thread(AllEnvironment<KType> *env) {
                     v = env->val_dist(gen);
                     v2 = env->val_dist2(gen);
                 }
-                res = env->table.upsert(k, updatefn, v);
-                res2 = env->table2.upsert(k, updatefn2, v2);
-                EXPECT_TRUE(res);
-                EXPECT_TRUE(res2);
+                env->table.upsert(k, updatefn, v);
+                env->table2.upsert(k, updatefn2, v2);
                 env->in_table[ind] = true;
                 break;
             default:
