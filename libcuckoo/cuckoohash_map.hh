@@ -331,7 +331,7 @@ public:
     }
 
     //! clear removes all the elements in the hash table, calling their
-    //!  destructors.
+    //! destructors.
     void clear() {
         check_hazard_pointer();
         TableInfo* ti = snapshot_and_lock_all();
@@ -1547,11 +1547,11 @@ public:
         // table, based on the boolean argument. We keep this constructor
         // private (but expose it to the cuckoohash_map class), since we don't
         // want users calling it.
-        const_iterator(cuckoohash_map<Key, T, Hash, Pred>* hm, bool is_end) {
+        const_iterator(const cuckoohash_map<Key, T, Hash, Pred>& hm,
+                       bool is_end) : hm_(hm) {
             cuckoohash_map<Key, T, Hash, Pred>::check_hazard_pointer();
-            hm_ = hm;
-            ti_ = hm_->snapshot_and_lock_all();
-            assert(ti_ == hm_->table_info.load());
+            ti_ = hm_.snapshot_and_lock_all();
+            assert(ti_ == hm_.table_info.load());
 
             has_table_lock = true;
 
@@ -1574,7 +1574,8 @@ public:
         //! This is an rvalue-reference constructor that takes the lock from \p
         //! it and copies its state. To create an iterator from scratch, call
         //! the \ref cbegin or \ref cend methods of cuckoohash_map.
-        const_iterator(const_iterator&& it) {
+        const_iterator(const_iterator&& it)
+            : hm_(it.hm_) {
             if (this == &it) {
                 return;
             }
@@ -1611,13 +1612,13 @@ public:
 
         //! is_end returns true if the iterator is at end_pos, which means it is
         //! past the end of the table.
-        bool is_end() {
+        bool is_end() const {
             return (index_ == end_pos.first && slot_ == end_pos.second);
         }
 
         //! is_begin returns true if the iterator is at begin_pos, which means
         //! it is at the first item in the table.
-        bool is_begin() {
+        bool is_begin() const {
             return (index_ == begin_pos.first && slot_ == begin_pos.second);
         }
 
@@ -1628,14 +1629,15 @@ public:
         typedef std::pair<const Key&, const T&> ref_pair;
         // Since we can't initialize a ref_pair before knowing what it points
         // to, we use std::aligned_storage to reserve unititialized space for
-        // the object, which we then construct with placement new.
-        typename std::aligned_storage<sizeof(ref_pair),
-                                      alignof(ref_pair)>::type data;
+        // the object, which we then construct with placement new. Since this
+        // isn't really part of the logical iterator state, we make it mutable.
+        mutable typename std::aligned_storage<sizeof(ref_pair),
+                                              alignof(ref_pair)>::type data;
 
     public:
         //! The dereference operator returns a value_type copied from the
         //! key-value pair under the iterator.
-        value_type operator*() {
+        value_type operator*() const {
             check_lock();
             if (is_end()) {
                 throw end_dereference;
@@ -1648,7 +1650,7 @@ public:
         //! The arrow dereference operator returns a pointer to an internal
         //! std::pair which contains const references to the key and value
         //! under the iterator.
-        ref_pair* operator->() {
+        ref_pair* operator->() const {
             check_lock();
             if (is_end()) {
                 throw end_dereference;
@@ -1711,7 +1713,7 @@ public:
 
     protected:
         // A pointer to the associated hashmap
-        cuckoohash_map<Key, T, Hash, Pred>* hm_;
+        const cuckoohash_map<Key, T, Hash, Pred>& hm_;
 
         // The hashmap's table info
         typename cuckoohash_map<Key, T, Hash, Pred>::TableInfo* ti_;
@@ -1739,14 +1741,14 @@ public:
         // set_end sets the given index and slot to one past the last position
         // in the table.
         void set_end(size_t& index, size_t& slot) {
-            index = hm_->bucket_count();
+            index = hm_.bucket_count();
             slot = 0;
         }
 
         // set_begin sets the given pair to the position of the first element in
         // the table.
         void set_begin(size_t& index, size_t& slot) {
-            if (hm_->empty()) {
+            if (hm_.empty()) {
                 set_end(index, slot);
             } else {
                 index = slot = 0;
@@ -1766,7 +1768,7 @@ public:
             if (slot < SLOT_PER_BUCKET-1) {
                 ++slot;
                 return true;
-            } else if (index < hm_->bucket_count()-1) {
+            } else if (index < hm_.bucket_count()-1) {
                 ++index;
                 slot = 0;
                 return true;
@@ -1828,7 +1830,7 @@ public:
 
         // check_lock throws an exception if the iterator doesn't have a
         // lock.
-        void check_lock() {
+        void check_lock() const {
             if (!has_table_lock) {
                 throw std::runtime_error(
                     "Iterator does not have a lock on the table");
@@ -1848,7 +1850,7 @@ public:
     class iterator : public const_iterator {
         // This constructor does the same thing as the private const_iterator
         // one.
-        iterator(cuckoohash_map<Key, T, Hash, Pred>* hm, bool is_end)
+        iterator(cuckoohash_map<Key, T, Hash, Pred>& hm, bool is_end)
             : const_iterator(hm, is_end) {}
 
         friend class cuckoohash_map<Key, T, Hash, Pred>;
@@ -1893,28 +1895,28 @@ public:
 public:
     //! cbegin returns a const_iterator to the first filled slot in the
     //! table.
-    const_iterator cbegin() {
-        return const_iterator(this, false);
+    const_iterator cbegin() const {
+        return const_iterator(*this, false);
     }
 
     //! cend returns a const_iterator set past the end of the table.
-    const_iterator cend() {
-        return const_iterator(this, true);
+    const_iterator cend() const {
+        return const_iterator(*this, true);
     }
 
     //! begin returns an iterator to the first filled slot in the table.
     iterator begin() {
-        return iterator(this, false);
+        return iterator(*this, false);
     }
 
     //! end returns an iterator set past the end of the table.
     iterator end() {
-        return iterator(this, true);
+        return iterator(*this, true);
     }
 
     //! snapshot_table allocates a vector and, using a const_iterator stores all
     //! the elements currently in the table.
-    std::vector<value_type> snapshot_table() {
+    std::vector<value_type> snapshot_table() const {
         std::vector<value_type> items;
         items.reserve(size());
         for (auto it = cbegin(); !it.is_end(); ++it) {
