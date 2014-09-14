@@ -321,7 +321,7 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;</div>
 <div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;        <span class="comment">// The constructor allocates the memory for the table. It allocates one</span></div>
 <div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;        <span class="comment">// cacheint for each core in num_inserts and num_deletes.</span></div>
-<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;        TableInfo(<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#ad794e8675891e86437b058a95241715d">hashpower</a>)</div>
+<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;        TableInfo(<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#a6e55ec3ae97d1cb60aa577dc4084c651">hashpower</a>)</div>
 <div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;            : hashpower_(hashpower), buckets_(hashsize(hashpower_)),</div>
 <div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;              num_inserts(kNumCores), num_deletes(kNumCores) {}</div>
 <div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;</div>
@@ -408,7 +408,7 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;</div>
 <div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;    <span class="comment">// reserve_calc takes in a parameter specifying a certain number of slots</span></div>
 <div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160;    <span class="comment">// for a table and returns the smallest hashpower that will hold n elements.</span></div>
-<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;    <span class="keywordtype">size_t</span> reserve_calc(<span class="keywordtype">size_t</span> n) {</div>
+<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;    <span class="keyword">static</span> <span class="keywordtype">size_t</span> reserve_calc(<span class="keywordtype">size_t</span> n) {</div>
 <div class="line"><a name="l00312"></a><span class="lineno">  312</span>&#160;        <span class="keywordtype">double</span> nhd = ceil(log2((<span class="keywordtype">double</span>)n / (<span class="keywordtype">double</span>)SLOT_PER_BUCKET));</div>
 <div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;        <span class="keywordtype">size_t</span> new_hashpower = (size_t) (nhd &lt;= 0 ? 1.0 : nhd);</div>
 <div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;        assert(n &lt;= hashsize(new_hashpower) * SLOT_PER_BUCKET);</div>
@@ -436,7 +436,7 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l00341"></a><span class="lineno">  341</span>&#160;        cuckoo_clear(ti);</div>
 <div class="line"><a name="l00342"></a><span class="lineno">  342</span>&#160;    }</div>
 <div class="line"><a name="l00343"></a><span class="lineno">  343</span>&#160;</div>
-<div class="line"><a name="l00347"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a9df95e5908ddd3629b8179c9124081a3">  347</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#a9df95e5908ddd3629b8179c9124081a3">size</a>() {</div>
+<div class="line"><a name="l00347"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#ae4bef7ea98f6fa52ab16ae9444aaf5b3">  347</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#ae4bef7ea98f6fa52ab16ae9444aaf5b3">size</a>()<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00348"></a><span class="lineno">  348</span>&#160;        check_hazard_pointer();</div>
 <div class="line"><a name="l00349"></a><span class="lineno">  349</span>&#160;        <span class="keyword">const</span> TableInfo* ti = snapshot_table_nolock();</div>
 <div class="line"><a name="l00350"></a><span class="lineno">  350</span>&#160;        HazardPointerUnsetter hpu;</div>
@@ -444,19 +444,19 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l00352"></a><span class="lineno">  352</span>&#160;        <span class="keywordflow">return</span> s;</div>
 <div class="line"><a name="l00353"></a><span class="lineno">  353</span>&#160;    }</div>
 <div class="line"><a name="l00354"></a><span class="lineno">  354</span>&#160;</div>
-<div class="line"><a name="l00356"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a53545a47a5bf74c2907a4dd111000b5f">  356</a></span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classcuckoohash__map.html#a53545a47a5bf74c2907a4dd111000b5f">empty</a>() {</div>
-<div class="line"><a name="l00357"></a><span class="lineno">  357</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map.html#a9df95e5908ddd3629b8179c9124081a3">size</a>() == 0;</div>
+<div class="line"><a name="l00356"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a573ba87439e94511ad778b4382a45752">  356</a></span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classcuckoohash__map.html#a573ba87439e94511ad778b4382a45752">empty</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a name="l00357"></a><span class="lineno">  357</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map.html#ae4bef7ea98f6fa52ab16ae9444aaf5b3">size</a>() == 0;</div>
 <div class="line"><a name="l00358"></a><span class="lineno">  358</span>&#160;    }</div>
 <div class="line"><a name="l00359"></a><span class="lineno">  359</span>&#160;</div>
-<div class="line"><a name="l00362"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#ad794e8675891e86437b058a95241715d">  362</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#ad794e8675891e86437b058a95241715d">hashpower</a>() {</div>
+<div class="line"><a name="l00362"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a6e55ec3ae97d1cb60aa577dc4084c651">  362</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#a6e55ec3ae97d1cb60aa577dc4084c651">hashpower</a>()<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00363"></a><span class="lineno">  363</span>&#160;        check_hazard_pointer();</div>
 <div class="line"><a name="l00364"></a><span class="lineno">  364</span>&#160;        TableInfo* ti = snapshot_table_nolock();</div>
 <div class="line"><a name="l00365"></a><span class="lineno">  365</span>&#160;        HazardPointerUnsetter hpu;</div>
-<div class="line"><a name="l00366"></a><span class="lineno">  366</span>&#160;        <span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#ad794e8675891e86437b058a95241715d">hashpower</a> = ti-&gt;hashpower_;</div>
-<div class="line"><a name="l00367"></a><span class="lineno">  367</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map.html#ad794e8675891e86437b058a95241715d">hashpower</a>;</div>
+<div class="line"><a name="l00366"></a><span class="lineno">  366</span>&#160;        <span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#a6e55ec3ae97d1cb60aa577dc4084c651">hashpower</a> = ti-&gt;hashpower_;</div>
+<div class="line"><a name="l00367"></a><span class="lineno">  367</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map.html#a6e55ec3ae97d1cb60aa577dc4084c651">hashpower</a>;</div>
 <div class="line"><a name="l00368"></a><span class="lineno">  368</span>&#160;    }</div>
 <div class="line"><a name="l00369"></a><span class="lineno">  369</span>&#160;</div>
-<div class="line"><a name="l00371"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a0a3f7e2bb8786eaaed3c1b18e8953f49">  371</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#a0a3f7e2bb8786eaaed3c1b18e8953f49">bucket_count</a>() {</div>
+<div class="line"><a name="l00371"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a3866a109503d5e6aeefd6edcda14714d">  371</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#a3866a109503d5e6aeefd6edcda14714d">bucket_count</a>()<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00372"></a><span class="lineno">  372</span>&#160;        check_hazard_pointer();</div>
 <div class="line"><a name="l00373"></a><span class="lineno">  373</span>&#160;        TableInfo* ti = snapshot_table_nolock();</div>
 <div class="line"><a name="l00374"></a><span class="lineno">  374</span>&#160;        HazardPointerUnsetter hpu;</div>
@@ -464,14 +464,14 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l00376"></a><span class="lineno">  376</span>&#160;        <span class="keywordflow">return</span> buckets;</div>
 <div class="line"><a name="l00377"></a><span class="lineno">  377</span>&#160;    }</div>
 <div class="line"><a name="l00378"></a><span class="lineno">  378</span>&#160;</div>
-<div class="line"><a name="l00381"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#aec1d1c0a154b53796ee65007cf6cee8b">  381</a></span>&#160;    <span class="keywordtype">double</span> <a class="code" href="classcuckoohash__map.html#aec1d1c0a154b53796ee65007cf6cee8b">load_factor</a>() {</div>
+<div class="line"><a name="l00381"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a43ade3f08d0ec7efc197939b893b07d0">  381</a></span>&#160;    <span class="keywordtype">double</span> <a class="code" href="classcuckoohash__map.html#a43ade3f08d0ec7efc197939b893b07d0">load_factor</a>()<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00382"></a><span class="lineno">  382</span>&#160;        check_hazard_pointer();</div>
 <div class="line"><a name="l00383"></a><span class="lineno">  383</span>&#160;        <span class="keyword">const</span> TableInfo* ti = snapshot_table_nolock();</div>
 <div class="line"><a name="l00384"></a><span class="lineno">  384</span>&#160;        HazardPointerUnsetter hpu;</div>
 <div class="line"><a name="l00385"></a><span class="lineno">  385</span>&#160;        <span class="keywordflow">return</span> cuckoo_loadfactor(ti);</div>
 <div class="line"><a name="l00386"></a><span class="lineno">  386</span>&#160;    }</div>
 <div class="line"><a name="l00387"></a><span class="lineno">  387</span>&#160;</div>
-<div class="line"><a name="l00390"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#ab7cb726b2e358e91b6cfc24471f60c35">  390</a></span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classcuckoohash__map.html#ab7cb726b2e358e91b6cfc24471f60c35">find</a>(<span class="keyword">const</span> <a class="code" href="classcuckoohash__map.html#aa6f3de8712157f17d92bfdf6ad4e5314">key_type</a>&amp; key, <a class="code" href="classcuckoohash__map.html#a9923dc920c0698a2add2b177813a9b3a">mapped_type</a>&amp; val) {</div>
+<div class="line"><a name="l00390"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a948c647fe67f9471d8bd11afa176c3dc">  390</a></span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classcuckoohash__map.html#a948c647fe67f9471d8bd11afa176c3dc">find</a>(<span class="keyword">const</span> <a class="code" href="classcuckoohash__map.html#aa6f3de8712157f17d92bfdf6ad4e5314">key_type</a>&amp; key, <a class="code" href="classcuckoohash__map.html#a9923dc920c0698a2add2b177813a9b3a">mapped_type</a>&amp; val)<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00391"></a><span class="lineno">  391</span>&#160;        check_hazard_pointer();</div>
 <div class="line"><a name="l00392"></a><span class="lineno">  392</span>&#160;        <span class="keywordtype">size_t</span> hv = hashed_key(key);</div>
 <div class="line"><a name="l00393"></a><span class="lineno">  393</span>&#160;        TableInfo* ti;</div>
@@ -484,9 +484,9 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l00400"></a><span class="lineno">  400</span>&#160;        <span class="keywordflow">return</span> (st == ok);</div>
 <div class="line"><a name="l00401"></a><span class="lineno">  401</span>&#160;    }</div>
 <div class="line"><a name="l00402"></a><span class="lineno">  402</span>&#160;</div>
-<div class="line"><a name="l00406"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#addc0721a99193e0af53b34e2170fd6b5">  406</a></span>&#160;    <a class="code" href="classcuckoohash__map.html#a9923dc920c0698a2add2b177813a9b3a">mapped_type</a> <a class="code" href="classcuckoohash__map.html#addc0721a99193e0af53b34e2170fd6b5">find</a>(<span class="keyword">const</span> <a class="code" href="classcuckoohash__map.html#aa6f3de8712157f17d92bfdf6ad4e5314">key_type</a>&amp; key) {</div>
+<div class="line"><a name="l00406"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a550df3ea56b27115d067760343cbbdff">  406</a></span>&#160;    <a class="code" href="classcuckoohash__map.html#a9923dc920c0698a2add2b177813a9b3a">mapped_type</a> <a class="code" href="classcuckoohash__map.html#a550df3ea56b27115d067760343cbbdff">find</a>(<span class="keyword">const</span> <a class="code" href="classcuckoohash__map.html#aa6f3de8712157f17d92bfdf6ad4e5314">key_type</a>&amp; key)<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00407"></a><span class="lineno">  407</span>&#160;        <a class="code" href="classcuckoohash__map.html#a9923dc920c0698a2add2b177813a9b3a">mapped_type</a> val;</div>
-<div class="line"><a name="l00408"></a><span class="lineno">  408</span>&#160;        <span class="keywordtype">bool</span> done = <a class="code" href="classcuckoohash__map.html#ab7cb726b2e358e91b6cfc24471f60c35">find</a>(key, val);</div>
+<div class="line"><a name="l00408"></a><span class="lineno">  408</span>&#160;        <span class="keywordtype">bool</span> done = <a class="code" href="classcuckoohash__map.html#a948c647fe67f9471d8bd11afa176c3dc">find</a>(key, val);</div>
 <div class="line"><a name="l00409"></a><span class="lineno">  409</span>&#160;        <span class="keywordflow">if</span> (done) {</div>
 <div class="line"><a name="l00410"></a><span class="lineno">  410</span>&#160;            <span class="keywordflow">return</span> val;</div>
 <div class="line"><a name="l00411"></a><span class="lineno">  411</span>&#160;        } <span class="keywordflow">else</span> {</div>
@@ -596,11 +596,11 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l00549"></a><span class="lineno">  549</span>&#160;        <span class="keywordflow">return</span> (st == ok);</div>
 <div class="line"><a name="l00550"></a><span class="lineno">  550</span>&#160;    }</div>
 <div class="line"><a name="l00551"></a><span class="lineno">  551</span>&#160;</div>
-<div class="line"><a name="l00553"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#ac89a302a3461132e5076f877d3b6637d">  553</a></span>&#160;    <a class="code" href="classcuckoohash__map.html#a9be05b1e643b560c190cc0ddb52cc3b8">hasher</a> <a class="code" href="classcuckoohash__map.html#ac89a302a3461132e5076f877d3b6637d">hash_function</a>() {</div>
+<div class="line"><a name="l00553"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#afcbc8d76d7ad8aa669da84fbae78ac3e">  553</a></span>&#160;    <a class="code" href="classcuckoohash__map.html#a9be05b1e643b560c190cc0ddb52cc3b8">hasher</a> <a class="code" href="classcuckoohash__map.html#afcbc8d76d7ad8aa669da84fbae78ac3e">hash_function</a>()<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00554"></a><span class="lineno">  554</span>&#160;        <span class="keywordflow">return</span> hashfn;</div>
 <div class="line"><a name="l00555"></a><span class="lineno">  555</span>&#160;    }</div>
 <div class="line"><a name="l00556"></a><span class="lineno">  556</span>&#160;</div>
-<div class="line"><a name="l00558"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a8bc884daf5d8c814f670415e83679025">  558</a></span>&#160;    <a class="code" href="classcuckoohash__map.html#a40e3f15d104fecc45647a624a5b99ae1">key_equal</a> <a class="code" href="classcuckoohash__map.html#a8bc884daf5d8c814f670415e83679025">key_eq</a>() {</div>
+<div class="line"><a name="l00558"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a4ce9a0523521ab3e113ad364e80732e7">  558</a></span>&#160;    <a class="code" href="classcuckoohash__map.html#a40e3f15d104fecc45647a624a5b99ae1">key_equal</a> <a class="code" href="classcuckoohash__map.html#a4ce9a0523521ab3e113ad364e80732e7">key_eq</a>()<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00559"></a><span class="lineno">  559</span>&#160;        <span class="keywordflow">return</span> eqfn;</div>
 <div class="line"><a name="l00560"></a><span class="lineno">  560</span>&#160;    }</div>
 <div class="line"><a name="l00561"></a><span class="lineno">  561</span>&#160;</div>
@@ -724,7 +724,7 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l00679"></a><span class="lineno">  679</span>&#160;    <span class="comment">// issue, where the address of the new table_info equals the address of a</span></div>
 <div class="line"><a name="l00680"></a><span class="lineno">  680</span>&#160;    <span class="comment">// previously deleted one, however it doesn&#39;t matter, since we would still</span></div>
 <div class="line"><a name="l00681"></a><span class="lineno">  681</span>&#160;    <span class="comment">// be looking at the most recent table_info in that case.</span></div>
-<div class="line"><a name="l00682"></a><span class="lineno">  682</span>&#160;    TableInfo* snapshot_table_nolock() {</div>
+<div class="line"><a name="l00682"></a><span class="lineno">  682</span>&#160;    TableInfo* snapshot_table_nolock()<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00683"></a><span class="lineno">  683</span>&#160;        <span class="keywordflow">while</span> (<span class="keyword">true</span>) {</div>
 <div class="line"><a name="l00684"></a><span class="lineno">  684</span>&#160;            TableInfo* ti = table_info.load();</div>
 <div class="line"><a name="l00685"></a><span class="lineno">  685</span>&#160;            *hazard_pointer = ti;</div>
@@ -743,7 +743,7 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l00698"></a><span class="lineno">  698</span>&#160;    <span class="comment">// depends on the number of buckets in the table, the table_info pointer</span></div>
 <div class="line"><a name="l00699"></a><span class="lineno">  699</span>&#160;    <span class="comment">// needs to be grabbed first.</span></div>
 <div class="line"><a name="l00700"></a><span class="lineno">  700</span>&#160;    std::tuple&lt;TableInfo*, size_t, size_t&gt;</div>
-<div class="line"><a name="l00701"></a><span class="lineno">  701</span>&#160;    snapshot_and_lock_two(<span class="keyword">const</span> <span class="keywordtype">size_t</span> hv) {</div>
+<div class="line"><a name="l00701"></a><span class="lineno">  701</span>&#160;    snapshot_and_lock_two(<span class="keyword">const</span> <span class="keywordtype">size_t</span> hv)<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00702"></a><span class="lineno">  702</span>&#160;        TableInfo* ti;</div>
 <div class="line"><a name="l00703"></a><span class="lineno">  703</span>&#160;        <span class="keywordtype">size_t</span> i1, i2;</div>
 <div class="line"><a name="l00704"></a><span class="lineno">  704</span>&#160;        <span class="keywordflow">while</span> (<span class="keyword">true</span>) {</div>
@@ -783,7 +783,7 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l00738"></a><span class="lineno">  738</span>&#160;</div>
 <div class="line"><a name="l00739"></a><span class="lineno">  739</span>&#160;    <span class="comment">// snapshot_and_lock_all is similar to snapshot_and_lock_two, except that it</span></div>
 <div class="line"><a name="l00740"></a><span class="lineno">  740</span>&#160;    <span class="comment">// takes all the locks in the table.</span></div>
-<div class="line"><a name="l00741"></a><span class="lineno">  741</span>&#160;    TableInfo* snapshot_and_lock_all() {</div>
+<div class="line"><a name="l00741"></a><span class="lineno">  741</span>&#160;    TableInfo* snapshot_and_lock_all()<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l00742"></a><span class="lineno">  742</span>&#160;        <span class="keywordflow">while</span> (<span class="keyword">true</span>) {</div>
 <div class="line"><a name="l00743"></a><span class="lineno">  743</span>&#160;            TableInfo* ti = table_info.load();</div>
 <div class="line"><a name="l00744"></a><span class="lineno">  744</span>&#160;            *hazard_pointer = ti;</div>
@@ -811,13 +811,13 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l00766"></a><span class="lineno">  766</span>&#160;</div>
 <div class="line"><a name="l00767"></a><span class="lineno">  767</span>&#160;    <span class="comment">// hashsize returns the number of buckets corresponding to a given</span></div>
 <div class="line"><a name="l00768"></a><span class="lineno">  768</span>&#160;    <span class="comment">// hashpower.</span></div>
-<div class="line"><a name="l00769"></a><span class="lineno">  769</span>&#160;    <span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">size_t</span> hashsize(<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#ad794e8675891e86437b058a95241715d">hashpower</a>) {</div>
-<div class="line"><a name="l00770"></a><span class="lineno">  770</span>&#160;        <span class="keywordflow">return</span> 1U &lt;&lt; <a class="code" href="classcuckoohash__map.html#ad794e8675891e86437b058a95241715d">hashpower</a>;</div>
+<div class="line"><a name="l00769"></a><span class="lineno">  769</span>&#160;    <span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">size_t</span> hashsize(<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#a6e55ec3ae97d1cb60aa577dc4084c651">hashpower</a>) {</div>
+<div class="line"><a name="l00770"></a><span class="lineno">  770</span>&#160;        <span class="keywordflow">return</span> 1U &lt;&lt; <a class="code" href="classcuckoohash__map.html#a6e55ec3ae97d1cb60aa577dc4084c651">hashpower</a>;</div>
 <div class="line"><a name="l00771"></a><span class="lineno">  771</span>&#160;    }</div>
 <div class="line"><a name="l00772"></a><span class="lineno">  772</span>&#160;</div>
 <div class="line"><a name="l00773"></a><span class="lineno">  773</span>&#160;    <span class="comment">// hashmask returns the bitmask for the buckets array corresponding to a</span></div>
 <div class="line"><a name="l00774"></a><span class="lineno">  774</span>&#160;    <span class="comment">// given hashpower.</span></div>
-<div class="line"><a name="l00775"></a><span class="lineno">  775</span>&#160;    <span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">size_t</span> hashmask(<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#ad794e8675891e86437b058a95241715d">hashpower</a>) {</div>
+<div class="line"><a name="l00775"></a><span class="lineno">  775</span>&#160;    <span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">size_t</span> hashmask(<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#a6e55ec3ae97d1cb60aa577dc4084c651">hashpower</a>) {</div>
 <div class="line"><a name="l00776"></a><span class="lineno">  776</span>&#160;        <span class="keywordflow">return</span> hashsize(hashpower) - 1;</div>
 <div class="line"><a name="l00777"></a><span class="lineno">  777</span>&#160;    }</div>
 <div class="line"><a name="l00778"></a><span class="lineno">  778</span>&#160;</div>
@@ -1466,7 +1466,7 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l01421"></a><span class="lineno"> 1421</span>&#160;</div>
 <div class="line"><a name="l01422"></a><span class="lineno"> 1422</span>&#160;    <span class="comment">// cuckoo_init initializes the hashtable, given an initial hashpower as the</span></div>
 <div class="line"><a name="l01423"></a><span class="lineno"> 1423</span>&#160;    <span class="comment">// argument.</span></div>
-<div class="line"><a name="l01424"></a><span class="lineno"> 1424</span>&#160;    cuckoo_status cuckoo_init(<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#ad794e8675891e86437b058a95241715d">hashpower</a>) {</div>
+<div class="line"><a name="l01424"></a><span class="lineno"> 1424</span>&#160;    cuckoo_status cuckoo_init(<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html#a6e55ec3ae97d1cb60aa577dc4084c651">hashpower</a>) {</div>
 <div class="line"><a name="l01425"></a><span class="lineno"> 1425</span>&#160;        table_info.store(<span class="keyword">new</span> TableInfo(hashpower));</div>
 <div class="line"><a name="l01426"></a><span class="lineno"> 1426</span>&#160;        cuckoo_clear(table_info.load());</div>
 <div class="line"><a name="l01427"></a><span class="lineno"> 1427</span>&#160;        <span class="keywordflow">return</span> ok;</div>
@@ -1487,7 +1487,7 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l01442"></a><span class="lineno"> 1442</span>&#160;    }</div>
 <div class="line"><a name="l01443"></a><span class="lineno"> 1443</span>&#160;</div>
 <div class="line"><a name="l01444"></a><span class="lineno"> 1444</span>&#160;    <span class="comment">// cuckoo_size returns the number of elements in the given table.</span></div>
-<div class="line"><a name="l01445"></a><span class="lineno"> 1445</span>&#160;    <span class="keywordtype">size_t</span> cuckoo_size(<span class="keyword">const</span> TableInfo* ti) {</div>
+<div class="line"><a name="l01445"></a><span class="lineno"> 1445</span>&#160;    <span class="keywordtype">size_t</span> cuckoo_size(<span class="keyword">const</span> TableInfo* ti)<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l01446"></a><span class="lineno"> 1446</span>&#160;        <span class="keywordtype">size_t</span> inserts = 0;</div>
 <div class="line"><a name="l01447"></a><span class="lineno"> 1447</span>&#160;        <span class="keywordtype">size_t</span> deletes = 0;</div>
 <div class="line"><a name="l01448"></a><span class="lineno"> 1448</span>&#160;        <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; ti-&gt;num_inserts.size(); ++i) {</div>
@@ -1498,7 +1498,7 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l01453"></a><span class="lineno"> 1453</span>&#160;    }</div>
 <div class="line"><a name="l01454"></a><span class="lineno"> 1454</span>&#160;</div>
 <div class="line"><a name="l01455"></a><span class="lineno"> 1455</span>&#160;    <span class="comment">// cuckoo_loadfactor returns the load factor of the given table.</span></div>
-<div class="line"><a name="l01456"></a><span class="lineno"> 1456</span>&#160;    <span class="keywordtype">double</span> cuckoo_loadfactor(<span class="keyword">const</span> TableInfo* ti) {</div>
+<div class="line"><a name="l01456"></a><span class="lineno"> 1456</span>&#160;    <span class="keywordtype">double</span> cuckoo_loadfactor(<span class="keyword">const</span> TableInfo* ti)<span class="keyword"> const </span>{</div>
 <div class="line"><a name="l01457"></a><span class="lineno"> 1457</span>&#160;        <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><span class="keywordtype">double</span><span class="keyword">&gt;</span>(cuckoo_size(ti)) / SLOT_PER_BUCKET /</div>
 <div class="line"><a name="l01458"></a><span class="lineno"> 1458</span>&#160;            hashsize(ti-&gt;hashpower_);</div>
 <div class="line"><a name="l01459"></a><span class="lineno"> 1459</span>&#160;    }</div>
@@ -1577,11 +1577,11 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l01547"></a><span class="lineno"> 1547</span>&#160;        <span class="comment">// table, based on the boolean argument. We keep this constructor</span></div>
 <div class="line"><a name="l01548"></a><span class="lineno"> 1548</span>&#160;        <span class="comment">// private (but expose it to the cuckoohash_map class), since we don&#39;t</span></div>
 <div class="line"><a name="l01549"></a><span class="lineno"> 1549</span>&#160;        <span class="comment">// want users calling it.</span></div>
-<div class="line"><a name="l01550"></a><span class="lineno"> 1550</span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(<a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;</a>* hm, <span class="keywordtype">bool</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a7bea48bdd5f1ede1078906bc8ab3af63">is_end</a>) {</div>
-<div class="line"><a name="l01551"></a><span class="lineno"> 1551</span>&#160;            <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::check_hazard_pointer</a>();</div>
-<div class="line"><a name="l01552"></a><span class="lineno"> 1552</span>&#160;            hm_ = hm;</div>
-<div class="line"><a name="l01553"></a><span class="lineno"> 1553</span>&#160;            ti_ = hm_-&gt;snapshot_and_lock_all();</div>
-<div class="line"><a name="l01554"></a><span class="lineno"> 1554</span>&#160;            assert(ti_ == hm_-&gt;table_info.load());</div>
+<div class="line"><a name="l01550"></a><span class="lineno"> 1550</span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(<span class="keyword">const</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;</a>&amp; hm,</div>
+<div class="line"><a name="l01551"></a><span class="lineno"> 1551</span>&#160;                       <span class="keywordtype">bool</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798">is_end</a>) : hm_(hm) {</div>
+<div class="line"><a name="l01552"></a><span class="lineno"> 1552</span>&#160;            <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::check_hazard_pointer</a>();</div>
+<div class="line"><a name="l01553"></a><span class="lineno"> 1553</span>&#160;            ti_ = hm_.snapshot_and_lock_all();</div>
+<div class="line"><a name="l01554"></a><span class="lineno"> 1554</span>&#160;            assert(ti_ == hm_.table_info.load());</div>
 <div class="line"><a name="l01555"></a><span class="lineno"> 1555</span>&#160;</div>
 <div class="line"><a name="l01556"></a><span class="lineno"> 1556</span>&#160;            has_table_lock = <span class="keyword">true</span>;</div>
 <div class="line"><a name="l01557"></a><span class="lineno"> 1557</span>&#160;</div>
@@ -1601,410 +1601,412 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh_source.html','');}
 <div class="line"><a name="l01571"></a><span class="lineno"> 1571</span>&#160;        <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classcuckoohash__map.html">cuckoohash_map</a>&lt;Key, T, Hash, Pred&gt;;</div>
 <div class="line"><a name="l01572"></a><span class="lineno"> 1572</span>&#160;</div>
 <div class="line"><a name="l01573"></a><span class="lineno"> 1573</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l01577"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a827e61381946c3fbb3e2d8dbeaa87812"> 1577</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a827e61381946c3fbb3e2d8dbeaa87812">const_iterator</a>(<a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>&amp;&amp; it) {</div>
-<div class="line"><a name="l01578"></a><span class="lineno"> 1578</span>&#160;            <span class="keywordflow">if</span> (<span class="keyword">this</span> == &amp;it) {</div>
-<div class="line"><a name="l01579"></a><span class="lineno"> 1579</span>&#160;                <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l01580"></a><span class="lineno"> 1580</span>&#160;            }</div>
-<div class="line"><a name="l01581"></a><span class="lineno"> 1581</span>&#160;            memcpy(<span class="keyword">this</span>, &amp;it, <span class="keyword">sizeof</span>(<a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>));</div>
-<div class="line"><a name="l01582"></a><span class="lineno"> 1582</span>&#160;            it.has_table_lock = <span class="keyword">false</span>;</div>
-<div class="line"><a name="l01583"></a><span class="lineno"> 1583</span>&#160;        }</div>
-<div class="line"><a name="l01584"></a><span class="lineno"> 1584</span>&#160;</div>
-<div class="line"><a name="l01587"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#acd5f76dc0e7da063a5e7586f0728a692"> 1587</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#acd5f76dc0e7da063a5e7586f0728a692">operator=</a>(<a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>&amp;&amp; it) {</div>
-<div class="line"><a name="l01588"></a><span class="lineno"> 1588</span>&#160;            <span class="keywordflow">if</span> (<span class="keyword">this</span> == &amp;it) {</div>
-<div class="line"><a name="l01589"></a><span class="lineno"> 1589</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
-<div class="line"><a name="l01590"></a><span class="lineno"> 1590</span>&#160;            }</div>
-<div class="line"><a name="l01591"></a><span class="lineno"> 1591</span>&#160;            memcpy(<span class="keyword">this</span>, &amp;it, <span class="keyword">sizeof</span>(<a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>));</div>
-<div class="line"><a name="l01592"></a><span class="lineno"> 1592</span>&#160;            it.has_table_lock = <span class="keyword">false</span>;</div>
-<div class="line"><a name="l01593"></a><span class="lineno"> 1593</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
-<div class="line"><a name="l01594"></a><span class="lineno"> 1594</span>&#160;        }</div>
-<div class="line"><a name="l01595"></a><span class="lineno"> 1595</span>&#160;</div>
-<div class="line"><a name="l01599"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#aedb52efd2858b25b7547e93af345c356"> 1599</a></span>&#160;        <span class="keywordtype">void</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html#aedb52efd2858b25b7547e93af345c356">release</a>() {</div>
-<div class="line"><a name="l01600"></a><span class="lineno"> 1600</span>&#160;            <span class="keywordflow">if</span> (has_table_lock) {</div>
-<div class="line"><a name="l01601"></a><span class="lineno"> 1601</span>&#160;                AllUnlocker au(ti_);</div>
-<div class="line"><a name="l01602"></a><span class="lineno"> 1602</span>&#160;                <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::HazardPointerUnsetter</a> hpu;</div>
-<div class="line"><a name="l01603"></a><span class="lineno"> 1603</span>&#160;                has_table_lock = <span class="keyword">false</span>;</div>
-<div class="line"><a name="l01604"></a><span class="lineno"> 1604</span>&#160;            }</div>
-<div class="line"><a name="l01605"></a><span class="lineno"> 1605</span>&#160;        }</div>
-<div class="line"><a name="l01606"></a><span class="lineno"> 1606</span>&#160;</div>
-<div class="line"><a name="l01608"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a0c3f49b7da1c0eee133168f1fc0f8832"> 1608</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a0c3f49b7da1c0eee133168f1fc0f8832">~const_iterator</a>() {</div>
-<div class="line"><a name="l01609"></a><span class="lineno"> 1609</span>&#160;            <a class="code" href="classcuckoohash__map_1_1const__iterator.html#aedb52efd2858b25b7547e93af345c356">release</a>();</div>
-<div class="line"><a name="l01610"></a><span class="lineno"> 1610</span>&#160;        }</div>
-<div class="line"><a name="l01611"></a><span class="lineno"> 1611</span>&#160;</div>
-<div class="line"><a name="l01614"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a7bea48bdd5f1ede1078906bc8ab3af63"> 1614</a></span>&#160;        <span class="keywordtype">bool</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a7bea48bdd5f1ede1078906bc8ab3af63">is_end</a>() {</div>
-<div class="line"><a name="l01615"></a><span class="lineno"> 1615</span>&#160;            <span class="keywordflow">return</span> (index_ == end_pos.first &amp;&amp; slot_ == end_pos.second);</div>
-<div class="line"><a name="l01616"></a><span class="lineno"> 1616</span>&#160;        }</div>
-<div class="line"><a name="l01617"></a><span class="lineno"> 1617</span>&#160;</div>
-<div class="line"><a name="l01620"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a8c43996df3dbf2cf909563c45c096bd1"> 1620</a></span>&#160;        <span class="keywordtype">bool</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a8c43996df3dbf2cf909563c45c096bd1">is_begin</a>() {</div>
-<div class="line"><a name="l01621"></a><span class="lineno"> 1621</span>&#160;            <span class="keywordflow">return</span> (index_ == begin_pos.first &amp;&amp; slot_ == begin_pos.second);</div>
-<div class="line"><a name="l01622"></a><span class="lineno"> 1622</span>&#160;        }</div>
-<div class="line"><a name="l01623"></a><span class="lineno"> 1623</span>&#160;</div>
-<div class="line"><a name="l01624"></a><span class="lineno"> 1624</span>&#160;    <span class="keyword">protected</span>:</div>
-<div class="line"><a name="l01625"></a><span class="lineno"> 1625</span>&#160;        <span class="comment">// For the arrow dereference operator, we return a pointer to a</span></div>
-<div class="line"><a name="l01626"></a><span class="lineno"> 1626</span>&#160;        <span class="comment">// lightweight pair consisting of const references to the key and value</span></div>
-<div class="line"><a name="l01627"></a><span class="lineno"> 1627</span>&#160;        <span class="comment">// under the iterator.</span></div>
-<div class="line"><a name="l01628"></a><span class="lineno"> 1628</span>&#160;        <span class="keyword">typedef</span> std::pair&lt;const Key&amp;, const T&amp;&gt; ref_pair;</div>
-<div class="line"><a name="l01629"></a><span class="lineno"> 1629</span>&#160;        <span class="comment">// Since we can&#39;t initialize a ref_pair before knowing what it points</span></div>
-<div class="line"><a name="l01630"></a><span class="lineno"> 1630</span>&#160;        <span class="comment">// to, we use std::aligned_storage to reserve unititialized space for</span></div>
-<div class="line"><a name="l01631"></a><span class="lineno"> 1631</span>&#160;        <span class="comment">// the object, which we then construct with placement new.</span></div>
-<div class="line"><a name="l01632"></a><span class="lineno"> 1632</span>&#160;        <span class="keyword">typename</span> std::aligned_storage&lt;<span class="keyword">sizeof</span>(ref_pair),</div>
-<div class="line"><a name="l01633"></a><span class="lineno"> 1633</span>&#160;                                      <span class="keyword">alignof</span>(ref_pair)&gt;::type data;</div>
-<div class="line"><a name="l01634"></a><span class="lineno"> 1634</span>&#160;</div>
-<div class="line"><a name="l01635"></a><span class="lineno"> 1635</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l01638"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#ad782571a1b5d85cdcdba3eb74edf40d6"> 1638</a></span>&#160;        <a class="code" href="classcuckoohash__map.html#af38c5d713aee19015c16fb26a2d1f13c">value_type</a> <a class="code" href="classcuckoohash__map_1_1const__iterator.html#ad782571a1b5d85cdcdba3eb74edf40d6">operator*</a>() {</div>
-<div class="line"><a name="l01639"></a><span class="lineno"> 1639</span>&#160;            check_lock();</div>
-<div class="line"><a name="l01640"></a><span class="lineno"> 1640</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#a7bea48bdd5f1ede1078906bc8ab3af63">is_end</a>()) {</div>
-<div class="line"><a name="l01641"></a><span class="lineno"> 1641</span>&#160;                <span class="keywordflow">throw</span> end_dereference;</div>
-<div class="line"><a name="l01642"></a><span class="lineno"> 1642</span>&#160;            }</div>
-<div class="line"><a name="l01643"></a><span class="lineno"> 1643</span>&#160;            assert(ti_-&gt;buckets_[index_].occupied(slot_));</div>
-<div class="line"><a name="l01644"></a><span class="lineno"> 1644</span>&#160;            <span class="keywordflow">return</span> {ti_-&gt;buckets_[index_].key(slot_),</div>
-<div class="line"><a name="l01645"></a><span class="lineno"> 1645</span>&#160;                    ti_-&gt;buckets_[index_].val(slot_)};</div>
-<div class="line"><a name="l01646"></a><span class="lineno"> 1646</span>&#160;        }</div>
-<div class="line"><a name="l01647"></a><span class="lineno"> 1647</span>&#160;</div>
-<div class="line"><a name="l01651"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#adbccaae238f2f8a750a2d0ffef40c4eb"> 1651</a></span>&#160;        ref_pair* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#adbccaae238f2f8a750a2d0ffef40c4eb">operator-&gt;</a>() {</div>
-<div class="line"><a name="l01652"></a><span class="lineno"> 1652</span>&#160;            check_lock();</div>
-<div class="line"><a name="l01653"></a><span class="lineno"> 1653</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#a7bea48bdd5f1ede1078906bc8ab3af63">is_end</a>()) {</div>
-<div class="line"><a name="l01654"></a><span class="lineno"> 1654</span>&#160;                <span class="keywordflow">throw</span> end_dereference;</div>
-<div class="line"><a name="l01655"></a><span class="lineno"> 1655</span>&#160;            }</div>
-<div class="line"><a name="l01656"></a><span class="lineno"> 1656</span>&#160;            assert(ti_-&gt;buckets_[index_].occupied(slot_));</div>
-<div class="line"><a name="l01657"></a><span class="lineno"> 1657</span>&#160;            ref_pair* data_ptr =</div>
-<div class="line"><a name="l01658"></a><span class="lineno"> 1658</span>&#160;                <span class="keyword">static_cast&lt;</span>ref_pair*<span class="keyword">&gt;</span>(<span class="keyword">static_cast&lt;</span><span class="keywordtype">void</span>*<span class="keyword">&gt;</span>(&amp;data));</div>
-<div class="line"><a name="l01659"></a><span class="lineno"> 1659</span>&#160;            <span class="keyword">new</span> (data_ptr) ref_pair(ti_-&gt;buckets_[index_].key(slot_),</div>
-<div class="line"><a name="l01660"></a><span class="lineno"> 1660</span>&#160;                                    ti_-&gt;buckets_[index_].val(slot_));</div>
-<div class="line"><a name="l01661"></a><span class="lineno"> 1661</span>&#160;            <span class="keywordflow">return</span> data_ptr;</div>
-<div class="line"><a name="l01662"></a><span class="lineno"> 1662</span>&#160;        }</div>
-<div class="line"><a name="l01663"></a><span class="lineno"> 1663</span>&#160;</div>
-<div class="line"><a name="l01668"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a0c6ac6dcfca13a16ba6697fedd723c05"> 1668</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a0c6ac6dcfca13a16ba6697fedd723c05">operator++</a>() {</div>
-<div class="line"><a name="l01669"></a><span class="lineno"> 1669</span>&#160;            check_lock();</div>
-<div class="line"><a name="l01670"></a><span class="lineno"> 1670</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#a7bea48bdd5f1ede1078906bc8ab3af63">is_end</a>()) {</div>
-<div class="line"><a name="l01671"></a><span class="lineno"> 1671</span>&#160;                <span class="keywordflow">throw</span> end_increment;</div>
-<div class="line"><a name="l01672"></a><span class="lineno"> 1672</span>&#160;            }</div>
-<div class="line"><a name="l01673"></a><span class="lineno"> 1673</span>&#160;            forward_filled_slot(index_, slot_);</div>
-<div class="line"><a name="l01674"></a><span class="lineno"> 1674</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
-<div class="line"><a name="l01675"></a><span class="lineno"> 1675</span>&#160;        }</div>
-<div class="line"><a name="l01676"></a><span class="lineno"> 1676</span>&#160;</div>
-<div class="line"><a name="l01679"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a8893cca42e1280a3cede09f7555757f3"> 1679</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a8893cca42e1280a3cede09f7555757f3">operator++</a>(<span class="keywordtype">int</span>) {</div>
-<div class="line"><a name="l01680"></a><span class="lineno"> 1680</span>&#160;            check_lock();</div>
-<div class="line"><a name="l01681"></a><span class="lineno"> 1681</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#a7bea48bdd5f1ede1078906bc8ab3af63">is_end</a>()) {</div>
-<div class="line"><a name="l01682"></a><span class="lineno"> 1682</span>&#160;                <span class="keywordflow">throw</span> end_increment;</div>
-<div class="line"><a name="l01683"></a><span class="lineno"> 1683</span>&#160;            }</div>
-<div class="line"><a name="l01684"></a><span class="lineno"> 1684</span>&#160;            forward_filled_slot(index_, slot_);</div>
-<div class="line"><a name="l01685"></a><span class="lineno"> 1685</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
-<div class="line"><a name="l01686"></a><span class="lineno"> 1686</span>&#160;        }</div>
-<div class="line"><a name="l01687"></a><span class="lineno"> 1687</span>&#160;</div>
-<div class="line"><a name="l01692"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a476ac6df9a842b3ff8d84ef223fb71be"> 1692</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a476ac6df9a842b3ff8d84ef223fb71be">operator--</a>() {</div>
-<div class="line"><a name="l01693"></a><span class="lineno"> 1693</span>&#160;            check_lock();</div>
-<div class="line"><a name="l01694"></a><span class="lineno"> 1694</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#a8c43996df3dbf2cf909563c45c096bd1">is_begin</a>()) {</div>
-<div class="line"><a name="l01695"></a><span class="lineno"> 1695</span>&#160;                <span class="keywordflow">throw</span> begin_decrement;</div>
-<div class="line"><a name="l01696"></a><span class="lineno"> 1696</span>&#160;            }</div>
-<div class="line"><a name="l01697"></a><span class="lineno"> 1697</span>&#160;            backward_filled_slot(index_, slot_);</div>
-<div class="line"><a name="l01698"></a><span class="lineno"> 1698</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
-<div class="line"><a name="l01699"></a><span class="lineno"> 1699</span>&#160;        }</div>
-<div class="line"><a name="l01700"></a><span class="lineno"> 1700</span>&#160;</div>
-<div class="line"><a name="l01703"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#af075fde729c00dccd2f24af1dd8679fa"> 1703</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#af075fde729c00dccd2f24af1dd8679fa">operator--</a>(<span class="keywordtype">int</span>) {</div>
-<div class="line"><a name="l01704"></a><span class="lineno"> 1704</span>&#160;            check_lock();</div>
-<div class="line"><a name="l01705"></a><span class="lineno"> 1705</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#a8c43996df3dbf2cf909563c45c096bd1">is_begin</a>()) {</div>
-<div class="line"><a name="l01706"></a><span class="lineno"> 1706</span>&#160;                <span class="keywordflow">throw</span> begin_decrement;</div>
-<div class="line"><a name="l01707"></a><span class="lineno"> 1707</span>&#160;            }</div>
-<div class="line"><a name="l01708"></a><span class="lineno"> 1708</span>&#160;            backward_filled_slot(index_, slot_);</div>
-<div class="line"><a name="l01709"></a><span class="lineno"> 1709</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
-<div class="line"><a name="l01710"></a><span class="lineno"> 1710</span>&#160;        }</div>
-<div class="line"><a name="l01711"></a><span class="lineno"> 1711</span>&#160;</div>
-<div class="line"><a name="l01712"></a><span class="lineno"> 1712</span>&#160;    <span class="keyword">protected</span>:</div>
-<div class="line"><a name="l01713"></a><span class="lineno"> 1713</span>&#160;        <span class="comment">// A pointer to the associated hashmap</span></div>
-<div class="line"><a name="l01714"></a><span class="lineno"> 1714</span>&#160;        <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;</a>* hm_;</div>
-<div class="line"><a name="l01715"></a><span class="lineno"> 1715</span>&#160;</div>
-<div class="line"><a name="l01716"></a><span class="lineno"> 1716</span>&#160;        <span class="comment">// The hashmap&#39;s table info</span></div>
-<div class="line"><a name="l01717"></a><span class="lineno"> 1717</span>&#160;        <span class="keyword">typename</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::TableInfo</a>* ti_;</div>
-<div class="line"><a name="l01718"></a><span class="lineno"> 1718</span>&#160;</div>
-<div class="line"><a name="l01719"></a><span class="lineno"> 1719</span>&#160;        <span class="comment">// Indicates whether the iterator has the table lock</span></div>
-<div class="line"><a name="l01720"></a><span class="lineno"> 1720</span>&#160;        <span class="keywordtype">bool</span> has_table_lock;</div>
-<div class="line"><a name="l01721"></a><span class="lineno"> 1721</span>&#160;</div>
-<div class="line"><a name="l01722"></a><span class="lineno"> 1722</span>&#160;        <span class="comment">// Stores the bucket and slot of the end iterator, which is one past the</span></div>
-<div class="line"><a name="l01723"></a><span class="lineno"> 1723</span>&#160;        <span class="comment">// end of the table. It is initialized during the iterator&#39;s</span></div>
-<div class="line"><a name="l01724"></a><span class="lineno"> 1724</span>&#160;        <span class="comment">// constructor.</span></div>
-<div class="line"><a name="l01725"></a><span class="lineno"> 1725</span>&#160;        std::pair&lt;size_t, size_t&gt; end_pos;</div>
-<div class="line"><a name="l01726"></a><span class="lineno"> 1726</span>&#160;</div>
-<div class="line"><a name="l01727"></a><span class="lineno"> 1727</span>&#160;        <span class="comment">// Stotres the bucket and slot of the begin iterator, which is the first</span></div>
-<div class="line"><a name="l01728"></a><span class="lineno"> 1728</span>&#160;        <span class="comment">// filled position in the table. It is initialized during the iterator&#39;s</span></div>
-<div class="line"><a name="l01729"></a><span class="lineno"> 1729</span>&#160;        <span class="comment">// constructor. If the table is empty, it points past the end of the</span></div>
-<div class="line"><a name="l01730"></a><span class="lineno"> 1730</span>&#160;        <span class="comment">// table, to the same position as end_pos.</span></div>
-<div class="line"><a name="l01731"></a><span class="lineno"> 1731</span>&#160;        std::pair&lt;size_t, size_t&gt; begin_pos;</div>
-<div class="line"><a name="l01732"></a><span class="lineno"> 1732</span>&#160;</div>
-<div class="line"><a name="l01733"></a><span class="lineno"> 1733</span>&#160;        <span class="comment">// The bucket index of the item being pointed to</span></div>
-<div class="line"><a name="l01734"></a><span class="lineno"> 1734</span>&#160;        <span class="keywordtype">size_t</span> index_;</div>
-<div class="line"><a name="l01735"></a><span class="lineno"> 1735</span>&#160;</div>
-<div class="line"><a name="l01736"></a><span class="lineno"> 1736</span>&#160;        <span class="comment">// The slot in the bucket of the item being pointed to</span></div>
-<div class="line"><a name="l01737"></a><span class="lineno"> 1737</span>&#160;        <span class="keywordtype">size_t</span> slot_;</div>
-<div class="line"><a name="l01738"></a><span class="lineno"> 1738</span>&#160;</div>
-<div class="line"><a name="l01739"></a><span class="lineno"> 1739</span>&#160;        <span class="comment">// set_end sets the given index and slot to one past the last position</span></div>
-<div class="line"><a name="l01740"></a><span class="lineno"> 1740</span>&#160;        <span class="comment">// in the table.</span></div>
-<div class="line"><a name="l01741"></a><span class="lineno"> 1741</span>&#160;        <span class="keywordtype">void</span> set_end(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
-<div class="line"><a name="l01742"></a><span class="lineno"> 1742</span>&#160;            index = hm_-&gt;bucket_count();</div>
-<div class="line"><a name="l01743"></a><span class="lineno"> 1743</span>&#160;            slot = 0;</div>
-<div class="line"><a name="l01744"></a><span class="lineno"> 1744</span>&#160;        }</div>
-<div class="line"><a name="l01745"></a><span class="lineno"> 1745</span>&#160;</div>
-<div class="line"><a name="l01746"></a><span class="lineno"> 1746</span>&#160;        <span class="comment">// set_begin sets the given pair to the position of the first element in</span></div>
-<div class="line"><a name="l01747"></a><span class="lineno"> 1747</span>&#160;        <span class="comment">// the table.</span></div>
-<div class="line"><a name="l01748"></a><span class="lineno"> 1748</span>&#160;        <span class="keywordtype">void</span> set_begin(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
-<div class="line"><a name="l01749"></a><span class="lineno"> 1749</span>&#160;            <span class="keywordflow">if</span> (hm_-&gt;empty()) {</div>
-<div class="line"><a name="l01750"></a><span class="lineno"> 1750</span>&#160;                set_end(index, slot);</div>
-<div class="line"><a name="l01751"></a><span class="lineno"> 1751</span>&#160;            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l01752"></a><span class="lineno"> 1752</span>&#160;                index = slot = 0;</div>
-<div class="line"><a name="l01753"></a><span class="lineno"> 1753</span>&#160;                <span class="comment">// There must be a filled slot somewhere in the table</span></div>
-<div class="line"><a name="l01754"></a><span class="lineno"> 1754</span>&#160;                <span class="keywordflow">if</span> (!ti_-&gt;buckets_[index].occupied(slot)) {</div>
-<div class="line"><a name="l01755"></a><span class="lineno"> 1755</span>&#160;                    forward_filled_slot(index, slot);</div>
-<div class="line"><a name="l01756"></a><span class="lineno"> 1756</span>&#160;                    assert(!<a class="code" href="classcuckoohash__map_1_1const__iterator.html#a7bea48bdd5f1ede1078906bc8ab3af63">is_end</a>());</div>
-<div class="line"><a name="l01757"></a><span class="lineno"> 1757</span>&#160;                }</div>
-<div class="line"><a name="l01758"></a><span class="lineno"> 1758</span>&#160;            }</div>
-<div class="line"><a name="l01759"></a><span class="lineno"> 1759</span>&#160;        }</div>
-<div class="line"><a name="l01760"></a><span class="lineno"> 1760</span>&#160;</div>
-<div class="line"><a name="l01761"></a><span class="lineno"> 1761</span>&#160;        <span class="comment">// forward_slot moves the given index and slot to the next available</span></div>
-<div class="line"><a name="l01762"></a><span class="lineno"> 1762</span>&#160;        <span class="comment">// slot in the forwards direction. It returns true if it successfully</span></div>
-<div class="line"><a name="l01763"></a><span class="lineno"> 1763</span>&#160;        <span class="comment">// advances, and false if it has reached the end of the table, in which</span></div>
-<div class="line"><a name="l01764"></a><span class="lineno"> 1764</span>&#160;        <span class="comment">// case it sets index and slot to end_pos.</span></div>
-<div class="line"><a name="l01765"></a><span class="lineno"> 1765</span>&#160;        <span class="keywordtype">bool</span> forward_slot(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
-<div class="line"><a name="l01766"></a><span class="lineno"> 1766</span>&#160;            <span class="keywordflow">if</span> (slot &lt; SLOT_PER_BUCKET-1) {</div>
-<div class="line"><a name="l01767"></a><span class="lineno"> 1767</span>&#160;                ++slot;</div>
-<div class="line"><a name="l01768"></a><span class="lineno"> 1768</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
-<div class="line"><a name="l01769"></a><span class="lineno"> 1769</span>&#160;            } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (index &lt; hm_-&gt;<a class="code" href="classcuckoohash__map.html#a0a3f7e2bb8786eaaed3c1b18e8953f49">bucket_count</a>()-1) {</div>
-<div class="line"><a name="l01770"></a><span class="lineno"> 1770</span>&#160;                ++index;</div>
-<div class="line"><a name="l01771"></a><span class="lineno"> 1771</span>&#160;                slot = 0;</div>
-<div class="line"><a name="l01772"></a><span class="lineno"> 1772</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
-<div class="line"><a name="l01773"></a><span class="lineno"> 1773</span>&#160;            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l01774"></a><span class="lineno"> 1774</span>&#160;                set_end(index, slot);</div>
-<div class="line"><a name="l01775"></a><span class="lineno"> 1775</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><a name="l01776"></a><span class="lineno"> 1776</span>&#160;            }</div>
-<div class="line"><a name="l01777"></a><span class="lineno"> 1777</span>&#160;        }</div>
-<div class="line"><a name="l01778"></a><span class="lineno"> 1778</span>&#160;</div>
-<div class="line"><a name="l01779"></a><span class="lineno"> 1779</span>&#160;        <span class="comment">// backward_slot moves index and slot to the next available slot in the</span></div>
-<div class="line"><a name="l01780"></a><span class="lineno"> 1780</span>&#160;        <span class="comment">// backwards direction. It returns true if it successfully advances, and</span></div>
-<div class="line"><a name="l01781"></a><span class="lineno"> 1781</span>&#160;        <span class="comment">// false if it has reached the beginning of the table, setting the index</span></div>
-<div class="line"><a name="l01782"></a><span class="lineno"> 1782</span>&#160;        <span class="comment">// and slot back to begin_pos.</span></div>
-<div class="line"><a name="l01783"></a><span class="lineno"> 1783</span>&#160;        <span class="keywordtype">bool</span> backward_slot(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
-<div class="line"><a name="l01784"></a><span class="lineno"> 1784</span>&#160;            <span class="keywordflow">if</span> (slot &gt; 0) {</div>
-<div class="line"><a name="l01785"></a><span class="lineno"> 1785</span>&#160;                --slot;</div>
-<div class="line"><a name="l01786"></a><span class="lineno"> 1786</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
-<div class="line"><a name="l01787"></a><span class="lineno"> 1787</span>&#160;            } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (index &gt; 0) {</div>
-<div class="line"><a name="l01788"></a><span class="lineno"> 1788</span>&#160;                --index;</div>
-<div class="line"><a name="l01789"></a><span class="lineno"> 1789</span>&#160;                slot = SLOT_PER_BUCKET-1;</div>
-<div class="line"><a name="l01790"></a><span class="lineno"> 1790</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
-<div class="line"><a name="l01791"></a><span class="lineno"> 1791</span>&#160;            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l01792"></a><span class="lineno"> 1792</span>&#160;                set_begin(index, slot);</div>
-<div class="line"><a name="l01793"></a><span class="lineno"> 1793</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><a name="l01794"></a><span class="lineno"> 1794</span>&#160;            }</div>
-<div class="line"><a name="l01795"></a><span class="lineno"> 1795</span>&#160;        }</div>
-<div class="line"><a name="l01796"></a><span class="lineno"> 1796</span>&#160;</div>
-<div class="line"><a name="l01797"></a><span class="lineno"> 1797</span>&#160;        <span class="comment">// forward_filled_slot moves index and slot to the next filled slot.</span></div>
-<div class="line"><a name="l01798"></a><span class="lineno"> 1798</span>&#160;        <span class="keywordtype">bool</span> forward_filled_slot(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
-<div class="line"><a name="l01799"></a><span class="lineno"> 1799</span>&#160;            <span class="keywordtype">bool</span> res = forward_slot(index, slot);</div>
-<div class="line"><a name="l01800"></a><span class="lineno"> 1800</span>&#160;            <span class="keywordflow">if</span> (!res) {</div>
-<div class="line"><a name="l01801"></a><span class="lineno"> 1801</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><a name="l01802"></a><span class="lineno"> 1802</span>&#160;            }</div>
-<div class="line"><a name="l01803"></a><span class="lineno"> 1803</span>&#160;            <span class="keywordflow">while</span> (!ti_-&gt;buckets_[index].occupied(slot)) {</div>
-<div class="line"><a name="l01804"></a><span class="lineno"> 1804</span>&#160;                res = forward_slot(index, slot);</div>
-<div class="line"><a name="l01805"></a><span class="lineno"> 1805</span>&#160;                <span class="keywordflow">if</span> (!res) {</div>
-<div class="line"><a name="l01806"></a><span class="lineno"> 1806</span>&#160;                    <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><a name="l01807"></a><span class="lineno"> 1807</span>&#160;                }</div>
-<div class="line"><a name="l01808"></a><span class="lineno"> 1808</span>&#160;            }</div>
-<div class="line"><a name="l01809"></a><span class="lineno"> 1809</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
-<div class="line"><a name="l01810"></a><span class="lineno"> 1810</span>&#160;        }</div>
-<div class="line"><a name="l01811"></a><span class="lineno"> 1811</span>&#160;</div>
-<div class="line"><a name="l01812"></a><span class="lineno"> 1812</span>&#160;        <span class="comment">// backward_filled_slot moves index and slot to the previous filled</span></div>
-<div class="line"><a name="l01813"></a><span class="lineno"> 1813</span>&#160;        <span class="comment">// slot.</span></div>
-<div class="line"><a name="l01814"></a><span class="lineno"> 1814</span>&#160;        <span class="keywordtype">bool</span> backward_filled_slot(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
-<div class="line"><a name="l01815"></a><span class="lineno"> 1815</span>&#160;            <span class="keywordtype">bool</span> res = backward_slot(index, slot);</div>
-<div class="line"><a name="l01816"></a><span class="lineno"> 1816</span>&#160;            <span class="keywordflow">if</span> (!res) {</div>
-<div class="line"><a name="l01817"></a><span class="lineno"> 1817</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><a name="l01818"></a><span class="lineno"> 1818</span>&#160;            }</div>
-<div class="line"><a name="l01819"></a><span class="lineno"> 1819</span>&#160;            <span class="keywordflow">while</span> (!ti_-&gt;buckets_[index].occupied(slot)) {</div>
-<div class="line"><a name="l01820"></a><span class="lineno"> 1820</span>&#160;                res = backward_slot(index, slot);</div>
-<div class="line"><a name="l01821"></a><span class="lineno"> 1821</span>&#160;                <span class="keywordflow">if</span> (!res) {</div>
-<div class="line"><a name="l01822"></a><span class="lineno"> 1822</span>&#160;                    <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><a name="l01823"></a><span class="lineno"> 1823</span>&#160;                }</div>
-<div class="line"><a name="l01824"></a><span class="lineno"> 1824</span>&#160;            }</div>
-<div class="line"><a name="l01825"></a><span class="lineno"> 1825</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
-<div class="line"><a name="l01826"></a><span class="lineno"> 1826</span>&#160;        }</div>
-<div class="line"><a name="l01827"></a><span class="lineno"> 1827</span>&#160;</div>
-<div class="line"><a name="l01828"></a><span class="lineno"> 1828</span>&#160;</div>
-<div class="line"><a name="l01829"></a><span class="lineno"> 1829</span>&#160;        <span class="comment">// check_lock throws an exception if the iterator doesn&#39;t have a</span></div>
-<div class="line"><a name="l01830"></a><span class="lineno"> 1830</span>&#160;        <span class="comment">// lock.</span></div>
-<div class="line"><a name="l01831"></a><span class="lineno"> 1831</span>&#160;        <span class="keywordtype">void</span> check_lock() {</div>
-<div class="line"><a name="l01832"></a><span class="lineno"> 1832</span>&#160;            <span class="keywordflow">if</span> (!has_table_lock) {</div>
-<div class="line"><a name="l01833"></a><span class="lineno"> 1833</span>&#160;                <span class="keywordflow">throw</span> std::runtime_error(</div>
-<div class="line"><a name="l01834"></a><span class="lineno"> 1834</span>&#160;                    <span class="stringliteral">&quot;Iterator does not have a lock on the table&quot;</span>);</div>
-<div class="line"><a name="l01835"></a><span class="lineno"> 1835</span>&#160;            }</div>
-<div class="line"><a name="l01836"></a><span class="lineno"> 1836</span>&#160;        }</div>
-<div class="line"><a name="l01837"></a><span class="lineno"> 1837</span>&#160;</div>
-<div class="line"><a name="l01838"></a><span class="lineno"> 1838</span>&#160;        <span class="comment">// Other error messages</span></div>
-<div class="line"><a name="l01839"></a><span class="lineno"> 1839</span>&#160;        <span class="keyword">static</span> <span class="keyword">const</span> std::out_of_range end_dereference;</div>
-<div class="line"><a name="l01840"></a><span class="lineno"> 1840</span>&#160;        <span class="keyword">static</span> <span class="keyword">const</span> std::out_of_range end_increment;</div>
-<div class="line"><a name="l01841"></a><span class="lineno"> 1841</span>&#160;        <span class="keyword">static</span> <span class="keyword">const</span> std::out_of_range begin_decrement;</div>
-<div class="line"><a name="l01842"></a><span class="lineno"> 1842</span>&#160;    };</div>
-<div class="line"><a name="l01843"></a><span class="lineno"> 1843</span>&#160;</div>
-<div class="line"><a name="l01844"></a><span class="lineno"> 1844</span>&#160;</div>
-<div class="line"><a name="l01848"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1iterator.html"> 1848</a></span>&#160;    <span class="keyword">class </span><a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a> : <span class="keyword">public</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a> {</div>
-<div class="line"><a name="l01849"></a><span class="lineno"> 1849</span>&#160;        <span class="comment">// This constructor does the same thing as the private const_iterator</span></div>
-<div class="line"><a name="l01850"></a><span class="lineno"> 1850</span>&#160;        <span class="comment">// one.</span></div>
-<div class="line"><a name="l01851"></a><span class="lineno"> 1851</span>&#160;        <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>(<a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;</a>* hm, <span class="keywordtype">bool</span> is_end)</div>
-<div class="line"><a name="l01852"></a><span class="lineno"> 1852</span>&#160;            : <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(hm, is_end) {}</div>
-<div class="line"><a name="l01853"></a><span class="lineno"> 1853</span>&#160;</div>
-<div class="line"><a name="l01854"></a><span class="lineno"> 1854</span>&#160;        <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classcuckoohash__map.html">cuckoohash_map</a>&lt;Key, T, Hash, Pred&gt;;</div>
+<div class="line"><a name="l01577"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a827e61381946c3fbb3e2d8dbeaa87812"> 1577</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a827e61381946c3fbb3e2d8dbeaa87812">const_iterator</a>(<a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>&amp;&amp; it)</div>
+<div class="line"><a name="l01578"></a><span class="lineno"> 1578</span>&#160;            : hm_(it.hm_) {</div>
+<div class="line"><a name="l01579"></a><span class="lineno"> 1579</span>&#160;            <span class="keywordflow">if</span> (<span class="keyword">this</span> == &amp;it) {</div>
+<div class="line"><a name="l01580"></a><span class="lineno"> 1580</span>&#160;                <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l01581"></a><span class="lineno"> 1581</span>&#160;            }</div>
+<div class="line"><a name="l01582"></a><span class="lineno"> 1582</span>&#160;            memcpy(<span class="keyword">this</span>, &amp;it, <span class="keyword">sizeof</span>(<a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>));</div>
+<div class="line"><a name="l01583"></a><span class="lineno"> 1583</span>&#160;            it.has_table_lock = <span class="keyword">false</span>;</div>
+<div class="line"><a name="l01584"></a><span class="lineno"> 1584</span>&#160;        }</div>
+<div class="line"><a name="l01585"></a><span class="lineno"> 1585</span>&#160;</div>
+<div class="line"><a name="l01588"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#acd5f76dc0e7da063a5e7586f0728a692"> 1588</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#acd5f76dc0e7da063a5e7586f0728a692">operator=</a>(<a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>&amp;&amp; it) {</div>
+<div class="line"><a name="l01589"></a><span class="lineno"> 1589</span>&#160;            <span class="keywordflow">if</span> (<span class="keyword">this</span> == &amp;it) {</div>
+<div class="line"><a name="l01590"></a><span class="lineno"> 1590</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
+<div class="line"><a name="l01591"></a><span class="lineno"> 1591</span>&#160;            }</div>
+<div class="line"><a name="l01592"></a><span class="lineno"> 1592</span>&#160;            memcpy(<span class="keyword">this</span>, &amp;it, <span class="keyword">sizeof</span>(<a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>));</div>
+<div class="line"><a name="l01593"></a><span class="lineno"> 1593</span>&#160;            it.has_table_lock = <span class="keyword">false</span>;</div>
+<div class="line"><a name="l01594"></a><span class="lineno"> 1594</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
+<div class="line"><a name="l01595"></a><span class="lineno"> 1595</span>&#160;        }</div>
+<div class="line"><a name="l01596"></a><span class="lineno"> 1596</span>&#160;</div>
+<div class="line"><a name="l01600"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#aedb52efd2858b25b7547e93af345c356"> 1600</a></span>&#160;        <span class="keywordtype">void</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html#aedb52efd2858b25b7547e93af345c356">release</a>() {</div>
+<div class="line"><a name="l01601"></a><span class="lineno"> 1601</span>&#160;            <span class="keywordflow">if</span> (has_table_lock) {</div>
+<div class="line"><a name="l01602"></a><span class="lineno"> 1602</span>&#160;                AllUnlocker au(ti_);</div>
+<div class="line"><a name="l01603"></a><span class="lineno"> 1603</span>&#160;                <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::HazardPointerUnsetter</a> hpu;</div>
+<div class="line"><a name="l01604"></a><span class="lineno"> 1604</span>&#160;                has_table_lock = <span class="keyword">false</span>;</div>
+<div class="line"><a name="l01605"></a><span class="lineno"> 1605</span>&#160;            }</div>
+<div class="line"><a name="l01606"></a><span class="lineno"> 1606</span>&#160;        }</div>
+<div class="line"><a name="l01607"></a><span class="lineno"> 1607</span>&#160;</div>
+<div class="line"><a name="l01609"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a0c3f49b7da1c0eee133168f1fc0f8832"> 1609</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a0c3f49b7da1c0eee133168f1fc0f8832">~const_iterator</a>() {</div>
+<div class="line"><a name="l01610"></a><span class="lineno"> 1610</span>&#160;            <a class="code" href="classcuckoohash__map_1_1const__iterator.html#aedb52efd2858b25b7547e93af345c356">release</a>();</div>
+<div class="line"><a name="l01611"></a><span class="lineno"> 1611</span>&#160;        }</div>
+<div class="line"><a name="l01612"></a><span class="lineno"> 1612</span>&#160;</div>
+<div class="line"><a name="l01615"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798"> 1615</a></span>&#160;        <span class="keywordtype">bool</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798">is_end</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a name="l01616"></a><span class="lineno"> 1616</span>&#160;            <span class="keywordflow">return</span> (index_ == end_pos.first &amp;&amp; slot_ == end_pos.second);</div>
+<div class="line"><a name="l01617"></a><span class="lineno"> 1617</span>&#160;        }</div>
+<div class="line"><a name="l01618"></a><span class="lineno"> 1618</span>&#160;</div>
+<div class="line"><a name="l01621"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#adc247eac6dc0ef114ee345a00e40d4a0"> 1621</a></span>&#160;        <span class="keywordtype">bool</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html#adc247eac6dc0ef114ee345a00e40d4a0">is_begin</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a name="l01622"></a><span class="lineno"> 1622</span>&#160;            <span class="keywordflow">return</span> (index_ == begin_pos.first &amp;&amp; slot_ == begin_pos.second);</div>
+<div class="line"><a name="l01623"></a><span class="lineno"> 1623</span>&#160;        }</div>
+<div class="line"><a name="l01624"></a><span class="lineno"> 1624</span>&#160;</div>
+<div class="line"><a name="l01625"></a><span class="lineno"> 1625</span>&#160;    <span class="keyword">protected</span>:</div>
+<div class="line"><a name="l01626"></a><span class="lineno"> 1626</span>&#160;        <span class="comment">// For the arrow dereference operator, we return a pointer to a</span></div>
+<div class="line"><a name="l01627"></a><span class="lineno"> 1627</span>&#160;        <span class="comment">// lightweight pair consisting of const references to the key and value</span></div>
+<div class="line"><a name="l01628"></a><span class="lineno"> 1628</span>&#160;        <span class="comment">// under the iterator.</span></div>
+<div class="line"><a name="l01629"></a><span class="lineno"> 1629</span>&#160;        <span class="keyword">typedef</span> std::pair&lt;const Key&amp;, const T&amp;&gt; ref_pair;</div>
+<div class="line"><a name="l01630"></a><span class="lineno"> 1630</span>&#160;        <span class="comment">// Since we can&#39;t initialize a ref_pair before knowing what it points</span></div>
+<div class="line"><a name="l01631"></a><span class="lineno"> 1631</span>&#160;        <span class="comment">// to, we use std::aligned_storage to reserve unititialized space for</span></div>
+<div class="line"><a name="l01632"></a><span class="lineno"> 1632</span>&#160;        <span class="comment">// the object, which we then construct with placement new. Since this</span></div>
+<div class="line"><a name="l01633"></a><span class="lineno"> 1633</span>&#160;        <span class="comment">// isn&#39;t really part of the logical iterator state, we make it mutable.</span></div>
+<div class="line"><a name="l01634"></a><span class="lineno"> 1634</span>&#160;        <span class="keyword">mutable</span> <span class="keyword">typename</span> std::aligned_storage&lt;<span class="keyword">sizeof</span>(ref_pair),</div>
+<div class="line"><a name="l01635"></a><span class="lineno"> 1635</span>&#160;                                              <span class="keyword">alignof</span>(ref_pair)&gt;::type data;</div>
+<div class="line"><a name="l01636"></a><span class="lineno"> 1636</span>&#160;</div>
+<div class="line"><a name="l01637"></a><span class="lineno"> 1637</span>&#160;    <span class="keyword">public</span>:</div>
+<div class="line"><a name="l01640"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a5344b8c23c86e4b1710bef23548839d6"> 1640</a></span>&#160;        <a class="code" href="classcuckoohash__map.html#af38c5d713aee19015c16fb26a2d1f13c">value_type</a> <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a5344b8c23c86e4b1710bef23548839d6">operator*</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a name="l01641"></a><span class="lineno"> 1641</span>&#160;            check_lock();</div>
+<div class="line"><a name="l01642"></a><span class="lineno"> 1642</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798">is_end</a>()) {</div>
+<div class="line"><a name="l01643"></a><span class="lineno"> 1643</span>&#160;                <span class="keywordflow">throw</span> end_dereference;</div>
+<div class="line"><a name="l01644"></a><span class="lineno"> 1644</span>&#160;            }</div>
+<div class="line"><a name="l01645"></a><span class="lineno"> 1645</span>&#160;            assert(ti_-&gt;buckets_[index_].occupied(slot_));</div>
+<div class="line"><a name="l01646"></a><span class="lineno"> 1646</span>&#160;            <span class="keywordflow">return</span> {ti_-&gt;buckets_[index_].key(slot_),</div>
+<div class="line"><a name="l01647"></a><span class="lineno"> 1647</span>&#160;                    ti_-&gt;buckets_[index_].val(slot_)};</div>
+<div class="line"><a name="l01648"></a><span class="lineno"> 1648</span>&#160;        }</div>
+<div class="line"><a name="l01649"></a><span class="lineno"> 1649</span>&#160;</div>
+<div class="line"><a name="l01653"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a3a4fc6fc11d3157a25bcbe0d0c6b9e6e"> 1653</a></span>&#160;        ref_pair* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a3a4fc6fc11d3157a25bcbe0d0c6b9e6e">operator-&gt;</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a name="l01654"></a><span class="lineno"> 1654</span>&#160;            check_lock();</div>
+<div class="line"><a name="l01655"></a><span class="lineno"> 1655</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798">is_end</a>()) {</div>
+<div class="line"><a name="l01656"></a><span class="lineno"> 1656</span>&#160;                <span class="keywordflow">throw</span> end_dereference;</div>
+<div class="line"><a name="l01657"></a><span class="lineno"> 1657</span>&#160;            }</div>
+<div class="line"><a name="l01658"></a><span class="lineno"> 1658</span>&#160;            assert(ti_-&gt;buckets_[index_].occupied(slot_));</div>
+<div class="line"><a name="l01659"></a><span class="lineno"> 1659</span>&#160;            ref_pair* data_ptr =</div>
+<div class="line"><a name="l01660"></a><span class="lineno"> 1660</span>&#160;                <span class="keyword">static_cast&lt;</span>ref_pair*<span class="keyword">&gt;</span>(<span class="keyword">static_cast&lt;</span><span class="keywordtype">void</span>*<span class="keyword">&gt;</span>(&amp;data));</div>
+<div class="line"><a name="l01661"></a><span class="lineno"> 1661</span>&#160;            <span class="keyword">new</span> (data_ptr) ref_pair(ti_-&gt;buckets_[index_].key(slot_),</div>
+<div class="line"><a name="l01662"></a><span class="lineno"> 1662</span>&#160;                                    ti_-&gt;buckets_[index_].val(slot_));</div>
+<div class="line"><a name="l01663"></a><span class="lineno"> 1663</span>&#160;            <span class="keywordflow">return</span> data_ptr;</div>
+<div class="line"><a name="l01664"></a><span class="lineno"> 1664</span>&#160;        }</div>
+<div class="line"><a name="l01665"></a><span class="lineno"> 1665</span>&#160;</div>
+<div class="line"><a name="l01670"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a0c6ac6dcfca13a16ba6697fedd723c05"> 1670</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a0c6ac6dcfca13a16ba6697fedd723c05">operator++</a>() {</div>
+<div class="line"><a name="l01671"></a><span class="lineno"> 1671</span>&#160;            check_lock();</div>
+<div class="line"><a name="l01672"></a><span class="lineno"> 1672</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798">is_end</a>()) {</div>
+<div class="line"><a name="l01673"></a><span class="lineno"> 1673</span>&#160;                <span class="keywordflow">throw</span> end_increment;</div>
+<div class="line"><a name="l01674"></a><span class="lineno"> 1674</span>&#160;            }</div>
+<div class="line"><a name="l01675"></a><span class="lineno"> 1675</span>&#160;            forward_filled_slot(index_, slot_);</div>
+<div class="line"><a name="l01676"></a><span class="lineno"> 1676</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
+<div class="line"><a name="l01677"></a><span class="lineno"> 1677</span>&#160;        }</div>
+<div class="line"><a name="l01678"></a><span class="lineno"> 1678</span>&#160;</div>
+<div class="line"><a name="l01681"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a8893cca42e1280a3cede09f7555757f3"> 1681</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a8893cca42e1280a3cede09f7555757f3">operator++</a>(<span class="keywordtype">int</span>) {</div>
+<div class="line"><a name="l01682"></a><span class="lineno"> 1682</span>&#160;            check_lock();</div>
+<div class="line"><a name="l01683"></a><span class="lineno"> 1683</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798">is_end</a>()) {</div>
+<div class="line"><a name="l01684"></a><span class="lineno"> 1684</span>&#160;                <span class="keywordflow">throw</span> end_increment;</div>
+<div class="line"><a name="l01685"></a><span class="lineno"> 1685</span>&#160;            }</div>
+<div class="line"><a name="l01686"></a><span class="lineno"> 1686</span>&#160;            forward_filled_slot(index_, slot_);</div>
+<div class="line"><a name="l01687"></a><span class="lineno"> 1687</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
+<div class="line"><a name="l01688"></a><span class="lineno"> 1688</span>&#160;        }</div>
+<div class="line"><a name="l01689"></a><span class="lineno"> 1689</span>&#160;</div>
+<div class="line"><a name="l01694"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#a476ac6df9a842b3ff8d84ef223fb71be"> 1694</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#a476ac6df9a842b3ff8d84ef223fb71be">operator--</a>() {</div>
+<div class="line"><a name="l01695"></a><span class="lineno"> 1695</span>&#160;            check_lock();</div>
+<div class="line"><a name="l01696"></a><span class="lineno"> 1696</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#adc247eac6dc0ef114ee345a00e40d4a0">is_begin</a>()) {</div>
+<div class="line"><a name="l01697"></a><span class="lineno"> 1697</span>&#160;                <span class="keywordflow">throw</span> begin_decrement;</div>
+<div class="line"><a name="l01698"></a><span class="lineno"> 1698</span>&#160;            }</div>
+<div class="line"><a name="l01699"></a><span class="lineno"> 1699</span>&#160;            backward_filled_slot(index_, slot_);</div>
+<div class="line"><a name="l01700"></a><span class="lineno"> 1700</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
+<div class="line"><a name="l01701"></a><span class="lineno"> 1701</span>&#160;        }</div>
+<div class="line"><a name="l01702"></a><span class="lineno"> 1702</span>&#160;</div>
+<div class="line"><a name="l01705"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1const__iterator.html#af075fde729c00dccd2f24af1dd8679fa"> 1705</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>* <a class="code" href="classcuckoohash__map_1_1const__iterator.html#af075fde729c00dccd2f24af1dd8679fa">operator--</a>(<span class="keywordtype">int</span>) {</div>
+<div class="line"><a name="l01706"></a><span class="lineno"> 1706</span>&#160;            check_lock();</div>
+<div class="line"><a name="l01707"></a><span class="lineno"> 1707</span>&#160;            <span class="keywordflow">if</span> (<a class="code" href="classcuckoohash__map_1_1const__iterator.html#adc247eac6dc0ef114ee345a00e40d4a0">is_begin</a>()) {</div>
+<div class="line"><a name="l01708"></a><span class="lineno"> 1708</span>&#160;                <span class="keywordflow">throw</span> begin_decrement;</div>
+<div class="line"><a name="l01709"></a><span class="lineno"> 1709</span>&#160;            }</div>
+<div class="line"><a name="l01710"></a><span class="lineno"> 1710</span>&#160;            backward_filled_slot(index_, slot_);</div>
+<div class="line"><a name="l01711"></a><span class="lineno"> 1711</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
+<div class="line"><a name="l01712"></a><span class="lineno"> 1712</span>&#160;        }</div>
+<div class="line"><a name="l01713"></a><span class="lineno"> 1713</span>&#160;</div>
+<div class="line"><a name="l01714"></a><span class="lineno"> 1714</span>&#160;    <span class="keyword">protected</span>:</div>
+<div class="line"><a name="l01715"></a><span class="lineno"> 1715</span>&#160;        <span class="comment">// A pointer to the associated hashmap</span></div>
+<div class="line"><a name="l01716"></a><span class="lineno"> 1716</span>&#160;        <span class="keyword">const</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;</a>&amp; hm_;</div>
+<div class="line"><a name="l01717"></a><span class="lineno"> 1717</span>&#160;</div>
+<div class="line"><a name="l01718"></a><span class="lineno"> 1718</span>&#160;        <span class="comment">// The hashmap&#39;s table info</span></div>
+<div class="line"><a name="l01719"></a><span class="lineno"> 1719</span>&#160;        <span class="keyword">typename</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::TableInfo</a>* ti_;</div>
+<div class="line"><a name="l01720"></a><span class="lineno"> 1720</span>&#160;</div>
+<div class="line"><a name="l01721"></a><span class="lineno"> 1721</span>&#160;        <span class="comment">// Indicates whether the iterator has the table lock</span></div>
+<div class="line"><a name="l01722"></a><span class="lineno"> 1722</span>&#160;        <span class="keywordtype">bool</span> has_table_lock;</div>
+<div class="line"><a name="l01723"></a><span class="lineno"> 1723</span>&#160;</div>
+<div class="line"><a name="l01724"></a><span class="lineno"> 1724</span>&#160;        <span class="comment">// Stores the bucket and slot of the end iterator, which is one past the</span></div>
+<div class="line"><a name="l01725"></a><span class="lineno"> 1725</span>&#160;        <span class="comment">// end of the table. It is initialized during the iterator&#39;s</span></div>
+<div class="line"><a name="l01726"></a><span class="lineno"> 1726</span>&#160;        <span class="comment">// constructor.</span></div>
+<div class="line"><a name="l01727"></a><span class="lineno"> 1727</span>&#160;        std::pair&lt;size_t, size_t&gt; end_pos;</div>
+<div class="line"><a name="l01728"></a><span class="lineno"> 1728</span>&#160;</div>
+<div class="line"><a name="l01729"></a><span class="lineno"> 1729</span>&#160;        <span class="comment">// Stotres the bucket and slot of the begin iterator, which is the first</span></div>
+<div class="line"><a name="l01730"></a><span class="lineno"> 1730</span>&#160;        <span class="comment">// filled position in the table. It is initialized during the iterator&#39;s</span></div>
+<div class="line"><a name="l01731"></a><span class="lineno"> 1731</span>&#160;        <span class="comment">// constructor. If the table is empty, it points past the end of the</span></div>
+<div class="line"><a name="l01732"></a><span class="lineno"> 1732</span>&#160;        <span class="comment">// table, to the same position as end_pos.</span></div>
+<div class="line"><a name="l01733"></a><span class="lineno"> 1733</span>&#160;        std::pair&lt;size_t, size_t&gt; begin_pos;</div>
+<div class="line"><a name="l01734"></a><span class="lineno"> 1734</span>&#160;</div>
+<div class="line"><a name="l01735"></a><span class="lineno"> 1735</span>&#160;        <span class="comment">// The bucket index of the item being pointed to</span></div>
+<div class="line"><a name="l01736"></a><span class="lineno"> 1736</span>&#160;        <span class="keywordtype">size_t</span> index_;</div>
+<div class="line"><a name="l01737"></a><span class="lineno"> 1737</span>&#160;</div>
+<div class="line"><a name="l01738"></a><span class="lineno"> 1738</span>&#160;        <span class="comment">// The slot in the bucket of the item being pointed to</span></div>
+<div class="line"><a name="l01739"></a><span class="lineno"> 1739</span>&#160;        <span class="keywordtype">size_t</span> slot_;</div>
+<div class="line"><a name="l01740"></a><span class="lineno"> 1740</span>&#160;</div>
+<div class="line"><a name="l01741"></a><span class="lineno"> 1741</span>&#160;        <span class="comment">// set_end sets the given index and slot to one past the last position</span></div>
+<div class="line"><a name="l01742"></a><span class="lineno"> 1742</span>&#160;        <span class="comment">// in the table.</span></div>
+<div class="line"><a name="l01743"></a><span class="lineno"> 1743</span>&#160;        <span class="keywordtype">void</span> set_end(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
+<div class="line"><a name="l01744"></a><span class="lineno"> 1744</span>&#160;            index = hm_.bucket_count();</div>
+<div class="line"><a name="l01745"></a><span class="lineno"> 1745</span>&#160;            slot = 0;</div>
+<div class="line"><a name="l01746"></a><span class="lineno"> 1746</span>&#160;        }</div>
+<div class="line"><a name="l01747"></a><span class="lineno"> 1747</span>&#160;</div>
+<div class="line"><a name="l01748"></a><span class="lineno"> 1748</span>&#160;        <span class="comment">// set_begin sets the given pair to the position of the first element in</span></div>
+<div class="line"><a name="l01749"></a><span class="lineno"> 1749</span>&#160;        <span class="comment">// the table.</span></div>
+<div class="line"><a name="l01750"></a><span class="lineno"> 1750</span>&#160;        <span class="keywordtype">void</span> set_begin(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
+<div class="line"><a name="l01751"></a><span class="lineno"> 1751</span>&#160;            <span class="keywordflow">if</span> (hm_.empty()) {</div>
+<div class="line"><a name="l01752"></a><span class="lineno"> 1752</span>&#160;                set_end(index, slot);</div>
+<div class="line"><a name="l01753"></a><span class="lineno"> 1753</span>&#160;            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l01754"></a><span class="lineno"> 1754</span>&#160;                index = slot = 0;</div>
+<div class="line"><a name="l01755"></a><span class="lineno"> 1755</span>&#160;                <span class="comment">// There must be a filled slot somewhere in the table</span></div>
+<div class="line"><a name="l01756"></a><span class="lineno"> 1756</span>&#160;                <span class="keywordflow">if</span> (!ti_-&gt;buckets_[index].occupied(slot)) {</div>
+<div class="line"><a name="l01757"></a><span class="lineno"> 1757</span>&#160;                    forward_filled_slot(index, slot);</div>
+<div class="line"><a name="l01758"></a><span class="lineno"> 1758</span>&#160;                    assert(!<a class="code" href="classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798">is_end</a>());</div>
+<div class="line"><a name="l01759"></a><span class="lineno"> 1759</span>&#160;                }</div>
+<div class="line"><a name="l01760"></a><span class="lineno"> 1760</span>&#160;            }</div>
+<div class="line"><a name="l01761"></a><span class="lineno"> 1761</span>&#160;        }</div>
+<div class="line"><a name="l01762"></a><span class="lineno"> 1762</span>&#160;</div>
+<div class="line"><a name="l01763"></a><span class="lineno"> 1763</span>&#160;        <span class="comment">// forward_slot moves the given index and slot to the next available</span></div>
+<div class="line"><a name="l01764"></a><span class="lineno"> 1764</span>&#160;        <span class="comment">// slot in the forwards direction. It returns true if it successfully</span></div>
+<div class="line"><a name="l01765"></a><span class="lineno"> 1765</span>&#160;        <span class="comment">// advances, and false if it has reached the end of the table, in which</span></div>
+<div class="line"><a name="l01766"></a><span class="lineno"> 1766</span>&#160;        <span class="comment">// case it sets index and slot to end_pos.</span></div>
+<div class="line"><a name="l01767"></a><span class="lineno"> 1767</span>&#160;        <span class="keywordtype">bool</span> forward_slot(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
+<div class="line"><a name="l01768"></a><span class="lineno"> 1768</span>&#160;            <span class="keywordflow">if</span> (slot &lt; SLOT_PER_BUCKET-1) {</div>
+<div class="line"><a name="l01769"></a><span class="lineno"> 1769</span>&#160;                ++slot;</div>
+<div class="line"><a name="l01770"></a><span class="lineno"> 1770</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a name="l01771"></a><span class="lineno"> 1771</span>&#160;            } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (index &lt; hm_.bucket_count()-1) {</div>
+<div class="line"><a name="l01772"></a><span class="lineno"> 1772</span>&#160;                ++index;</div>
+<div class="line"><a name="l01773"></a><span class="lineno"> 1773</span>&#160;                slot = 0;</div>
+<div class="line"><a name="l01774"></a><span class="lineno"> 1774</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a name="l01775"></a><span class="lineno"> 1775</span>&#160;            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l01776"></a><span class="lineno"> 1776</span>&#160;                set_end(index, slot);</div>
+<div class="line"><a name="l01777"></a><span class="lineno"> 1777</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a name="l01778"></a><span class="lineno"> 1778</span>&#160;            }</div>
+<div class="line"><a name="l01779"></a><span class="lineno"> 1779</span>&#160;        }</div>
+<div class="line"><a name="l01780"></a><span class="lineno"> 1780</span>&#160;</div>
+<div class="line"><a name="l01781"></a><span class="lineno"> 1781</span>&#160;        <span class="comment">// backward_slot moves index and slot to the next available slot in the</span></div>
+<div class="line"><a name="l01782"></a><span class="lineno"> 1782</span>&#160;        <span class="comment">// backwards direction. It returns true if it successfully advances, and</span></div>
+<div class="line"><a name="l01783"></a><span class="lineno"> 1783</span>&#160;        <span class="comment">// false if it has reached the beginning of the table, setting the index</span></div>
+<div class="line"><a name="l01784"></a><span class="lineno"> 1784</span>&#160;        <span class="comment">// and slot back to begin_pos.</span></div>
+<div class="line"><a name="l01785"></a><span class="lineno"> 1785</span>&#160;        <span class="keywordtype">bool</span> backward_slot(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
+<div class="line"><a name="l01786"></a><span class="lineno"> 1786</span>&#160;            <span class="keywordflow">if</span> (slot &gt; 0) {</div>
+<div class="line"><a name="l01787"></a><span class="lineno"> 1787</span>&#160;                --slot;</div>
+<div class="line"><a name="l01788"></a><span class="lineno"> 1788</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a name="l01789"></a><span class="lineno"> 1789</span>&#160;            } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (index &gt; 0) {</div>
+<div class="line"><a name="l01790"></a><span class="lineno"> 1790</span>&#160;                --index;</div>
+<div class="line"><a name="l01791"></a><span class="lineno"> 1791</span>&#160;                slot = SLOT_PER_BUCKET-1;</div>
+<div class="line"><a name="l01792"></a><span class="lineno"> 1792</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a name="l01793"></a><span class="lineno"> 1793</span>&#160;            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l01794"></a><span class="lineno"> 1794</span>&#160;                set_begin(index, slot);</div>
+<div class="line"><a name="l01795"></a><span class="lineno"> 1795</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a name="l01796"></a><span class="lineno"> 1796</span>&#160;            }</div>
+<div class="line"><a name="l01797"></a><span class="lineno"> 1797</span>&#160;        }</div>
+<div class="line"><a name="l01798"></a><span class="lineno"> 1798</span>&#160;</div>
+<div class="line"><a name="l01799"></a><span class="lineno"> 1799</span>&#160;        <span class="comment">// forward_filled_slot moves index and slot to the next filled slot.</span></div>
+<div class="line"><a name="l01800"></a><span class="lineno"> 1800</span>&#160;        <span class="keywordtype">bool</span> forward_filled_slot(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
+<div class="line"><a name="l01801"></a><span class="lineno"> 1801</span>&#160;            <span class="keywordtype">bool</span> res = forward_slot(index, slot);</div>
+<div class="line"><a name="l01802"></a><span class="lineno"> 1802</span>&#160;            <span class="keywordflow">if</span> (!res) {</div>
+<div class="line"><a name="l01803"></a><span class="lineno"> 1803</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a name="l01804"></a><span class="lineno"> 1804</span>&#160;            }</div>
+<div class="line"><a name="l01805"></a><span class="lineno"> 1805</span>&#160;            <span class="keywordflow">while</span> (!ti_-&gt;buckets_[index].occupied(slot)) {</div>
+<div class="line"><a name="l01806"></a><span class="lineno"> 1806</span>&#160;                res = forward_slot(index, slot);</div>
+<div class="line"><a name="l01807"></a><span class="lineno"> 1807</span>&#160;                <span class="keywordflow">if</span> (!res) {</div>
+<div class="line"><a name="l01808"></a><span class="lineno"> 1808</span>&#160;                    <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a name="l01809"></a><span class="lineno"> 1809</span>&#160;                }</div>
+<div class="line"><a name="l01810"></a><span class="lineno"> 1810</span>&#160;            }</div>
+<div class="line"><a name="l01811"></a><span class="lineno"> 1811</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a name="l01812"></a><span class="lineno"> 1812</span>&#160;        }</div>
+<div class="line"><a name="l01813"></a><span class="lineno"> 1813</span>&#160;</div>
+<div class="line"><a name="l01814"></a><span class="lineno"> 1814</span>&#160;        <span class="comment">// backward_filled_slot moves index and slot to the previous filled</span></div>
+<div class="line"><a name="l01815"></a><span class="lineno"> 1815</span>&#160;        <span class="comment">// slot.</span></div>
+<div class="line"><a name="l01816"></a><span class="lineno"> 1816</span>&#160;        <span class="keywordtype">bool</span> backward_filled_slot(<span class="keywordtype">size_t</span>&amp; index, <span class="keywordtype">size_t</span>&amp; slot) {</div>
+<div class="line"><a name="l01817"></a><span class="lineno"> 1817</span>&#160;            <span class="keywordtype">bool</span> res = backward_slot(index, slot);</div>
+<div class="line"><a name="l01818"></a><span class="lineno"> 1818</span>&#160;            <span class="keywordflow">if</span> (!res) {</div>
+<div class="line"><a name="l01819"></a><span class="lineno"> 1819</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a name="l01820"></a><span class="lineno"> 1820</span>&#160;            }</div>
+<div class="line"><a name="l01821"></a><span class="lineno"> 1821</span>&#160;            <span class="keywordflow">while</span> (!ti_-&gt;buckets_[index].occupied(slot)) {</div>
+<div class="line"><a name="l01822"></a><span class="lineno"> 1822</span>&#160;                res = backward_slot(index, slot);</div>
+<div class="line"><a name="l01823"></a><span class="lineno"> 1823</span>&#160;                <span class="keywordflow">if</span> (!res) {</div>
+<div class="line"><a name="l01824"></a><span class="lineno"> 1824</span>&#160;                    <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a name="l01825"></a><span class="lineno"> 1825</span>&#160;                }</div>
+<div class="line"><a name="l01826"></a><span class="lineno"> 1826</span>&#160;            }</div>
+<div class="line"><a name="l01827"></a><span class="lineno"> 1827</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a name="l01828"></a><span class="lineno"> 1828</span>&#160;        }</div>
+<div class="line"><a name="l01829"></a><span class="lineno"> 1829</span>&#160;</div>
+<div class="line"><a name="l01830"></a><span class="lineno"> 1830</span>&#160;</div>
+<div class="line"><a name="l01831"></a><span class="lineno"> 1831</span>&#160;        <span class="comment">// check_lock throws an exception if the iterator doesn&#39;t have a</span></div>
+<div class="line"><a name="l01832"></a><span class="lineno"> 1832</span>&#160;        <span class="comment">// lock.</span></div>
+<div class="line"><a name="l01833"></a><span class="lineno"> 1833</span>&#160;        <span class="keywordtype">void</span> check_lock()<span class="keyword"> const </span>{</div>
+<div class="line"><a name="l01834"></a><span class="lineno"> 1834</span>&#160;            <span class="keywordflow">if</span> (!has_table_lock) {</div>
+<div class="line"><a name="l01835"></a><span class="lineno"> 1835</span>&#160;                <span class="keywordflow">throw</span> std::runtime_error(</div>
+<div class="line"><a name="l01836"></a><span class="lineno"> 1836</span>&#160;                    <span class="stringliteral">&quot;Iterator does not have a lock on the table&quot;</span>);</div>
+<div class="line"><a name="l01837"></a><span class="lineno"> 1837</span>&#160;            }</div>
+<div class="line"><a name="l01838"></a><span class="lineno"> 1838</span>&#160;        }</div>
+<div class="line"><a name="l01839"></a><span class="lineno"> 1839</span>&#160;</div>
+<div class="line"><a name="l01840"></a><span class="lineno"> 1840</span>&#160;        <span class="comment">// Other error messages</span></div>
+<div class="line"><a name="l01841"></a><span class="lineno"> 1841</span>&#160;        <span class="keyword">static</span> <span class="keyword">const</span> std::out_of_range end_dereference;</div>
+<div class="line"><a name="l01842"></a><span class="lineno"> 1842</span>&#160;        <span class="keyword">static</span> <span class="keyword">const</span> std::out_of_range end_increment;</div>
+<div class="line"><a name="l01843"></a><span class="lineno"> 1843</span>&#160;        <span class="keyword">static</span> <span class="keyword">const</span> std::out_of_range begin_decrement;</div>
+<div class="line"><a name="l01844"></a><span class="lineno"> 1844</span>&#160;    };</div>
+<div class="line"><a name="l01845"></a><span class="lineno"> 1845</span>&#160;</div>
+<div class="line"><a name="l01846"></a><span class="lineno"> 1846</span>&#160;</div>
+<div class="line"><a name="l01850"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1iterator.html"> 1850</a></span>&#160;    <span class="keyword">class </span><a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a> : <span class="keyword">public</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a> {</div>
+<div class="line"><a name="l01851"></a><span class="lineno"> 1851</span>&#160;        <span class="comment">// This constructor does the same thing as the private const_iterator</span></div>
+<div class="line"><a name="l01852"></a><span class="lineno"> 1852</span>&#160;        <span class="comment">// one.</span></div>
+<div class="line"><a name="l01853"></a><span class="lineno"> 1853</span>&#160;        <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>(<a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;</a>&amp; hm, <span class="keywordtype">bool</span> is_end)</div>
+<div class="line"><a name="l01854"></a><span class="lineno"> 1854</span>&#160;            : <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(hm, is_end) {}</div>
 <div class="line"><a name="l01855"></a><span class="lineno"> 1855</span>&#160;</div>
-<div class="line"><a name="l01856"></a><span class="lineno"> 1856</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l01859"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1iterator.html#ae08a2adc5611de416e1c1de7702435e5"> 1859</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1iterator.html#ae08a2adc5611de416e1c1de7702435e5">iterator</a>(<a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>&amp;&amp; it)</div>
-<div class="line"><a name="l01860"></a><span class="lineno"> 1860</span>&#160;            : <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(std::move(it)) {}</div>
-<div class="line"><a name="l01861"></a><span class="lineno"> 1861</span>&#160;</div>
-<div class="line"><a name="l01864"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1iterator.html#af9aaec3eed50e8657411701af94e9fbe"> 1864</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1iterator.html#af9aaec3eed50e8657411701af94e9fbe">iterator</a>(<a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>&amp;&amp; it)</div>
-<div class="line"><a name="l01865"></a><span class="lineno"> 1865</span>&#160;            : <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(std::move(it)) {}</div>
-<div class="line"><a name="l01866"></a><span class="lineno"> 1866</span>&#160;</div>
-<div class="line"><a name="l01867"></a><span class="lineno"> 1867</span>&#160;        <span class="comment">// The assignment operator behaves identically to the rvalue-reference</span></div>
-<div class="line"><a name="l01868"></a><span class="lineno"> 1868</span>&#160;        <span class="comment">// constructor.</span></div>
-<div class="line"><a name="l01869"></a><span class="lineno"> 1869</span>&#160;        <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>* operator=(<a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>&amp;&amp; it) {</div>
-<div class="line"><a name="l01870"></a><span class="lineno"> 1870</span>&#160;            <span class="keywordflow">if</span> (<span class="keyword">this</span> == &amp;it) {</div>
-<div class="line"><a name="l01871"></a><span class="lineno"> 1871</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
-<div class="line"><a name="l01872"></a><span class="lineno"> 1872</span>&#160;            }</div>
-<div class="line"><a name="l01873"></a><span class="lineno"> 1873</span>&#160;            memcpy(<span class="keyword">this</span>, &amp;it, <span class="keyword">sizeof</span>(iterator));</div>
-<div class="line"><a name="l01874"></a><span class="lineno"> 1874</span>&#160;            it.has_table_lock = <span class="keyword">false</span>;</div>
-<div class="line"><a name="l01875"></a><span class="lineno"> 1875</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
-<div class="line"><a name="l01876"></a><span class="lineno"> 1876</span>&#160;        }</div>
-<div class="line"><a name="l01877"></a><span class="lineno"> 1877</span>&#160;</div>
-<div class="line"><a name="l01882"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1iterator.html#a3318f88a345dd463acd7bd74db879964"> 1882</a></span>&#160;        <span class="keywordtype">void</span> <a class="code" href="classcuckoohash__map_1_1iterator.html#a3318f88a345dd463acd7bd74db879964">set_value</a>(<span class="keyword">const</span> <a class="code" href="classcuckoohash__map.html#a9923dc920c0698a2add2b177813a9b3a">mapped_type</a> val) {</div>
-<div class="line"><a name="l01883"></a><span class="lineno"> 1883</span>&#160;            this-&gt;check_lock();</div>
-<div class="line"><a name="l01884"></a><span class="lineno"> 1884</span>&#160;            <span class="keywordflow">if</span> (this-&gt;<a class="code" href="classcuckoohash__map_1_1const__iterator.html#a7bea48bdd5f1ede1078906bc8ab3af63">is_end</a>()) {</div>
-<div class="line"><a name="l01885"></a><span class="lineno"> 1885</span>&#160;                <span class="keywordflow">throw</span> this-&gt;end_dereference;</div>
-<div class="line"><a name="l01886"></a><span class="lineno"> 1886</span>&#160;            }</div>
-<div class="line"><a name="l01887"></a><span class="lineno"> 1887</span>&#160;            assert(this-&gt;ti_-&gt;buckets_[this-&gt;index_].occupied(this-&gt;slot_));</div>
-<div class="line"><a name="l01888"></a><span class="lineno"> 1888</span>&#160;            this-&gt;ti_-&gt;buckets_[this-&gt;index_].val(this-&gt;slot_) = val;</div>
-<div class="line"><a name="l01889"></a><span class="lineno"> 1889</span>&#160;        }</div>
-<div class="line"><a name="l01890"></a><span class="lineno"> 1890</span>&#160;    };</div>
-<div class="line"><a name="l01891"></a><span class="lineno"> 1891</span>&#160;</div>
-<div class="line"><a name="l01892"></a><span class="lineno"> 1892</span>&#160;<span class="comment">// Public iterator functions</span></div>
-<div class="line"><a name="l01893"></a><span class="lineno"> 1893</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l01896"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a8e3a65a5d68a1631a728f8a3dd79ce71"> 1896</a></span>&#160;    <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a> <a class="code" href="classcuckoohash__map.html#a8e3a65a5d68a1631a728f8a3dd79ce71">cbegin</a>() {</div>
-<div class="line"><a name="l01897"></a><span class="lineno"> 1897</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(<span class="keyword">this</span>, <span class="keyword">false</span>);</div>
-<div class="line"><a name="l01898"></a><span class="lineno"> 1898</span>&#160;    }</div>
-<div class="line"><a name="l01899"></a><span class="lineno"> 1899</span>&#160;</div>
-<div class="line"><a name="l01901"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a6a021e201b509120df3a56bd2ded35f5"> 1901</a></span>&#160;    <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a> <a class="code" href="classcuckoohash__map.html#a6a021e201b509120df3a56bd2ded35f5">cend</a>() {</div>
-<div class="line"><a name="l01902"></a><span class="lineno"> 1902</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(<span class="keyword">this</span>, <span class="keyword">true</span>);</div>
-<div class="line"><a name="l01903"></a><span class="lineno"> 1903</span>&#160;    }</div>
-<div class="line"><a name="l01904"></a><span class="lineno"> 1904</span>&#160;</div>
-<div class="line"><a name="l01906"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a0206a0def9d587c27cd73cca31c8b03b"> 1906</a></span>&#160;    <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a> <a class="code" href="classcuckoohash__map.html#a0206a0def9d587c27cd73cca31c8b03b">begin</a>() {</div>
-<div class="line"><a name="l01907"></a><span class="lineno"> 1907</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>(<span class="keyword">this</span>, <span class="keyword">false</span>);</div>
-<div class="line"><a name="l01908"></a><span class="lineno"> 1908</span>&#160;    }</div>
-<div class="line"><a name="l01909"></a><span class="lineno"> 1909</span>&#160;</div>
-<div class="line"><a name="l01911"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#ada16dfaf02fef029f0c9c57f3d3adf32"> 1911</a></span>&#160;    <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a> <a class="code" href="classcuckoohash__map.html#ada16dfaf02fef029f0c9c57f3d3adf32">end</a>() {</div>
-<div class="line"><a name="l01912"></a><span class="lineno"> 1912</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>(<span class="keyword">this</span>, <span class="keyword">true</span>);</div>
-<div class="line"><a name="l01913"></a><span class="lineno"> 1913</span>&#160;    }</div>
-<div class="line"><a name="l01914"></a><span class="lineno"> 1914</span>&#160;</div>
-<div class="line"><a name="l01917"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a932465423d5c935b8cd793313abe2a84"> 1917</a></span>&#160;    std::vector&lt;value_type&gt; <a class="code" href="classcuckoohash__map.html#a932465423d5c935b8cd793313abe2a84">snapshot_table</a>() {</div>
-<div class="line"><a name="l01918"></a><span class="lineno"> 1918</span>&#160;        std::vector&lt;value_type&gt; items;</div>
-<div class="line"><a name="l01919"></a><span class="lineno"> 1919</span>&#160;        items.reserve(<a class="code" href="classcuckoohash__map.html#a9df95e5908ddd3629b8179c9124081a3">size</a>());</div>
-<div class="line"><a name="l01920"></a><span class="lineno"> 1920</span>&#160;        <span class="keywordflow">for</span> (<span class="keyword">auto</span> it = <a class="code" href="classcuckoohash__map.html#a8e3a65a5d68a1631a728f8a3dd79ce71">cbegin</a>(); !it.<a class="code" href="classcuckoohash__map_1_1const__iterator.html#a7bea48bdd5f1ede1078906bc8ab3af63">is_end</a>(); ++it) {</div>
-<div class="line"><a name="l01921"></a><span class="lineno"> 1921</span>&#160;            items.push_back(*it);</div>
-<div class="line"><a name="l01922"></a><span class="lineno"> 1922</span>&#160;        }</div>
-<div class="line"><a name="l01923"></a><span class="lineno"> 1923</span>&#160;        <span class="keywordflow">return</span> items;</div>
-<div class="line"><a name="l01924"></a><span class="lineno"> 1924</span>&#160;    }</div>
-<div class="line"><a name="l01925"></a><span class="lineno"> 1925</span>&#160;};</div>
-<div class="line"><a name="l01926"></a><span class="lineno"> 1926</span>&#160;</div>
-<div class="line"><a name="l01927"></a><span class="lineno"> 1927</span>&#160;<span class="comment">// Initializing the static members</span></div>
-<div class="line"><a name="l01928"></a><span class="lineno"> 1928</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
-<div class="line"><a name="l01929"></a><span class="lineno"> 1929</span>&#160;    __thread <span class="keyword">typename</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::TableInfo</a>**</div>
-<div class="line"><a name="l01930"></a><span class="lineno"> 1930</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::hazard_pointer</a> = <span class="keyword">nullptr</span>;</div>
-<div class="line"><a name="l01931"></a><span class="lineno"> 1931</span>&#160;</div>
-<div class="line"><a name="l01932"></a><span class="lineno"> 1932</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
-<div class="line"><a name="l01933"></a><span class="lineno"> 1933</span>&#160;    __thread <span class="keywordtype">int</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::counterid</a> = -1;</div>
-<div class="line"><a name="l01934"></a><span class="lineno"> 1934</span>&#160;</div>
-<div class="line"><a name="l01935"></a><span class="lineno"> 1935</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
-<div class="line"><a name="l01936"></a><span class="lineno"> 1936</span>&#160;    <span class="keyword">typename</span> <a class="code" href="classcuckoohash__map.html#a9be05b1e643b560c190cc0ddb52cc3b8">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::hasher</a></div>
-<div class="line"><a name="l01937"></a><span class="lineno"> 1937</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::hashfn</a>;</div>
-<div class="line"><a name="l01938"></a><span class="lineno"> 1938</span>&#160;</div>
-<div class="line"><a name="l01939"></a><span class="lineno"> 1939</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
-<div class="line"><a name="l01940"></a><span class="lineno"> 1940</span>&#160;    <span class="keyword">typename</span> <a class="code" href="classcuckoohash__map.html#a40e3f15d104fecc45647a624a5b99ae1">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::key_equal</a></div>
-<div class="line"><a name="l01941"></a><span class="lineno"> 1941</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::eqfn</a>;</div>
-<div class="line"><a name="l01942"></a><span class="lineno"> 1942</span>&#160;</div>
-<div class="line"><a name="l01943"></a><span class="lineno"> 1943</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
-<div class="line"><a name="l01944"></a><span class="lineno"> 1944</span>&#160;    <span class="keyword">typename</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::GlobalHazardPointerList</a></div>
-<div class="line"><a name="l01945"></a><span class="lineno"> 1945</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::global_hazard_pointers</a>;</div>
-<div class="line"><a name="l01946"></a><span class="lineno"> 1946</span>&#160;</div>
-<div class="line"><a name="l01947"></a><span class="lineno"> 1947</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
-<div class="line"><a name="l01948"></a><span class="lineno"> 1948</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::kNumCores</a> =</div>
-<div class="line"><a name="l01949"></a><span class="lineno"> 1949</span>&#160;    std::thread::hardware_concurrency() == 0 ?</div>
-<div class="line"><a name="l01950"></a><span class="lineno"> 1950</span>&#160;    sysconf(_SC_NPROCESSORS_ONLN) : std::thread::hardware_concurrency();</div>
-<div class="line"><a name="l01951"></a><span class="lineno"> 1951</span>&#160;</div>
-<div class="line"><a name="l01952"></a><span class="lineno"> 1952</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
-<div class="line"><a name="l01953"></a><span class="lineno"> 1953</span>&#160;    <span class="keyword">const</span> std::out_of_range</div>
-<div class="line"><a name="l01954"></a><span class="lineno"> 1954</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::const_iterator::end_dereference</a>(</div>
-<div class="line"><a name="l01955"></a><span class="lineno"> 1955</span>&#160;        <span class="stringliteral">&quot;Cannot dereference: iterator points past the end of the table&quot;</span>);</div>
-<div class="line"><a name="l01956"></a><span class="lineno"> 1956</span>&#160;</div>
-<div class="line"><a name="l01957"></a><span class="lineno"> 1957</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
-<div class="line"><a name="l01958"></a><span class="lineno"> 1958</span>&#160;    <span class="keyword">const</span> std::out_of_range</div>
-<div class="line"><a name="l01959"></a><span class="lineno"> 1959</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::const_iterator::end_increment</a>(</div>
-<div class="line"><a name="l01960"></a><span class="lineno"> 1960</span>&#160;        <span class="stringliteral">&quot;Cannot increment: iterator points past the end of the table&quot;</span>);</div>
-<div class="line"><a name="l01961"></a><span class="lineno"> 1961</span>&#160;</div>
-<div class="line"><a name="l01962"></a><span class="lineno"> 1962</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
-<div class="line"><a name="l01963"></a><span class="lineno"> 1963</span>&#160;    <span class="keyword">const</span> std::out_of_range</div>
-<div class="line"><a name="l01964"></a><span class="lineno"> 1964</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::const_iterator::begin_decrement</a>(</div>
-<div class="line"><a name="l01965"></a><span class="lineno"> 1965</span>&#160;        <span class="stringliteral">&quot;Cannot decrement: iterator points to the beginning of the table&quot;</span>);</div>
-<div class="line"><a name="l01966"></a><span class="lineno"> 1966</span>&#160;</div>
-<div class="line"><a name="l01967"></a><span class="lineno"> 1967</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="classcuckoohash__map_html_a8e3a65a5d68a1631a728f8a3dd79ce71"><div class="ttname"><a href="classcuckoohash__map.html#a8e3a65a5d68a1631a728f8a3dd79ce71">cuckoohash_map::cbegin</a></div><div class="ttdeci">const_iterator cbegin()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01896">cuckoohash_map.hh:1896</a></div></div>
+<div class="line"><a name="l01856"></a><span class="lineno"> 1856</span>&#160;        <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classcuckoohash__map.html">cuckoohash_map</a>&lt;Key, T, Hash, Pred&gt;;</div>
+<div class="line"><a name="l01857"></a><span class="lineno"> 1857</span>&#160;</div>
+<div class="line"><a name="l01858"></a><span class="lineno"> 1858</span>&#160;    <span class="keyword">public</span>:</div>
+<div class="line"><a name="l01861"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1iterator.html#ae08a2adc5611de416e1c1de7702435e5"> 1861</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1iterator.html#ae08a2adc5611de416e1c1de7702435e5">iterator</a>(<a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>&amp;&amp; it)</div>
+<div class="line"><a name="l01862"></a><span class="lineno"> 1862</span>&#160;            : <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(std::move(it)) {}</div>
+<div class="line"><a name="l01863"></a><span class="lineno"> 1863</span>&#160;</div>
+<div class="line"><a name="l01866"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1iterator.html#af9aaec3eed50e8657411701af94e9fbe"> 1866</a></span>&#160;        <a class="code" href="classcuckoohash__map_1_1iterator.html#af9aaec3eed50e8657411701af94e9fbe">iterator</a>(<a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>&amp;&amp; it)</div>
+<div class="line"><a name="l01867"></a><span class="lineno"> 1867</span>&#160;            : <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(std::move(it)) {}</div>
+<div class="line"><a name="l01868"></a><span class="lineno"> 1868</span>&#160;</div>
+<div class="line"><a name="l01869"></a><span class="lineno"> 1869</span>&#160;        <span class="comment">// The assignment operator behaves identically to the rvalue-reference</span></div>
+<div class="line"><a name="l01870"></a><span class="lineno"> 1870</span>&#160;        <span class="comment">// constructor.</span></div>
+<div class="line"><a name="l01871"></a><span class="lineno"> 1871</span>&#160;        <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>* operator=(<a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>&amp;&amp; it) {</div>
+<div class="line"><a name="l01872"></a><span class="lineno"> 1872</span>&#160;            <span class="keywordflow">if</span> (<span class="keyword">this</span> == &amp;it) {</div>
+<div class="line"><a name="l01873"></a><span class="lineno"> 1873</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
+<div class="line"><a name="l01874"></a><span class="lineno"> 1874</span>&#160;            }</div>
+<div class="line"><a name="l01875"></a><span class="lineno"> 1875</span>&#160;            memcpy(<span class="keyword">this</span>, &amp;it, <span class="keyword">sizeof</span>(iterator));</div>
+<div class="line"><a name="l01876"></a><span class="lineno"> 1876</span>&#160;            it.has_table_lock = <span class="keyword">false</span>;</div>
+<div class="line"><a name="l01877"></a><span class="lineno"> 1877</span>&#160;            <span class="keywordflow">return</span> <span class="keyword">this</span>;</div>
+<div class="line"><a name="l01878"></a><span class="lineno"> 1878</span>&#160;        }</div>
+<div class="line"><a name="l01879"></a><span class="lineno"> 1879</span>&#160;</div>
+<div class="line"><a name="l01884"></a><span class="lineno"><a class="line" href="classcuckoohash__map_1_1iterator.html#a3318f88a345dd463acd7bd74db879964"> 1884</a></span>&#160;        <span class="keywordtype">void</span> <a class="code" href="classcuckoohash__map_1_1iterator.html#a3318f88a345dd463acd7bd74db879964">set_value</a>(<span class="keyword">const</span> <a class="code" href="classcuckoohash__map.html#a9923dc920c0698a2add2b177813a9b3a">mapped_type</a> val) {</div>
+<div class="line"><a name="l01885"></a><span class="lineno"> 1885</span>&#160;            this-&gt;check_lock();</div>
+<div class="line"><a name="l01886"></a><span class="lineno"> 1886</span>&#160;            <span class="keywordflow">if</span> (this-&gt;<a class="code" href="classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798">is_end</a>()) {</div>
+<div class="line"><a name="l01887"></a><span class="lineno"> 1887</span>&#160;                <span class="keywordflow">throw</span> this-&gt;end_dereference;</div>
+<div class="line"><a name="l01888"></a><span class="lineno"> 1888</span>&#160;            }</div>
+<div class="line"><a name="l01889"></a><span class="lineno"> 1889</span>&#160;            assert(this-&gt;ti_-&gt;buckets_[this-&gt;index_].occupied(this-&gt;slot_));</div>
+<div class="line"><a name="l01890"></a><span class="lineno"> 1890</span>&#160;            this-&gt;ti_-&gt;buckets_[this-&gt;index_].val(this-&gt;slot_) = val;</div>
+<div class="line"><a name="l01891"></a><span class="lineno"> 1891</span>&#160;        }</div>
+<div class="line"><a name="l01892"></a><span class="lineno"> 1892</span>&#160;    };</div>
+<div class="line"><a name="l01893"></a><span class="lineno"> 1893</span>&#160;</div>
+<div class="line"><a name="l01894"></a><span class="lineno"> 1894</span>&#160;<span class="comment">// Public iterator functions</span></div>
+<div class="line"><a name="l01895"></a><span class="lineno"> 1895</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l01898"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a1045d325ff37a8c7b85a93e8e80c88e5"> 1898</a></span>&#160;    <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a> <a class="code" href="classcuckoohash__map.html#a1045d325ff37a8c7b85a93e8e80c88e5">cbegin</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a name="l01899"></a><span class="lineno"> 1899</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(*<span class="keyword">this</span>, <span class="keyword">false</span>);</div>
+<div class="line"><a name="l01900"></a><span class="lineno"> 1900</span>&#160;    }</div>
+<div class="line"><a name="l01901"></a><span class="lineno"> 1901</span>&#160;</div>
+<div class="line"><a name="l01903"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a1ca0af61cc18eda538a83836d543a60b"> 1903</a></span>&#160;    <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a> <a class="code" href="classcuckoohash__map.html#a1ca0af61cc18eda538a83836d543a60b">cend</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a name="l01904"></a><span class="lineno"> 1904</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>(*<span class="keyword">this</span>, <span class="keyword">true</span>);</div>
+<div class="line"><a name="l01905"></a><span class="lineno"> 1905</span>&#160;    }</div>
+<div class="line"><a name="l01906"></a><span class="lineno"> 1906</span>&#160;</div>
+<div class="line"><a name="l01908"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a0206a0def9d587c27cd73cca31c8b03b"> 1908</a></span>&#160;    <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a> <a class="code" href="classcuckoohash__map.html#a0206a0def9d587c27cd73cca31c8b03b">begin</a>() {</div>
+<div class="line"><a name="l01909"></a><span class="lineno"> 1909</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>(*<span class="keyword">this</span>, <span class="keyword">false</span>);</div>
+<div class="line"><a name="l01910"></a><span class="lineno"> 1910</span>&#160;    }</div>
+<div class="line"><a name="l01911"></a><span class="lineno"> 1911</span>&#160;</div>
+<div class="line"><a name="l01913"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#ada16dfaf02fef029f0c9c57f3d3adf32"> 1913</a></span>&#160;    <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a> <a class="code" href="classcuckoohash__map.html#ada16dfaf02fef029f0c9c57f3d3adf32">end</a>() {</div>
+<div class="line"><a name="l01914"></a><span class="lineno"> 1914</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classcuckoohash__map_1_1iterator.html">iterator</a>(*<span class="keyword">this</span>, <span class="keyword">true</span>);</div>
+<div class="line"><a name="l01915"></a><span class="lineno"> 1915</span>&#160;    }</div>
+<div class="line"><a name="l01916"></a><span class="lineno"> 1916</span>&#160;</div>
+<div class="line"><a name="l01919"></a><span class="lineno"><a class="line" href="classcuckoohash__map.html#a7315b787d50112207ff18b0b44515c10"> 1919</a></span>&#160;    std::vector&lt;value_type&gt; <a class="code" href="classcuckoohash__map.html#a7315b787d50112207ff18b0b44515c10">snapshot_table</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a name="l01920"></a><span class="lineno"> 1920</span>&#160;        std::vector&lt;value_type&gt; items;</div>
+<div class="line"><a name="l01921"></a><span class="lineno"> 1921</span>&#160;        items.reserve(<a class="code" href="classcuckoohash__map.html#ae4bef7ea98f6fa52ab16ae9444aaf5b3">size</a>());</div>
+<div class="line"><a name="l01922"></a><span class="lineno"> 1922</span>&#160;        <span class="keywordflow">for</span> (<span class="keyword">auto</span> it = <a class="code" href="classcuckoohash__map.html#a1045d325ff37a8c7b85a93e8e80c88e5">cbegin</a>(); !it.<a class="code" href="classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798">is_end</a>(); ++it) {</div>
+<div class="line"><a name="l01923"></a><span class="lineno"> 1923</span>&#160;            items.push_back(*it);</div>
+<div class="line"><a name="l01924"></a><span class="lineno"> 1924</span>&#160;        }</div>
+<div class="line"><a name="l01925"></a><span class="lineno"> 1925</span>&#160;        <span class="keywordflow">return</span> items;</div>
+<div class="line"><a name="l01926"></a><span class="lineno"> 1926</span>&#160;    }</div>
+<div class="line"><a name="l01927"></a><span class="lineno"> 1927</span>&#160;};</div>
+<div class="line"><a name="l01928"></a><span class="lineno"> 1928</span>&#160;</div>
+<div class="line"><a name="l01929"></a><span class="lineno"> 1929</span>&#160;<span class="comment">// Initializing the static members</span></div>
+<div class="line"><a name="l01930"></a><span class="lineno"> 1930</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
+<div class="line"><a name="l01931"></a><span class="lineno"> 1931</span>&#160;    __thread <span class="keyword">typename</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::TableInfo</a>**</div>
+<div class="line"><a name="l01932"></a><span class="lineno"> 1932</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::hazard_pointer</a> = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a name="l01933"></a><span class="lineno"> 1933</span>&#160;</div>
+<div class="line"><a name="l01934"></a><span class="lineno"> 1934</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
+<div class="line"><a name="l01935"></a><span class="lineno"> 1935</span>&#160;    __thread <span class="keywordtype">int</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::counterid</a> = -1;</div>
+<div class="line"><a name="l01936"></a><span class="lineno"> 1936</span>&#160;</div>
+<div class="line"><a name="l01937"></a><span class="lineno"> 1937</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
+<div class="line"><a name="l01938"></a><span class="lineno"> 1938</span>&#160;    <span class="keyword">typename</span> <a class="code" href="classcuckoohash__map.html#a9be05b1e643b560c190cc0ddb52cc3b8">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::hasher</a></div>
+<div class="line"><a name="l01939"></a><span class="lineno"> 1939</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::hashfn</a>;</div>
+<div class="line"><a name="l01940"></a><span class="lineno"> 1940</span>&#160;</div>
+<div class="line"><a name="l01941"></a><span class="lineno"> 1941</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
+<div class="line"><a name="l01942"></a><span class="lineno"> 1942</span>&#160;    <span class="keyword">typename</span> <a class="code" href="classcuckoohash__map.html#a40e3f15d104fecc45647a624a5b99ae1">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::key_equal</a></div>
+<div class="line"><a name="l01943"></a><span class="lineno"> 1943</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::eqfn</a>;</div>
+<div class="line"><a name="l01944"></a><span class="lineno"> 1944</span>&#160;</div>
+<div class="line"><a name="l01945"></a><span class="lineno"> 1945</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
+<div class="line"><a name="l01946"></a><span class="lineno"> 1946</span>&#160;    <span class="keyword">typename</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::GlobalHazardPointerList</a></div>
+<div class="line"><a name="l01947"></a><span class="lineno"> 1947</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::global_hazard_pointers</a>;</div>
+<div class="line"><a name="l01948"></a><span class="lineno"> 1948</span>&#160;</div>
+<div class="line"><a name="l01949"></a><span class="lineno"> 1949</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
+<div class="line"><a name="l01950"></a><span class="lineno"> 1950</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::kNumCores</a> =</div>
+<div class="line"><a name="l01951"></a><span class="lineno"> 1951</span>&#160;    std::thread::hardware_concurrency() == 0 ?</div>
+<div class="line"><a name="l01952"></a><span class="lineno"> 1952</span>&#160;    sysconf(_SC_NPROCESSORS_ONLN) : std::thread::hardware_concurrency();</div>
+<div class="line"><a name="l01953"></a><span class="lineno"> 1953</span>&#160;</div>
+<div class="line"><a name="l01954"></a><span class="lineno"> 1954</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
+<div class="line"><a name="l01955"></a><span class="lineno"> 1955</span>&#160;    <span class="keyword">const</span> std::out_of_range</div>
+<div class="line"><a name="l01956"></a><span class="lineno"> 1956</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::const_iterator::end_dereference</a>(</div>
+<div class="line"><a name="l01957"></a><span class="lineno"> 1957</span>&#160;        <span class="stringliteral">&quot;Cannot dereference: iterator points past the end of the table&quot;</span>);</div>
+<div class="line"><a name="l01958"></a><span class="lineno"> 1958</span>&#160;</div>
+<div class="line"><a name="l01959"></a><span class="lineno"> 1959</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
+<div class="line"><a name="l01960"></a><span class="lineno"> 1960</span>&#160;    <span class="keyword">const</span> std::out_of_range</div>
+<div class="line"><a name="l01961"></a><span class="lineno"> 1961</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::const_iterator::end_increment</a>(</div>
+<div class="line"><a name="l01962"></a><span class="lineno"> 1962</span>&#160;        <span class="stringliteral">&quot;Cannot increment: iterator points past the end of the table&quot;</span>);</div>
+<div class="line"><a name="l01963"></a><span class="lineno"> 1963</span>&#160;</div>
+<div class="line"><a name="l01964"></a><span class="lineno"> 1964</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Key, <span class="keyword">class</span> T, <span class="keyword">class</span> Hash, <span class="keyword">class</span> Pred&gt;</div>
+<div class="line"><a name="l01965"></a><span class="lineno"> 1965</span>&#160;    <span class="keyword">const</span> std::out_of_range</div>
+<div class="line"><a name="l01966"></a><span class="lineno"> 1966</span>&#160;    <a class="code" href="classcuckoohash__map.html">cuckoohash_map&lt;Key, T, Hash, Pred&gt;::const_iterator::begin_decrement</a>(</div>
+<div class="line"><a name="l01967"></a><span class="lineno"> 1967</span>&#160;        <span class="stringliteral">&quot;Cannot decrement: iterator points to the beginning of the table&quot;</span>);</div>
+<div class="line"><a name="l01968"></a><span class="lineno"> 1968</span>&#160;</div>
+<div class="line"><a name="l01969"></a><span class="lineno"> 1969</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="ttc" id="classcuckoohash__map_html_a76483af1c8edafb9d692fdbb2b114145"><div class="ttname"><a href="classcuckoohash__map.html#a76483af1c8edafb9d692fdbb2b114145">cuckoohash_map::erase</a></div><div class="ttdeci">bool erase(const key_type &amp;key)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00436">cuckoohash_map.hh:436</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1iterator_html_ae08a2adc5611de416e1c1de7702435e5"><div class="ttname"><a href="classcuckoohash__map_1_1iterator.html#ae08a2adc5611de416e1c1de7702435e5">cuckoohash_map::iterator::iterator</a></div><div class="ttdeci">iterator(iterator &amp;&amp;it)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01859">cuckoohash_map.hh:1859</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1iterator_html_ae08a2adc5611de416e1c1de7702435e5"><div class="ttname"><a href="classcuckoohash__map_1_1iterator.html#ae08a2adc5611de416e1c1de7702435e5">cuckoohash_map::iterator::iterator</a></div><div class="ttdeci">iterator(iterator &amp;&amp;it)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01861">cuckoohash_map.hh:1861</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_aa6f3de8712157f17d92bfdf6ad4e5314"><div class="ttname"><a href="classcuckoohash__map.html#aa6f3de8712157f17d92bfdf6ad4e5314">cuckoohash_map::key_type</a></div><div class="ttdeci">Key key_type</div><div class="ttdoc">key_type is the type of keys. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00035">cuckoohash_map.hh:35</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_af38c5d713aee19015c16fb26a2d1f13c"><div class="ttname"><a href="classcuckoohash__map.html#af38c5d713aee19015c16fb26a2d1f13c">cuckoohash_map::value_type</a></div><div class="ttdeci">std::pair&lt; Key, T &gt; value_type</div><div class="ttdoc">value_type is the type of key-value pairs. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00037">cuckoohash_map.hh:37</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_ad794e8675891e86437b058a95241715d"><div class="ttname"><a href="classcuckoohash__map.html#ad794e8675891e86437b058a95241715d">cuckoohash_map::hashpower</a></div><div class="ttdeci">size_t hashpower()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00362">cuckoohash_map.hh:362</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1iterator_html"><div class="ttname"><a href="classcuckoohash__map_1_1iterator.html">cuckoohash_map::iterator</a></div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01848">cuckoohash_map.hh:1848</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1iterator_html_a3318f88a345dd463acd7bd74db879964"><div class="ttname"><a href="classcuckoohash__map_1_1iterator.html#a3318f88a345dd463acd7bd74db879964">cuckoohash_map::iterator::set_value</a></div><div class="ttdeci">void set_value(const mapped_type val)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01882">cuckoohash_map.hh:1882</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_a948c647fe67f9471d8bd11afa176c3dc"><div class="ttname"><a href="classcuckoohash__map.html#a948c647fe67f9471d8bd11afa176c3dc">cuckoohash_map::find</a></div><div class="ttdeci">bool find(const key_type &amp;key, mapped_type &amp;val) const </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00390">cuckoohash_map.hh:390</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_a6e55ec3ae97d1cb60aa577dc4084c651"><div class="ttname"><a href="classcuckoohash__map.html#a6e55ec3ae97d1cb60aa577dc4084c651">cuckoohash_map::hashpower</a></div><div class="ttdeci">size_t hashpower() const </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00362">cuckoohash_map.hh:362</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_a4ce9a0523521ab3e113ad364e80732e7"><div class="ttname"><a href="classcuckoohash__map.html#a4ce9a0523521ab3e113ad364e80732e7">cuckoohash_map::key_eq</a></div><div class="ttdeci">key_equal key_eq() const </div><div class="ttdoc">key_eq returns the equality predicate object used by the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00558">cuckoohash_map.hh:558</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1iterator_html"><div class="ttname"><a href="classcuckoohash__map_1_1iterator.html">cuckoohash_map::iterator</a></div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01850">cuckoohash_map.hh:1850</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1iterator_html_a3318f88a345dd463acd7bd74db879964"><div class="ttname"><a href="classcuckoohash__map_1_1iterator.html#a3318f88a345dd463acd7bd74db879964">cuckoohash_map::iterator::set_value</a></div><div class="ttdeci">void set_value(const mapped_type val)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01884">cuckoohash_map.hh:1884</a></div></div>
 <div class="ttc" id="cuckoohash__config_8h_html"><div class="ttname"><a href="cuckoohash__config_8h.html">cuckoohash_config.h</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_ab7cb726b2e358e91b6cfc24471f60c35"><div class="ttname"><a href="classcuckoohash__map.html#ab7cb726b2e358e91b6cfc24471f60c35">cuckoohash_map::find</a></div><div class="ttdeci">bool find(const key_type &amp;key, mapped_type &amp;val)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00390">cuckoohash_map.hh:390</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1iterator_html_af9aaec3eed50e8657411701af94e9fbe"><div class="ttname"><a href="classcuckoohash__map_1_1iterator.html#af9aaec3eed50e8657411701af94e9fbe">cuckoohash_map::iterator::iterator</a></div><div class="ttdeci">iterator(const_iterator &amp;&amp;it)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01864">cuckoohash_map.hh:1864</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_a6a021e201b509120df3a56bd2ded35f5"><div class="ttname"><a href="classcuckoohash__map.html#a6a021e201b509120df3a56bd2ded35f5">cuckoohash_map::cend</a></div><div class="ttdeci">const_iterator cend()</div><div class="ttdoc">cend returns a const_iterator set past the end of the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01901">cuckoohash_map.hh:1901</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_ae642d6ad7d4cfa34c73d81dff196d798"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798">cuckoohash_map::const_iterator::is_end</a></div><div class="ttdeci">bool is_end() const </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01615">cuckoohash_map.hh:1615</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_a550df3ea56b27115d067760343cbbdff"><div class="ttname"><a href="classcuckoohash__map.html#a550df3ea56b27115d067760343cbbdff">cuckoohash_map::find</a></div><div class="ttdeci">mapped_type find(const key_type &amp;key) const </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00406">cuckoohash_map.hh:406</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1iterator_html_af9aaec3eed50e8657411701af94e9fbe"><div class="ttname"><a href="classcuckoohash__map_1_1iterator.html#af9aaec3eed50e8657411701af94e9fbe">cuckoohash_map::iterator::iterator</a></div><div class="ttdeci">iterator(const_iterator &amp;&amp;it)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01866">cuckoohash_map.hh:1866</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_ae4bef7ea98f6fa52ab16ae9444aaf5b3"><div class="ttname"><a href="classcuckoohash__map.html#ae4bef7ea98f6fa52ab16ae9444aaf5b3">cuckoohash_map::size</a></div><div class="ttdeci">size_t size() const </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00347">cuckoohash_map.hh:347</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_a9be05b1e643b560c190cc0ddb52cc3b8"><div class="ttname"><a href="classcuckoohash__map.html#a9be05b1e643b560c190cc0ddb52cc3b8">cuckoohash_map::hasher</a></div><div class="ttdeci">Hash hasher</div><div class="ttdoc">hasher is the type of the hash function. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00041">cuckoohash_map.hh:41</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_ab2559543c3f70499eacb6acdb0fb6abd"><div class="ttname"><a href="classcuckoohash__map.html#ab2559543c3f70499eacb6acdb0fb6abd">cuckoohash_map::clear</a></div><div class="ttdeci">void clear()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00335">cuckoohash_map.hh:335</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_afcbc8d76d7ad8aa669da84fbae78ac3e"><div class="ttname"><a href="classcuckoohash__map.html#afcbc8d76d7ad8aa669da84fbae78ac3e">cuckoohash_map::hash_function</a></div><div class="ttdeci">hasher hash_function() const </div><div class="ttdoc">hash_function returns the hash function object used by the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00553">cuckoohash_map.hh:553</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_a68275b50074f32e9a41f7f80764eb129"><div class="ttname"><a href="classcuckoohash__map.html#a68275b50074f32e9a41f7f80764eb129">cuckoohash_map::~cuckoohash_map</a></div><div class="ttdeci">~cuckoohash_map()</div><div class="ttdoc">The destructor explicitly deletes the current table info. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00326">cuckoohash_map.hh:326</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a8893cca42e1280a3cede09f7555757f3"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a8893cca42e1280a3cede09f7555757f3">cuckoohash_map::const_iterator::operator++</a></div><div class="ttdeci">const_iterator * operator++(int)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01679">cuckoohash_map.hh:1679</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a476ac6df9a842b3ff8d84ef223fb71be"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a476ac6df9a842b3ff8d84ef223fb71be">cuckoohash_map::const_iterator::operator--</a></div><div class="ttdeci">const_iterator * operator--()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01692">cuckoohash_map.hh:1692</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_adbccaae238f2f8a750a2d0ffef40c4eb"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#adbccaae238f2f8a750a2d0ffef40c4eb">cuckoohash_map::const_iterator::operator-&gt;</a></div><div class="ttdeci">ref_pair * operator-&gt;()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01651">cuckoohash_map.hh:1651</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a0c6ac6dcfca13a16ba6697fedd723c05"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a0c6ac6dcfca13a16ba6697fedd723c05">cuckoohash_map::const_iterator::operator++</a></div><div class="ttdeci">const_iterator * operator++()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01668">cuckoohash_map.hh:1668</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a8893cca42e1280a3cede09f7555757f3"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a8893cca42e1280a3cede09f7555757f3">cuckoohash_map::const_iterator::operator++</a></div><div class="ttdeci">const_iterator * operator++(int)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01681">cuckoohash_map.hh:1681</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a476ac6df9a842b3ff8d84ef223fb71be"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a476ac6df9a842b3ff8d84ef223fb71be">cuckoohash_map::const_iterator::operator--</a></div><div class="ttdeci">const_iterator * operator--()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01694">cuckoohash_map.hh:1694</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a0c6ac6dcfca13a16ba6697fedd723c05"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a0c6ac6dcfca13a16ba6697fedd723c05">cuckoohash_map::const_iterator::operator++</a></div><div class="ttdeci">const_iterator * operator++()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01670">cuckoohash_map.hh:1670</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_adc247eac6dc0ef114ee345a00e40d4a0"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#adc247eac6dc0ef114ee345a00e40d4a0">cuckoohash_map::const_iterator::is_begin</a></div><div class="ttdeci">bool is_begin() const </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01621">cuckoohash_map.hh:1621</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_a1ca0af61cc18eda538a83836d543a60b"><div class="ttname"><a href="classcuckoohash__map.html#a1ca0af61cc18eda538a83836d543a60b">cuckoohash_map::cend</a></div><div class="ttdeci">const_iterator cend() const </div><div class="ttdoc">cend returns a const_iterator set past the end of the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01903">cuckoohash_map.hh:1903</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_a1045d325ff37a8c7b85a93e8e80c88e5"><div class="ttname"><a href="classcuckoohash__map.html#a1045d325ff37a8c7b85a93e8e80c88e5">cuckoohash_map::cbegin</a></div><div class="ttdeci">const_iterator cbegin() const </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01898">cuckoohash_map.hh:1898</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_a3866a109503d5e6aeefd6edcda14714d"><div class="ttname"><a href="classcuckoohash__map.html#a3866a109503d5e6aeefd6edcda14714d">cuckoohash_map::bucket_count</a></div><div class="ttdeci">size_t bucket_count() const </div><div class="ttdoc">bucket_count returns the number of buckets in the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00371">cuckoohash_map.hh:371</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_a9923dc920c0698a2add2b177813a9b3a"><div class="ttname"><a href="classcuckoohash__map.html#a9923dc920c0698a2add2b177813a9b3a">cuckoohash_map::mapped_type</a></div><div class="ttdeci">T mapped_type</div><div class="ttdoc">mapped_type is the type of values. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00039">cuckoohash_map.hh:39</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a0c3f49b7da1c0eee133168f1fc0f8832"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a0c3f49b7da1c0eee133168f1fc0f8832">cuckoohash_map::const_iterator::~const_iterator</a></div><div class="ttdeci">~const_iterator()</div><div class="ttdoc">The destructor simply calls release. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01608">cuckoohash_map.hh:1608</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_a0a3f7e2bb8786eaaed3c1b18e8953f49"><div class="ttname"><a href="classcuckoohash__map.html#a0a3f7e2bb8786eaaed3c1b18e8953f49">cuckoohash_map::bucket_count</a></div><div class="ttdeci">size_t bucket_count()</div><div class="ttdoc">bucket_count returns the number of buckets in the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00371">cuckoohash_map.hh:371</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a0c3f49b7da1c0eee133168f1fc0f8832"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a0c3f49b7da1c0eee133168f1fc0f8832">cuckoohash_map::const_iterator::~const_iterator</a></div><div class="ttdeci">~const_iterator()</div><div class="ttdoc">The destructor simply calls release. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01609">cuckoohash_map.hh:1609</a></div></div>
 <div class="ttc" id="cuckoohash__config_8h_html_a54977b4b1551a03c6a0a8b8f95fc68b6"><div class="ttname"><a href="cuckoohash__config_8h.html#a54977b4b1551a03c6a0a8b8f95fc68b6">DEFAULT_SIZE</a></div><div class="ttdeci">const size_t DEFAULT_SIZE</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__config_8h_source.html#l00011">cuckoohash_config.h:11</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html"><div class="ttname"><a href="classcuckoohash__map.html">cuckoohash_map</a></div><div class="ttdoc">cuckoohash_map is the hash table class. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00032">cuckoohash_map.hh:32</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_a7719790ca20ee1dd415b999d1eb9ce22"><div class="ttname"><a href="classcuckoohash__map.html#a7719790ca20ee1dd415b999d1eb9ce22">cuckoohash_map::upsert</a></div><div class="ttdeci">void upsert(const key_type &amp;key, const updater &amp;fn, const mapped_type &amp;val)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00488">cuckoohash_map.hh:488</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_af075fde729c00dccd2f24af1dd8679fa"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#af075fde729c00dccd2f24af1dd8679fa">cuckoohash_map::const_iterator::operator--</a></div><div class="ttdeci">const_iterator * operator--(int)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01703">cuckoohash_map.hh:1703</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_af075fde729c00dccd2f24af1dd8679fa"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#af075fde729c00dccd2f24af1dd8679fa">cuckoohash_map::const_iterator::operator--</a></div><div class="ttdeci">const_iterator * operator--(int)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01705">cuckoohash_map.hh:1705</a></div></div>
 <div class="ttc" id="classcuckoohash__map_1_1const__iterator_html"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html">cuckoohash_map::const_iterator</a></div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01543">cuckoohash_map.hh:1543</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_ada16dfaf02fef029f0c9c57f3d3adf32"><div class="ttname"><a href="classcuckoohash__map.html#ada16dfaf02fef029f0c9c57f3d3adf32">cuckoohash_map::end</a></div><div class="ttdeci">iterator end()</div><div class="ttdoc">end returns an iterator set past the end of the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01911">cuckoohash_map.hh:1911</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_addc0721a99193e0af53b34e2170fd6b5"><div class="ttname"><a href="classcuckoohash__map.html#addc0721a99193e0af53b34e2170fd6b5">cuckoohash_map::find</a></div><div class="ttdeci">mapped_type find(const key_type &amp;key)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00406">cuckoohash_map.hh:406</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_aec1d1c0a154b53796ee65007cf6cee8b"><div class="ttname"><a href="classcuckoohash__map.html#aec1d1c0a154b53796ee65007cf6cee8b">cuckoohash_map::load_factor</a></div><div class="ttdeci">double load_factor()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00381">cuckoohash_map.hh:381</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_ada16dfaf02fef029f0c9c57f3d3adf32"><div class="ttname"><a href="classcuckoohash__map.html#ada16dfaf02fef029f0c9c57f3d3adf32">cuckoohash_map::end</a></div><div class="ttdeci">iterator end()</div><div class="ttdoc">end returns an iterator set past the end of the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01913">cuckoohash_map.hh:1913</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_aca7e87cbd2bd0d42a66885a4eed2ae67"><div class="ttname"><a href="classcuckoohash__map.html#aca7e87cbd2bd0d42a66885a4eed2ae67">cuckoohash_map::rehash</a></div><div class="ttdeci">bool rehash(size_t n)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00524">cuckoohash_map.hh:524</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_a913b068ba69d501cbb3fe0d82d2fe195"><div class="ttname"><a href="classcuckoohash__map.html#a913b068ba69d501cbb3fe0d82d2fe195">cuckoohash_map::reserve</a></div><div class="ttdeci">bool reserve(size_t n)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00541">cuckoohash_map.hh:541</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_a4e3f5f61da922b3dc7db1c075a60149c"><div class="ttname"><a href="classcuckoohash__map.html#a4e3f5f61da922b3dc7db1c075a60149c">cuckoohash_map::updater</a></div><div class="ttdeci">std::function&lt; mapped_type(const mapped_type &amp;)&gt; updater</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00046">cuckoohash_map.hh:46</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a7bea48bdd5f1ede1078906bc8ab3af63"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a7bea48bdd5f1ede1078906bc8ab3af63">cuckoohash_map::const_iterator::is_end</a></div><div class="ttdeci">bool is_end()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01614">cuckoohash_map.hh:1614</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_a40e3f15d104fecc45647a624a5b99ae1"><div class="ttname"><a href="classcuckoohash__map.html#a40e3f15d104fecc45647a624a5b99ae1">cuckoohash_map::key_equal</a></div><div class="ttdeci">Pred key_equal</div><div class="ttdoc">key_equal is the type of the equality predicate. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00043">cuckoohash_map.hh:43</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_ac89a302a3461132e5076f877d3b6637d"><div class="ttname"><a href="classcuckoohash__map.html#ac89a302a3461132e5076f877d3b6637d">cuckoohash_map::hash_function</a></div><div class="ttdeci">hasher hash_function()</div><div class="ttdoc">hash_function returns the hash function object used by the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00553">cuckoohash_map.hh:553</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_a0da478485c794255976d55d0fe18a055"><div class="ttname"><a href="classcuckoohash__map.html#a0da478485c794255976d55d0fe18a055">cuckoohash_map::cuckoohash_map</a></div><div class="ttdeci">cuckoohash_map(size_t n=DEFAULT_SIZE)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00321">cuckoohash_map.hh:321</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_ad782571a1b5d85cdcdba3eb74edf40d6"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#ad782571a1b5d85cdcdba3eb74edf40d6">cuckoohash_map::const_iterator::operator*</a></div><div class="ttdeci">value_type operator*()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01638">cuckoohash_map.hh:1638</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_a9df95e5908ddd3629b8179c9124081a3"><div class="ttname"><a href="classcuckoohash__map.html#a9df95e5908ddd3629b8179c9124081a3">cuckoohash_map::size</a></div><div class="ttdeci">size_t size()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00347">cuckoohash_map.hh:347</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_a0206a0def9d587c27cd73cca31c8b03b"><div class="ttname"><a href="classcuckoohash__map.html#a0206a0def9d587c27cd73cca31c8b03b">cuckoohash_map::begin</a></div><div class="ttdeci">iterator begin()</div><div class="ttdoc">begin returns an iterator to the first filled slot in the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01906">cuckoohash_map.hh:1906</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_a573ba87439e94511ad778b4382a45752"><div class="ttname"><a href="classcuckoohash__map.html#a573ba87439e94511ad778b4382a45752">cuckoohash_map::empty</a></div><div class="ttdeci">bool empty() const </div><div class="ttdoc">empty returns true if the table is empty. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00356">cuckoohash_map.hh:356</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a3a4fc6fc11d3157a25bcbe0d0c6b9e6e"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a3a4fc6fc11d3157a25bcbe0d0c6b9e6e">cuckoohash_map::const_iterator::operator-&gt;</a></div><div class="ttdeci">ref_pair * operator-&gt;() const </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01653">cuckoohash_map.hh:1653</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_a0206a0def9d587c27cd73cca31c8b03b"><div class="ttname"><a href="classcuckoohash__map.html#a0206a0def9d587c27cd73cca31c8b03b">cuckoohash_map::begin</a></div><div class="ttdeci">iterator begin()</div><div class="ttdoc">begin returns an iterator to the first filled slot in the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01908">cuckoohash_map.hh:1908</a></div></div>
 <div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a827e61381946c3fbb3e2d8dbeaa87812"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a827e61381946c3fbb3e2d8dbeaa87812">cuckoohash_map::const_iterator::const_iterator</a></div><div class="ttdeci">const_iterator(const_iterator &amp;&amp;it)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01577">cuckoohash_map.hh:1577</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_a53545a47a5bf74c2907a4dd111000b5f"><div class="ttname"><a href="classcuckoohash__map.html#a53545a47a5bf74c2907a4dd111000b5f">cuckoohash_map::empty</a></div><div class="ttdeci">bool empty()</div><div class="ttdoc">empty returns true if the table is empty. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00356">cuckoohash_map.hh:356</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a5344b8c23c86e4b1710bef23548839d6"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a5344b8c23c86e4b1710bef23548839d6">cuckoohash_map::const_iterator::operator*</a></div><div class="ttdeci">value_type operator*() const </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01640">cuckoohash_map.hh:1640</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_a8dbd06d16594582355ba1ad132902e1b"><div class="ttname"><a href="classcuckoohash__map.html#a8dbd06d16594582355ba1ad132902e1b">cuckoohash_map::update_fn</a></div><div class="ttdeci">bool update_fn(const key_type &amp;key, const updater &amp;fn)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00470">cuckoohash_map.hh:470</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_a932465423d5c935b8cd793313abe2a84"><div class="ttname"><a href="classcuckoohash__map.html#a932465423d5c935b8cd793313abe2a84">cuckoohash_map::snapshot_table</a></div><div class="ttdeci">std::vector&lt; value_type &gt; snapshot_table()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01917">cuckoohash_map.hh:1917</a></div></div>
-<div class="ttc" id="classcuckoohash__map_html_a8bc884daf5d8c814f670415e83679025"><div class="ttname"><a href="classcuckoohash__map.html#a8bc884daf5d8c814f670415e83679025">cuckoohash_map::key_eq</a></div><div class="ttdeci">key_equal key_eq()</div><div class="ttdoc">key_eq returns the equality predicate object used by the table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00558">cuckoohash_map.hh:558</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_acd5f76dc0e7da063a5e7586f0728a692"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#acd5f76dc0e7da063a5e7586f0728a692">cuckoohash_map::const_iterator::operator=</a></div><div class="ttdeci">const_iterator * operator=(const_iterator &amp;&amp;it)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01587">cuckoohash_map.hh:1587</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_a7315b787d50112207ff18b0b44515c10"><div class="ttname"><a href="classcuckoohash__map.html#a7315b787d50112207ff18b0b44515c10">cuckoohash_map::snapshot_table</a></div><div class="ttdeci">std::vector&lt; value_type &gt; snapshot_table() const </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01919">cuckoohash_map.hh:1919</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_acd5f76dc0e7da063a5e7586f0728a692"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#acd5f76dc0e7da063a5e7586f0728a692">cuckoohash_map::const_iterator::operator=</a></div><div class="ttdeci">const_iterator * operator=(const_iterator &amp;&amp;it)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01588">cuckoohash_map.hh:1588</a></div></div>
 <div class="ttc" id="cuckoohash__config_8h_html_af9fa239753671f0cf754e17a37bb911d"><div class="ttname"><a href="cuckoohash__config_8h.html#af9fa239753671f0cf754e17a37bb911d">SLOT_PER_BUCKET</a></div><div class="ttdeci">const size_t SLOT_PER_BUCKET</div><div class="ttdoc">SLOT_PER_BUCKET is the maximum number of keys per bucket. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__config_8h_source.html#l00007">cuckoohash_config.h:7</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_aedb52efd2858b25b7547e93af345c356"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#aedb52efd2858b25b7547e93af345c356">cuckoohash_map::const_iterator::release</a></div><div class="ttdeci">void release()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01599">cuckoohash_map.hh:1599</a></div></div>
+<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_aedb52efd2858b25b7547e93af345c356"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#aedb52efd2858b25b7547e93af345c356">cuckoohash_map::const_iterator::release</a></div><div class="ttdeci">void release()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01600">cuckoohash_map.hh:1600</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_afb2e9f268b71e60ffedaf4a99e3b72d1"><div class="ttname"><a href="classcuckoohash__map.html#afb2e9f268b71e60ffedaf4a99e3b72d1">cuckoohash_map::update</a></div><div class="ttdeci">bool update(const key_type &amp;key, const mapped_type &amp;val)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00452">cuckoohash_map.hh:452</a></div></div>
-<div class="ttc" id="classcuckoohash__map_1_1const__iterator_html_a8c43996df3dbf2cf909563c45c096bd1"><div class="ttname"><a href="classcuckoohash__map_1_1const__iterator.html#a8c43996df3dbf2cf909563c45c096bd1">cuckoohash_map::const_iterator::is_begin</a></div><div class="ttdeci">bool is_begin()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l01620">cuckoohash_map.hh:1620</a></div></div>
 <div class="ttc" id="classcuckoohash__map_html_ad24491ee52318a05afdd69f72c77aef4"><div class="ttname"><a href="classcuckoohash__map.html#ad24491ee52318a05afdd69f72c77aef4">cuckoohash_map::insert</a></div><div class="ttdeci">bool insert(const key_type &amp;key, const mapped_type &amp;val)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00422">cuckoohash_map.hh:422</a></div></div>
+<div class="ttc" id="classcuckoohash__map_html_a43ade3f08d0ec7efc197939b893b07d0"><div class="ttname"><a href="classcuckoohash__map.html#a43ade3f08d0ec7efc197939b893b07d0">cuckoohash_map::load_factor</a></div><div class="ttdeci">double load_factor() const </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__map_8hh_source.html#l00381">cuckoohash_map.hh:381</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_e4efb664af72a21142a7864d180da0f4.html">libcuckoo</a></li><li class="navelem"><b>cuckoohash_map.hh</b></li>
-    <li class="footer">Generated on Wed Sep 10 2014 19:04:27 for libcuckoo by
+    <li class="footer">Generated on Sun Sep 14 2014 08:47:15 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>
