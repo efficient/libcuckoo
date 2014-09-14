@@ -308,7 +308,7 @@ private:
 
     // reserve_calc takes in a parameter specifying a certain number of slots
     // for a table and returns the smallest hashpower that will hold n elements.
-    size_t reserve_calc(size_t n) {
+    static size_t reserve_calc(size_t n) {
         double nhd = ceil(log2((double)n / (double)SLOT_PER_BUCKET));
         size_t new_hashpower = (size_t) (nhd <= 0 ? 1.0 : nhd);
         assert(n <= hashsize(new_hashpower) * SLOT_PER_BUCKET);
@@ -344,7 +344,7 @@ public:
     //! size returns the number of items currently in the hash table. Since it
     //! doesn't lock the table, elements can be inserted during the computation,
     //! so the result may not necessarily be exact.
-    size_t size() {
+    size_t size() const {
         check_hazard_pointer();
         const TableInfo* ti = snapshot_table_nolock();
         HazardPointerUnsetter hpu;
@@ -353,13 +353,13 @@ public:
     }
 
     //! empty returns true if the table is empty.
-    bool empty() {
+    bool empty() const {
         return size() == 0;
     }
 
     //! hashpower returns the hashpower of the table, which is
     //! log<SUB>2</SUB>(the number of buckets).
-    size_t hashpower() {
+    size_t hashpower() const {
         check_hazard_pointer();
         TableInfo* ti = snapshot_table_nolock();
         HazardPointerUnsetter hpu;
@@ -368,7 +368,7 @@ public:
     }
 
     //! bucket_count returns the number of buckets in the table.
-    size_t bucket_count() {
+    size_t bucket_count() const {
         check_hazard_pointer();
         TableInfo* ti = snapshot_table_nolock();
         HazardPointerUnsetter hpu;
@@ -378,7 +378,7 @@ public:
 
     //! load_factor returns the ratio of the number of items in the table to the
     //! total number of available slots in the table.
-    double load_factor() {
+    double load_factor() const {
         check_hazard_pointer();
         const TableInfo* ti = snapshot_table_nolock();
         HazardPointerUnsetter hpu;
@@ -387,7 +387,7 @@ public:
 
     //! find searches through the table for \p key, and stores the associated
     //! value it finds in \p val.
-    bool find(const key_type& key, mapped_type& val) {
+    bool find(const key_type& key, mapped_type& val) const {
         check_hazard_pointer();
         size_t hv = hashed_key(key);
         TableInfo* ti;
@@ -403,7 +403,7 @@ public:
     //! This version of find does the same thing as the two-argument version,
     //! except it returns the value it finds, throwing an \p std::out_of_range
     //! exception if the key isn't in the table.
-    mapped_type find(const key_type& key) {
+    mapped_type find(const key_type& key) const {
         mapped_type val;
         bool done = find(key, val);
         if (done) {
@@ -550,12 +550,12 @@ public:
     }
 
     //! hash_function returns the hash function object used by the table.
-    hasher hash_function() {
+    hasher hash_function() const {
         return hashfn;
     }
 
     //! key_eq returns the equality predicate object used by the table.
-    key_equal key_eq() {
+    key_equal key_eq() const {
         return eqfn;
     }
 
@@ -679,7 +679,7 @@ private:
     // issue, where the address of the new table_info equals the address of a
     // previously deleted one, however it doesn't matter, since we would still
     // be looking at the most recent table_info in that case.
-    TableInfo* snapshot_table_nolock() {
+    TableInfo* snapshot_table_nolock() const {
         while (true) {
             TableInfo* ti = table_info.load();
             *hazard_pointer = ti;
@@ -698,7 +698,7 @@ private:
     // depends on the number of buckets in the table, the table_info pointer
     // needs to be grabbed first.
     std::tuple<TableInfo*, size_t, size_t>
-    snapshot_and_lock_two(const size_t hv) {
+    snapshot_and_lock_two(const size_t hv) const {
         TableInfo* ti;
         size_t i1, i2;
         while (true) {
@@ -738,7 +738,7 @@ private:
 
     // snapshot_and_lock_all is similar to snapshot_and_lock_two, except that it
     // takes all the locks in the table.
-    TableInfo* snapshot_and_lock_all() {
+    TableInfo* snapshot_and_lock_all() const {
         while (true) {
             TableInfo* ti = table_info.load();
             *hazard_pointer = ti;
@@ -1442,7 +1442,7 @@ private:
     }
 
     // cuckoo_size returns the number of elements in the given table.
-    size_t cuckoo_size(const TableInfo* ti) {
+    size_t cuckoo_size(const TableInfo* ti) const {
         size_t inserts = 0;
         size_t deletes = 0;
         for (size_t i = 0; i < ti->num_inserts.size(); ++i) {
@@ -1453,7 +1453,7 @@ private:
     }
 
     // cuckoo_loadfactor returns the load factor of the given table.
-    double cuckoo_loadfactor(const TableInfo* ti) {
+    double cuckoo_loadfactor(const TableInfo* ti) const {
         return static_cast<double>(cuckoo_size(ti)) / SLOT_PER_BUCKET /
             hashsize(ti->hashpower_);
     }
