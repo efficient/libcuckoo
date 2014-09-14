@@ -480,10 +480,10 @@ public:
         return (st == ok);
     }
 
-    //! upsert is a combined update_fn-insert function. It first tries updating
+    //! upsert is a combination of update_fn and insert. It first tries updating
     //! the value associated with \p key using \p fn. If \p key is not in the
-    //! table, then it runs an insert with \p key and \p val. This upsert will
-    //! always succeed, since if the insert encounters finds the key already
+    //! table, then it runs an insert with \p key and \p val. It will always
+    //! succeed, since if the update fails and the insert finds the key already
     //! inserted, it can retry the update.
     void upsert(const key_type& key, const updater& fn,
                 const mapped_type& val) {
