@@ -2,7 +2,6 @@
 #  include "config.h"
 #endif
 
-#include <map>
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
@@ -113,47 +112,6 @@ void FilledTableIncrementItems() {
     }
 }
 
-ValType ConstRead(const Table& t, KeyType key) {
-  return t[key];
-}
-
-void IndexOperatorTest() {
-  uint64_t seed =
-      std::chrono::system_clock::now().time_since_epoch().count();
-  std::cout << "seed = " << seed << std::endl;
-  std::uniform_int_distribution<ValType> v_dist(
-      std::numeric_limits<ValType>::min(),
-      std::numeric_limits<ValType>::max());
-  std::mt19937_64 gen(seed);
-  std::map<KeyType, ValType> reference_map;
-  Table cuckoo_map;
-  Table cuckoo_map2;
-  // loop over keys in [0, size) a few times verify that insertions
-  // into the cuckoo map match insertions into the reference map
-  for (size_t i = 0; i < size * size; i++) {
-    KeyType index = i % size;
-    ValType val = v_dist(gen);
-    // store
-    reference_map[index] = val;
-    cuckoo_map[index] = val;
-
-    // load
-    ValType cuckoo_read = cuckoo_map[index];
-    EXPECT_EQ(reference_map[index], cuckoo_read);
-    // const load
-    cuckoo_read = ConstRead(cuckoo_map, index);
-    EXPECT_EQ(reference_map[index], cuckoo_read);
-
-    // store from reference
-    cuckoo_map2[index] = (ValType)cuckoo_map[index]; 
-    EXPECT_EQ((ValType)cuckoo_map[index], (ValType)cuckoo_map2[index]);
-
-    // aliased store
-    cuckoo_map2[index] = (ValType)cuckoo_map2[index];
-    EXPECT_EQ((ValType)cuckoo_map[index], (ValType)cuckoo_map2[index]);
-  }
-}
-
 int main() {
     iter_env = new IteratorEnvironment;
     std::cout << "Running EmptyTableBeginEndIterator" << std::endl;
@@ -164,6 +122,4 @@ int main() {
     FilledTableIterForwards();
     std::cout << "Running FilledTableIncrementItems" << std::endl;
     FilledTableIncrementItems();
-    std::cout << "Running IndexOperatorTest" << std::endl;
-    IndexOperatorTest();
 }

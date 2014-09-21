@@ -14,8 +14,8 @@ std::mutex print_lock;
 typedef std::lock_guard<std::mutex> mutex_guard;
 
 // Prints a message if the two items aren't equal
-template <class T>
-inline void do_expect_equal(T x, const char *xname, T y,
+template <class T, class U>
+inline void do_expect_equal(T x, const char *xname, U y,
                             const char *yname, size_t line) {
     if (x != y) {
         mutex_guard m(print_lock);
@@ -26,8 +26,8 @@ inline void do_expect_equal(T x, const char *xname, T y,
 #define EXPECT_EQ(x, y) do_expect_equal(x, #x, y, #y, __LINE__)
 
 // Prints a message if the two items are equal
-template <class T>
-inline void do_expect_not_equal(T x, const char *xname, T y,
+template <class T, class U>
+inline void do_expect_not_equal(T x, const char *xname, U y,
                                 const char *yname, size_t line) {
     if (x == y) {
         mutex_guard m(print_lock);
@@ -58,8 +58,8 @@ inline void do_expect_false(bool x, const char *xname, size_t line) {
 #define EXPECT_FALSE(x) do_expect_false(x, #x, __LINE__)
 
 // Prints a message and exists if the two items aren't equal
-template <class T>
-inline void do_assert_equal(T x, const char *xname, T y,
+template <class T, class U>
+inline void do_assert_equal(T x, const char *xname, U y,
                             const char *yname, size_t line) {
     if (x != y) {
         mutex_guard m(print_lock);

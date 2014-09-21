@@ -41,80 +41,67 @@ public:
     typedef Hash              hasher;
     //! key_equal is the type of the equality predicate.
     typedef Pred              key_equal;
-    //! updater is the function type for functions passed to update_fn and
-    //! upsert.
-    typedef std::function<mapped_type(const mapped_type&)> updater;
 
+    //! Class returned by operator[] which wraps an entry in the hash table.
+    //! Note that this reference type behave somewhat differently from an STL
+    //! map reference. Most importantly, running this operator will not insert a
+    //! default key-value pair into the map if the given key is not already in
+    //! the map.
+    class reference {
+        // Note that this implementation here is not exactly STL compliant. To
+        // maintain performance and avoid hitting the hash table too many times,
+        // The reference object is *lazy*. In other words,
+        //
+        //  - operator[] does not actually perform an insert. It returns a
+        //    reference object pointing to the requested key.
+        //  - On table[i] = val // reference::operator=(mapped_type)
+        //    an update / insert is called
+        //  - On table[i] = table[j] // reference::operator=(const reference&)
+        //    an update / insert is called with the value of table[j]
+        //  - On val = table[i] // operator mapped_type()
+        //    a find is called
+        //  - On table[i] (i.e. no operation performed)
+        //    the destructor is called immediately (reference::~reference())
+        //    and nothing happens.
+    public:
+        //! Delete the default constructor, which should never be used
+        reference() = delete;
 
-    //! Class returned by operator[] which wraps an entry in the hash table
-    struct reference {
-      cuckoohash_map* owner = nullptr; // pointer to the hash map instance
-      key_type key; // the referenced key
-      mutable mapped_type value = mapped_type(); // the value at the referenced hash entry
-      mutable bool value_filled = false;
-
-      operator mapped_type() const {
-        // loop find and insert
-        if (value_filled) {
-          return value;
-        } else {
-          // a unified update/insert will be nice. upsert is not doing
-          // anything particularly different from this.
-          while(!owner->find(key, value) && !owner->insert(key, value));
-          value_filled = true;
-          return value;
+        //! Casting to \p mapped_type runs a find for the stored key. If the
+        //! find fails, it will thrown an exception.
+        operator mapped_type() const {
+            return owner_.find(key_);
         }
-      }
 
-      reference& operator=(const mapped_type& m) {
-        value = m;
-        value_filled = true;
-        // a unified update/insert will be nice. upsert is not doing
-        // anything particularly different from this.
-        // and this is currently biased towards inserting a new value
-        // than updating an existing value
-        while (!owner->insert(key, value) && 
-               !owner->update(key, value));
-        return *this;
-      }
- 
-      ~reference() {
-        // force an insert 
-        if (!value_filled) owner->insert(key, mapped_type());
-      }
-
-     private:
-      // private constructor
-      reference() { }
-      reference(const reference& m) {
-        owner = m.owner;
-        key = m.key;
-        value = m.value;
-        value_filled = m.value_filled;
-      }
-
-      // private assignment
-      reference& operator=(const reference& m) {
-        // no-op on aliased object
-        if (this == &m) return *this;
-        if (owner == nullptr) {
-          // left hand side is empty. assign and return
-          owner = m.owner;
-          key = m.key;
-          value = m.value;
-          value_filled = m.value_filled;
-          return *this;
+        //! The assignment operator will first try to update the value at the
+        //! reference's key. If the key isn't in the table, it will insert the
+        //! key with \p val.
+        reference& operator=(const mapped_type& val) {
+            owner_.upsert(
+                key_, [&val](const mapped_type&) { return val; }, val);
+            return *this;
         }
-        // left side has stuff, right side has potentially other stuff.
-        // i.e. this case is a[i] = b[j] (a and b could be the same). 
-        // We get the value from the RHS and assign.
-        value = m;
-        value_filled = true;
-        while (!owner->insert(key, value) && 
-               !owner->update(key, value));
-        return *this;
-      }
-      friend class cuckoohash_map;
+
+        //! The copy assignment operator doesn't actually copy the passed-in
+        //! reference. Instead, it has the same behavior as operator=(const
+        //! mapped_type& val).
+        reference& operator=(const reference& ref) {
+            *this = (mapped_type) ref;
+            return *this;
+        }
+
+    private:
+        // private constructor which initializes the owner and key
+        reference(cuckoohash_map& owner, const key_type& key)
+            : owner_(owner), key_(key) {}
+
+        // reference to the hash map instance
+        cuckoohash_map& owner_;
+        // the referenced key
+        const key_type& key_;
+
+        // cuckoohash_map needs to call the private constructor
+        friend class cuckoohash_map;
     };
 
     typedef mapped_type const_reference;
@@ -634,55 +621,20 @@ public:
         return eqfn;
     }
 
-    //! Returns a reference to the mapped value stored at the given key,
-    //! inserting the key (with default constructed mapped value) if the key
-    //! does not exist. Just like the vector<bool> this returns a reference type 
-    //! which wraps the actual mapped value. Also Note that find() and insert() 
-    //! may be more efficient.
-    //! \code
-    //! \endcode
+    //! Returns a \ref reference to the mapped value stored at the given key.
+    //! Note that the reference behaves somewhat differently from an STL map
+    //! reference (see the \ref reference documentation for details).
     reference operator[](const key_type& key) {
-      // Note that this implementation here is not exactly STL compliant. 
-      // To maintain performance and avoid hitting the hash table too many 
-      // times, The reference object is *lazy*. In other words, 
-      //
-      //  - operator[] does not actually perform an insert. It returns a
-      //    reference object pointing to the requested key.
-      //  - On table[i] = val // reference::operator=(mapped_type)
-      //    an insert / update is called, and the reference becomes eager.
-      //  - On val = table[i] // operator mapped_type()
-      //    an find / insert is called and the reference becomes eager.
-      //  - On table[i] (i.e. no operation performed), the destructor is called
-      //    immediately (reference::~reference()) in which case 
-      //    insert(key, mapped_type()) is called.
-      //
-      // Thus, with normal usage, this should behave pretty much exactly like
-      // a regular reference. However, where issues might occur is when the
-      // lifetime of the reference exceeds its usual lifespan.
-      // 
-      // auto i = table[i]
-      //
-      // in which case the lifetime of reference object is extended beyond
-      // what we would like it to be causing issues. To avoid this issue,
-      // the above is banned. By making the default constructor, 
-      // copy constructor, and assignment operator of the reference object
-      // private, the above will cause a compilation error.
-
-      reference ret;
-      ret.owner = this;
-      ret.key = key;
-      return ret;
+        return (reference(*this, key));
     }
 
-    //! Returns a reference to the mapped value stored at the given key,
-    //! inserting the key (with default constructed mapped value) if the key
-    //! does not exist. Just like the vector<bool> this returns a reference type
-    //! which wraps the actual mapped value. Also Note that find() and insert()
-    //! may be more efficient.
+    //! Returns a \ref const_reference to the mapped value stored at the given
+    //! key. This is equivalent to running the overloaded \ref find function
+    //! with no value parameter.
     const_reference operator[](const key_type& key) const {
-      // find should *really* be a const function
-      return const_cast<cuckoohash_map*>(this)->find(key);
+        return find(key);
     }
+
 private:
     std::atomic<TableInfo*> table_info;
 
