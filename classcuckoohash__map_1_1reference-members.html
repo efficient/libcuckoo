@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.5"/>
-<title>libcuckoo: libcuckoo Documentation</title>
+<title>libcuckoo: Member List</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -45,8 +45,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </script>
   <div id="navrow1" class="tabs">
     <ul class="tablist">
-      <li class="current"><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="annotated.html"><span>Classes</span></a></li>
+      <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -66,6 +66,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       </li>
     </ul>
   </div>
+  <div id="navrow2" class="tabs2">
+    <ul class="tablist">
+      <li><a href="annotated.html"><span>Class&#160;List</span></a></li>
+      <li><a href="classes.html"><span>Class&#160;Index</span></a></li>
+      <li><a href="hierarchy.html"><span>Class&#160;Hierarchy</span></a></li>
+      <li><a href="functions.html"><span>Class&#160;Members</span></a></li>
+    </ul>
+  </div>
 </div><!-- top -->
 <div id="side-nav" class="ui-resizable side-nav-resizable">
   <div id="nav-tree">
@@ -78,7 +86,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('index.html','');});
+$(document).ready(function(){initNavTree('classcuckoohash__map_1_1reference.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -97,15 +105,18 @@ $(document).ready(function(){initNavTree('index.html','');});
 
 <div class="header">
   <div class="headertitle">
-<div class="title">libcuckoo Documentation </div>  </div>
+<div class="title">cuckoohash_map&lt; Key, T, Hash, Pred &gt;::reference Member List</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>libcuckoo is a high-performance, memory efficient hash table that supports concurrent reads and writes.</p>
-<p><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a> is the class of the hash table. Its interface resembles that of STL's unordered_map but does contain some important differences.</p>
-<p>Internally, the hash table is partitioned into an array of buckets, each of which contains <a class="el" href="cuckoohash__config_8h.html#af9fa239753671f0cf754e17a37bb911d">SLOT_PER_BUCKET</a> slots to store items.</p>
-<p>Each bucket has a lock to ensure multiple threads don't modify the same elements. Most operations will lock no more than two buckets at a time, thereby allowing for concurrent reads and writes.</p>
-<p>The library also contains <a class="el" href="class_city_hasher.html">CityHasher</a>, which is a simple wrapper around Google's CityHash for the std::hash type. </p>
-</div></div><!-- contents -->
+
+<p>This is the complete list of members for <a class="el" href="classcuckoohash__map_1_1reference.html">cuckoohash_map&lt; Key, T, Hash, Pred &gt;::reference</a>, including all inherited members.</p>
+<table class="directory">
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>cuckoohash_map</b> (defined in <a class="el" href="classcuckoohash__map_1_1reference.html">cuckoohash_map&lt; Key, T, Hash, Pred &gt;::reference</a>)</td><td class="entry"><a class="el" href="classcuckoohash__map_1_1reference.html">cuckoohash_map&lt; Key, T, Hash, Pred &gt;::reference</a></td><td class="entry"><span class="mlabel">friend</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classcuckoohash__map_1_1reference.html#a14a7f47633f63709258e7ce51e3f51b9">operator mapped_type</a>() const </td><td class="entry"><a class="el" href="classcuckoohash__map_1_1reference.html">cuckoohash_map&lt; Key, T, Hash, Pred &gt;::reference</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classcuckoohash__map_1_1reference.html#a7868cba8b0277749ef0ecfc4a4eb1584">operator=</a>(const mapped_type &amp;val)</td><td class="entry"><a class="el" href="classcuckoohash__map_1_1reference.html">cuckoohash_map&lt; Key, T, Hash, Pred &gt;::reference</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classcuckoohash__map_1_1reference.html#a8faf6c4a71a5999b730850018f3c2faa">operator=</a>(const reference &amp;ref)</td><td class="entry"><a class="el" href="classcuckoohash__map_1_1reference.html">cuckoohash_map&lt; Key, T, Hash, Pred &gt;::reference</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classcuckoohash__map_1_1reference.html#a4956b76aee30c7429e4dbc0f45215b9e">reference</a>()=delete</td><td class="entry"><a class="el" href="classcuckoohash__map_1_1reference.html">cuckoohash_map&lt; Key, T, Hash, Pred &gt;::reference</a></td><td class="entry"></td></tr>
+</table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

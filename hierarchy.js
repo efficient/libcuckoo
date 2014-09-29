@@ -5,5 +5,6 @@ var hierarchy =
     [ "cuckoohash_map< Key, T, Hash, Pred >::const_iterator", "classcuckoohash__map_1_1const__iterator.html", [
       [ "cuckoohash_map< Key, T, Hash, Pred >::iterator", "classcuckoohash__map_1_1iterator.html", null ]
     ] ],
-    [ "cuckoohash_map< Key, T, Hash, Pred >", "classcuckoohash__map.html", null ]
+    [ "cuckoohash_map< Key, T, Hash, Pred >", "classcuckoohash__map.html", null ],
+    [ "cuckoohash_map< Key, T, Hash, Pred >::reference", "classcuckoohash__map_1_1reference.html", null ]
 ];
