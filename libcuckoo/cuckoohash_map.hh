@@ -524,9 +524,8 @@ public:
     }
 
     //! update_fn changes the value associated with \p key with the function \p
-    //! fn. \p fn should be a function that accepts an argument of type \p
-    //! mapped_type and returns a new value of type \p mapped_type. The exact
-    //! type of \p fn is specified by the \ref updater typedef. If \p key is not
+    //! fn. \p fn will be passed one argument of type \p const \p mapped_type&
+    //! and should return a value of type \p mapped_type. If \p key is not
     //! there, it returns false, otherwise it returns true.
     template <typename Updater>
     bool update_fn(const key_type& key, Updater fn) {
