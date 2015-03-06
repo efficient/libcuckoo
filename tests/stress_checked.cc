@@ -170,8 +170,8 @@ template <class KType>
 void update_thread(AllEnvironment<KType> *env) {
     std::mt19937_64 gen(env->gen_seed);
     std::uniform_int_distribution<size_t> third(0, 2);
-    auto updatefn = [](const ValType& v) -> ValType { return v+3; };
-    auto updatefn2 = [](const ValType2& v) -> ValType2 { return v+10; };
+    auto updatefn = [](ValType& v) { v += 3; };
+    auto updatefn2 = [](ValType2& v) { v += 10; };
     while (!env->finished.load()) {
         // Run updates, update_fns, or upserts on a random key, check
         // that the operations succeeded only if the keys were in the
@@ -196,8 +196,10 @@ void update_thread(AllEnvironment<KType> *env) {
                 break;
             case 1:
                 // update_fn
-                v = updatefn(env->vals[ind]);
-                v2 = updatefn2(env->vals2[ind]);
+                v = env->vals[ind];
+                v2 = env->vals2[ind];
+                updatefn(v);
+                updatefn2(v2);
                 res = env->table.update_fn(k, updatefn);
                 res2 = env->table2.update_fn(k, updatefn2);
                 EXPECT_EQ(res, env->in_table[ind]);
@@ -207,8 +209,10 @@ void update_thread(AllEnvironment<KType> *env) {
                 // upsert
                 if (env->in_table[ind]) {
                     // Then it should run updatefn
-                    v = updatefn(env->vals[ind]);
-                    v2 = updatefn2(env->vals2[ind]);
+                    v = env->vals[ind];
+                    v2 = env->vals2[ind];
+                    updatefn(v);
+                    updatefn2(v2);
                 } else {
                     // Then it should run an insert
                     v = env->val_dist(gen);

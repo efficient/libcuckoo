@@ -78,7 +78,7 @@ public:
         //! key with \p val.
         reference& operator=(const mapped_type& val) {
             owner_.upsert(
-                key_, [&val](const mapped_type&) { return val; }, val);
+                key_, [&val](mapped_type& v) { v = val; }, val);
             return *this;
         }
 
@@ -524,8 +524,8 @@ public:
     }
 
     //! update_fn changes the value associated with \p key with the function \p
-    //! fn. \p fn will be passed one argument of type \p const \p mapped_type&
-    //! and should return a value of type \p mapped_type. If \p key is not
+    //! fn. \p fn will be passed one argument of type \p mapped_type& and can
+    //! modify the argument as desired, returning nothing. If \p key is not
     //! there, it returns false, otherwise it returns true.
     template <typename Updater>
     bool update_fn(const key_type& key, Updater fn) {
@@ -1330,7 +1330,7 @@ private:
                 continue;
             }
             if (eqfn(ti->buckets_[i].key(j), key)) {
-                ti->buckets_[i].val(j) = fn(ti->buckets_[i].val(j));
+                fn(ti->buckets_[i].val(j));
                 return true;
             }
         }

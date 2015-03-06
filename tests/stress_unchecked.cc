@@ -122,7 +122,7 @@ void update_thread(AllEnvironment<KType> *env, size_t seed) {
     std::uniform_int_distribution<ValType2> val_dist2;
     std::uniform_int_distribution<size_t> third(0, 2);
     std::mt19937_64 gen(seed);
-    auto updatefn = [](const ValType& v) -> ValType { return v+3; };
+    auto updatefn = [](ValType& v) { v += 3; };
     while (!env->finished.load()) {
         // Run updates, update_funcs, or upserts on a random key.
         const KType k = generateKey<KType>(ind_dist(gen));
