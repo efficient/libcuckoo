@@ -84,7 +84,7 @@ void IndexOperatorTest() {
   // Concurrently increment the items in cuckoo_map2
   threads.clear();
   for (size_t i = 0; i < thread_num; ++i) {
-      threads.emplace_back(incrementer, std::ref(cuckoo_map),
+      threads.emplace_back(incrementer, std::ref(cuckoo_map2),
                            i * keys_per_thread, (i+1) * keys_per_thread);
   }
   for (auto& t : threads) {
