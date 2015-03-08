@@ -122,4 +122,5 @@ int main() {
     FilledTableIterForwards();
     std::cout << "Running FilledTableIncrementItems" << std::endl;
     FilledTableIncrementItems();
+    return main_return_value;
 }

@@ -310,4 +310,5 @@ int main(int argc, char** argv) {
         StressTest(env);
         delete env;
     }
+    return main_return_value;
 }

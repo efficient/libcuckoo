@@ -88,4 +88,5 @@ int main() {
     FindKeysInTables();
     std::cout << "Running FindNonkeysInTables" << std::endl;
     FindNonkeysInTables();
+    return main_return_value;
 }

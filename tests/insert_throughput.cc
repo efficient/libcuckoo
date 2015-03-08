@@ -167,4 +167,5 @@ int main(int argc, char** argv) {
         InsertThroughputTest(env);
         delete env;
     }
+    return main_return_value;
 }

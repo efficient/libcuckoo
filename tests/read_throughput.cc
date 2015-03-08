@@ -171,4 +171,5 @@ int main(int argc, char** argv) {
         ReadThroughputTest(env);
         delete env;
     }
+    return main_return_value;
 }

@@ -99,4 +99,5 @@ void IndexOperatorTest() {
 int main() {
     std::cout << "Running IndexOperatorTest" << std::endl;
     IndexOperatorTest();
+    return main_return_value;
 }

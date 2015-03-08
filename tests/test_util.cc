@@ -11,6 +11,7 @@
 #include <libcuckoo/cuckoohash_map.hh>
 
 std::mutex print_lock;
+int main_return_value = EXIT_SUCCESS;
 typedef std::lock_guard<std::mutex> mutex_guard;
 
 // Prints a message if the two items aren't equal
@@ -19,6 +20,7 @@ inline void do_expect_equal(T x, const char *xname, U y,
                             const char *yname, size_t line) {
     if (x != y) {
         mutex_guard m(print_lock);
+        main_return_value = EXIT_FAILURE;
         std::cout << "ERROR:\t" << xname << "(" << x << ") does not equal "
                   << yname << "(" << y << ") on line " << line << std::endl;
     }
@@ -31,6 +33,7 @@ inline void do_expect_not_equal(T x, const char *xname, U y,
                                 const char *yname, size_t line) {
     if (x == y) {
         mutex_guard m(print_lock);
+        main_return_value = EXIT_FAILURE;
         std::cout << "ERROR:\t" << xname << "(" << x << ") equals "
                   << yname << "(" << y << ") on line " << line << std::endl;
     }
@@ -41,6 +44,7 @@ inline void do_expect_not_equal(T x, const char *xname, U y,
 inline void do_expect_true(bool x, const char *xname, size_t line) {
     if (!x) {
         mutex_guard m(print_lock);
+        main_return_value = EXIT_FAILURE;
         std::cout << "ERROR:\t" << xname << "(" << x << ") is false on line "
                   << line << std::endl;
     }
@@ -51,6 +55,7 @@ inline void do_expect_true(bool x, const char *xname, size_t line) {
 inline void do_expect_false(bool x, const char *xname, size_t line) {
     if (x) {
         mutex_guard m(print_lock);
+        main_return_value = EXIT_FAILURE;
         std::cout << "ERROR:\t" << xname << "(" << x << ") is true on line "
                   << line << std::endl;
     }
@@ -66,7 +71,7 @@ inline void do_assert_equal(T x, const char *xname, U y,
         std::cout << "FATAL ERROR:\t" << xname << "(" << x
                   << ") does not equal " << yname << "(" << y << ") on line "
                   << line << std::endl;
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }
 #define ASSERT_EQ(x, y) do_assert_equal(x, #x, y, #y, __LINE__)
@@ -77,7 +82,7 @@ inline void do_assert_true(bool x, const char *xname, size_t line) {
         mutex_guard m(print_lock);
         std::cout << "FATAL ERROR:\t" << xname << "(" << x
                   << ") is false on line " << line << std::endl;
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }
 #define ASSERT_TRUE(x) do_assert_true(x, #x, __LINE__)
@@ -98,13 +103,13 @@ void parse_flags(int argc, char**argv, const char* description,
                     std::cerr << "You must provide a positive integer argument"
                               << " after the " << args[j] << " argument"
                               << std::endl;
-                    exit(1);
+                    exit(EXIT_FAILURE);
                 } else {
                     size_t argval = strtoull(argv[i+1], NULL, 10);
                     if (errno != 0) {
                         std::cerr << "The argument to " << args[j]
                                   << " must be a valid size_t" << std::endl;
-                        exit(1);
+                        exit(EXIT_FAILURE);
                     } else {
                         *(arg_vars[j]) = argval;
                     }
