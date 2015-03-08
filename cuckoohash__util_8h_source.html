@@ -113,12 +113,22 @@ $(document).ready(function(){initNavTree('cuckoohash__util_8h_source.html','');}
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="cuckoohash__config_8h.html">cuckoohash_config.h</a>&quot;</span> <span class="comment">// for LIBCUCKOO_DEBUG</span></div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;</div>
 <div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#if LIBCUCKOO_DEBUG</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)  fprintf(stderr, &quot;\x1b[32m&quot;&quot;[libcuckoo:%s:%d:%lu] &quot; fmt&quot;&quot; &quot;\x1b[0m&quot;,__FILE__,__LINE__, (unsigned long)pthread_self(), ##args)</span></div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)  do {} while (0)</span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)                                   \</span></div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="preprocessor">     fprintf(stderr, &quot;\x1b[32m&quot;&quot;[libcuckoo:%s:%d:%lu] &quot; fmt&quot;&quot; &quot;\x1b[0m&quot;, \</span></div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="preprocessor">             __FILE__,__LINE__, (unsigned long)pthread_self(), ##args)</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)  do {} while (0)</span></div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="comment">// For enabling certain methods based on a condition. Here&#39;s an example.</span></div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="comment">// ENABLE_IF(some_cond, type, static, inline) method() {</span></div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="comment">//     ...</span></div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="comment">// }</span></div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="preprocessor">#define ENABLE_IF(preamble, condition, return_type)                     \</span></div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="preprocessor">     template &lt;class Bogus=void*&gt;                                       \</span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="preprocessor">          preamble typename std::enable_if&lt;sizeof(Bogus) &amp;&amp;             \</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">          condition, return_type&gt;::type</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="cuckoohash__config_8h_html"><div class="ttname"><a href="cuckoohash__config_8h.html">cuckoohash_config.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
@@ -126,7 +136,7 @@ $(document).ready(function(){initNavTree('cuckoohash__util_8h_source.html','');}
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_e4efb664af72a21142a7864d180da0f4.html">libcuckoo</a></li><li class="navelem"><b>cuckoohash_util.h</b></li>
-    <li class="footer">Generated on Thu Mar 5 2015 11:58:38 for libcuckoo by
+    <li class="footer">Generated on Sat Mar 7 2015 16:33:39 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>
