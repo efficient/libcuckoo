@@ -114,6 +114,9 @@ private:
     static const bool is_simple =
         std::is_pod<key_type>::value && sizeof(key_type) <= 8;
 
+    static const bool value_copy_assignable = std::is_copy_assignable<
+        mapped_type>::value;
+
     // number of locks in the locks_ array
     static const size_t kNumLocks = 1 << 13;
 
@@ -205,6 +208,12 @@ private:
                    SLOT_PER_BUCKET> vals_;
         std::bitset<SLOT_PER_BUCKET> occupied_;
 
+        // key_allocator is the allocator used to construct keys
+        static std::allocator<key_type> key_allocator;
+
+        // value_allocator is the allocator to construct values
+        static std::allocator<mapped_type> value_allocator;
+
     public:
         bool occupied(int ind) const {
             return occupied_.test(ind);
@@ -228,16 +237,17 @@ private:
             return *static_cast<mapped_type*>(static_cast<void*>(&vals_[ind]));
         }
 
-        void setKV(size_t pos, const key_type& k, const mapped_type& v) {
-            occupied_.set(pos);
-            new (&key(pos)) key_type(k);
-            new (&val(pos)) mapped_type(v);
+        template <class V>
+        void setKV(size_t ind, const key_type& k, V v) {
+            occupied_.set(ind);
+            key_allocator.construct(&key(ind), k);
+            value_allocator.construct(&val(ind), std::forward<V>(v));
         }
 
-        void eraseKV(size_t pos) {
-            occupied_.reset(pos);
-            (&key(pos))->~key_type();
-            (&val(pos))->~mapped_type();
+        void eraseKV(size_t ind) {
+            occupied_.reset(ind);
+            key_allocator.destroy(&key(ind));
+            value_allocator.destroy(&val(ind));
         }
 
         Bucket() {
@@ -448,7 +458,8 @@ public:
 
     //! find searches through the table for \p key, and stores the associated
     //! value it finds in \p val.
-    bool find(const key_type& key, mapped_type& val) const {
+    ENABLE_IF(, value_copy_assignable, bool)
+    find(const key_type& key, mapped_type& val) const {
         check_hazard_pointer();
         size_t hv = hashed_key(key);
         TableInfo* ti;
@@ -464,7 +475,8 @@ public:
     //! This version of find does the same thing as the two-argument version,
     //! except it returns the value it finds, throwing an \p std::out_of_range
     //! exception if the key isn't in the table.
-    mapped_type find(const key_type& key) const {
+    ENABLE_IF(, value_copy_assignable, mapped_type)
+    find(const key_type& key) const {
         mapped_type val;
         bool done = find(key, val);
         if (done) {
@@ -474,13 +486,31 @@ public:
         }
     }
 
+    //! contains searches through the table for \p key, and returns true if it
+    //! finds it in the table, and false otherwise.
+    bool contains(const key_type& key) const {
+        check_hazard_pointer();
+        size_t hv = hashed_key(key);
+        TableInfo* ti;
+        size_t i1, i2;
+        std::tie(ti, i1, i2) = snapshot_and_lock_two(hv);
+        HazardPointerUnsetter hpu;
+
+        const bool result = cuckoo_contains(key, hv, ti, i1, i2);
+        unlock_two(ti, i1, i2);
+        return result;
+    }
+
     //! insert puts the given key-value pair into the table. It first checks
     //! that \p key isn't already in the table, since the table doesn't support
     //! duplicate keys. If the table is out of space, insert will automatically
     //! expand until it can succeed. Note that expansion can throw an exception,
     //! which insert will propagate. If \p key is already in the table, it
     //! returns false, otherwise it returns true.
-    bool insert(const key_type& key, const mapped_type& val) {
+    template <class V>
+    typename std::enable_if<std::is_convertible<V, const mapped_type&>::value,
+                            bool>::type
+    insert(const key_type& key, V val) {
         check_hazard_pointer();
         check_counterid();
         size_t hv = hashed_key(key);
@@ -488,7 +518,8 @@ public:
         size_t i1, i2;
         std::tie(ti, i1, i2) = snapshot_and_lock_two(hv);
         HazardPointerUnsetter hpu;
-        return cuckoo_insert_loop(key, val, hv, ti, i1, i2);
+        return cuckoo_insert_loop(key, std::forward<V>(val),
+                                  hv, ti, i1, i2);
     }
 
     //! erase removes \p key and it's associated value from the table, calling
@@ -510,7 +541,8 @@ public:
 
     //! update changes the value associated with \p key to \p val. If \p key is
     //! not there, it returns false, otherwise it returns true.
-    bool update(const key_type& key, const mapped_type& val) {
+    ENABLE_IF(, value_copy_assignable, bool)
+    update(const key_type& key, const mapped_type& val) {
         check_hazard_pointer();
         size_t hv = hashed_key(key);
         TableInfo* ti;
@@ -879,16 +911,12 @@ private:
     // bytes of the hashed key. This is used for partial-key cuckoohashing. If
     // the key type is POD and small, we don't use partial keys, so we just
     // return 0.
-    template <class Bogus = void*>
-    static inline
-    typename std::enable_if<sizeof(Bogus) && !is_simple, partial_t>::type
+    ENABLE_IF(static inline, is_simple, partial_t)
         partial_key(const size_t hv) {
         return (partial_t)(hv >> ((sizeof(size_t)-sizeof(partial_t)) * 8));
     }
-    template <class Bogus = void*>
-    static inline
-    typename std::enable_if<sizeof(Bogus) && is_simple, partial_t>::type
-        partial_key(const size_t&) {
+
+    ENABLE_IF(static inline, !is_simple, partial_t) partial_key(const size_t&) {
         return 0;
     }
 
@@ -1133,7 +1161,7 @@ private:
                 ti->buckets_[tb].partial(ts) = ti->buckets_[fb].partial(fs);
             }
             ti->buckets_[tb].setKV(ts, ti->buckets_[fb].key(fs),
-                                   ti->buckets_[fb].val(fs));
+                                   std::move(ti->buckets_[fb].val(fs)));
             ti->buckets_[fb].eraseKV(fs);
             if (depth == 1) {
                 // Don't unlock fb or ob, since they are needed in
@@ -1215,12 +1243,11 @@ private:
         return ok;
     }
 
-    // try_read_from-bucket will search the bucket for the given key and store
+    // try_read_from_bucket will search the bucket for the given key and store
     // the associated value if it finds it.
-    static bool try_read_from_bucket(const TableInfo* ti,
-                                     const partial_t partial,
-                                     const key_type &key, mapped_type &val,
-                                     const size_t i) {
+    ENABLE_IF(static, value_copy_assignable, bool) try_read_from_bucket(
+        const TableInfo* ti, const partial_t partial,
+        const key_type &key, mapped_type &val, const size_t i) {
         for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
             if (!ti->buckets_[i].occupied(j)) {
                 continue;
@@ -1236,15 +1263,35 @@ private:
         return false;
     }
 
+    // check_in_bucket will search the bucket for the given key and return true
+    // if the key is in the bucket, and false if it isn't.
+    static bool check_in_bucket(
+        const TableInfo* ti, const partial_t partial,
+        const key_type &key, const size_t i) {
+        for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
+            if (!ti->buckets_[i].occupied(j)) {
+                continue;
+            }
+            if (!is_simple && partial != ti->buckets_[i].partial(j)) {
+                continue;
+            }
+            if (eqfn(key, ti->buckets_[i].key(j))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // add_to_bucket will insert the given key-value pair into the slot.
+    template <class V>
     static void add_to_bucket(TableInfo* ti, const partial_t partial,
-                              const key_type &key, const mapped_type &val,
+                              const key_type &key, V val,
                               const size_t i, const size_t j) {
         assert(!ti->buckets_[i].occupied(j));
         if (!is_simple) {
             ti->buckets_[i].partial(j) = partial;
         }
-        ti->buckets_[i].setKV(j, key, val);
+        ti->buckets_[i].setKV(j, key, std::forward<V>(val));
         ti->num_inserts[counterid].num.fetch_add(1, std::memory_order_relaxed);
     }
 
@@ -1298,9 +1345,9 @@ private:
 
     // try_update_bucket will search the bucket for the given key and change its
     // associated value if it finds it.
-    static bool try_update_bucket(TableInfo* ti, const partial_t partial,
-                                  const key_type &key, const mapped_type &value,
-                                  const size_t i) {
+    ENABLE_IF(static, value_copy_assignable, bool) try_update_bucket(
+        TableInfo* ti, const partial_t partial,
+        const key_type &key, const mapped_type &value, const size_t i) {
         for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
             if (!ti->buckets_[i].occupied(j)) {
                 continue;
@@ -1319,9 +1366,9 @@ private:
     // try_update_bucket_fn will search the bucket for the given key and change
     // its associated value with the given function if it finds it.
     template <typename Updater>
-    static bool try_update_bucket_fn(TableInfo* ti, const partial_t partial,
-                                     const key_type &key, Updater fn,
-                                     const size_t i) {
+    static bool try_update_bucket_fn(
+        TableInfo* ti, const partial_t partial,
+        const key_type &key, Updater fn, const size_t i) {
         for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
             if (!ti->buckets_[i].occupied(j)) {
                 continue;
@@ -1340,9 +1387,10 @@ private:
     // cuckoo_find searches the table for the given key and value, storing the
     // value in the val if it finds the key. It expects the locks to be taken
     // and released outside the function.
-    static cuckoo_status cuckoo_find(const key_type& key, mapped_type& val,
-                                     const size_t hv, const TableInfo* ti,
-                                     const size_t i1, const size_t i2) {
+    ENABLE_IF(static, value_copy_assignable, cuckoo_status)
+        cuckoo_find(const key_type& key, mapped_type& val,
+                    const size_t hv, const TableInfo* ti,
+                    const size_t i1, const size_t i2) {
         const partial_t partial = partial_key(hv);
         if (try_read_from_bucket(ti, partial, key, val, i1)) {
             return ok;
@@ -1353,6 +1401,22 @@ private:
         return failure_key_not_found;
     }
 
+    // cuckoo_contains searches the table for the given key, returning true if
+    // it's in the table and false otherwise. It expects the locks to be taken
+    // and released outside the function.
+    static bool cuckoo_contains(const key_type& key,
+                                const size_t hv, const TableInfo* ti,
+                                const size_t i1, const size_t i2) {
+        const partial_t partial = partial_key(hv);
+        if (check_in_bucket(ti, partial, key, i1)) {
+            return true;
+        }
+        if (check_in_bucket(ti, partial, key, i2)) {
+            return true;
+        }
+        return false;
+    }
+
     // cuckoo_insert tries to insert the given key-value pair into an empty slot
     // in i1 or i2, performing cuckoo hashing if necessary. It expects the locks
     // to be taken outside the function, but they are released here, since
@@ -1360,10 +1424,10 @@ private:
     // inserting, it checks that the key isn't already in the table. cuckoo
     // hashing presents multiple concurrency issues, which are explained in the
     // function.
-    cuckoo_status cuckoo_insert(const key_type &key, const mapped_type &val,
+    template <class V>
+    cuckoo_status cuckoo_insert(const key_type &key, V val,
                                 const size_t hv, TableInfo* ti,
                                 const size_t i1, const size_t i2) {
-        mapped_type oldval;
         int res1, res2;
         const partial_t partial = partial_key(hv);
         if (!try_find_insert_bucket(ti, partial, key, i1, res1)) {
@@ -1375,12 +1439,12 @@ private:
             return failure_key_duplicated;
         }
         if (res1 != -1) {
-            add_to_bucket(ti, partial, key, val, i1, res1);
+            add_to_bucket(ti, partial, key, std::forward<V>(val), i1, res1);
             unlock_two(ti, i1, i2);
             return ok;
         }
         if (res2 != -1) {
-            add_to_bucket(ti, partial, key, val, i2, res2);
+            add_to_bucket(ti, partial, key, std::forward<V>(val), i2, res2);
             unlock_two(ti, i1, i2);
             return ok;
         }
@@ -1403,11 +1467,12 @@ private:
             // Since we unlocked the buckets during run_cuckoo, another insert
             // could have inserted the same key into either i1 or i2, so we
             // check for that before doing the insert.
-            if (cuckoo_find(key, oldval, hv, ti, i1, i2) == ok) {
+            if (cuckoo_contains(key, hv, ti, i1, i2)) {
                 unlock_two(ti, i1, i2);
                 return failure_key_duplicated;
             }
-            add_to_bucket(ti, partial, key, val, insert_bucket, insert_slot);
+            add_to_bucket(ti, partial, key, std::forward<V>(val),
+                          insert_bucket, insert_slot);
             unlock_two(ti, i1, i2);
             return ok;
         }
@@ -1422,9 +1487,11 @@ private:
     // we pulled out the loop to avoid duplicating it. This should be called
     // directly after snapshot_and_lock_two, and by the end of the function, the
     // hazard pointer will have been unset.
-    bool cuckoo_insert_loop(const key_type& key, const mapped_type& val,
+    template <class V>
+    bool cuckoo_insert_loop(const key_type& key, V val,
                             size_t hv, TableInfo* ti, size_t i1, size_t i2) {
-        cuckoo_status st = cuckoo_insert(key, val, hv, ti, i1, i2);
+        cuckoo_status st = cuckoo_insert(key, std::forward<V>(val),
+                                         hv, ti, i1, i2);
         while (st != ok) {
             // If the insert failed with failure_key_duplicated, it returns here
             if (st == failure_key_duplicated) {
@@ -1441,7 +1508,7 @@ private:
                 }
             }
             std::tie(ti, i1, i2) = snapshot_and_lock_two(hv);
-            st = cuckoo_insert(key, val, hv, ti, i1, i2);
+            st = cuckoo_insert(key, std::forward<V>(val), hv, ti, i1, i2);
         }
         return true;
     }
@@ -1465,7 +1532,8 @@ private:
     // cuckoo_update searches the table for the given key and updates its value
     // if it finds it. It expects the locks to be taken and released outside the
     // function.
-    cuckoo_status cuckoo_update(const key_type &key, const mapped_type &val,
+    ENABLE_IF(, value_copy_assignable, cuckoo_status)
+    cuckoo_update(const key_type &key, const mapped_type &val,
                                 const size_t hv, TableInfo* ti,
                                 const size_t i1, const size_t i2) {
         const partial_t partial = partial_key(hv);
@@ -1484,8 +1552,8 @@ private:
     // outside the function.
     template <typename Updater>
     cuckoo_status cuckoo_update_fn(const key_type &key, Updater fn,
-                                     const size_t hv, TableInfo* ti,
-                                     const size_t i1, const size_t i2) {
+                                   const size_t hv, TableInfo* ti,
+                                   const size_t i1, const size_t i2) {
         const partial_t partial = partial_key(hv);
         if (try_update_bucket_fn(ti, partial, key, fn, i1)) {
             return ok;
@@ -1543,8 +1611,9 @@ private:
         for (;i < end; ++i) {
             for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
                 if (old_ti->buckets_[i].occupied(j)) {
-                    new_map.insert(old_ti->buckets_[i].key(j),
-                                   old_ti->buckets_[i].val(j));
+                    new_map.insert(
+                        old_ti->buckets_[i].key(j),
+                        std::move((mapped_type&)old_ti->buckets_[i].val(j)));
                 }
             }
         }
