@@ -101,11 +101,12 @@ void ReadThroughputTest(ReadEnvironment<T> *env) {
     typedef typename T::key_type KType;
     std::vector<std::thread> threads;
     std::vector<cacheint> counters(thread_num);
-    // We use the first half of the threads to read the init_size
-    // elements that are in the table and the other half to read the
-    // numkeys-init_size elements that aren't in the table.
-    const size_t first_threadnum = thread_num / 2;
-    const size_t second_threadnum = thread_num - thread_num / 2;
+    // We use the first chunk of the threads to read the init_size elements that
+    // are in the table and the others to read the numkeys-init_size elements
+    // that aren't in the table. We proportion the number of threads based on
+    // the load factor.
+    const size_t first_threadnum = thread_num * (load / 100.0);
+    const size_t second_threadnum = thread_num - first_threadnum;
     const size_t in_keys_per_thread = (first_threadnum == 0) ?
         0 : env->init_size / first_threadnum;
     const size_t out_keys_per_thread = (env->numkeys - env->init_size) /
