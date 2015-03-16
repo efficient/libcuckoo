@@ -20,6 +20,7 @@ examples/.deps/
 examples/.libs/
 examples/count_freq
 examples/hellohash
+examples/nested_table
 install-sh
 libcuckoo/*.a
 libcuckoo/*.la
