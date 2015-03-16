@@ -2112,4 +2112,10 @@ template <class Key, class T, class Hash, class Pred>
     cuckoohash_map<Key, T, Hash, Pred>::const_iterator::begin_decrement(
         "Cannot decrement: iterator points to the beginning of the table");
 
+template <class Key, class T, class Hash, class Pred>
+std::allocator<Key> cuckoohash_map<Key, T, Hash, Pred>::Bucket::key_allocator;
+
+template <class Key, class T, class Hash, class Pred>
+std::allocator<T> cuckoohash_map<Key, T, Hash, Pred>::Bucket::value_allocator;
+
 #endif
