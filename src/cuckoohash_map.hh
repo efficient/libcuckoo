@@ -207,12 +207,19 @@ private:
                                            RealPartialContainer>::type {
     private:
         std::array<typename std::aligned_storage<
-                       sizeof(key_type), alignof(key_type)>::type,
-                   SLOT_PER_BUCKET> keys_;
-        std::array<typename std::aligned_storage<
-                       sizeof(mapped_type), alignof(mapped_type)>::type,
-                   SLOT_PER_BUCKET> vals_;
+                       sizeof(value_type), alignof(value_type)>::type,
+                   SLOT_PER_BUCKET> kvpairs_;
         std::bitset<SLOT_PER_BUCKET> occupied_;
+
+        const value_type& kvpair(int ind) const {
+            return *static_cast<const value_type*>(
+                static_cast<const void*>(&kvpairs_[ind]));
+        }
+
+        value_type& kvpair_noconst(int ind) {
+            return *static_cast<value_type*>(
+                static_cast<void*>(&kvpairs_[ind]));
+        }
 
     public:
         bool occupied(int ind) const {
@@ -220,34 +227,27 @@ private:
         }
 
         const key_type& key(int ind) const {
-            return *static_cast<const key_type*>(
-                static_cast<const void*>(&keys_[ind]));
-        }
-
-        key_type& key(int ind) {
-            return *static_cast<key_type*>(static_cast<void*>(&keys_[ind]));
+            return kvpair(ind).first;
         }
 
         const mapped_type& val(int ind) const {
-            return *static_cast<const mapped_type*>(
-                static_cast<const void*>(&vals_[ind]));
+            return kvpair(ind).second;
         }
 
         mapped_type& val(int ind) {
-            return *static_cast<mapped_type*>(static_cast<void*>(&vals_[ind]));
+            return kvpair_noconst(ind).second;
         }
 
-        template <class V>
-        void setKV(size_t ind, const key_type& k, V v) {
+        template <class... Args>
+        void setKV(size_t ind, Args&&... args) {
             occupied_.set(ind);
-            new ((void*)(&key(ind))) key_type(k);
-            new ((void*)(&val(ind))) mapped_type(std::forward<V>(v));
+            new ((void*)&kvpair_noconst(ind)) value_type(
+                std::forward<Args>(args)...);
         }
 
         void eraseKV(size_t ind) {
             occupied_.reset(ind);
-            (&key(ind))->~key_type();
-            (&val(ind))->~mapped_type();
+            (&kvpair_noconst(ind))->~value_type();
         }
 
         Bucket() {
