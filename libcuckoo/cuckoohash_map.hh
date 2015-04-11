@@ -121,7 +121,11 @@ private:
     static const size_t kNumLocks = 1 << 13;
 
     // number of cores on the machine
-    static const size_t kNumCores;
+    static size_t kNumCores() {
+        static size_t cores = std::thread::hardware_concurrency() == 0 ?
+            sysconf(_SC_NPROCESSORS_ONLN) : std::thread::hardware_concurrency();
+        return cores;
+    }
 
     // The maximum number of cuckoo operations per insert. This must be less
     // than or equal to SLOT_PER_BUCKET^(MAX_BFS_DEPTH+1)
@@ -294,7 +298,7 @@ private:
         // cacheint for each core in num_inserts and num_deletes.
         TableInfo(const size_t hashpower)
             : hashpower_(hashpower), buckets_(hashsize(hashpower_)),
-              num_inserts(kNumCores), num_deletes(kNumCores) {}
+              num_inserts(kNumCores()), num_deletes(kNumCores()) {}
 
         ~TableInfo() {}
     };
@@ -373,7 +377,7 @@ private:
     // the number of elements in the table.
     static inline void check_counterid() {
         if (counterid < 0) {
-            counterid = rand() % kNumCores;
+            counterid = rand() % kNumCores();
         }
     }
 
@@ -642,14 +646,24 @@ public:
         return (st == ok);
     }
 
+    static hasher hashfn() {
+        static hasher hash;
+        return hash;
+    }
+
     //! hash_function returns the hash function object used by the table.
     hasher hash_function() const {
-        return hashfn;
+        return hashfn();
+    }
+
+    static key_equal eqfn() {
+        static key_equal eq;
+        return eq;
     }
 
     //! key_eq returns the equality predicate object used by the table.
     key_equal key_eq() const {
-        return eqfn;
+        return eqfn();
     }
 
     //! Returns a \ref reference to the mapped value stored at the given key.
@@ -673,9 +687,6 @@ private:
     // during expansion. This keeps the memory alive for any leftover
     // operations, until they are deleted by the global hazard pointer manager.
     std::list<std::unique_ptr<TableInfo>> old_table_infos;
-
-    static hasher hashfn;
-    static key_equal eqfn;
 
     // lock locks the given bucket index.
     static inline void lock(TableInfo* ti, const size_t i) {
@@ -885,7 +896,7 @@ private:
 
     // hashed_key hashes the given key.
     static inline size_t hashed_key(const key_type &key) {
-        return hashfn(key);
+        return hashfn()(key);
     }
 
     // index_hash returns the first possible bucket that the given hashed key
@@ -1146,7 +1157,7 @@ private:
             // that happened, just... try again. Also the slot we are filling in
             // may have already been filled in by another thread, or the slot we
             // are moving from may be empty, both of which invalidate the swap.
-            if (!eqfn(ti->buckets_[fb].key(fs), from->key) ||
+            if (!eqfn()(ti->buckets_[fb].key(fs), from->key) ||
                 ti->buckets_[tb].occupied(ts) ||
                 !ti->buckets_[fb].occupied(fs)) {
                 if (depth == 1) {
@@ -1255,7 +1266,7 @@ private:
             if (!is_simple && partial != ti->buckets_[i].partial(j)) {
                 continue;
             }
-            if (eqfn(key, ti->buckets_[i].key(j))) {
+            if (eqfn()(key, ti->buckets_[i].key(j))) {
                 val = ti->buckets_[i].val(j);
                 return true;
             }
@@ -1275,7 +1286,7 @@ private:
             if (!is_simple && partial != ti->buckets_[i].partial(j)) {
                 continue;
             }
-            if (eqfn(key, ti->buckets_[i].key(j))) {
+            if (eqfn()(key, ti->buckets_[i].key(j))) {
                 return true;
             }
         }
@@ -1309,7 +1320,7 @@ private:
                 if (!is_simple && partial != ti->buckets_[i].partial(k)) {
                     continue;
                 }
-                if (eqfn(key, ti->buckets_[i].key(k))) {
+                if (eqfn()(key, ti->buckets_[i].key(k))) {
                     return false;
                 }
             } else {
@@ -1333,7 +1344,7 @@ private:
             if (!is_simple && ti->buckets_[i].partial(j) != partial) {
                 continue;
             }
-            if (eqfn(ti->buckets_[i].key(j), key)) {
+            if (eqfn()(ti->buckets_[i].key(j), key)) {
                 ti->buckets_[i].eraseKV(j);
                 ti->num_deletes[counterid].num.fetch_add(
                     1, std::memory_order_relaxed);
@@ -1355,7 +1366,7 @@ private:
             if (!is_simple && ti->buckets_[i].partial(j) != partial) {
                 continue;
             }
-            if (eqfn(ti->buckets_[i].key(j), key)) {
+            if (eqfn()(ti->buckets_[i].key(j), key)) {
                 ti->buckets_[i].val(j) = value;
                 return true;
             }
@@ -1376,7 +1387,7 @@ private:
             if (!is_simple && ti->buckets_[i].partial(j) != partial) {
                 continue;
             }
-            if (eqfn(ti->buckets_[i].key(j), key)) {
+            if (eqfn()(ti->buckets_[i].key(j), key)) {
                 fn(ti->buckets_[i].val(j));
                 return true;
             }
@@ -1638,7 +1649,7 @@ private:
         // Creates a new hash table with hashpower n and adds all the
         // elements from the old buckets
         cuckoohash_map<Key, T, Hash> new_map(hashsize(n) * SLOT_PER_BUCKET);
-        const size_t threadnum = kNumCores;
+        const size_t threadnum = kNumCores();
         const size_t buckets_per_thread =
             hashsize(ti->hashpower_) / threadnum;
         std::vector<std::thread> insertion_threads(threadnum);
@@ -2081,21 +2092,8 @@ template <class Key, class T, class Hash, class Pred>
     __thread int cuckoohash_map<Key, T, Hash, Pred>::counterid = -1;
 
 template <class Key, class T, class Hash, class Pred>
-    typename cuckoohash_map<Key, T, Hash, Pred>::hasher
-    cuckoohash_map<Key, T, Hash, Pred>::hashfn;
-
-template <class Key, class T, class Hash, class Pred>
-    typename cuckoohash_map<Key, T, Hash, Pred>::key_equal
-    cuckoohash_map<Key, T, Hash, Pred>::eqfn;
-
-template <class Key, class T, class Hash, class Pred>
     typename cuckoohash_map<Key, T, Hash, Pred>::GlobalHazardPointerList
     cuckoohash_map<Key, T, Hash, Pred>::global_hazard_pointers;
-
-template <class Key, class T, class Hash, class Pred>
-    const size_t cuckoohash_map<Key, T, Hash, Pred>::kNumCores =
-    std::thread::hardware_concurrency() == 0 ?
-    sysconf(_SC_NPROCESSORS_ONLN) : std::thread::hardware_concurrency();
 
 template <class Key, class T, class Hash, class Pred>
     const std::out_of_range
