@@ -190,14 +190,11 @@ void iterator_thread(AllEnvironment<KType> *env, size_t seed) {
     if (env->finished.load()) {
         return;
     }
-    if (gen() & 1) {
-        for (auto it = env->table2.begin(); !it.is_end(); it++) {
-            if (gen() & 1) {
-                it.set_value((*it).second + 1);
-            }
+    auto lt = env->table2.lock_table();
+    for (auto& item : lt) {
+        if (gen() & 1) {
+            item.second++;
         }
-    } else {
-        auto res = env->table.snapshot_table();
     }
 }
 

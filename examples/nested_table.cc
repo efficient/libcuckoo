@@ -29,12 +29,15 @@ int main() {
             innerTbl->insert("language", "javascript");
         });
 
-    for (auto it = tbl.cbegin(); !it.is_end(); it++) {
-        std::cout << "Properties for " << it->first << std::endl;
-        for (auto innerIt = it->second->cbegin(); !innerIt.is_end();
-             innerIt++) {
-            std::cout << "\t" << innerIt->first << " = " << innerIt->second
-                      << std::endl;
+    {
+        auto lt = tbl.lock_table();
+        for (const auto& item : lt) {
+            std::cout << "Properties for " << item.first << std::endl;
+            auto innerLt = item.second->lock_table();
+            for (auto innerItem : innerLt) {
+                std::cout << "\t" << innerItem.first << " = "
+                          << innerItem.second << std::endl;
+            }
         }
     }
 }

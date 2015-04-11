@@ -51,10 +51,13 @@ int main() {
     // maximum number of occurrences.
     KeyType maxkey;
     size_t maxval = 0;
-    for (auto it = freq_map.cbegin(); !it.is_end(); it++) {
-        if (it->second > maxval) {
-            maxkey = it->first;
-            maxval = it->second;
+    {
+        auto lt = freq_map.lock_table();
+        for (const auto& it : lt) {
+            if (it.second > maxval) {
+                maxkey = it.first;
+                maxval = it.second;
+            }
         }
     }
 

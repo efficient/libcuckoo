@@ -10,34 +10,24 @@
 #include "../../src/cuckoohash_map.hh"
 #include "unit_test_util.hh"
 
-template <class Iterator>
-void AssertIteratorIsBegin(Iterator& it) {
-    REQUIRE(it.is_begin());
-    REQUIRE_THROWS_AS(it--, std::out_of_range);
-}
-
-template <class Iterator>
-void AssertIteratorIsEnd(Iterator& it) {
-    REQUIRE(it.is_end());
-    REQUIRE_THROWS_AS(it++, std::out_of_range);
-    REQUIRE_THROWS_AS(*it, std::out_of_range);
-}
-
 
 TEST_CASE("empty table iteration", "[iterator]") {
     IntIntTable table;
-    auto it = table.begin();
-    AssertIteratorIsBegin(it);
-    it.release();
-    it = table.cbegin();
-    AssertIteratorIsBegin(it);
-    it.release();
-
-    it = table.end();
-    AssertIteratorIsEnd(it);
-    it.release();
-    it = table.cend();
-    AssertIteratorIsEnd(it);
+    {
+        auto lt = table.lock_table();
+        auto it = lt.begin();
+        REQUIRE(it == lt.begin());
+        REQUIRE(it == lt.end());
+        it = lt.cbegin();
+        REQUIRE(it == lt.begin());
+        REQUIRE(it == lt.end());
+        it = lt.end();
+        REQUIRE(it == lt.begin());
+        REQUIRE(it == lt.end());
+        it = lt.cend();
+        REQUIRE(it == lt.begin());
+        REQUIRE(it == lt.end());
+    }
 }
 
 template <class Iterator>
@@ -49,8 +39,14 @@ void AssertIteratorIsReleased(Iterator& it) {
     REQUIRE_THROWS_AS(++it, std::runtime_error);
     REQUIRE_THROWS_AS(it--, std::runtime_error);
     REQUIRE_THROWS_AS(--it, std::runtime_error);
+}
 
-    REQUIRE_THROWS_AS(it.set_value(10), std::runtime_error);
+template <class LockedTable>
+void AssertLockedTableIsReleased(LockedTable& lt) {
+    REQUIRE_THROWS_AS(lt.begin(), std::runtime_error);
+    REQUIRE_THROWS_AS(lt.end(), std::runtime_error);
+    REQUIRE_THROWS_AS(lt.cbegin(), std::runtime_error);
+    REQUIRE_THROWS_AS(lt.cend(), std::runtime_error);
 }
 
 TEST_CASE("iterator release", "[iterator]") {
@@ -58,17 +54,22 @@ TEST_CASE("iterator release", "[iterator]") {
     table.insert(10, 10);
 
     SECTION("explicit release") {
-        auto it = table.begin();
-        it.release();
+        auto lt = table.lock_table();
+        auto it = lt.begin();
+        lt.release();
         AssertIteratorIsReleased(it);
+        AssertLockedTableIsReleased(lt);
     }
 
     SECTION("release through destructor") {
-        auto it = table.begin();
-        it.IntIntTable::iterator::~iterator();
+        auto lt = table.lock_table();
+        auto it = lt.begin();
+        lt.IntIntTable::locked_table::~locked_table();
         AssertIteratorIsReleased(it);
-        it.release();
+        AssertLockedTableIsReleased(lt);
+        lt.release();
         AssertIteratorIsReleased(it);
+        AssertLockedTableIsReleased(lt);
     }
 }
 
@@ -79,43 +80,49 @@ TEST_CASE("iterator walkthrough", "[iterator]") {
     }
 
     SECTION("forward postfix walkthrough") {
-        auto it = table.cbegin();
+        auto lt = table.lock_table();
+        auto it = lt.cbegin();
         for (size_t i = 0; i < table.size(); ++i) {
             REQUIRE((*it).first == (*it).second);
             REQUIRE(it->first == it->second);
-            it++;
+            auto old_it = it;
+            REQUIRE(old_it == it++);
         }
-        REQUIRE(it.is_end());
+        REQUIRE(it == lt.end());
     }
 
     SECTION("forward prefix walkthrough") {
-        auto it = table.cbegin();
+        auto lt = table.lock_table();
+        auto it = lt.cbegin();
         for (size_t i = 0; i < table.size(); ++i) {
             REQUIRE((*it).first == (*it).second);
             REQUIRE(it->first == it->second);
             ++it;
         }
-        REQUIRE(it.is_end());
+        REQUIRE(it == lt.end());
     }
 
     SECTION("backwards postfix walkthrough") {
-        auto it = table.cend();
+        auto lt = table.lock_table();
+        auto it = lt.cend();
         for (size_t i = 0; i < table.size(); ++i) {
-            it--;
+            auto old_it = it;
+            REQUIRE(old_it == it--);
             REQUIRE((*it).first == (*it).second);
             REQUIRE(it->first == it->second);
         }
-        REQUIRE(it.is_begin());
+        REQUIRE(it == lt.begin());
     }
 
     SECTION("backwards prefix walkthrough") {
-        auto it = table.cend();
+        auto lt = table.lock_table();
+        auto it = lt.cend();
         for (size_t i = 0; i < table.size(); ++i) {
             --it;
             REQUIRE((*it).first == (*it).second);
             REQUIRE(it->first == it->second);
         }
-        REQUIRE(it.is_begin());
+        REQUIRE(it == lt.begin());
     }
 }
 
@@ -125,46 +132,23 @@ TEST_CASE("iterator modification", "[iterator]") {
         table.insert(i, i);
     }
 
-    for (auto it = table.begin(); !it.is_end(); ++it) {
-        it.set_value(it->second + 1);
+    auto lt = table.lock_table();
+    for (auto it = lt.begin(); it != lt.end(); ++it) {
+        it->second = it->second + 1;
     }
 
-    auto it = table.cbegin();
+    auto it = lt.cbegin();
     for (size_t i = 0; i < table.size(); ++i) {
         REQUIRE(it->first == it->second - 1);
         ++it;
     }
-    REQUIRE(it.is_end());
+    REQUIRE(it == lt.end());
 }
 
 
-TEST_CASE("empty table snapshot", "[iterator]") {
-    cuckoohash_map<std::string, int> table;
-    auto snapshot = table.snapshot_table();
-    REQUIRE(snapshot.size() == 0);
-}
-
-TEST_CASE("filled table snapshot", "[iterator]") {
-    cuckoohash_map<std::string, int> table;
-    size_t TABLE_SIZE = 10;
-    for (size_t i = 0; i < TABLE_SIZE; ++i) {
-        table.insert(std::to_string(i), i);
-    }
-
-    auto snapshot = table.snapshot_table();
-    REQUIRE(snapshot.size() == TABLE_SIZE);
-
-    for (size_t i = 0; i < TABLE_SIZE; ++i) {
-        REQUIRE(std::find(snapshot.begin(), snapshot.end(),
-                          std::pair<const std::string, int>(
-                              std::to_string(i), i))
-                != snapshot.end());
-    }
-}
-
-TEST_CASE("iterator blocks inserts", "[iterator]") {
+TEST_CASE("lock table blocks inserts", "[iterator]") {
     IntIntTable table;
-    auto it = table.begin();
+    auto lt = table.lock_table();
     std::thread thread([&table] () {
             for (int i = 0; i < 10; ++i) {
                 table.insert(i, i);
@@ -172,9 +156,7 @@ TEST_CASE("iterator blocks inserts", "[iterator]") {
         });
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     REQUIRE(table.size() == 0);
-    REQUIRE(it.is_begin());
-    REQUIRE(it.is_end());
-    it.release();
+    lt.release();
     thread.join();
 
     REQUIRE(table.size() == 10);
