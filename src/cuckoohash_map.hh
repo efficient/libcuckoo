@@ -1715,11 +1715,15 @@ private:
     }
 
 public:
-    //! A locked table provides a set of operations on the table that aren't
-    //! possible in a concurrent context. Right now, this includes the ability
-    //! to construct iterators on the table. Creating a locked_table will take
-    //! all the locks on the table, and will release them when destroyed (or the
-    //! \p release method is called).
+    //! A locked_table is an ownership wrapper around a \ref cuckoohash_map
+    //! table instance. When given a table instance, it takes all the locks on
+    //! the table, blocking all outside operations on the table. Because the
+    //! locked_table has unique ownership of the table, it can provide a set of
+    //! operations on the table that aren't possible in a concurrent context.
+    //! Right now, this includes the ability to construct STL-compatible
+    //! iterators on the table. When the locked_table is destroyed (or the \ref
+    //! release method is called), it will release all locks on the table. This
+    //! will invalidate all existing iterators.
     class locked_table {
         // We need to hold all the data returned by snapshot_and_lock_all, but
         // we also need to be able to re-assign the reference, so we create an
@@ -2105,8 +2109,8 @@ public:
         friend class cuckoohash_map<Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET>;
     };
 
-    //! lock_table will take all the locks in the table and return a \p
-    //! locked_table object, which can be used to iterate through the table
+    //! lock_table construct a \ref locked_table object that owns all the locks
+    //! in the table. This can be used to iterate through the table.
     locked_table lock_table() {
         return locked_table(*this);
     }
