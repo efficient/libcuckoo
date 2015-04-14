@@ -1,4 +1,4 @@
-LDFLAGS = -lpthread -L$(top_builddir)/libcuckoo -lcityhash
+LDFLAGS = -pthread -L$(top_builddir)/libcuckoo -lcityhash
 DEPS = $(top_builddir)/libcuckoo/libcityhash.la
 
 noinst_PROGRAMS = test_insert_and_find.out test_iterator.out test_bracket_operator.out stress_checked.out stress_unchecked.out insert_throughput.out read_throughput.out
