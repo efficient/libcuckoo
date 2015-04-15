@@ -4,7 +4,7 @@
 #define _CUCKOOHASH_CONFIG_H
 
 //! SLOT_PER_BUCKET is the maximum number of keys per bucket
-const size_t SLOT_PER_BUCKET = 8;
+const size_t SLOT_PER_BUCKET = 4;
 
 //! DEFAULT_SIZE is the default number of elements in an empty hash
 //! table

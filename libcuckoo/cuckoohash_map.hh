@@ -118,7 +118,7 @@ private:
         mapped_type>::value;
 
     // number of locks in the locks_ array
-    static const size_t kNumLocks = 1 << 13;
+    static const size_t kNumLocks = 1 << 16;
 
     // number of cores on the machine
     static size_t kNumCores() {
