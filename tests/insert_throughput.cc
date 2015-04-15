@@ -74,7 +74,7 @@ public:
         std::vector<std::thread> threads;
         size_t keys_per_thread = numkeys * (begin_load / 100.0) / thread_num;
         for (size_t i = 0; i < thread_num; i++) {
-            threads.emplace_back(insert_thread<KType, ValType>, std::ref(table),
+            threads.emplace_back(insert_thread<T>::func, std::ref(table),
                                  keys.begin()+i*keys_per_thread,
                                  keys.begin()+(i+1)*keys_per_thread);
         }
@@ -98,7 +98,6 @@ public:
 
 template <class T>
 void InsertThroughputTest(InsertEnvironment<T> *env) {
-    typedef typename T::key_type KType;
     std::vector<std::thread> threads;
     size_t keys_per_thread = env->numkeys * ((end_load-begin_load) / 100.0) /
         thread_num;
@@ -106,7 +105,7 @@ void InsertThroughputTest(InsertEnvironment<T> *env) {
     gettimeofday(&t1, NULL);
     for (size_t i = 0; i < thread_num; i++) {
         threads.emplace_back(
-            insert_thread<KType, ValType>, std::ref(env->table),
+            insert_thread<T>::func, std::ref(env->table),
             env->keys.begin()+(i*keys_per_thread)+env->init_size,
             env->keys.begin()+((i+1)*keys_per_thread)+env->init_size);
     }

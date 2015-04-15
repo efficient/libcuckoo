@@ -75,7 +75,7 @@ public:
         std::vector<std::thread> threads;
         size_t keys_per_thread = numkeys * (load / 100.0) / thread_num;
         for (size_t i = 0; i < thread_num; i++) {
-            threads.emplace_back(insert_thread<KType, ValType>, std::ref(table),
+            threads.emplace_back(insert_thread<T>::func, std::ref(table),
                                  keys.begin()+i*keys_per_thread,
                                  keys.begin()+(i+1)*keys_per_thread);
         }
@@ -98,7 +98,6 @@ public:
 
 template <class T>
 void ReadThroughputTest(ReadEnvironment<T> *env) {
-    typedef typename T::key_type KType;
     std::vector<std::thread> threads;
     std::vector<cacheint> counters(thread_num);
     // We use the first chunk of the threads to read the init_size elements that
@@ -114,14 +113,14 @@ void ReadThroughputTest(ReadEnvironment<T> *env) {
     // When set to true, it signals to the threads to stop running
     std::atomic<bool> finished(false);
     for (size_t i = 0; i < first_threadnum; i++) {
-        threads.emplace_back(read_thread<KType, ValType>, std::ref(env->table),
+        threads.emplace_back(read_thread<T>::func, std::ref(env->table),
                              env->keys.begin() + (i*in_keys_per_thread),
                              env->keys.begin() + ((i+1)*in_keys_per_thread),
                              std::ref(counters[i]), true, std::ref(finished));
     }
     for (size_t i = 0; i < second_threadnum; i++) {
         threads.emplace_back(
-            read_thread<KType, ValType>, std::ref(env->table),
+            read_thread<T>::func, std::ref(env->table),
             env->keys.begin() + (i*out_keys_per_thread) + env->init_size,
             env->keys.begin() + (i+1)*out_keys_per_thread + env->init_size,
             std::ref(counters[first_threadnum+i]), false, std::ref(finished));

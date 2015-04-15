@@ -89,7 +89,7 @@ public:
 };
 
 template <class KType>
-void insert_thread(AllEnvironment<KType> *env, size_t seed) {
+void stress_insert_thread(AllEnvironment<KType> *env, size_t seed) {
     std::uniform_int_distribution<size_t> ind_dist;
     std::uniform_int_distribution<ValType> val_dist;
     std::uniform_int_distribution<ValType2> val_dist2;
@@ -233,7 +233,8 @@ void StressTest(AllEnvironment<KType> *env) {
     std::vector<std::thread> threads;
     for (size_t i = 0; i < thread_num; i++) {
         if (!disable_inserts) {
-            threads.emplace_back(insert_thread<KType>, env, env->gen_seed++);
+            threads.emplace_back(stress_insert_thread<KType>, env,
+                                 env->gen_seed++);
         }
         if (!disable_deletes) {
             threads.emplace_back(delete_thread<KType>, env, env->gen_seed++);

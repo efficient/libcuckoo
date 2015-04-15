@@ -106,7 +106,7 @@ public:
 };
 
 template <class KType>
-void insert_thread(AllEnvironment<KType> *env) {
+void stress_insert_thread(AllEnvironment<KType> *env) {
     std::mt19937_64 gen(env->gen_seed);
     while (!env->finished.load()) {
         // Pick a random number between 0 and numkeys. If that slot is
@@ -273,7 +273,7 @@ void StressTest(AllEnvironment<KType> *env) {
     std::vector<std::thread> threads;
     for (size_t i = 0; i < thread_num; i++) {
         if (!disable_inserts) {
-            threads.emplace_back(insert_thread<KType>, env);
+            threads.emplace_back(stress_insert_thread<KType>, env);
         }
         if (!disable_deletes) {
             threads.emplace_back(delete_thread<KType>, env);
