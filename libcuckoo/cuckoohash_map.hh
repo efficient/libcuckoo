@@ -958,30 +958,42 @@ private:
 
     // b_queue is the queue used to store b_slots for BFS cuckoo hashing.
     class b_queue {
+        // A circular array of b_slots
         b_slot slots[MAX_CUCKOO_COUNT+1];
+        // The index of the head of the queue in the array
         size_t first;
+        // One past the index of the tail of the queue in the array. If first ==
+        // last, then the queue is empty.
         size_t last;
+
+        // returns the index in the queue after ind, wrapping around if
+        // necessary.
+        size_t increment(size_t ind) {
+            return (ind == MAX_CUCKOO_COUNT) ? 0 : ind + 1;
+        }
 
     public:
         b_queue() : first(0), last(0) {}
 
-
         void enqueue(b_slot x) {
+            assert(!full());
             slots[last] = x;
-            last = (last == MAX_CUCKOO_COUNT) ? 0 : last+1;
-            assert(last != first);
+            last = increment(last);
         }
 
         b_slot dequeue() {
-            assert(first != last);
+            assert(!empty());
             b_slot& x = slots[first];
-            first = (first == MAX_CUCKOO_COUNT) ? 0 : first+1;
+            first = increment(first);
             return x;
         }
 
-        bool not_full() {
-            const size_t next = (last == MAX_CUCKOO_COUNT) ? 0 : last+1;
-            return next != first;
+        bool empty() {
+            return first == last;
+        }
+
+        bool full() {
+            return increment(last) == first;
         }
     } __attribute__((__packed__));
 
@@ -995,10 +1007,10 @@ private:
         // starts on
         q.enqueue(b_slot(i1, 0, 0));
         q.enqueue(b_slot(i2, 1, 0));
-        while (q.not_full()) {
+        while (!q.full() && !q.empty()) {
             b_slot x = q.dequeue();
             // Picks a random slot to start from
-            for (size_t slot = 0; slot < SLOT_PER_BUCKET && q.not_full();
+            for (size_t slot = 0; slot < SLOT_PER_BUCKET && !q.full();
                  ++slot) {
                 lock(ti, x.bucket);
                 if (!ti->buckets_[x.bucket].occupied(slot)) {
