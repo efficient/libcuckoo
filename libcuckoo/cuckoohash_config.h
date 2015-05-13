@@ -13,4 +13,4 @@ const size_t DEFAULT_SIZE = (1U << 16) * SLOT_PER_BUCKET;
 //! set LIBCUCKOO_DEBUG to 1 to enable debug output
 #define LIBCUCKOO_DEBUG 0
 
-#endif
+#endif // _CUCKOOHASH_CONFIG_H

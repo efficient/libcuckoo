@@ -1,3 +1,6 @@
+#ifndef _CITY_HASHER_HH
+#define _CITY_HASHER_HH
+
 #include "city.h"
 
 /*! CityHasher is a std::hash-style wrapper around CityHash. We
@@ -20,3 +23,5 @@ public:
         return CityHash64(k.c_str(), k.size());
     }
 };
+
+#endif // _CITY_HASHER_HH

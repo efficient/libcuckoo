@@ -1,5 +1,5 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef _CUCKOOHASH_UTIL_H
+#define _CUCKOOHASH_UTIL_H
 
 #include <pthread.h>
 #include "cuckoohash_config.h" // for LIBCUCKOO_DEBUG
@@ -20,4 +20,4 @@
      template <class Bogus=void*>                                       \
           preamble typename std::enable_if<sizeof(Bogus) &&             \
           condition, return_type>::type
-#endif
+#endif // _CUCKOOHASH_UTIL_H

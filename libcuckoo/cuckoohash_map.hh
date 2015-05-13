@@ -2140,4 +2140,4 @@ std::allocator<Key> cuckoohash_map<Key, T, Hash, Pred>::Bucket::key_allocator;
 template <class Key, class T, class Hash, class Pred>
 std::allocator<T> cuckoohash_map<Key, T, Hash, Pred>::Bucket::value_allocator;
 
-#endif
+#endif // _CUCKOOHASH_MAP_HH
