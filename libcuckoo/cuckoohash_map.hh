@@ -384,6 +384,18 @@ private:
         return new_hashpower;
     }
 
+    // hashfn returns an instance of the hash function
+    static hasher hashfn() {
+        static hasher hash;
+        return hash;
+    }
+
+    // eqfn returns an instance of the equality predicate
+    static key_equal eqfn() {
+        static key_equal eq;
+        return eq;
+    }
+
 public:
     //! The constructor creates a new hash table with enough space for \p n
     //! elements. If the constructor fails, it will throw an exception.
@@ -640,19 +652,9 @@ public:
         return (st == ok);
     }
 
-    static hasher hashfn() {
-        static hasher hash;
-        return hash;
-    }
-
     //! hash_function returns the hash function object used by the table.
     hasher hash_function() const {
         return hashfn();
-    }
-
-    static key_equal eqfn() {
-        static key_equal eq;
-        return eq;
     }
 
     //! key_eq returns the equality predicate object used by the table.
