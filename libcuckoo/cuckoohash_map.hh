@@ -1643,7 +1643,7 @@ private:
     // insert_into_table is a helper function used by cuckoo_expand_simple to
     // fill up the new table.
     static void insert_into_table(
-        cuckoohash_map<Key, T, Hash>& new_map, const TableInfo* old_ti,
+        cuckoohash_map<Key, T, Hash, Pred>& new_map, const TableInfo* old_ti,
         size_t i, size_t end) {
         for (;i < end; ++i) {
             for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
@@ -1674,7 +1674,7 @@ private:
 
         // Creates a new hash table with hashpower n and adds all the
         // elements from the old buckets
-        cuckoohash_map<Key, T, Hash> new_map(hashsize(n) * SLOT_PER_BUCKET);
+        cuckoohash_map<Key, T, Hash, Pred> new_map(hashsize(n) * SLOT_PER_BUCKET);
         const size_t threadnum = kNumCores();
         const size_t buckets_per_thread =
             hashsize(ti->hashpower_) / threadnum;
