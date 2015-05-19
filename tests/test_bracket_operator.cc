@@ -12,7 +12,7 @@
 #include <utility>
 
 #include <libcuckoo/cuckoohash_map.hh>
-#include "test_util.cc"
+#include "test_util.hh"
 
 typedef uint32_t Type;
 typedef cuckoohash_map<Type, Type> Table;

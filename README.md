@@ -40,38 +40,31 @@ Usage
 ==========
 
 To build a program with the hash table, include
-``libcuckoo/cuckoohash_map.hh`` into your source file. If you want to
+`libcuckoo/cuckoohash_map.hh` into your source file. If you want to
 use CityHash, which we recommend, we have provided a wrapper
-compatible with the ``std::hash`` type around it in the
-``libcuckoo/city_hasher.hh`` file. If compiling with CityHash, add the
-``-lcityhash`` flag. You must also enable C++11 features on your
-compiler. Compiling the file ``examples/count_freq.cpp`` with g++
+compatible with the `std::hash` type around it in the
+`libcuckoo/city_hasher.hh` file. If compiling with CityHash, add the
+`-lcityhash` flag. You must also enable C++11 features on your
+compiler. Compiling the file `examples/count_freq.cpp` with g++
 might look like this:
 
     $ g++ -std=c++11 examples/count_freq.cpp -lcityhash
 
 The
 [examples directory](https://github.com/efficient/libcuckoo/tree/master/examples)
-contains some simple demonstrations of some of the basic features of
-the hash table.
-
-**Note**: While the STL supports ``operator[]`` for accessing keys in
-  the map, we instead have a ``cuckoohash_map::find`` method, which
-  resembles the ``unordered_map::at`` method. Consult
-  [the documentation](http://efficient.github.io/libcuckoo/classcuckoohash__map.html#addc0721a99193e0af53b34e2170fd6b5)
-  for more information.
+contains some simple demonstrations of some of the basic features of the hash
+table. Note that the library must be installed **before** the examples can be
+compiled.
 
 Tests
 ==========
 
-The
-[tests directory](https://github.com/efficient/libcuckoo/tree/master/tests)
-directory contains a number of tests and benchmarks of the hash table,
-which also serve as useful examples of how to use the table's various
-features. The entire test suite can be built by ``cd tests`` and then
-``make all`` and run
-with the ``make check`` command. The test executables, which have the
-suffix ``.out``, can be run individually as well.
+The [tests directory](https://github.com/efficient/libcuckoo/tree/master/tests)
+directory contains a number of tests and benchmarks of the hash table, which
+also serve as useful examples of how to use the table's various features. After
+installing the library, the entire test suite can be built by `cd tests` and
+then `make all` and run with the `make check` command. The test executables,
+which have the suffix `.out`, can be run individually as well.
 
 Issue Report
 ============

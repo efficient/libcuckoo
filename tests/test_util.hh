@@ -1,5 +1,5 @@
-#ifndef _TEST_UTIL_CC
-#define _TEST_UTIL_CC
+#ifndef _TEST_UTIL_HH
+#define _TEST_UTIL_HH
 
 // Utilities for running tests
 #include <array>
@@ -206,4 +206,4 @@ public:
     }
 };
 
-#endif
+#endif // _TEST_UTIL_HH

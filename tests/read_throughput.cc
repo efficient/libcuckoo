@@ -23,7 +23,7 @@
 #include <vector>
 
 #include <libcuckoo/cuckoohash_map.hh>
-#include "test_util.cc"
+#include "test_util.hh"
 
 typedef uint32_t KeyType;
 typedef std::string KeyType2;
