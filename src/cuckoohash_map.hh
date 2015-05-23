@@ -35,7 +35,7 @@ public:
     //! key_type is the type of keys.
     typedef Key               key_type;
     //! value_type is the type of key-value pairs.
-    typedef std::pair<Key, T> value_type;
+    typedef std::pair<const Key, T> value_type;
     //! mapped_type is the type of values.
     typedef T                 mapped_type;
     //! hasher is the type of the hash function.
@@ -105,7 +105,7 @@ public:
         friend class cuckoohash_map;
     };
 
-    typedef mapped_type const_reference;
+    typedef const mapped_type const_reference;
 
 private:
     // Constants used internally
