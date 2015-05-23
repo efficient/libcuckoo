@@ -5,13 +5,14 @@
 #include <random>
 #include <chrono>
 #include <cstdint>
-#include <libcuckoo/cuckoohash_map.hh>
-#include <libcuckoo/city_hasher.hh>
 #include <limits>
 #include <vector>
 #include <algorithm>
 #include <thread>
 #include <utility>
+
+#include "../src/cuckoohash_map.hh"
+#include "../src/city_hasher.hh"
 
 typedef uint32_t KeyType;
 typedef cuckoohash_map<KeyType, size_t, CityHasher<KeyType> > Table;
@@ -19,9 +20,11 @@ const size_t thread_num = 8;
 const size_t total_inserts = 10000000;
 
 void do_inserts(Table& freq_map) {
-    std::mt19937_64 gen(std::chrono::system_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<KeyType> dist(std::numeric_limits<KeyType>::min(),
-                                                std::numeric_limits<KeyType>::max());
+    std::mt19937_64 gen(
+        std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<KeyType> dist(
+        std::numeric_limits<KeyType>::min(),
+        std::numeric_limits<KeyType>::max());
     auto updatefn = [](const size_t& num) { return num+1; };
     for (size_t i = 0; i < total_inserts/thread_num; i++) {
         KeyType num = dist(gen);

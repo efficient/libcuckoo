@@ -2,17 +2,15 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.67])
-AC_INIT([libcuckoo], [1.0], [fawn-dev@mailman.srv.cs.cmu.edu])
-AC_CONFIG_HEADERS([config.h])
+AC_INIT([libcuckoo-tests], [1.0])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 
 AC_CONFIG_FILES([ Makefile
-                  src/Makefile
-                  examples/Makefile
+                  benchmarks/Makefile
+                  stress-tests/Makefile
+                  unit-tests/Makefile
                 ])
-AC_CONFIG_SRCDIR([src/cuckoohash_map.hh])
-AC_CONFIG_SUBDIRS([cityhash-1.1.1 tests])
-AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_MACRO_DIR([../m4])
 
 AC_PROG_CXX
 AC_PROG_LIBTOOL

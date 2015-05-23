@@ -1,0 +1,5 @@
+AM_CXXFLAGS = -O3 -DNDEBUG
+
+noinst_PROGRAMS = insert_throughput.out read_throughput.out
+insert_throughput_out_SOURCES = insert_throughput.cc
+read_throughput_out_SOURCES = read_throughput.cc

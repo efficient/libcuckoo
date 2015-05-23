@@ -21,9 +21,9 @@
 #include <utility>
 #include <vector>
 
-#include <libcuckoo/cuckoohash_config.h> // for SLOT_PER_BUCKET
-#include <libcuckoo/cuckoohash_map.hh>
-#include "test_util.hh"
+#include "../../src/cuckoohash_config.h" // for SLOT_PER_BUCKET
+#include "../../src/cuckoohash_map.hh"
+#include "../test_util.hh"
 
 typedef uint32_t KeyType;
 typedef std::string KeyType2;

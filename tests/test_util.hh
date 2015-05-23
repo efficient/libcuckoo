@@ -8,7 +8,7 @@
 #include <cstring>
 #include <iostream>
 #include <mutex>
-#include <libcuckoo/cuckoohash_map.hh>
+#include "../src/cuckoohash_map.hh"
 
 std::mutex print_lock;
 int main_return_value = EXIT_SUCCESS;
