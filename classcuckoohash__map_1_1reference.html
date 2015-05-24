@@ -140,7 +140,7 @@ class cuckoohash_map&lt; Key, T, Hash, Pred &gt;::reference</h3>
 
 <p>Class returned by operator[] which wraps an entry in the hash table. Note that this reference type behave somewhat differently from an STL map reference. Most importantly, running this operator will not insert a default key-value pair into the map if the given key is not already in the map. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00050">50</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00051">51</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="a14a7f47633f63709258e7ce51e3f51b9"></a>
 <div class="memitem">
@@ -166,7 +166,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>Casting to <code>mapped_type</code> runs a find for the stored key. If the find fails, it will thrown an exception. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00072">72</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00073">73</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -195,7 +195,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>The assignment operator will first try to update the value at the reference's key. If the key isn't in the table, it will insert the key with <code>val</code>. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00079">79</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00080">80</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -224,12 +224,12 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>The copy assignment operator doesn't actually copy the passed-in reference. Instead, it has the same behavior as operator=(const mapped_type&amp; val). </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00088">88</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00089">89</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>/Users/manu/Dropbox/dev/src/libcuckoo/libcuckoo/libcuckoo/<a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a></li>
+<li>/Users/manu/Dropbox/dev/src/libcuckoo/libcuckoo/src/<a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -237,7 +237,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a></li><li class="navelem"><a class="el" href="classcuckoohash__map_1_1reference.html">reference</a></li>
-    <li class="footer">Generated on Sat Mar 7 2015 16:33:39 for libcuckoo by
+    <li class="footer">Generated on Sat May 23 2015 17:38:06 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>
