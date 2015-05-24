@@ -53,18 +53,17 @@ might look like this:
 The
 [examples directory](https://github.com/efficient/libcuckoo/tree/master/examples)
 contains some simple demonstrations of some of the basic features of the hash
-table. Note that the library must be installed **before** the examples can be
-compiled.
+table.
 
 Tests
 ==========
 
 The [tests directory](https://github.com/efficient/libcuckoo/tree/master/tests)
 directory contains a number of tests and benchmarks of the hash table, which
-also serve as useful examples of how to use the table's various features. After
-installing the library, the entire test suite can be built by `cd tests` and
-then `make all` and run with the `make check` command. The test executables,
-which have the suffix `.out`, can be run individually as well.
+also can serve as useful examples of how to use the table's various features.
+After running `make all`, the entire test suite can be run with the `make check`
+command. This will not run the benchmarks, which must be run individually. The
+test executables, which have the suffix `.out`, can be run individually as well.
 
 Issue Report
 ============
