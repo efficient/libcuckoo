@@ -86,7 +86,9 @@ public:
         init_size = table.size();
         ASSERT_TRUE(init_size == keys_per_thread * thread_num);
 
-        std::cout << "Table with capacity " << numkeys << " prefilled to a load factor of " << load << "%" << std::endl;
+        std::cout << "Table with capacity " << numkeys
+                  << " prefilled to a load factor of " << load << "%"
+                  << std::endl;
     }
 
     size_t numkeys;
@@ -99,7 +101,10 @@ public:
 template <class T>
 void ReadThroughputTest(ReadEnvironment<T> *env) {
     std::vector<std::thread> threads;
-    std::vector<cacheint> counters(thread_num);
+    // A counter for the number of reads
+    std::atomic<size_t> counter(0);
+    // When set to true, it signals to the threads to stop running
+    std::atomic<bool> finished(false);
     // We use the first chunk of the threads to read the init_size elements that
     // are in the table and the others to read the numkeys-init_size elements
     // that aren't in the table. We proportion the number of threads based on
@@ -110,36 +115,30 @@ void ReadThroughputTest(ReadEnvironment<T> *env) {
         0 : env->init_size / first_threadnum;
     const size_t out_keys_per_thread = (env->numkeys - env->init_size) /
         second_threadnum;
-    // When set to true, it signals to the threads to stop running
-    std::atomic<bool> finished(false);
     for (size_t i = 0; i < first_threadnum; i++) {
         threads.emplace_back(read_thread<T>::func, std::ref(env->table),
                              env->keys.begin() + (i*in_keys_per_thread),
                              env->keys.begin() + ((i+1)*in_keys_per_thread),
-                             std::ref(counters[i]), true, std::ref(finished));
+                             std::ref(counter), true, std::ref(finished));
     }
     for (size_t i = 0; i < second_threadnum; i++) {
         threads.emplace_back(
             read_thread<T>::func, std::ref(env->table),
             env->keys.begin() + (i*out_keys_per_thread) + env->init_size,
             env->keys.begin() + (i+1)*out_keys_per_thread + env->init_size,
-            std::ref(counters[first_threadnum+i]), false, std::ref(finished));
+            std::ref(counter), false, std::ref(finished));
     }
     sleep(test_len);
     finished.store(true, std::memory_order_release);
     for (size_t i = 0; i < threads.size(); i++) {
         threads[i].join();
     }
-    size_t total_reads = 0;
-    for (size_t i = 0; i < counters.size(); i++) {
-        total_reads += counters[i].num;
-    }
     // Reports the results
     std::cout << "----------Results----------" << std::endl;
-    std::cout << "Number of reads:\t" << total_reads << std::endl;
+    std::cout << "Number of reads:\t" << counter.load() << std::endl;
     std::cout << "Time elapsed:\t" << test_len << " seconds" << std::endl;
-    std::cout << "Throughput: " << std::fixed << total_reads / (double)test_len
-              << " reads/sec" << std::endl;
+    std::cout << "Throughput: " << std::fixed
+              << counter.load() / (double)test_len << " reads/sec" << std::endl;
 }
 
 int main(int argc, char** argv) {
