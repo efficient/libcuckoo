@@ -621,14 +621,16 @@ public:
     //! number of buckets in the table will be 2<SUP>\p n</SUP> after expansion,
     //! so the table will have 2<SUP>\p n</SUP> &times; \ref SLOT_PER_BUCKET
     //! slots to store items in. If \p n is not larger than the current
-    //! hashpower, then the function does nothing. It returns true if the table
-    //! expansion succeeded, and false otherwise. rehash can throw an exception
-    //! if the expansion fails to allocate enough memory for the larger table.
+    //! hashpower, then it decreases the hashpower to either \p n or the
+    //! smallest power that can hold all the elements currently in the table. It
+    //! returns true if the table expansion succeeded, and false otherwise.
+    //! rehash can throw an exception if the expansion fails to allocate enough
+    //! memory for the larger table.
     bool rehash(size_t n) {
         check_hazard_pointer();
         TableInfo* ti = snapshot_table_nolock();
         HazardPointerUnsetter hpu;
-        if (n <= ti->hashpower_) {
+        if (n == ti->hashpower_) {
             return false;
         }
         const cuckoo_status st = cuckoo_expand_simple(n);
@@ -637,18 +639,21 @@ public:
 
     //! reserve will size the table to have enough slots for at least \p n
     //! elements. If the table can already hold that many elements, the function
-    //! has no effect. Otherwise, the function will expand the table to a
-    //! hashpower sufficient to hold \p n elements. It will return true if there
-    //! was an expansion, and false otherwise. reserve can throw an exception if
-    //! the expansion fails to allocate enough memory for the larger table.
+    //! will shrink the table to the smallest hashpower that can hold the
+    //! maximum of \p n and the current table size. Otherwise, the function will
+    //! expand the table to a hashpower sufficient to hold \p n elements. It
+    //! will return true if there was an expansion, and false otherwise. reserve
+    //! can throw an exception if the expansion fails to allocate enough memory
+    //! for the larger table.
     bool reserve(size_t n) {
         check_hazard_pointer();
         TableInfo* ti = snapshot_table_nolock();
         HazardPointerUnsetter hpu;
-        if (n <= hashsize(ti->hashpower_) * SLOT_PER_BUCKET) {
+        size_t new_hashpower = reserve_calc(n);
+        if (new_hashpower == ti->hashpower_) {
             return false;
         }
-        const cuckoo_status st = cuckoo_expand_simple(reserve_calc(n));
+        const cuckoo_status st = cuckoo_expand_simple(new_hashpower);
         return (st == ok);
     }
 
@@ -1656,25 +1661,26 @@ private:
         }
     }
 
-    // cuckoo_expand_simple is a simpler version of expansion than
-    // cuckoo_expand, which will double the size of the existing hash table. It
-    // needs to take all the bucket locks, since no other operations can change
-    // the table during expansion. If some other thread is holding the expansion
-    // thread at the time, then it will return failure_under_expansion.
-    cuckoo_status cuckoo_expand_simple(size_t n) {
+    // cuckoo_expand_simple will resize the table to at least the given
+    // new_hashpower. If the current table contains more elements than can be
+    // held by new_hashpower, the resulting hashpower will be greater than
+    // new_hashpower. It needs to take all the bucket locks, since no other
+    // operations can change the table during expansion.
+    cuckoo_status cuckoo_expand_simple(size_t new_hashpower) {
         TableInfo* ti = snapshot_and_lock_all();
         assert(ti == table_info.load());
         AllUnlocker au(ti);
         HazardPointerUnsetter hpu;
-        if (n <= ti->hashpower_) {
+        if (new_hashpower <= ti->hashpower_) {
             // Most likely another expansion ran before this one could grab the
             // locks
             return failure_under_expansion;
         }
 
-        // Creates a new hash table with hashpower n and adds all the
-        // elements from the old buckets
-        cuckoohash_map<Key, T, Hash, Pred> new_map(hashsize(n) * SLOT_PER_BUCKET);
+        // Creates a new hash table with hashpower new_hashpower and adds all
+        // the elements from the old buckets
+        cuckoohash_map<Key, T, Hash, Pred> new_map(
+            hashsize(new_hashpower) * SLOT_PER_BUCKET);
         const size_t threadnum = kNumCores();
         const size_t buckets_per_thread =
             hashsize(ti->hashpower_) / threadnum;
