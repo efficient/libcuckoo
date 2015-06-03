@@ -175,7 +175,7 @@ class cuckoohash_map&lt; Key, T, Hash, Pred &gt;::iterator</h3>
 
 <p>An iterator supports the same operations as the <a class="el" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a> and provides an additional <a class="el" href="classcuckoohash__map_1_1iterator.html#a3318f88a345dd463acd7bd74db879964">set_value</a> method to allow changing values in the table. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02033">2033</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02039">2039</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="ae08a2adc5611de416e1c1de7702435e5"></a>
 <div class="memitem">
@@ -202,7 +202,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>This constructor is identical to the rvalue-reference constructor of <a class="el" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a>. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02044">2044</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02050">2050</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -231,7 +231,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>This constructor allows converting from a <a class="el" href="classcuckoohash__map_1_1const__iterator.html">const_iterator</a> to an iterator. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02049">2049</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02055">2055</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -261,7 +261,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>set_value sets the value pointed to by the iterator to <code>val</code>. This involves modifying the hash table itself, but since we have a lock on the table, we are okay. We are only changing the value in the bucket, so the element will retain it's position in the table. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02067">2067</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02073">2073</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -274,7 +274,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a></li><li class="navelem"><a class="el" href="classcuckoohash__map_1_1iterator.html">iterator</a></li>
-    <li class="footer">Generated on Sat May 23 2015 17:38:06 for libcuckoo by
+    <li class="footer">Generated on Wed Jun 3 2015 10:32:29 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>
