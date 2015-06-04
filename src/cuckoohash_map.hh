@@ -633,7 +633,8 @@ public:
         if (n == ti->hashpower_) {
             return false;
         }
-        const cuckoo_status st = cuckoo_expand_simple(n);
+        const cuckoo_status st = cuckoo_expand_simple(
+            n, n > ti->hashpower_);
         return (st == ok);
     }
 
@@ -653,7 +654,8 @@ public:
         if (new_hashpower == ti->hashpower_) {
             return false;
         }
-        const cuckoo_status st = cuckoo_expand_simple(new_hashpower);
+        const cuckoo_status st = cuckoo_expand_simple(
+            new_hashpower, new_hashpower > ti->hashpower_);
         return (st == ok);
     }
 
@@ -1544,7 +1546,7 @@ private:
             // failure_table_full, we have to expand the table before trying
             // again.
             if (st == failure_table_full) {
-                if (cuckoo_expand_simple(ti->hashpower_+1) ==
+                if (cuckoo_expand_simple(ti->hashpower_ + 1, true) ==
                     failure_under_expansion) {
                     LIBCUCKOO_DBG("expansion is on-going\n");
                 }
@@ -1662,16 +1664,21 @@ private:
     }
 
     // cuckoo_expand_simple will resize the table to at least the given
-    // new_hashpower. If the current table contains more elements than can be
-    // held by new_hashpower, the resulting hashpower will be greater than
-    // new_hashpower. It needs to take all the bucket locks, since no other
-    // operations can change the table during expansion.
-    cuckoo_status cuckoo_expand_simple(size_t new_hashpower) {
+    // new_hashpower. If is_expansion is true, new_hashpower must be greater
+    // than the current size of the table. If it's false, then new_hashpower
+    // must be less. When we're shrinking the table, if the current table
+    // contains more elements than can be held by new_hashpower, the resulting
+    // hashpower will be greater than new_hashpower. It needs to take all the
+    // bucket locks, since no other operations can change the table during
+    // expansion.
+    cuckoo_status cuckoo_expand_simple(size_t new_hashpower,
+                                       bool is_expansion) {
         TableInfo* ti = snapshot_and_lock_all();
         assert(ti == table_info.load());
         AllUnlocker au(ti);
         HazardPointerUnsetter hpu;
-        if (new_hashpower <= ti->hashpower_) {
+        if ((is_expansion && new_hashpower <= ti->hashpower_) ||
+            (!is_expansion && new_hashpower >= ti->hashpower_)) {
             // Most likely another expansion ran before this one could grab the
             // locks
             return failure_under_expansion;
