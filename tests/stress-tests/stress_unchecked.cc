@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "../../src/cuckoohash_config.h" // for SLOT_PER_BUCKET
+#include "../../src/cuckoohash_config.h"
 #include "../../src/cuckoohash_map.hh"
 #include "../test_util.hh"
 
@@ -176,8 +176,8 @@ void resize_thread(AllEnvironment<KType> *env, size_t seed) {
         env->table.rehash(hashpower + 1);
         env->table.rehash(hashpower / 2);
     } else {
-        env->table2.reserve((1U << (hashpower+1)) * SLOT_PER_BUCKET);
-        env->table2.reserve((1U << hashpower) * SLOT_PER_BUCKET);
+        env->table2.reserve((1U << (hashpower+1)) * DEFAULT_SLOT_PER_BUCKET);
+        env->table2.reserve((1U << hashpower) * DEFAULT_SLOT_PER_BUCKET);
     }
 }
 

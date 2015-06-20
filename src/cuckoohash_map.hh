@@ -29,7 +29,8 @@
 
 //! cuckoohash_map is the hash table class.
 template <class Key, class T, class Hash = std::hash<Key>,
-          class Pred = std::equal_to<Key> >
+          class Pred = std::equal_to<Key>,
+          size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET >
 class cuckoohash_map {
 public:
     //! key_type is the type of keys.
@@ -1790,7 +1791,8 @@ public:
         void release() {
             if (has_table_lock) {
                 AllUnlocker au(ti_);
-                cuckoohash_map<Key, T, Hash, Pred>::HazardPointerUnsetter hpu;
+                cuckoohash_map<Key, T, Hash, Pred,
+                               SLOT_PER_BUCKET>::HazardPointerUnsetter hpu;
                 has_table_lock = false;
             }
         }
@@ -2117,30 +2119,30 @@ public:
 };
 
 // Initializing the static members
-template <class Key, class T, class Hash, class Pred>
-    __thread typename cuckoohash_map<Key, T, Hash, Pred>::TableInfo**
-    cuckoohash_map<Key, T, Hash, Pred>::hazard_pointer = nullptr;
+template <class Key, class T, class Hash, class Pred, size_t SPB>
+__thread typename cuckoohash_map<Key, T, Hash, Pred, SPB>::TableInfo**
+cuckoohash_map<Key, T, Hash, Pred, SPB>::hazard_pointer = nullptr;
 
-template <class Key, class T, class Hash, class Pred>
-    __thread int cuckoohash_map<Key, T, Hash, Pred>::counterid = -1;
+template <class Key, class T, class Hash, class Pred, size_t SPB>
+__thread int cuckoohash_map<Key, T, Hash, Pred, SPB>::counterid = -1;
 
-template <class Key, class T, class Hash, class Pred>
-    typename cuckoohash_map<Key, T, Hash, Pred>::GlobalHazardPointerList
-    cuckoohash_map<Key, T, Hash, Pred>::global_hazard_pointers;
+template <class Key, class T, class Hash, class Pred, size_t SPB>
+typename cuckoohash_map<Key, T, Hash, Pred, SPB>::GlobalHazardPointerList
+cuckoohash_map<Key, T, Hash, Pred, SPB>::global_hazard_pointers;
 
-template <class Key, class T, class Hash, class Pred>
-    const std::out_of_range
-    cuckoohash_map<Key, T, Hash, Pred>::const_iterator::end_dereference(
-        "Cannot dereference: iterator points past the end of the table");
+template <class Key, class T, class Hash, class Pred, size_t SPB>
+const std::out_of_range
+cuckoohash_map<Key, T, Hash, Pred, SPB>::const_iterator::end_dereference(
+    "Cannot dereference: iterator points past the end of the table");
 
-template <class Key, class T, class Hash, class Pred>
-    const std::out_of_range
-    cuckoohash_map<Key, T, Hash, Pred>::const_iterator::end_increment(
-        "Cannot increment: iterator points past the end of the table");
+template <class Key, class T, class Hash, class Pred, size_t SPB>
+const std::out_of_range
+cuckoohash_map<Key, T, Hash, Pred, SPB>::const_iterator::end_increment(
+    "Cannot increment: iterator points past the end of the table");
 
-template <class Key, class T, class Hash, class Pred>
-    const std::out_of_range
-    cuckoohash_map<Key, T, Hash, Pred>::const_iterator::begin_decrement(
-        "Cannot decrement: iterator points to the beginning of the table");
+template <class Key, class T, class Hash, class Pred, size_t SPB>
+const std::out_of_range
+cuckoohash_map<Key, T, Hash, Pred, SPB>::const_iterator::begin_decrement(
+    "Cannot decrement: iterator points to the beginning of the table");
 
 #endif // _CUCKOOHASH_MAP_HH

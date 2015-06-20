@@ -4,8 +4,11 @@
 
 #include "../../src/cuckoohash_map.hh"
 
+using Table = cuckoohash_map<
+    int, int, std::hash<int>, std::equal_to<int>, 4>;
+
 TEST_CASE("rehash empty table", "[resize]") {
-    cuckoohash_map<int, int> table(1);
+    Table table(1);
     REQUIRE(table.hashpower() == 1);
 
     table.rehash(20);
@@ -16,9 +19,9 @@ TEST_CASE("rehash empty table", "[resize]") {
 }
 
 TEST_CASE("reserve empty table", "[resize]") {
-    cuckoohash_map<int, int> table(1);
+    Table table(1);
     table.reserve(100);
-    REQUIRE(table.hashpower() == (size_t)ceil(log2(100.0 / SLOT_PER_BUCKET)));
+    REQUIRE(table.hashpower() == 5);
 
     table.reserve(1);
     REQUIRE(table.hashpower() == 1);
