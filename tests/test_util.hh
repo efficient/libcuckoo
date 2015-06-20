@@ -1,7 +1,7 @@
 #ifndef _TEST_UTIL_HH
 #define _TEST_UTIL_HH
 
-// Utilities for running tests
+// Utilities for running stress tests and benchmarks
 #include <array>
 #include <cerrno>
 #include <cstdlib>

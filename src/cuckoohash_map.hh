@@ -28,21 +28,27 @@
 #include "cuckoohash_util.h"
 
 //! cuckoohash_map is the hash table class.
-template <class Key, class T, class Hash = std::hash<Key>,
-          class Pred = std::equal_to<Key>,
-          size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET >
+template < class Key,
+           class T,
+           class Hash = std::hash<Key>,
+           class Pred = std::equal_to<Key>,
+           class Alloc = std::allocator<std::pair<const Key, T>>,
+           size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET
+           >
 class cuckoohash_map {
 public:
     //! key_type is the type of keys.
-    typedef Key               key_type;
+    typedef Key                     key_type;
     //! value_type is the type of key-value pairs.
     typedef std::pair<const Key, T> value_type;
     //! mapped_type is the type of values.
-    typedef T                 mapped_type;
+    typedef T                       mapped_type;
     //! hasher is the type of the hash function.
-    typedef Hash              hasher;
+    typedef Hash                    hasher;
     //! key_equal is the type of the equality predicate.
-    typedef Pred              key_equal;
+    typedef Pred                    key_equal;
+    //! allocator_type is the type of the allocator
+    typedef Alloc                   allocator_type;
 
     //! Class returned by operator[] which wraps an entry in the hash table.
     //! Note that this reference type behave somewhat differently from an STL
@@ -94,16 +100,17 @@ public:
 
     private:
         // private constructor which initializes the owner and key
-        reference(cuckoohash_map& owner, const key_type& key)
-            : owner_(owner), key_(key) {}
+        reference(
+            cuckoohash_map<Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET>& owner,
+            const key_type& key) : owner_(owner), key_(key) {}
 
         // reference to the hash map instance
-        cuckoohash_map& owner_;
+        cuckoohash_map<Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET>& owner_;
         // the referenced key
         const key_type& key_;
 
         // cuckoohash_map needs to call the private constructor
-        friend class cuckoohash_map;
+        friend class cuckoohash_map<Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET>;
     };
 
     typedef const mapped_type const_reference;
@@ -267,21 +274,27 @@ private:
     // An alias for the type of lock we are using
     typedef spinlock locktype;
 
+    typedef typename allocator_type::template rebind<
+        Bucket>::other bucket_allocator;
+
+    typedef typename allocator_type::template rebind<
+        cacheint>::other cacheint_allocator;
+
     // TableInfo contains the entire state of the hashtable. We allocate one
     // TableInfo pointer per hash table and store all of the table memory in it,
     // so that all the data can be atomically swapped during expansion.
     struct TableInfo {
         // 2**hashpower is the number of buckets
-        size_t hashpower_;
+        const size_t hashpower_;
 
         // vector of buckets
-        std::vector<Bucket> buckets_;
+        std::vector<Bucket, bucket_allocator> buckets_;
 
         // array of locks
         std::array<locktype, kNumLocks> locks_;
 
         // per-core counters for the number of inserts and deletes
-        std::vector<cacheint> num_inserts, num_deletes;
+        std::vector<cacheint, cacheint_allocator> num_inserts, num_deletes;
 
         // The constructor allocates the memory for the table. It allocates one
         // cacheint for each core in num_inserts and num_deletes.
@@ -291,6 +304,14 @@ private:
 
         ~TableInfo() {}
     };
+
+    typedef typename allocator_type::template rebind<
+        TableInfo>::other tableinfo_allocator;
+
+    static tableinfo_allocator get_tableinfo_allocator() {
+        static tableinfo_allocator alloc;
+        return alloc;
+    }
 
     // This is a hazard pointer, used to indicate which version of the TableInfo
     // is currently being used in the thread. Since cuckoohash_map operations
@@ -921,7 +942,7 @@ private:
     // the key type is POD and small, we don't use partial keys, so we just
     // return 0.
     ENABLE_IF(static inline, is_simple, partial_t)
-        partial_key(const size_t hv) {
+    partial_key(const size_t hv) {
         return (partial_t)(hv >> ((sizeof(size_t)-sizeof(partial_t)) * 8));
     }
 
@@ -1427,9 +1448,9 @@ private:
     // value in the val if it finds the key. It expects the locks to be taken
     // and released outside the function.
     ENABLE_IF(static, value_copy_assignable, cuckoo_status)
-        cuckoo_find(const key_type& key, mapped_type& val,
-                    const size_t hv, const TableInfo* ti,
-                    const size_t i1, const size_t i2) {
+    cuckoo_find(const key_type& key, mapped_type& val,
+                const size_t hv, const TableInfo* ti,
+                const size_t i1, const size_t i2) {
         const partial_t partial = partial_key(hv);
         if (try_read_from_bucket(ti, partial, key, val, i1)) {
             return ok;
@@ -1573,8 +1594,8 @@ private:
     // function.
     ENABLE_IF(, value_copy_assignable, cuckoo_status)
     cuckoo_update(const key_type &key, const mapped_type &val,
-                                const size_t hv, TableInfo* ti,
-                                const size_t i1, const size_t i2) {
+                  const size_t hv, TableInfo* ti,
+                  const size_t i1, const size_t i2) {
         const partial_t partial = partial_key(hv);
         if (try_update_bucket(ti, partial, key, val, i1)) {
             return ok;
@@ -1606,7 +1627,9 @@ private:
     // cuckoo_init initializes the hashtable, given an initial hashpower as the
     // argument.
     cuckoo_status cuckoo_init(const size_t hashpower) {
-        table_info.store(new TableInfo(hashpower));
+        TableInfo* ptr = get_tableinfo_allocator().allocate(1);
+        get_tableinfo_allocator().construct(ptr, hashpower);
+        table_info.store(ptr);
         cuckoo_clear(table_info.load());
         return ok;
     }
@@ -1645,8 +1668,8 @@ private:
     // insert_into_table is a helper function used by cuckoo_expand_simple to
     // fill up the new table.
     static void insert_into_table(
-        cuckoohash_map<Key, T, Hash, Pred>& new_map, const TableInfo* old_ti,
-        size_t i, size_t end) {
+        cuckoohash_map<Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET>& new_map,
+        const TableInfo* old_ti, size_t i, size_t end) {
         for (;i < end; ++i) {
             for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
                 if (old_ti->buckets_[i].occupied(j)) {
@@ -1681,7 +1704,7 @@ private:
 
         // Creates a new hash table with hashpower new_hashpower and adds all
         // the elements from the old buckets
-        cuckoohash_map<Key, T, Hash, Pred> new_map(
+        cuckoohash_map<Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET> new_map(
             hashsize(new_hashpower) * SLOT_PER_BUCKET);
         const size_t threadnum = kNumCores();
         const size_t buckets_per_thread =
@@ -1738,9 +1761,11 @@ public:
         // table, based on the boolean argument. We keep this constructor
         // private (but expose it to the cuckoohash_map class), since we don't
         // want users calling it.
-        const_iterator(const cuckoohash_map<Key, T, Hash, Pred>& hm,
-                       bool is_end) : hm_(hm) {
-            cuckoohash_map<Key, T, Hash, Pred>::check_hazard_pointer();
+        const_iterator(
+            const cuckoohash_map<Key, T, Hash, Pred, Alloc,
+            SLOT_PER_BUCKET>& hm, bool is_end) : hm_(hm) {
+            cuckoohash_map<Key, T, Hash, Pred, Alloc,
+                           SLOT_PER_BUCKET>::check_hazard_pointer();
             ti_ = hm_.snapshot_and_lock_all();
             assert(ti_ == hm_.table_info.load());
 
@@ -1759,7 +1784,7 @@ public:
             }
         }
 
-        friend class cuckoohash_map<Key, T, Hash, Pred>;
+        friend class cuckoohash_map<Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET>;
 
     public:
         //! This is an rvalue-reference constructor that takes the lock from \p
@@ -1791,7 +1816,7 @@ public:
         void release() {
             if (has_table_lock) {
                 AllUnlocker au(ti_);
-                cuckoohash_map<Key, T, Hash, Pred,
+                cuckoohash_map<Key, T, Hash, Pred, Alloc,
                                SLOT_PER_BUCKET>::HazardPointerUnsetter hpu;
                 has_table_lock = false;
             }
@@ -1905,10 +1930,11 @@ public:
 
     protected:
         // A pointer to the associated hashmap
-        const cuckoohash_map<Key, T, Hash, Pred>& hm_;
+        const cuckoohash_map<Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET>& hm_;
 
         // The hashmap's table info
-        typename cuckoohash_map<Key, T, Hash, Pred>::TableInfo* ti_;
+        typename cuckoohash_map<Key, T, Hash, Pred, Alloc,
+                                SLOT_PER_BUCKET>::TableInfo* ti_;
 
         // Indicates whether the iterator has the table lock
         bool has_table_lock;
@@ -2042,10 +2068,11 @@ public:
     class iterator : public const_iterator {
         // This constructor does the same thing as the private const_iterator
         // one.
-        iterator(cuckoohash_map<Key, T, Hash, Pred>& hm, bool is_end)
+        iterator(cuckoohash_map<Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET>& hm,
+                 bool is_end)
             : const_iterator(hm, is_end) {}
 
-        friend class cuckoohash_map<Key, T, Hash, Pred>;
+        friend class cuckoohash_map<Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET>;
 
     public:
         //! This constructor is identical to the rvalue-reference constructor of
@@ -2119,30 +2146,32 @@ public:
 };
 
 // Initializing the static members
-template <class Key, class T, class Hash, class Pred, size_t SPB>
-__thread typename cuckoohash_map<Key, T, Hash, Pred, SPB>::TableInfo**
-cuckoohash_map<Key, T, Hash, Pred, SPB>::hazard_pointer = nullptr;
+template <class Key, class T, class Hash, class Pred, class Alloc, size_t SPB>
+    __thread typename cuckoohash_map<Key, T, Hash, Pred, Alloc,
+                                     SPB>::TableInfo**
+    cuckoohash_map<Key, T, Hash, Pred, Alloc, SPB>::hazard_pointer = nullptr;
 
-template <class Key, class T, class Hash, class Pred, size_t SPB>
-__thread int cuckoohash_map<Key, T, Hash, Pred, SPB>::counterid = -1;
+template <class Key, class T, class Hash, class Pred, class Alloc, size_t SPB>
+    __thread int cuckoohash_map<Key, T, Hash, Pred, Alloc, SPB>::counterid = -1;
 
-template <class Key, class T, class Hash, class Pred, size_t SPB>
-typename cuckoohash_map<Key, T, Hash, Pred, SPB>::GlobalHazardPointerList
-cuckoohash_map<Key, T, Hash, Pred, SPB>::global_hazard_pointers;
+template <class Key, class T, class Hash, class Pred, class Alloc, size_t SPB>
+    typename cuckoohash_map<Key, T, Hash, Pred, Alloc,
+                            SPB>::GlobalHazardPointerList
+    cuckoohash_map<Key, T, Hash, Pred, Alloc, SPB>::global_hazard_pointers;
 
-template <class Key, class T, class Hash, class Pred, size_t SPB>
-const std::out_of_range
-cuckoohash_map<Key, T, Hash, Pred, SPB>::const_iterator::end_dereference(
-    "Cannot dereference: iterator points past the end of the table");
+template <class Key, class T, class Hash, class Pred, class Alloc, size_t SPB>
+const std::out_of_range cuckoohash_map<
+    Key, T, Hash, Pred, Alloc, SPB>::const_iterator::end_dereference(
+        "Cannot dereference: iterator points past the end of the table");
 
-template <class Key, class T, class Hash, class Pred, size_t SPB>
-const std::out_of_range
-cuckoohash_map<Key, T, Hash, Pred, SPB>::const_iterator::end_increment(
-    "Cannot increment: iterator points past the end of the table");
+template <class Key, class T, class Hash, class Pred, class Alloc, size_t SPB>
+    const std::out_of_range cuckoohash_map<
+    Key, T, Hash, Pred, Alloc, SPB>::const_iterator::end_increment(
+        "Cannot increment: iterator points past the end of the table");
 
-template <class Key, class T, class Hash, class Pred, size_t SPB>
-const std::out_of_range
-cuckoohash_map<Key, T, Hash, Pred, SPB>::const_iterator::begin_decrement(
-    "Cannot decrement: iterator points to the beginning of the table");
+template <class Key, class T, class Hash, class Pred, class Alloc, size_t SPB>
+    const std::out_of_range cuckoohash_map<
+    Key, T, Hash, Pred, Alloc, SPB>::const_iterator::begin_decrement(
+        "Cannot decrement: iterator points to the beginning of the table");
 
 #endif // _CUCKOOHASH_MAP_HH

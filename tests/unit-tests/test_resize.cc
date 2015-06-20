@@ -3,12 +3,10 @@
 #include <cmath>
 
 #include "../../src/cuckoohash_map.hh"
-
-using Table = cuckoohash_map<
-    int, int, std::hash<int>, std::equal_to<int>, 4>;
+#include "unit_test_util.hh"
 
 TEST_CASE("rehash empty table", "[resize]") {
-    Table table(1);
+    IntIntTable table(1);
     REQUIRE(table.hashpower() == 1);
 
     table.rehash(20);
@@ -19,7 +17,7 @@ TEST_CASE("rehash empty table", "[resize]") {
 }
 
 TEST_CASE("reserve empty table", "[resize]") {
-    Table table(1);
+    IntIntTable table(1);
     table.reserve(100);
     REQUIRE(table.hashpower() == 5);
 

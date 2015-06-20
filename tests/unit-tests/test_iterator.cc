@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "../../src/cuckoohash_map.hh"
+#include "unit_test_util.hh"
 
 template <class Iterator>
 void AssertIteratorIsBegin(Iterator& it) {
@@ -24,7 +25,7 @@ void AssertIteratorIsEnd(Iterator& it) {
 
 
 TEST_CASE("empty table iteration", "[iterator]") {
-    cuckoohash_map<int, int> table;
+    IntIntTable table;
     auto it = table.begin();
     AssertIteratorIsBegin(it);
     it.release();
@@ -53,7 +54,7 @@ void AssertIteratorIsReleased(Iterator& it) {
 }
 
 TEST_CASE("iterator release", "[iterator]") {
-    cuckoohash_map<int, int> table;
+    IntIntTable table;
     table.insert(10, 10);
 
     SECTION("explicit release") {
@@ -64,7 +65,7 @@ TEST_CASE("iterator release", "[iterator]") {
 
     SECTION("release through destructor") {
         auto it = table.begin();
-        it.cuckoohash_map<int, int>::iterator::~iterator();
+        it.IntIntTable::iterator::~iterator();
         AssertIteratorIsReleased(it);
         it.release();
         AssertIteratorIsReleased(it);
@@ -72,7 +73,7 @@ TEST_CASE("iterator release", "[iterator]") {
 }
 
 TEST_CASE("iterator walkthrough", "[iterator]") {
-    cuckoohash_map<int, int> table;
+    IntIntTable table;
     for (int i = 0; i < 10; ++i) {
         table.insert(i, i);
     }
@@ -119,7 +120,7 @@ TEST_CASE("iterator walkthrough", "[iterator]") {
 }
 
 TEST_CASE("iterator modification", "[iterator]") {
-    cuckoohash_map<int, int> table;
+    IntIntTable table;
     for (int i = 0; i < 10; ++i) {
         table.insert(i, i);
     }
@@ -162,7 +163,7 @@ TEST_CASE("filled table snapshot", "[iterator]") {
 }
 
 TEST_CASE("iterator blocks inserts", "[iterator]") {
-    cuckoohash_map<int, int> table;
+    IntIntTable table;
     auto it = table.begin();
     std::thread thread([&table] () {
             for (int i = 0; i < 10; ++i) {
