@@ -206,12 +206,6 @@ private:
                    SLOT_PER_BUCKET> vals_;
         std::bitset<SLOT_PER_BUCKET> occupied_;
 
-        // key_allocator is the allocator used to construct keys
-        static std::allocator<key_type> key_allocator;
-
-        // value_allocator is the allocator to construct values
-        static std::allocator<mapped_type> value_allocator;
-
     public:
         bool occupied(int ind) const {
             return occupied_.test(ind);
@@ -238,14 +232,14 @@ private:
         template <class V>
         void setKV(size_t ind, const key_type& k, V v) {
             occupied_.set(ind);
-            key_allocator.construct(&key(ind), k);
-            value_allocator.construct(&val(ind), std::forward<V>(v));
+            new ((void*)(&key(ind))) key_type(k);
+            new ((void*)(&val(ind))) mapped_type(std::forward<V>(v));
         }
 
         void eraseKV(size_t ind) {
             occupied_.reset(ind);
-            key_allocator.destroy(&key(ind));
-            value_allocator.destroy(&val(ind));
+            (&key(ind))->~key_type();
+            (&val(ind))->~mapped_type();
         }
 
         Bucket() {
@@ -2148,11 +2142,5 @@ template <class Key, class T, class Hash, class Pred>
     const std::out_of_range
     cuckoohash_map<Key, T, Hash, Pred>::const_iterator::begin_decrement(
         "Cannot decrement: iterator points to the beginning of the table");
-
-template <class Key, class T, class Hash, class Pred>
-std::allocator<Key> cuckoohash_map<Key, T, Hash, Pred>::Bucket::key_allocator;
-
-template <class Key, class T, class Hash, class Pred>
-std::allocator<T> cuckoohash_map<Key, T, Hash, Pred>::Bucket::value_allocator;
 
 #endif // _CUCKOOHASH_MAP_HH
