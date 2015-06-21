@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "../../src/cuckoohash_config.h"
+#include "../../src/cuckoohash_config.hh"
 #include "../../src/cuckoohash_map.hh"
 #include "../test_util.hh"
 

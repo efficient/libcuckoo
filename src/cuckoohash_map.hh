@@ -24,8 +24,8 @@
 #include <utility>
 #include <vector>
 
-#include "cuckoohash_config.h"
-#include "cuckoohash_util.h"
+#include "cuckoohash_config.hh"
+#include "cuckoohash_util.hh"
 
 //! cuckoohash_map is the hash table class.
 template < class Key,
