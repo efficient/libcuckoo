@@ -268,6 +268,7 @@ private:
         std::atomic<size_t> num;
         cacheint(): num(0) {}
         cacheint(size_t x): num(x) {}
+        cacheint(const cacheint& x): num(x.num.load()) {}
         cacheint(cacheint&& x): num(x.num.load()) {}
     } __attribute__((aligned(64)));
 
@@ -300,7 +301,7 @@ private:
         // cacheint for each core in num_inserts and num_deletes.
         TableInfo(const size_t hashpower)
             : hashpower_(hashpower), buckets_(hashsize(hashpower_)),
-              num_inserts(kNumCores()), num_deletes(kNumCores()) {}
+              num_inserts(kNumCores(), 0), num_deletes(kNumCores(), 0) {}
 
         ~TableInfo() {}
     };
@@ -423,7 +424,8 @@ public:
     ~cuckoohash_map() {
         TableInfo* ti = table_info.load();
         if (ti != nullptr) {
-            delete ti;
+            get_tableinfo_allocator().destroy(ti);
+            get_tableinfo_allocator().deallocate(ti, 1);
         }
     }
 
@@ -1628,9 +1630,13 @@ private:
     // argument.
     cuckoo_status cuckoo_init(const size_t hashpower) {
         TableInfo* ptr = get_tableinfo_allocator().allocate(1);
-        get_tableinfo_allocator().construct(ptr, hashpower);
-        table_info.store(ptr);
-        cuckoo_clear(table_info.load());
+        try {
+            get_tableinfo_allocator().construct(ptr, hashpower);
+            table_info.store(ptr);
+        } catch (...) {
+            get_tableinfo_allocator().deallocate(ptr, 1);
+            throw;
+        }
         return ok;
     }
 
