@@ -1,7 +1,5 @@
 #include "catch.hpp"
 
-#include <cmath>
-
 #include "../../src/cuckoohash_map.hh"
 #include "unit_test_util.hh"
 
