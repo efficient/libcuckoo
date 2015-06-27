@@ -417,7 +417,15 @@ public:
     //! The constructor creates a new hash table with enough space for \p n
     //! elements. If the constructor fails, it will throw an exception.
     explicit cuckoohash_map(size_t n = DEFAULT_SIZE) {
-        cuckoo_init(reserve_calc(n));
+        const size_t hashpower = reserve_calc(n);
+        TableInfo* ptr = get_tableinfo_allocator().allocate(1);
+        try {
+            get_tableinfo_allocator().construct(ptr, hashpower);
+            table_info.store(ptr);
+        } catch (...) {
+            get_tableinfo_allocator().deallocate(ptr, 1);
+            throw;
+        }
     }
 
     //! The destructor explicitly deletes the current table info.
@@ -1624,20 +1632,6 @@ private:
             return ok;
         }
         return failure_key_not_found;
-    }
-
-    // cuckoo_init initializes the hashtable, given an initial hashpower as the
-    // argument.
-    cuckoo_status cuckoo_init(const size_t hashpower) {
-        TableInfo* ptr = get_tableinfo_allocator().allocate(1);
-        try {
-            get_tableinfo_allocator().construct(ptr, hashpower);
-            table_info.store(ptr);
-        } catch (...) {
-            get_tableinfo_allocator().deallocate(ptr, 1);
-            throw;
-        }
-        return ok;
     }
 
     // cuckoo_clear empties the table, calling the destructors of all the
