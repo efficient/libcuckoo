@@ -2149,6 +2149,9 @@ public:
         }
         return items;
     }
+
+    // This class is a friend for unit testing
+    friend class UnitTestInternalAccess;
 };
 
 // Initializing the static members

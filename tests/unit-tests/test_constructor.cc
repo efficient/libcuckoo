@@ -25,15 +25,16 @@ TEST_CASE("given size", "[constructor]") {
 }
 
 TEST_CASE("frees even with exceptions", "[constructor]") {
-    typedef cuckoohash_map<int, int, std::hash<int>, std::equal_to<int>,
-                           TrackingAllocator<int, 0>> no_space_table;
-    typedef cuckoohash_map<int, int, std::hash<int>, std::equal_to<int>,
-                           TrackingAllocator<int, 1000>> some_space_table;
+    typedef IntIntTableWithAlloc< TrackingAllocator<int, 0>> no_space_table;
     // Should throw when allocating the TableInfo struct
     REQUIRE_THROWS_AS(no_space_table(1), std::bad_alloc);
     REQUIRE(get_unfreed_bytes() == 0);
+
+    typedef IntIntTableWithAlloc<
+        TrackingAllocator<int, UnitTestInternalAccess::IntIntTableInfoSize>>
+        some_space_table;
     // Should throw when constructing the TableInfo struct, which involves
     // allocating the buckets and counters
-    REQUIRE_THROWS_AS(some_space_table(1000000), std::bad_alloc);
+    REQUIRE_THROWS_AS(some_space_table(1), std::bad_alloc);
     REQUIRE(get_unfreed_bytes() == 0);
 }

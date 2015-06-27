@@ -101,6 +101,15 @@ using IntIntTable = cuckoohash_map<
     std::allocator<std::pair<const int, int>>,
     4>;
 
+template <class Alloc>
+using IntIntTableWithAlloc = cuckoohash_map<
+    int,
+    int,
+    std::hash<int>,
+    std::equal_to<int>,
+    Alloc,
+    4>;
+
 
 using StringIntTable = cuckoohash_map<
     std::string,
@@ -109,5 +118,12 @@ using StringIntTable = cuckoohash_map<
     std::equal_to<std::string>,
     std::allocator<std::pair<const std::string, int>>,
     4>;
+
+// Some unit tests need access into certain private data members of the table.
+// This class is a friend of the table, so it can access those.
+class UnitTestInternalAccess {
+public:
+    static const size_t IntIntTableInfoSize = sizeof(IntIntTable::TableInfo);
+};
 
 #endif // UNIT_TEST_UTIL_HH_
