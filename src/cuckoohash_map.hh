@@ -1006,14 +1006,9 @@ private:
 
     // b_queue is the queue used to store b_slots for BFS cuckoo hashing.
     class b_queue {
-        // The maximum size of the BFS queue. Unless it's less than
-        // SLOT_PER_BUCKET^MAX_BFS_PATH_LEN, it won't really mean anything. If
-        // it's a power of 2, then we can quickly wrap around to the beginning
-        // of the array, so we do that.
+        // The maximum size of the BFS queue. Note that unless it's less than
+        // SLOT_PER_BUCKET^MAX_BFS_PATH_LEN, it won't really mean anything.
         static const size_t MAX_CUCKOO_COUNT = 512;
-        static_assert(const_pow(SLOT_PER_BUCKET, MAX_BFS_PATH_LEN) >=
-                      MAX_CUCKOO_COUNT, "MAX_CUCKOO_COUNT value is too large"
-                      " to be useful");
         static_assert((MAX_CUCKOO_COUNT & (MAX_CUCKOO_COUNT - 1)) == 0,
                       "MAX_CUCKOO_COUNT should be a power of 2");
         // A circular array of b_slots
