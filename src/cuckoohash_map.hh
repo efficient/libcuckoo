@@ -50,6 +50,9 @@ public:
     //! allocator_type is the type of the allocator
     typedef Alloc                   allocator_type;
 
+    //! slot_per_bucket is the number of items each bucket in the table can hold
+    const size_t slot_per_bucket = SLOT_PER_BUCKET;
+
     //! Class returned by operator[] which wraps an entry in the hash table.
     //! Note that this reference type behave somewhat differently from an STL
     //! map reference. Most importantly, running this operator will not insert a
