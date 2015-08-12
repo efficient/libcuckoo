@@ -141,7 +141,7 @@ void update_thread(AllEnvironment<KType> *env, size_t seed) {
         case 2:
             env->table.upsert(k, updatefn, val_dist(gen));
             env->table2.upsert(
-                k, [](const ValType2& v) -> ValType2 { return v-50; },
+                k, [](ValType2& v) { v -= 50; },
                 val_dist2(gen));
         }
     }

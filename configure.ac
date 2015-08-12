@@ -4,7 +4,7 @@
 AC_PREREQ([2.67])
 AC_INIT([libcuckoo], [1.0], [fawn-dev@mailman.srv.cs.cmu.edu])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign])
 
 AC_CONFIG_FILES([ Makefile
                   src/Makefile
@@ -24,5 +24,7 @@ CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 CC="$PTHREAD_CC"
 
 AX_CXX_COMPILE_STDCXX_11(,[mandatory])
+
+CXXFLAGS="$CXXFLAGS -Wall -Wextra -Wshadow"
 
 AC_OUTPUT

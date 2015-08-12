@@ -17,8 +17,8 @@
 //     ...
 // }
 #define ENABLE_IF(preamble, condition, return_type)                     \
-     template <class Bogus=void*>                                       \
-          preamble typename std::enable_if<sizeof(Bogus) &&             \
-          condition, return_type>::type
+    template <class Bogus=void*>                                        \
+    preamble typename std::enable_if<sizeof(Bogus) &&                   \
+        condition, return_type>::type
 
 #endif // _CUCKOOHASH_UTIL_HH
