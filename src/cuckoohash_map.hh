@@ -375,7 +375,7 @@ private:
         // occur simultaneously in one thread. The hazard pointer variable
         // points to a pointer inside a global list of pointers, that each map
         // checks before deleting any old TableInfo pointers.
-        static __thread TableInfo** hazard_pointer;
+        static __thread TableInfo** hazard_pointer = nullptr;
 
         if (hazard_pointer == nullptr) {
             hazard_pointer = global_hazard_pointers.new_hazard_pointer();
@@ -402,7 +402,7 @@ private:
     static inline int get_counterid() {
         // counterid stores the per-thread counter index of each thread. Each
         // counter value corresponds to a core on the machine.
-        static __thread int counterid;
+        static __thread int counterid = -1;
 
         if (counterid < 0) {
             counterid = rand() % kNumCores();
