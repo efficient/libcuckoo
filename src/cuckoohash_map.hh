@@ -53,6 +53,10 @@ public:
     //! slot_per_bucket is the number of items each bucket in the table can hold
     static const size_t slot_per_bucket = SLOT_PER_BUCKET;
 
+    //! For any update operations, the callable passed in must be convertible to
+    //! the following type
+    typedef std::function<void(mapped_type&)> updater_type;
+
     //! Class returned by operator[] which wraps an entry in the hash table.
     //! Note that this reference type behave somewhat differently from an STL
     //! map reference. Most importantly, running this operator will not insert a
@@ -565,7 +569,9 @@ public:
     //! modify the argument as desired, returning nothing. If \p key is not
     //! there, it returns false, otherwise it returns true.
     template <typename Updater>
-    bool update_fn(const key_type& key, Updater fn) {
+    typename std::enable_if<
+        std::is_convertible<Updater, updater_type>::value,
+        bool>::type update_fn(const key_type& key, Updater fn) {
         size_t hv = hashed_key(key);
         auto res = snapshot_and_lock_two(hv);
         const cuckoo_status st = cuckoo_update_fn(key, fn, hv, res.ti, res.i1,
@@ -580,7 +586,9 @@ public:
     //! succeed, since if the update fails and the insert finds the key already
     //! inserted, it can retry the update.
     template <typename Updater, typename V>
-    void upsert(const key_type& key, Updater fn, V val) {
+    typename std::enable_if<
+        std::is_convertible<Updater, updater_type>::value,
+        void>::type upsert(const key_type& key, Updater fn, V val) {
         size_t hv = hashed_key(key);
         cuckoo_status st;
         do {

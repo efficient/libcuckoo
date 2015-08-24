@@ -25,7 +25,7 @@ void do_inserts(Table& freq_map) {
     std::uniform_int_distribution<KeyType> dist(
         std::numeric_limits<KeyType>::min(),
         std::numeric_limits<KeyType>::max());
-    auto updatefn = [](const size_t& num) { return num+1; };
+    auto updatefn = [](size_t& num) { ++num; };
     for (size_t i = 0; i < total_inserts/thread_num; i++) {
         KeyType num = dist(gen);
         // If the number is already in the table, it will increment
