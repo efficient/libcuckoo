@@ -1685,11 +1685,14 @@ private:
         for (size_t i = 0; i < threadnum; ++i) {
             insertion_threads[i].join();
         }
-        // Sets this table_info to new_map's. It then sets new_map's
-        // table_info to nullptr, so that it doesn't get deleted when
-        // new_map goes out of scope
-        table_info.store(new_map.table_info.load());
+        // Sets this table_info to new_map's. It then sets new_map's table_info
+        // to nullptr, so that it doesn't get deleted when new_map goes out of
+        // scope. Also we set the hazard pointer to the new table, so that we
+        // can free the old table info if no other thread is looking at it.
+        TableInfo* new_table_info = new_map.table_info.load();
+        table_info.store(new_table_info);
         new_map.table_info.store(nullptr);
+        *(res.hpc) = new_table_info;
 
         // Rather than deleting ti now, we store it in old_table_infos.
         // Note that by encapsulating the old table info in a unique_ptr, we're
