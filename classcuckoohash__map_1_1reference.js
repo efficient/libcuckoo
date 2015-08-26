@@ -1,8 +1,8 @@
 var classcuckoohash__map_1_1reference =
 [
-    [ "reference", "classcuckoohash__map_1_1reference.html#a4956b76aee30c7429e4dbc0f45215b9e", null ],
-    [ "operator mapped_type", "classcuckoohash__map_1_1reference.html#a14a7f47633f63709258e7ce51e3f51b9", null ],
-    [ "operator=", "classcuckoohash__map_1_1reference.html#a7868cba8b0277749ef0ecfc4a4eb1584", null ],
-    [ "operator=", "classcuckoohash__map_1_1reference.html#a8faf6c4a71a5999b730850018f3c2faa", null ],
-    [ "cuckoohash_map", "classcuckoohash__map_1_1reference.html#a94cdf1410bd3f79e476afb624dc87ee6", null ]
+    [ "reference", "classcuckoohash__map_1_1reference.html#aadc8c74717f83fd301372904fa988ad6", null ],
+    [ "operator mapped_type", "classcuckoohash__map_1_1reference.html#a12a50a4f72eaad151326a27b76d48a98", null ],
+    [ "operator=", "classcuckoohash__map_1_1reference.html#a3efc9da6c30a356ca1f9af98b0a05ed9", null ],
+    [ "operator=", "classcuckoohash__map_1_1reference.html#aaea02f86fc4c94ebd7ba0a4e1c4515b7", null ],
+    [ "cuckoohash_map< Key, T, Hash, Pred, Alloc, slot_per_bucket >", "classcuckoohash__map_1_1reference.html#a6de5338b4e74388f86419bedb830b14f", null ]
 ];

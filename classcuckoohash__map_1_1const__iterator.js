@@ -1,16 +1,18 @@
 var classcuckoohash__map_1_1const__iterator =
 [
-    [ "const_iterator", "classcuckoohash__map_1_1const__iterator.html#a827e61381946c3fbb3e2d8dbeaa87812", null ],
-    [ "~const_iterator", "classcuckoohash__map_1_1const__iterator.html#a0c3f49b7da1c0eee133168f1fc0f8832", null ],
-    [ "is_begin", "classcuckoohash__map_1_1const__iterator.html#adc247eac6dc0ef114ee345a00e40d4a0", null ],
-    [ "is_end", "classcuckoohash__map_1_1const__iterator.html#ae642d6ad7d4cfa34c73d81dff196d798", null ],
-    [ "operator*", "classcuckoohash__map_1_1const__iterator.html#a5344b8c23c86e4b1710bef23548839d6", null ],
-    [ "operator++", "classcuckoohash__map_1_1const__iterator.html#a0c6ac6dcfca13a16ba6697fedd723c05", null ],
-    [ "operator++", "classcuckoohash__map_1_1const__iterator.html#a8893cca42e1280a3cede09f7555757f3", null ],
-    [ "operator--", "classcuckoohash__map_1_1const__iterator.html#a476ac6df9a842b3ff8d84ef223fb71be", null ],
-    [ "operator--", "classcuckoohash__map_1_1const__iterator.html#af075fde729c00dccd2f24af1dd8679fa", null ],
-    [ "operator->", "classcuckoohash__map_1_1const__iterator.html#a3a4fc6fc11d3157a25bcbe0d0c6b9e6e", null ],
-    [ "operator=", "classcuckoohash__map_1_1const__iterator.html#acd5f76dc0e7da063a5e7586f0728a692", null ],
-    [ "release", "classcuckoohash__map_1_1const__iterator.html#aedb52efd2858b25b7547e93af345c356", null ],
-    [ "cuckoohash_map< Key, T, Hash, Pred >", "classcuckoohash__map_1_1const__iterator.html#ad6b50eee56a2cb40c39126d595546139", null ]
+    [ "const_iterator", "classcuckoohash__map_1_1const__iterator.html#a9054f3ff5d8f671661269c1eb67d2b2f", null ],
+    [ "const_iterator", "classcuckoohash__map_1_1const__iterator.html#a4294f208e0726f023b4eb512d23fc614", null ],
+    [ "~const_iterator", "classcuckoohash__map_1_1const__iterator.html#a2cabb041b6571b17158666f3316d05ad", null ],
+    [ "is_begin", "classcuckoohash__map_1_1const__iterator.html#aa96082518ad3d3f96d0347487a2dbaae", null ],
+    [ "is_end", "classcuckoohash__map_1_1const__iterator.html#aa34202b531990813ec49ab81fd2e294f", null ],
+    [ "operator*", "classcuckoohash__map_1_1const__iterator.html#ab506a84f68b95a53cf36c99e0b2e35c8", null ],
+    [ "operator++", "classcuckoohash__map_1_1const__iterator.html#aefa96003f380092ab0e4753992e881aa", null ],
+    [ "operator++", "classcuckoohash__map_1_1const__iterator.html#a69f2fd6c7eeeeb0fb42cb2b89b906467", null ],
+    [ "operator--", "classcuckoohash__map_1_1const__iterator.html#ac022eb75dd4909de997568d2ca71b0a0", null ],
+    [ "operator--", "classcuckoohash__map_1_1const__iterator.html#a0bfb6886aa763ba75ab6c975029c01b3", null ],
+    [ "operator->", "classcuckoohash__map_1_1const__iterator.html#a7b5fbba5376a56d5d6534795a9191a66", null ],
+    [ "operator=", "classcuckoohash__map_1_1const__iterator.html#a5371b2e27ade408fcda5f07b47124644", null ],
+    [ "operator=", "classcuckoohash__map_1_1const__iterator.html#a166e684c9653268e83469e66fd43acd1", null ],
+    [ "release", "classcuckoohash__map_1_1const__iterator.html#a2a8314e911b232d49aad473641a52cf3", null ],
+    [ "cuckoohash_map< Key, T, Hash, Pred, Alloc, slot_per_bucket >", "classcuckoohash__map_1_1const__iterator.html#a6de5338b4e74388f86419bedb830b14f", null ]
 ];
