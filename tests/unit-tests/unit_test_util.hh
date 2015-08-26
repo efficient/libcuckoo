@@ -119,11 +119,29 @@ using StringIntTable = cuckoohash_map<
     std::allocator<std::pair<const std::string, int>>,
     4>;
 
+// Returns the number of slots the table has to store key-value pairs.
+template <class CuckoohashMap>
+size_t table_capacity(const CuckoohashMap& table) {
+    return CuckoohashMap::slot_per_bucket * (1U << table.hashpower());
+}
+
 // Some unit tests need access into certain private data members of the table.
 // This class is a friend of the table, so it can access those.
 class UnitTestInternalAccess {
 public:
     static const size_t IntIntTableInfoSize = sizeof(IntIntTable::TableInfo);
+
+    template <class CuckoohashMap>
+    static size_t old_table_info_size(const CuckoohashMap& table) {
+        // This is not thread-safe
+        return table.old_table_infos.size();
+    }
+
+    template <class CuckoohashMap>
+    static typename CuckoohashMap::SnapshotNoLockResults snapshot_table_nolock(
+        const CuckoohashMap& table) {
+        return table.snapshot_table_nolock();
+    }
 };
 
 #endif // UNIT_TEST_UTIL_HH_

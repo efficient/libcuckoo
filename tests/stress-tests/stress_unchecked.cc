@@ -56,8 +56,8 @@ bool disable_resizes = false;
 // the command line flag --disable-iterators
 bool disable_iterators = false;
 // Whether to disable statistic operations or not. This can be set with
-// the command line flag --disable-statistics
-bool disable_statistics = false;
+// the command line flag --disable-misc
+bool disable_misc = false;
 // Whether to disable clear operations or not. This can be set with
 // the command line flag --disable-clears
 bool disable_clears = false;
@@ -202,8 +202,8 @@ void iterator_thread(AllEnvironment<KType> *env, size_t seed) {
 }
 
 template <class KType>
-void statistics_thread(AllEnvironment<KType> *env) {
-    // Runs all the statistics functions
+void misc_thread(AllEnvironment<KType> *env) {
+    // Runs all the misc functions
     std::mt19937_64 gen(seed);
     while (!env->finished.load()) {
         env->table.size();
@@ -212,6 +212,7 @@ void statistics_thread(AllEnvironment<KType> *env) {
         env->table.load_factor();
         env->table.hash_function();
         env->table.key_eq();
+        env->table.purge();
     }
 }
 
@@ -251,8 +252,8 @@ void StressTest(AllEnvironment<KType> *env) {
         if (!disable_iterators) {
             threads.emplace_back(iterator_thread<KType>, env, env->gen_seed++);
         }
-        if (!disable_statistics) {
-            threads.emplace_back(statistics_thread<KType>, env);
+        if (!disable_misc) {
+            threads.emplace_back(misc_thread<KType>, env);
         }
         if (!disable_clears) {
             threads.emplace_back(clear_thread<KType>, env, env->gen_seed++);
@@ -281,11 +282,11 @@ int main(int argc, char** argv) {
     const char* flags[] = {
         "--disable-inserts", "--disable-deletes", "--disable-updates",
         "--disable-finds", "--disable-resizes", "--disable-iterators",
-        "--disable-statistics", "--disable-clears", "--use-strings"
+        "--disable-misc", "--disable-clears", "--use-strings"
     };
     bool* flag_vars[] = {&disable_inserts, &disable_deletes, &disable_updates,
                          &disable_finds, &disable_resizes, &disable_iterators,
-                         &disable_statistics, &disable_clears, &use_strings};
+                         &disable_misc, &disable_clears, &use_strings};
     const char* flag_help[] = {
         "If set, no inserts will be run",
         "If set, no deletes will be run",
@@ -293,7 +294,7 @@ int main(int argc, char** argv) {
         "If set, no finds will be run",
         "If set, no resize operations will be run",
         "If set, no iterator operations will be run",
-        "If set, no statistics functions will be run",
+        "If set, no misc functions will be run",
         "If set, no clears will be run",
         "If set, the key type of the map will be std::string"
     };

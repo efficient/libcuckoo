@@ -678,6 +678,14 @@ public:
         return find(key);
     }
 
+    //! Frees any unused memory still held on to by the table. During a table
+    //! resize, it is not immediately possible to free the memory of the old
+    //! table, so this method explicitly purges any old table memory that is
+    //! unused.
+    void purge() {
+        global_hazard_pointers.delete_unused(old_table_infos);
+    }
+
 private:
     std::atomic<TableInfo*> table_info;
 
