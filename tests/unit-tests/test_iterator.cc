@@ -16,17 +16,15 @@ TEST_CASE("empty table iteration", "[iterator]") {
     {
         auto lt = table.lock_table();
         auto it = lt.begin();
-        REQUIRE(it == lt.begin());
-        REQUIRE(it == lt.end());
-        it = lt.cbegin();
-        REQUIRE(it == lt.begin());
-        REQUIRE(it == lt.end());
-        it = lt.end();
-        REQUIRE(it == lt.begin());
-        REQUIRE(it == lt.end());
-        it = lt.cend();
-        REQUIRE(it == lt.begin());
-        REQUIRE(it == lt.end());
+
+        REQUIRE(lt.begin() == lt.begin());
+        REQUIRE(lt.begin() == lt.end());
+
+        REQUIRE(lt.cbegin() == lt.begin());
+        REQUIRE(lt.begin() == lt.end());
+
+        REQUIRE(lt.cbegin() == lt.begin());
+        REQUIRE(lt.cend() == lt.end());
     }
 }
 

@@ -224,7 +224,7 @@ private:
                 static_cast<const void*>(&kvpairs_[ind]));
         }
 
-        value_type& kvpair_noconst(int ind) {
+        value_type& kvpair(int ind) {
             return *static_cast<value_type*>(
                 static_cast<void*>(&kvpairs_[ind]));
         }
@@ -242,19 +242,19 @@ private:
         }
 
         mapped_type& val(int ind) {
-            return kvpair_noconst(ind).second;
+            return kvpair(ind).second;
         }
 
         template <class... Args>
         void setKV(size_t ind, Args&&... args) {
             occupied_.set(ind);
-            new ((void*)&kvpair_noconst(ind)) value_type(
+            new ((void*)&kvpair(ind)) value_type(
                 std::forward<Args>(args)...);
         }
 
         void eraseKV(size_t ind) {
             occupied_.reset(ind);
-            (&kvpair_noconst(ind))->~value_type();
+            (&kvpair(ind))->~value_type();
         }
 
         Bucket() {
@@ -1809,46 +1809,22 @@ public:
             release();
         }
 
-        //! A const_iterator is an STL-style BidirectionalIterator that can be
-        //! used to iterate over a locked table
-        class const_iterator :
-            public std::iterator<std::bidirectional_iterator_tag, value_type> {
+    private:
+        //! A templated iterator whose implementation works for both const and
+        //! non_const iterators. It is an STL-style BidirectionalIterator that
+        //! can be used to iterate over a locked table.
+        template <bool IS_CONST>
+        class templated_iterator :
+            public std::iterator< std::bidirectional_iterator_tag, value_type> {
         public:
             //! No default constructor
-            const_iterator() = delete;
-
-            //! Copy constructor
-            const_iterator(const const_iterator& it)
-                : has_table_lock_(it.has_table_lock_),
-                  ti_(it.ti_), index_(it.index_), slot_(it.slot_) {}
-
-            //! Copy assignment
-            const_iterator& operator=(const const_iterator& it) {
-                has_table_lock_ = it.has_table_lock_;
-                ti_ = it.ti_;
-                index_ = it.index_;
-                slot_ = it.slot_;
-                return *this;
-            }
-
-            //! Move constructor. The iterator being moved will be invalidated.
-            const_iterator(const_iterator&& it)
-                : has_table_lock_(std::move(it.has_table_lock_)),
-                  ti_(it.ti_), index_(it.index_), slot_(it.slot_) {}
-
-            //! Move assignment. The iterator being moved will be invalidated.
-            const_iterator& operator=(const_iterator&& it) {
-                has_table_lock_ = std::move(it.has_table_lock_);
-                ti_ = it.ti_;
-                index_ = it.index_;
-                slot_ = it.slot_;
-                return *this;
-            }
+            templated_iterator() = delete;
 
             //! Return true if the iterators point to the same table and
             //! location, false otherwise. This will return false if either of
             //! the iterators has lost ownership of its table.
-            bool operator==(const const_iterator& it) const {
+            template <bool OTHER_CONST>
+            bool operator==(const templated_iterator<OTHER_CONST>& it) const {
                 // Note that if two iterators have the same has_table_lock_
                 // address, then they necessarily point to the same table info
                 // object.
@@ -1862,7 +1838,8 @@ public:
             //! Return true if the iterators point to different tables or
             //! different location, false otherwise. This will return false if
             //! either of the iterators has lost ownership of its table.
-            bool operator!=(const const_iterator& it) const {
+            template <bool OTHER_CONST>
+            bool operator!=(const templated_iterator<OTHER_CONST>& it) const {
                 return (
                     has_table_lock_.get() && it.has_table_lock_.get()
                     && !operator==(it));
@@ -1875,6 +1852,14 @@ public:
                 return ti_.get().buckets[index_].kvpair(slot_);
             }
 
+            //! Returns a mutable reference to the current key-value pair
+            //! pointed to by the iterator. Behavior is undefined if the
+            //! iterator is at the end.
+            ENABLE_IF(, !IS_CONST, value_type&) operator*() {
+                check_iterator();
+                return ti_.get().buckets[index_].kvpair(slot_);
+            }
+
             //! Return a pointer to the immutable key-value pair pointed to by
             //! the iterator. Behavior is undefined if the iterator is at the
             //! end.
@@ -1883,10 +1868,19 @@ public:
                 return &ti_.get().buckets[index_].kvpair(slot_);
             }
 
+            //! Returns a mutable pointer to the current key-value pair pointed
+            //! to by the iterator. Behavior is undefined if the iterator is at
+            //! the end.
+            ENABLE_IF(, !IS_CONST, value_type*) operator->() {
+                check_iterator();
+                return &ti_.get().buckets[index_].kvpair(slot_);
+            }
+
+
             //! Advance the iterator to the next item in the table, or to the
             //! end of the table. Returns the iterator at its new position.
             //! Behavior is undefined if the iterator is at the end.
-            const_iterator& operator++() {
+            templated_iterator& operator++() {
                 check_iterator();
                 // Move forward until we get to a slot that is occupied, or we
                 // get to the end
@@ -1906,8 +1900,8 @@ public:
             //! Advance the iterator to the next item in the table, or to the
             //! end of the table. Returns the iterator at its old position.
             //! Behavior is undefined if the iterator is at the end.
-            const_iterator operator++(int) {
-                const_iterator old(*this);
+            templated_iterator operator++(int) {
+                templated_iterator old(*this);
                 ++(*this);
                 return old;
             }
@@ -1915,7 +1909,7 @@ public:
             //! Move the iterator back to the previous item in the table.
             //! Returns the iterator at its new position. Behavior is undefined
             //! if the iterator is at the beginning.
-            const_iterator& operator--() {
+            templated_iterator& operator--() {
                 check_iterator();
                 // Move backward until we get to the beginning. If we try to
                 // move before that, we stop.
@@ -1938,8 +1932,8 @@ public:
             //! Move the iterator back to the previous item in the table.
             //! Returns the iterator at its old position. Behavior is undefined
             //! if the iterator is at the beginning.
-            const_iterator operator--(int) {
-                const_iterator old(*this);
+            templated_iterator operator--(int) {
+                templated_iterator old(*this);
                 --(*this);
                 return old;
             }
@@ -1951,7 +1945,9 @@ public:
             // never be nullptr.
             std::shared_ptr<bool> has_table_lock_;
             // The table info owned by the locked table being iterated over.
-            std::reference_wrapper<TableInfo> ti_;
+            typename std::conditional<
+                IS_CONST, std::reference_wrapper<const TableInfo>,
+                std::reference_wrapper<TableInfo>>::type ti_;
 
             // The bucket index of the item being pointed to. For implementation
             // convenience, we let it take on negative values.
@@ -1960,7 +1956,7 @@ public:
             // implementation convenience, we let it take on negative values.
             intmax_t slot_;
 
-            static const std::tuple<intmax_t, intmax_t> end_pos(
+            static const std::pair<intmax_t, intmax_t> end_pos(
                 const TableInfo& ti) {
                 // When index_ == buckets.size() and slot_ == 0, we're at the
                 // end of the table. When index_ and slot_ point to the data
@@ -1975,11 +1971,12 @@ public:
             // iterators from scratch. If the given index_-slot_ pair is at the
             // end of the table, or that spot is occupied, stay. Otherwise, step
             // forward to the next data item, or to the end of the table.
-            const_iterator(std::shared_ptr<bool> has_table_lock,
-                           TableInfo& ti, size_t index, size_t slot)
+            templated_iterator(
+                std::shared_ptr<bool> has_table_lock,
+                typename decltype(ti_)::type& ti, size_t index, size_t slot)
                 : has_table_lock_(has_table_lock), ti_(ti),
                   index_(index), slot_(slot) {
-                if (std::make_tuple(index_, slot_) != end_pos(ti) &&
+                if (std::make_pair(index_, slot_) != end_pos(ti) &&
                     !ti.buckets[index_].occupied(slot_)) {
                     operator++();
                 }
@@ -1997,67 +1994,9 @@ public:
                                         Alloc, SLOT_PER_BUCKET>;
         };
 
-        //! An iterator is a BidirectionalIterator and OutputIterator that can
-        //! be used to iterate through and mutate values in a locked table
-        class iterator
-            : public const_iterator,
-              public std::iterator<std::output_iterator_tag, value_type> {
-        public:
-            using const_iterator::const_iterator;
-
-            //! No default constructor
-            iterator() = delete;
-
-            //! Same behavior as const_iterator copy constructor
-            iterator(const const_iterator& it):
-                const_iterator::const_iterator(it) {}
-
-            //! Same behavior as const_iterator move constructor
-            iterator(const_iterator&& it):
-                const_iterator::const_iterator(it) {}
-
-            //! Same behavior as const_iterator copy assignment
-            iterator& operator=(const const_iterator& it) {
-                const_iterator::operator=(it);
-                return *this;
-            }
-
-            //! Same behavior as const_iterator move assignment
-            iterator& operator=(const_iterator&& it) {
-                const_iterator::operator=(std::move(it));
-                return *this;
-            }
-
-            // Returns a mutable reference to the current key-value pair pointed
-            // to by the iterator. Behavior is undefined if the iterator is at
-            // the end.
-            value_type& operator*() const {
-                const_iterator::check_iterator();
-                return const_iterator::ti_.get().buckets[
-                    const_iterator::index_].kvpair_noconst(
-                        const_iterator::slot_);
-            }
-
-            // Returns a mutable pointer to the current key-value pair pointed
-            // to by the iterator. Behavior is undefined if the iterator is at
-            // the end.
-            value_type* operator->() const {
-                const_iterator::check_iterator();
-                return &const_iterator::ti_.get().buckets[
-                    const_iterator::index_].kvpair_noconst(
-                        const_iterator::slot_);
-            }
-
-        protected:
-            // Behaves identically to the const_iterator protected constructor
-            iterator(std::shared_ptr<bool> has_table_lock,
-                     TableInfo& ti, size_t index, size_t slot)
-                : const_iterator::const_iterator(
-                    has_table_lock, ti, index, slot) {}
-
-            friend class cuckoohash_map<Key, T, Hash, Pred,
-                                        Alloc, SLOT_PER_BUCKET>;
-        };
+    public:
+        typedef templated_iterator<true> const_iterator;
+        typedef templated_iterator<false> iterator;
 
         //! begin returns an iterator to the beginning of the table
         iterator begin() {
@@ -2080,7 +2019,7 @@ public:
             check_table();
             const auto end_pos = const_iterator::end_pos(resources_.ti);
             return iterator(has_table_lock_, resources_.ti,
-                            std::get<0>(end_pos), std::get<1>(end_pos));
+                            end_pos.first, end_pos.second);
         }
 
         //! end returns a const_iterator to the end of the table
@@ -2088,7 +2027,7 @@ public:
             check_table();
             const auto end_pos = const_iterator::end_pos(resources_.ti);
             return const_iterator(has_table_lock_, resources_.ti,
-                                  std::get<0>(end_pos), std::get<1>(end_pos));
+                                  end_pos.first, end_pos.second);
         }
 
         //! cend returns a const_iterator to the end of the table
