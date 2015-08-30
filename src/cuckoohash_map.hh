@@ -463,7 +463,7 @@ public:
     //! clear removes all the elements in the hash table, calling their
     //! destructors.
     void clear() {
-        cuckoo_clear(snapshot_and_lock_all().ti);
+        cuckoo_clear(*snapshot_and_lock_all().ti);
     }
 
     //! size returns the number of items currently in the hash table. Since it
@@ -861,11 +861,21 @@ private:
         }
     }
 
+    // Manages a TableInfo snapshot when we take all the locks on it.
+    struct AllLockedTableInfoDeleter {
+        void operator()(TableInfo* ti) {
+            for (size_t i = 0; i < kNumLocks; ++i) {
+                ti->locks[i].unlock();
+            }
+        }
+    };
+    typedef std::unique_ptr<TableInfo,
+                            AllLockedTableInfoDeleter> AllLockedTableInfo;
+
     // Return type of snapshot_and_lock_all
     struct SnapshotLockAllResults {
-        TableInfo& ti;
+        AllLockedTableInfo ti;
         HazardPointerContainer hpc;
-        AllUnlockerContainer au;
     };
 
     // snapshot_and_lock_all is similar to snapshot_and_lock_two, except that it
@@ -883,12 +893,12 @@ private:
             for (size_t i = 0; i < kNumLocks; ++i) {
                 ti->locks[i].lock();
             }
-            // If the table info has changed, unlock the locks and try again.
+            // If the table info has changed, free the locks and try again.
             if (ti != table_info.load()) {
-                AllUnlocker()(ti);
+                AllLockedTableInfoDeleter()(ti);
                 continue;
             }
-            return {std::ref(*ti), std::move(hpc), AllUnlockerContainer(ti)};
+            return {std::move(AllLockedTableInfo(ti)), std::move(hpc)};
         }
     }
 
@@ -1665,9 +1675,9 @@ private:
     cuckoo_status cuckoo_expand_simple(size_t new_hashpower,
                                        bool is_expansion) {
         auto res = snapshot_and_lock_all();
-        assert(&res.ti == table_info.load());
-        if ((is_expansion && new_hashpower <= res.ti.hashpower) ||
-            (!is_expansion && new_hashpower >= res.ti.hashpower)) {
+        assert(res.ti.get() == table_info.load());
+        if ((is_expansion && new_hashpower <= res.ti->hashpower) ||
+            (!is_expansion && new_hashpower >= res.ti->hashpower)) {
             // Most likely another expansion ran before this one could grab the
             // locks
             LIBCUCKOO_DBG("another expansion is on-going\n");
@@ -1680,17 +1690,17 @@ private:
             hashsize(new_hashpower) * slot_per_bucket);
         const size_t threadnum = kNumCores();
         const size_t buckets_per_thread = (
-            hashsize(res.ti.hashpower) / threadnum);
+            hashsize(res.ti->hashpower) / threadnum);
         std::vector<std::thread> insertion_threads(threadnum);
         for (size_t i = 0; i < threadnum-1; ++i) {
             insertion_threads[i] = std::thread(
-                insert_into_table, std::ref(new_map), std::ref(res.ti),
+                insert_into_table, std::ref(new_map), std::ref(*res.ti),
                 i*buckets_per_thread, (i+1)*buckets_per_thread);
         }
         insertion_threads[threadnum-1] = std::thread(
-            insert_into_table, std::ref(new_map), std::ref(res.ti),
+            insert_into_table, std::ref(new_map), std::ref(*res.ti),
             (threadnum-1)*buckets_per_thread, hashsize(
-                res.ti.hashpower));
+                res.ti->hashpower));
         for (size_t i = 0; i < threadnum; ++i) {
             insertion_threads[i].join();
         }
@@ -1703,12 +1713,13 @@ private:
         new_map.table_info.store(nullptr);
         *(res.hpc) = new_table_info;
 
-        // Rather than deleting ti now, we store it in old_table_infos.
-        // Note that by encapsulating the old table info in a unique_ptr, we're
-        // taking ownership of it. This is okay, because we have all the locks
-        // on it, and the current table info now points to a different one.
-        old_table_infos.push_back(std::move(std::unique_ptr<TableInfo>(
-                                                &res.ti)));
+        // Release the locks on the TableInfo, and store it into old_table_infos
+        // for freeing, when possible. This is okay, because we have all the
+        // locks on it, and the current table info now points to a different
+        // one.
+        TableInfo* old_table_info = res.ti.get();
+        res.ti.reset();
+        old_table_infos.emplace_back(old_table_info);
         // We run a delete_unused routine to delete all the old table pointers.
         global_hazard_pointers.delete_unused(old_table_infos);
         return ok;
@@ -1725,34 +1736,11 @@ public:
     //! release method is called), it will release all locks on the table. This
     //! will invalidate all existing iterators.
     class locked_table {
-        // We need to hold all the data returned by snapshot_and_lock_all, but
-        // we also need to be able to re-assign the reference, so we create an
-        // *almost* identical struct to hold that data.
-        struct AssignableSnapshotLockAllResults {
-            // A reference to the table_info being iterated over
-            std::reference_wrapper<TableInfo> ti;
-            // The hazard pointer container, which unsets the hazard pointer on
-            // the table when the locked table is released.
-            HazardPointerContainer hpc;
-            // The all unlocker container, which releases all locks on the table
-            // when the locked table is released
-            AllUnlockerContainer au;
-
-            AssignableSnapshotLockAllResults(SnapshotLockAllResults&& res)
-                : ti(res.ti), hpc(std::move(res.hpc)), au(std::move(res.au)) {}
-
-            AssignableSnapshotLockAllResults(
-                AssignableSnapshotLockAllResults&& res)
-                : ti(res.ti), hpc(std::move(res.hpc)), au(std::move(res.au)) {}
-        } resources_;
-
-
-        // Whether the table has the locks on hm_ or not. This is shared to all
-        // iterators that are created, and is destroyed when the locked table
-        // and all the iterators it spawned are destroyed. If the table has no
-        // managed boolean in this pointer, we assume the table has no ownership
-        // of the table info (so hpc and au should be nullptr), and the
-        // locked_table is effectively invalidated.
+        // Holds the TableInfo, manages the locks we take on the table, and the
+        // hazard pointer.
+        SnapshotLockAllResults resources_;
+        // A boolean shared to all iterators, indicating whether the
+        // locked_table has ownership of the hashtable or not.
         std::shared_ptr<bool> has_table_lock_;
 
         // The constructor locks the entire table, retrying until
@@ -1765,46 +1753,33 @@ public:
               has_table_lock_(new bool(true)) {}
 
     public:
-        //! No default constructor
-        locked_table() = delete;
-        //! No copy constructor
-        locked_table(const locked_table& lt) = delete;
-
-        //! This is an rvalue-reference constructor that takes ownership from \p
-        //! lt. Thus \p lt will be invalidated after this operation.
         locked_table(locked_table&& lt)
             : resources_(std::move(lt.resources_)),
               has_table_lock_(std::move(lt.has_table_lock_)) {}
 
-        //! No copy assignment operator
-        locked_table& operator=(const locked_table& lt) = delete;
-
-        //! This is an rvalue-reference assignment operator, with the same
-        //! semantics as the rvalue-reference constructor.
         locked_table& operator=(locked_table&& lt) {
             resources_ = std::move(lt.resources_);
             has_table_lock_ = std::move(lt.has_table_lock_);
             return *this;
         }
 
-        //! Returns true if the locked table still has a table lock, false
-        //! otherwise.
-        bool has_table_lock() {
+        //! Returns true if the locked table still has ownership of the
+        //! hashtable, false otherwise.
+        bool has_table_lock() const {
             return has_table_lock_ && *has_table_lock_;
         }
 
         //! release unlocks the table, thereby freeing it up for other
         //! operations, but also invalidating all iterators and future
-        //! operations with this table.
+        //! operations with this table. It is idempotent.
         void release() {
-            if (has_table_lock_ && *has_table_lock_) {
-                *has_table_lock_ = false;
+            if (has_table_lock()) {
                 resources_.hpc.reset();
-                resources_.au.reset();
+                resources_.ti.reset();
+                *has_table_lock_ = false;
             }
         }
 
-        //! The destructor simply calls \ref release.
         ~locked_table() {
             release();
         }
@@ -1815,34 +1790,40 @@ public:
         //! can be used to iterate over a locked table.
         template <bool IS_CONST>
         class templated_iterator :
-            public std::iterator< std::bidirectional_iterator_tag, value_type> {
-        public:
-            //! No default constructor
-            templated_iterator() = delete;
+            public std::iterator<std::bidirectional_iterator_tag, value_type> {
 
-            //! Return true if the iterators point to the same table and
+            // The table info locked and owned by the locked table being
+            // iterated over.
+            std::reference_wrapper<
+                typename std::conditional<
+                    IS_CONST, const TableInfo, TableInfo>::type> ti_;
+
+            // The shared boolean indicating whether the iterator points to a
+            // still-locked table or not. It should never be nullptr.
+            std::shared_ptr<bool> has_table_lock_;
+
+            // The bucket index of the item being pointed to. For implementation
+            // convenience, we let it take on negative values.
+            intmax_t index_;
+            // The slot in the bucket of the item being pointed to. For
+            // implementation convenience, we let it take on negative values.
+            intmax_t slot_;
+
+        public:
+            //! Return true if the iterators are from the same locked table and
             //! location, false otherwise. This will return false if either of
             //! the iterators has lost ownership of its table.
             template <bool OTHER_CONST>
             bool operator==(const templated_iterator<OTHER_CONST>& it) const {
-                // Note that if two iterators have the same has_table_lock_
-                // address, then they necessarily point to the same table info
-                // object.
-                return (
-                    has_table_lock_.get() && it.has_table_lock_.get()
-                    && has_table_lock_.get() == it.has_table_lock_.get()
-                    && index_ == it.index_
-                    && slot_ == it.slot_);
+                return (*has_table_lock_ && *it.has_table_lock_
+                        && &ti_.get() == &it.ti_.get()
+                        && index_ == it.index_ && slot_ == it.slot_);
             }
 
-            //! Return true if the iterators point to different tables or
-            //! different location, false otherwise. This will return false if
-            //! either of the iterators has lost ownership of its table.
+            //! Equivalent to !operator==(it)
             template <bool OTHER_CONST>
             bool operator!=(const templated_iterator<OTHER_CONST>& it) const {
-                return (
-                    has_table_lock_.get() && it.has_table_lock_.get()
-                    && !operator==(it));
+                return !(operator==(it));
             }
 
             //! Return the key-value pair pointed to by the iterator. Behavior
@@ -1881,9 +1862,9 @@ public:
             //! end of the table. Returns the iterator at its new position.
             //! Behavior is undefined if the iterator is at the end.
             templated_iterator& operator++() {
-                check_iterator();
                 // Move forward until we get to a slot that is occupied, or we
                 // get to the end
+                check_iterator();
                 for (; (size_t)index_ < ti_.get().buckets.size(); ++index_) {
                     while ((size_t)++slot_ < SLOT_PER_BUCKET) {
                         if (ti_.get().buckets[index_].occupied(slot_)) {
@@ -1910,9 +1891,9 @@ public:
             //! Returns the iterator at its new position. Behavior is undefined
             //! if the iterator is at the beginning.
             templated_iterator& operator--() {
-                check_iterator();
                 // Move backward until we get to the beginning. If we try to
                 // move before that, we stop.
+                check_iterator();
                 for (; index_ >= 0; --index_) {
                     while (--slot_ >= 0) {
                         if (ti_.get().buckets[index_].occupied(slot_)) {
@@ -1938,24 +1919,7 @@ public:
                 return old;
             }
 
-        protected:
-            // Indicates whether the locked_table that generated the iterator
-            // has the table lock. If false, all iterator operations will be
-            // invalidated. This should never be unset, which means it should
-            // never be nullptr.
-            std::shared_ptr<bool> has_table_lock_;
-            // The table info owned by the locked table being iterated over.
-            typename std::conditional<
-                IS_CONST, std::reference_wrapper<const TableInfo>,
-                std::reference_wrapper<TableInfo>>::type ti_;
-
-            // The bucket index of the item being pointed to. For implementation
-            // convenience, we let it take on negative values.
-            intmax_t index_;
-            // The slot in the bucket of the item being pointed to. For
-            // implementation convenience, we let it take on negative values.
-            intmax_t slot_;
-
+        private:
             static const std::pair<intmax_t, intmax_t> end_pos(
                 const TableInfo& ti) {
                 // When index_ == buckets.size() and slot_ == 0, we're at the
@@ -1972,9 +1936,9 @@ public:
             // end of the table, or that spot is occupied, stay. Otherwise, step
             // forward to the next data item, or to the end of the table.
             templated_iterator(
-                std::shared_ptr<bool> has_table_lock,
-                typename decltype(ti_)::type& ti, size_t index, size_t slot)
-                : has_table_lock_(has_table_lock), ti_(ti),
+                typename decltype(ti_)::type& ti,
+                std::shared_ptr<bool> has_table_lock, size_t index, size_t slot)
+                : ti_(ti), has_table_lock_(has_table_lock),
                   index_(index), slot_(slot) {
                 if (std::make_pair(index_, slot_) != end_pos(ti) &&
                     !ti.buckets[index_].occupied(slot_)) {
@@ -2001,12 +1965,13 @@ public:
         //! begin returns an iterator to the beginning of the table
         iterator begin() {
             check_table();
-            return iterator(has_table_lock_, resources_.ti, 0, 0);
+            return iterator(*resources_.ti, has_table_lock_, 0, 0);
         }
 
         //! begin returns a const_iterator to the beginning of the table
         const_iterator begin() const {
-            return const_iterator(has_table_lock_, resources_.ti, 0, 0);
+            check_table();
+            return const_iterator(*resources_.ti, has_table_lock_, 0, 0);
         }
 
         //! cbegin returns a const_iterator to the beginning of the table
@@ -2017,16 +1982,16 @@ public:
         //! end returns an iterator to the end of the table
         iterator end() {
             check_table();
-            const auto end_pos = const_iterator::end_pos(resources_.ti);
-            return iterator(has_table_lock_, resources_.ti,
+            const auto end_pos = const_iterator::end_pos(*resources_.ti);
+            return iterator(*resources_.ti, has_table_lock_,
                             end_pos.first, end_pos.second);
         }
 
         //! end returns a const_iterator to the end of the table
         const_iterator end() const {
             check_table();
-            const auto end_pos = const_iterator::end_pos(resources_.ti);
-            return const_iterator(has_table_lock_, resources_.ti,
+            const auto end_pos = const_iterator::end_pos(*resources_.ti);
+            return const_iterator(*resources_.ti, has_table_lock_,
                                   end_pos.first, end_pos.second);
         }
 
@@ -2039,7 +2004,7 @@ public:
         // Throws an exception if the locked_table has been invalidated because
         // it lost ownership of the table info.
         void check_table() const {
-            if (!has_table_lock_.get() || !(*has_table_lock_)) {
+            if (!has_table_lock()) {
                 throw std::runtime_error(
                     "locked_table lost ownership of table");
             }

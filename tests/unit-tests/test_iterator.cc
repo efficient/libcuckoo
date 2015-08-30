@@ -69,6 +69,25 @@ TEST_CASE("iterator release", "[iterator]") {
         AssertIteratorIsReleased(it);
         AssertLockedTableIsReleased(lt);
     }
+
+    SECTION("released iterator equality") {
+        auto lt = table.lock_table();
+        auto it1 = lt.begin();
+        auto it2 = lt.begin();
+        REQUIRE(it1 == it2);
+        lt.release();
+        REQUIRE(it1 != it2);
+    }
+
+    SECTION("iterators compare after table is moved") {
+        auto lt1 = table.lock_table();
+        auto it1 = lt1.begin();
+        auto it2 = lt1.begin();
+        REQUIRE(it1 == it2);
+        auto lt2(std::move(lt1));
+        REQUIRE(it1 == it2);
+        lt2.release();
+    }
 }
 
 TEST_CASE("iterator walkthrough", "[iterator]") {
@@ -121,6 +140,19 @@ TEST_CASE("iterator walkthrough", "[iterator]") {
             REQUIRE(it->first == it->second);
         }
         REQUIRE(it == lt.begin());
+    }
+
+    SECTION("walkthrough works after move") {
+        auto lt = table.lock_table();
+        auto it = lt.cend();
+        auto lt2 = std::move(lt);
+        for (size_t i = 0; i < table.size(); ++i) {
+            --it;
+            REQUIRE((*it).first == (*it).second);
+            REQUIRE(it->first == it->second);
+        }
+        REQUIRE(it == lt2.begin());
+
     }
 }
 
