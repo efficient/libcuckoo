@@ -1,3 +1,5 @@
+AM_CXXFLAGS = -g -O0
+
 TESTS = test_runner.out
 noinst_PROGRAMS = $(TESTS)
 test_runner_out_SOURCES = \

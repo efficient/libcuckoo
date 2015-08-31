@@ -12,6 +12,10 @@ AC_CONFIG_FILES([ Makefile
                 ])
 AC_CONFIG_MACRO_DIR([../m4])
 
+# Empty defaults for flags
+: ${CFLAGS=""}
+: ${CXXFLAGS=""}
+AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_LIBTOOL
 
