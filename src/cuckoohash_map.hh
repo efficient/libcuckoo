@@ -184,10 +184,10 @@ private:
     class RealPartialContainer {
         std::array<partial_t, slot_per_bucket> partials_;
     public:
-        const partial_t& partial(int ind) const {
+        const partial_t& partial(size_t ind) const {
             return partials_[ind];
         }
-        partial_t& partial(int ind) {
+        partial_t& partial(size_t ind) {
             return partials_[ind];
         }
     };
@@ -196,11 +196,11 @@ private:
     public:
         // These methods should never be called, so we raise an exception if
         // they are.
-        const partial_t& partial(int) const {
+        const partial_t& partial(size_t) const {
             throw std::logic_error(
                 "FakePartialContainer::partial should never be called");
         }
-        partial_t& partial(int) {
+        partial_t& partial(size_t) {
             throw std::logic_error(
                 "FakePartialContainer::partial should never be called");
         }
@@ -219,29 +219,29 @@ private:
         std::bitset<slot_per_bucket> occupied_;
 
     public:
-        const value_type& kvpair(int ind) const {
+        const value_type& kvpair(size_t ind) const {
             return *static_cast<const value_type*>(
                 static_cast<const void*>(&kvpairs_[ind]));
         }
 
-        value_type& kvpair(int ind) {
+        value_type& kvpair(size_t ind) {
             return *static_cast<value_type*>(
                 static_cast<void*>(&kvpairs_[ind]));
         }
 
-        bool occupied(int ind) const {
+        bool occupied(size_t ind) const {
             return occupied_.test(ind);
         }
 
-        const key_type& key(int ind) const {
+        const key_type& key(size_t ind) const {
             return kvpair(ind).first;
         }
 
-        const mapped_type& val(int ind) const {
+        const mapped_type& val(size_t ind) const {
             return kvpair(ind).second;
         }
 
-        mapped_type& val(int ind) {
+        mapped_type& val(size_t ind) {
             return kvpair(ind).second;
         }
 
