@@ -116,20 +116,23 @@ $(document).ready(function(){initNavTree('cuckoohash__config_8hh_source.html',''
 <div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;</div>
 <div class="line"><a name="l00009"></a><span class="lineno"><a class="line" href="cuckoohash__config_8hh.html#ad4a4fc053fbb1ec397a1db0aa16523e6">    9</a></span>&#160;<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="cuckoohash__config_8hh.html#ad4a4fc053fbb1ec397a1db0aa16523e6">DEFAULT_SLOT_PER_BUCKET</a> = 4;</div>
 <div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;</div>
-<div class="line"><a name="l00013"></a><span class="lineno"><a class="line" href="cuckoohash__config_8hh.html#a54977b4b1551a03c6a0a8b8f95fc68b6">   13</a></span>&#160;<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="cuckoohash__config_8hh.html#a54977b4b1551a03c6a0a8b8f95fc68b6">DEFAULT_SIZE</a> = (1U &lt;&lt; 16) * <a class="code" href="cuckoohash__config_8hh.html#ad4a4fc053fbb1ec397a1db0aa16523e6">DEFAULT_SLOT_PER_BUCKET</a>;</div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;</div>
-<div class="line"><a name="l00016"></a><span class="lineno"><a class="line" href="cuckoohash__config_8hh.html#adadf6ca6ff8002ce9c3bbcdc18e5ff9c">   16</a></span>&#160;<span class="preprocessor">#define LIBCUCKOO_DEBUG 0</span></div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;</div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="preprocessor">#endif // _CUCKOOHASH_CONFIG_HH</span></div>
-<div class="ttc" id="cuckoohash__config_8hh_html_a54977b4b1551a03c6a0a8b8f95fc68b6"><div class="ttname"><a href="cuckoohash__config_8hh.html#a54977b4b1551a03c6a0a8b8f95fc68b6">DEFAULT_SIZE</a></div><div class="ttdeci">const size_t DEFAULT_SIZE</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__config_8hh_source.html#l00013">cuckoohash_config.hh:13</a></div></div>
-<div class="ttc" id="cuckoohash__config_8hh_html_ad4a4fc053fbb1ec397a1db0aa16523e6"><div class="ttname"><a href="cuckoohash__config_8hh.html#ad4a4fc053fbb1ec397a1db0aa16523e6">DEFAULT_SLOT_PER_BUCKET</a></div><div class="ttdeci">const size_t DEFAULT_SLOT_PER_BUCKET</div><div class="ttdoc">SLOT_PER_BUCKET is the maximum number of keys per bucket. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__config_8hh_source.html#l00009">cuckoohash_config.hh:9</a></div></div>
+<div class="line"><a name="l00012"></a><span class="lineno"><a class="line" href="cuckoohash__config_8hh.html#a54977b4b1551a03c6a0a8b8f95fc68b6">   12</a></span>&#160;<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="cuckoohash__config_8hh.html#a54977b4b1551a03c6a0a8b8f95fc68b6">DEFAULT_SIZE</a> = (1U &lt;&lt; 16) * <a class="code" href="cuckoohash__config_8hh.html#ad4a4fc053fbb1ec397a1db0aa16523e6">DEFAULT_SLOT_PER_BUCKET</a>;</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;</div>
+<div class="line"><a name="l00018"></a><span class="lineno"><a class="line" href="cuckoohash__config_8hh.html#af344b33dac24222bf30262e7469553e6">   18</a></span>&#160;<span class="keyword">const</span> <span class="keywordtype">double</span> <a class="code" href="cuckoohash__config_8hh.html#af344b33dac24222bf30262e7469553e6">DEFAULT_MINIMUM_LOAD_FACTOR</a> = 0.05;</div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;</div>
+<div class="line"><a name="l00021"></a><span class="lineno"><a class="line" href="cuckoohash__config_8hh.html#adadf6ca6ff8002ce9c3bbcdc18e5ff9c">   21</a></span>&#160;<span class="preprocessor">#define LIBCUCKOO_DEBUG 0</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;</div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">#endif // _CUCKOOHASH_CONFIG_HH</span></div>
+<div class="ttc" id="cuckoohash__config_8hh_html_af344b33dac24222bf30262e7469553e6"><div class="ttname"><a href="cuckoohash__config_8hh.html#af344b33dac24222bf30262e7469553e6">DEFAULT_MINIMUM_LOAD_FACTOR</a></div><div class="ttdeci">const double DEFAULT_MINIMUM_LOAD_FACTOR</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__config_8hh_source.html#l00018">cuckoohash_config.hh:18</a></div></div>
+<div class="ttc" id="cuckoohash__config_8hh_html_a54977b4b1551a03c6a0a8b8f95fc68b6"><div class="ttname"><a href="cuckoohash__config_8hh.html#a54977b4b1551a03c6a0a8b8f95fc68b6">DEFAULT_SIZE</a></div><div class="ttdeci">const size_t DEFAULT_SIZE</div><div class="ttdoc">The default number of elements in an empty hash table. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__config_8hh_source.html#l00012">cuckoohash_config.hh:12</a></div></div>
+<div class="ttc" id="cuckoohash__config_8hh_html_ad4a4fc053fbb1ec397a1db0aa16523e6"><div class="ttname"><a href="cuckoohash__config_8hh.html#ad4a4fc053fbb1ec397a1db0aa16523e6">DEFAULT_SLOT_PER_BUCKET</a></div><div class="ttdeci">const size_t DEFAULT_SLOT_PER_BUCKET</div><div class="ttdoc">The default maximum number of keys per bucket. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__config_8hh_source.html#l00009">cuckoohash_config.hh:9</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_7da76f3c08bcb9cfedda4a1d9f14bb3a.html">src</a></li><li class="navelem"><a class="el" href="cuckoohash__config_8hh.html">cuckoohash_config.hh</a></li>
-    <li class="footer">Generated on Sat Sep 26 2015 10:01:38 for libcuckoo by
+    <li class="footer">Generated on Sun Oct 4 2015 14:16:33 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

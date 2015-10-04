@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.10"/>
-<title>libcuckoo: CityHasher&lt; std::string &gt; Class Template Reference</title>
+<title>libcuckoo: libcuckoo_load_factor_too_low Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -88,7 +88,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('class_city_hasher_3_01std_1_1string_01_4.html','');});
+$(document).ready(function(){initNavTree('classlibcuckoo__load__factor__too__low.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -108,36 +108,106 @@ $(document).ready(function(){initNavTree('class_city_hasher_3_01std_1_1string_01
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="class_city_hasher_3_01std_1_1string_01_4-members.html">List of all members</a>  </div>
+<a href="classlibcuckoo__load__factor__too__low-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">CityHasher&lt; std::string &gt; Class Template Reference</div>  </div>
+<div class="title">libcuckoo_load_factor_too_low Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="city__hasher_8hh_source.html">city_hasher.hh</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for libcuckoo_load_factor_too_low:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="classlibcuckoo__load__factor__too__low.png" usemap="#libcuckoo_load_factor_too_low_map" alt=""/>
+  <map id="libcuckoo_load_factor_too_low_map" name="libcuckoo_load_factor_too_low_map">
+</map>
+ </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a20a08d82f960d746f7cc78e32e52cfd1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20a08d82f960d746f7cc78e32e52cfd1"></a>
-size_t&#160;</td><td class="memItemRight" valign="bottom"><b>operator()</b> (const std::string &amp;k) const </td></tr>
-<tr class="separator:a20a08d82f960d746f7cc78e32e52cfd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a382fc73444568dce5fa2c2f2dd627b52"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">libcuckoo_load_factor_too_low</a> (const double lf)</td></tr>
+<tr class="separator:a382fc73444568dce5fa2c2f2dd627b52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa298e2b5a2c543704b0b27d51629afb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaa298e2b5a2c543704b0b27d51629afb"></a>
+virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () const  noexcept</td></tr>
+<tr class="separator:aaa298e2b5a2c543704b0b27d51629afb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6733a03a958354bb8bb3c2b8a86b3d96"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">load_factor</a> ()</td></tr>
+<tr class="separator:a6733a03a958354bb8bb3c2b8a86b3d96"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;&gt;<br />
-class CityHasher&lt; std::string &gt;</h3>
+<div class="textblock"><p>Thrown when an automatic expansion is triggered, but the load factor of the table is below a minimum threshold. This can happen if the hash function does not properly distribute keys, or for certain adversarial workloads. </p>
 
-<p>This is a template specialization of <a class="el" href="class_city_hasher.html">CityHasher</a> for std::string. </p>
+<p>Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00030">30</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="a382fc73444568dce5fa2c2f2dd627b52"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">libcuckoo_load_factor_too_low::libcuckoo_load_factor_too_low </td>
+          <td>(</td>
+          <td class="paramtype">const double&#160;</td>
+          <td class="paramname"><em>lf</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Constructor</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">lf</td><td>the load factor of the table when the exception was thrown </td></tr>
+  </table>
+  </dd>
+</dl>
 
-<p>Definition at line <a class="el" href="city__hasher_8hh_source.html#l00021">21</a> of file <a class="el" href="city__hasher_8hh_source.html">city_hasher.hh</a>.</p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>/Users/manu/Dropbox/dev/src/libcuckoo/libcuckoo/src/<a class="el" href="city__hasher_8hh_source.html">city_hasher.hh</a></li>
+<p>Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00037">37</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a6733a03a958354bb8bb3c2b8a86b3d96"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double libcuckoo_load_factor_too_low::load_factor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>the load factor of the table when the exception was thrown </dd></dl>
+
+<p>Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00048">48</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>/Users/manu/Dropbox/dev/src/libcuckoo/libcuckoo/src/<a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="class_city_hasher_3_01std_1_1string_01_4.html">CityHasher&lt; std::string &gt;</a></li>
+    <li class="navelem"><a class="el" href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a></li>
     <li class="footer">Generated on Sun Oct 4 2015 14:16:33 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>

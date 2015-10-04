@@ -177,7 +177,7 @@ class cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::locked
 
 <p>A <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> is an ownership wrapper around a <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a> table instance. When given a table instance, it takes all the locks on the table, blocking all outside operations on the table. Because the <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> has unique ownership of the table, it can provide a set of operations on the table that aren't possible in a concurrent context. Right now, this includes the ability to construct STL-compatible iterators on the table. When the <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> is destroyed (or the <a class="el" href="classcuckoohash__map_1_1locked__table.html#a7565d79616908dfc5b9098d08fcc2380">release</a> method is called), it will release all locks on the table. This will invalidate all existing iterators. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01755">1755</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01800">1800</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="a705232185e8f25508b86cca45a4bb96e"></a>
 <div class="memitem">
@@ -203,7 +203,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>Returns true if the locked table still has ownership of the hashtable, false otherwise. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01785">1785</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01830">1830</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -231,7 +231,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>release unlocks the table, thereby freeing it up for other operations, but also invalidating all iterators and future operations with this table. It is idempotent. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01792">1792</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01837">1837</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -244,7 +244,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a></li><li class="navelem"><a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a></li>
-    <li class="footer">Generated on Sat Sep 26 2015 10:01:38 for libcuckoo by
+    <li class="footer">Generated on Sun Oct 4 2015 14:16:33 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>
