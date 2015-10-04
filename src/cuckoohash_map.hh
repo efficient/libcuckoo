@@ -388,6 +388,13 @@ private:
         return HazardPointerContainer(hazard_pointer);
     }
 
+    // stores the minimum load factor allowed for automatic expansions. Whenever
+    // an automatic expansion is triggered (during an insertion where cuckoo
+    // hashing fails, for example), we check the load factor against this
+    // double, and throw an exception if it's lower than this value. It can be
+    // used to signal when the hash function is bad or the input adversarial.
+    std::atomic<double> minimum_load_factor;
+
     // AllUnlocker is deleter class which releases all the locks on the given
     // table info.
     struct AllUnlocker {
@@ -437,10 +444,18 @@ private:
     }
 
 public:
-    //! The constructor creates a new hash table with enough space for \p n
-    //! elements. If the constructor fails, it will throw an exception.
-    explicit cuckoohash_map(size_t n = DEFAULT_SIZE) {
+    /**
+     * Creates a new cuckohash_map instance
+     *
+     * @param n the number of elements to reserve space for initially
+     * @param mlf the minimum load factor required that the
+     * table allows for automatic expansion.
+     * @throw std::invalid_argument if the given minimum load factor is invalid
+     */
+    cuckoohash_map(size_t n = DEFAULT_SIZE,
+                   double mlf = DEFAULT_MINIMUM_LOAD_FACTOR) {
         const size_t hp = reserve_calc(n);
+        set_minimum_load_factor(mlf);
         TableInfo* ptr = get_tableinfo_allocator().allocate(1);
         try {
             get_tableinfo_allocator().construct(ptr, hp);
@@ -495,6 +510,35 @@ public:
         return cuckoo_loadfactor(snapshot_table_nolock().ti);
     }
 
+    /**
+     * Sets the minimum load factor allowed for automatic expansions. If an
+     * expansion is needed when the load factor of the table is lower than this
+     * threshold, the libcuckoo_load_factor_too_low exception is thrown.
+     *
+     * @param mlf the load factor to set the minimum to
+     * @throw std::invalid_argument if the given load factor is less than 0.0
+     * or greater than 1.0
+     */
+    void set_minimum_load_factor(double mlf) {
+        if (mlf < 0.0) {
+            throw std::invalid_argument(
+                "load factor " + std::to_string(mlf) + " cannot be "
+                " less than 0");
+        } else if (mlf > 1.0) {
+            throw std::invalid_argument(
+                "load factor " + std::to_string(mlf) + " cannot be "
+                " greater than 1");
+        }
+        minimum_load_factor = mlf;
+    }
+
+    /**
+     * @return the minimum load factor of the table
+     */
+    double get_minimum_load_factor() {
+        return minimum_load_factor;
+    }
+
     //! find searches through the table for \p key, and stores the associated
     //! value it finds in \p val.
     ENABLE_IF(, value_copy_assignable, bool)
@@ -531,12 +575,17 @@ public:
         return result;
     }
 
-    //! insert puts the given key-value pair into the table. It first checks
-    //! that \p key isn't already in the table, since the table doesn't support
-    //! duplicate keys. If the table is out of space, insert will automatically
-    //! expand until it can succeed. Note that expansion can throw an exception,
-    //! which insert will propagate. If \p key is already in the table, it
-    //! returns false, otherwise it returns true.
+    /**
+     * Puts the given key-value pair into the table. If the key cannot be placed
+     * in the table, it may be automatically expanded to fit more items.
+     *
+     * @param key the key to insert into the table
+     * @param val the value to insert
+     * @return true if the insertion succeeded, false if there was a duplicate
+     * key
+     * @throw libcuckoo_load_factor_too_low if the load factor is below the
+     * minimum_load_factor threshold if expansion is required
+     */
     template <class V>
     bool insert(const key_type& key, V&& val) {
         return cuckoo_insert_loop(key, std::forward<V>(val), hashed_key(key));
@@ -1547,8 +1596,17 @@ private:
         return failure_table_full;
     }
 
-    // We run cuckoo_insert in a loop until it succeeds in insert and upsert, so
-    // we pulled out the loop to avoid duplicating it.
+    /**
+     * We run cuckoo_insert in a loop until it succeeds in insert and upsert, so
+     * we pulled out the loop to avoid duplicating logic
+     *
+     * @param key the key to insert
+     * @param val the value to insert
+     * @param hv the hash value of the key
+     * @return true if the insert succeeded, false if there was a duplicate key
+     * @throw libcuckoo_load_factor_too_low if expansion is necessary, but the
+     * load factor of the table is below the threshold
+     */
     template <class V>
     bool cuckoo_insert_loop(const key_type& key, V&& val, size_t hv) {
         cuckoo_status st;
@@ -1559,6 +1617,10 @@ private:
             if (st == failure_key_duplicated) {
                 return false;
             } else if (st == failure_table_full) {
+                if (cuckoo_loadfactor(res.ti) < get_minimum_load_factor()) {
+                    throw libcuckoo_load_factor_too_low(
+                        get_minimum_load_factor());
+                }
                 // Expand the table and try again
                 cuckoo_expand_simple(res.ti.hashpower + 1, true);
             }

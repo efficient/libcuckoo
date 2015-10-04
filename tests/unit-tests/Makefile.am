@@ -8,5 +8,6 @@ test_runner_out_SOURCES = \
 	test_resize.cc \
 	test_constructor.cc \
 	test_free_old_tables.cc \
+	test_insert.cc \
 	unit_test_util.cc \
 	test_runner.cc catch.hpp
