@@ -187,10 +187,10 @@ size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cl
 <tr class="separator:a66d14599376771dabc9e2b4b0866f2b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0f01ec0a818065ed81d52942357cb6f3"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a0f01ec0a818065ed81d52942357cb6f3">load_factor</a> () const </td></tr>
 <tr class="separator:a0f01ec0a818065ed81d52942357cb6f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a399fe120e3594a1b410bcdb89a3d6782"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a399fe120e3594a1b410bcdb89a3d6782">set_minimum_load_factor</a> (double mlf)</td></tr>
-<tr class="separator:a399fe120e3594a1b410bcdb89a3d6782"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a48363bd19c60178850b789022226d216"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a48363bd19c60178850b789022226d216">get_minimum_load_factor</a> ()</td></tr>
-<tr class="separator:a48363bd19c60178850b789022226d216"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeecfff17d1b8c0193fd64f184c0b3bd8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#aeecfff17d1b8c0193fd64f184c0b3bd8">minimum_load_factor</a> (const double mlf)</td></tr>
+<tr class="separator:aeecfff17d1b8c0193fd64f184c0b3bd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bdbe1d67874a2284c37c9f553343c11"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a2bdbe1d67874a2284c37c9f553343c11">minimum_load_factor</a> ()</td></tr>
+<tr class="separator:a2bdbe1d67874a2284c37c9f553343c11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0b27c41ab86baebdc47170a13daf7a1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#af0b27c41ab86baebdc47170a13daf7a1">find</a> (const <a class="el" href="classcuckoohash__map.html#a024936e091e714f4ffc2484e0dc3daea">key_type</a> &amp;key, <a class="el" href="classcuckoohash__map.html#a84358980ded175e7092a7570eded618d">mapped_type</a> &amp;val) const </td></tr>
 <tr class="separator:af0b27c41ab86baebdc47170a13daf7a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8c128094f01ddea5babdc516025977ec"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a8c128094f01ddea5babdc516025977ec">find</a> (const <a class="el" href="classcuckoohash__map.html#a024936e091e714f4ffc2484e0dc3daea">key_type</a> &amp;key) const </td></tr>
@@ -483,34 +483,6 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 
 </div>
 </div>
-<a class="anchor" id="a48363bd19c60178850b789022226d216"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = std::equal_to&lt;Key&gt;, class Alloc = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">double <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::get_minimum_load_factor </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>the minimum load factor of the table </dd></dl>
-
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00538">538</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
-
-</div>
-</div>
 <a class="anchor" id="a8a1df93223c9c0a8a8f45d2cb960df7f"></a>
 <div class="memitem">
 <div class="memproto">
@@ -646,7 +618,76 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 </div><div class="memdoc">
 <p>lock_table construct a <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> object that owns all the locks in the table. This can be used to iterate through the table. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02080">2080</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02079">2079</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="aeecfff17d1b8c0193fd64f184c0b3bd8"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = std::equal_to&lt;Key&gt;, class Alloc = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::minimum_load_factor </td>
+          <td>(</td>
+          <td class="paramtype">const double&#160;</td>
+          <td class="paramname"><em>mlf</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Sets the minimum load factor allowed for automatic expansions. If an expansion is needed when the load factor of the table is lower than this threshold, the <a class="el" href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a> exception is thrown.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mlf</td><td>the load factor to set the minimum to </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if the given load factor is less than 0.0 or greater than 1.0 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00522">522</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a2bdbe1d67874a2284c37c9f553343c11"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = std::equal_to&lt;Key&gt;, class Alloc = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::minimum_load_factor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>the minimum load factor of the table </dd></dl>
+
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00538">538</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -791,47 +832,6 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 <p>reserve will size the table to have enough slots for at least <code>n</code> elements. If the table can already hold that many elements, the function will shrink the table to the smallest hashpower that can hold the maximum of <code>n</code> and the current table size. Otherwise, the function will expand the table to a hashpower sufficient to hold <code>n</code> elements. It will return true if there was an change in size, and false otherwise. reserve can throw an exception if the expansion fails to allocate enough memory for the larger table. </p>
 
 <p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00697">697</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a399fe120e3594a1b410bcdb89a3d6782"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = std::equal_to&lt;Key&gt;, class Alloc = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::set_minimum_load_factor </td>
-          <td>(</td>
-          <td class="paramtype">double&#160;</td>
-          <td class="paramname"><em>mlf</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Sets the minimum load factor allowed for automatic expansions. If an expansion is needed when the load factor of the table is lower than this threshold, the <a class="el" href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a> exception is thrown.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">mlf</td><td>the load factor to set the minimum to </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">std::invalid_argument</td><td>if the given load factor is less than 0.0 or greater than 1.0 </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00522">522</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -999,7 +999,7 @@ template&lt;typename Updater , typename V &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a></li>
-    <li class="footer">Generated on Sun Oct 4 2015 14:16:33 for libcuckoo by
+    <li class="footer">Generated on Sun Oct 4 2015 14:45:49 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>
