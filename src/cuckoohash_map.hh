@@ -393,7 +393,7 @@ private:
     // hashing fails, for example), we check the load factor against this
     // double, and throw an exception if it's lower than this value. It can be
     // used to signal when the hash function is bad or the input adversarial.
-    std::atomic<double> minimum_load_factor;
+    std::atomic<double> minimum_load_factor_;
 
     // AllUnlocker is deleter class which releases all the locks on the given
     // table info.
@@ -455,7 +455,7 @@ public:
     cuckoohash_map(size_t n = DEFAULT_SIZE,
                    double mlf = DEFAULT_MINIMUM_LOAD_FACTOR) {
         const size_t hp = reserve_calc(n);
-        set_minimum_load_factor(mlf);
+        minimum_load_factor(mlf);
         TableInfo* ptr = get_tableinfo_allocator().allocate(1);
         try {
             get_tableinfo_allocator().construct(ptr, hp);
@@ -519,7 +519,7 @@ public:
      * @throw std::invalid_argument if the given load factor is less than 0.0
      * or greater than 1.0
      */
-    void set_minimum_load_factor(double mlf) {
+    void minimum_load_factor(const double mlf) {
         if (mlf < 0.0) {
             throw std::invalid_argument(
                 "load factor " + std::to_string(mlf) + " cannot be "
@@ -529,14 +529,14 @@ public:
                 "load factor " + std::to_string(mlf) + " cannot be "
                 " greater than 1");
         }
-        minimum_load_factor = mlf;
+        minimum_load_factor_ = mlf;
     }
 
     /**
      * @return the minimum load factor of the table
      */
-    double get_minimum_load_factor() {
-        return minimum_load_factor;
+    double minimum_load_factor() {
+        return minimum_load_factor_;
     }
 
     //! find searches through the table for \p key, and stores the associated
@@ -1617,9 +1617,8 @@ private:
             if (st == failure_key_duplicated) {
                 return false;
             } else if (st == failure_table_full) {
-                if (cuckoo_loadfactor(res.ti) < get_minimum_load_factor()) {
-                    throw libcuckoo_load_factor_too_low(
-                        get_minimum_load_factor());
+                if (cuckoo_loadfactor(res.ti) < minimum_load_factor()) {
+                    throw libcuckoo_load_factor_too_low(minimum_load_factor());
                 }
                 // Expand the table and try again
                 cuckoo_expand_simple(res.ti.hashpower + 1, true);
