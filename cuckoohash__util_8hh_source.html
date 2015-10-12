@@ -108,59 +108,79 @@ $(document).ready(function(){initNavTree('cuckoohash__util_8hh_source.html','');
 <div class="title">cuckoohash_util.hh</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#ifndef _CUCKOOHASH_UTIL_HH</span></div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="preprocessor">#define _CUCKOOHASH_UTIL_HH</span></div>
-<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;</div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#include &lt;exception&gt;</span></div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &lt;pthread.h&gt;</span></div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="cuckoohash__config_8hh.html">cuckoohash_config.hh</a>&quot;</span> <span class="comment">// for LIBCUCKOO_DEBUG</span></div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;</div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor">#if LIBCUCKOO_DEBUG</span></div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)                                   \</span></div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="preprocessor">     fprintf(stderr, &quot;\x1b[32m&quot;&quot;[libcuckoo:%s:%d:%lu] &quot; fmt&quot;&quot; &quot;\x1b[0m&quot;, \</span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="preprocessor">             __FILE__,__LINE__, (unsigned long)pthread_self(), ##args)</span></div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)  do {} while (0)</span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;</div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="comment">// For enabling certain methods based on a condition. Here&#39;s an example.</span></div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="comment">// ENABLE_IF(some_cond, type, static, inline) method() {</span></div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="comment">//     ...</span></div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="comment">// }</span></div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="preprocessor">#define ENABLE_IF(preamble, condition, return_type)                     \</span></div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="preprocessor">    template &lt;class Bogus=void*&gt;                                        \</span></div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">    preamble typename std::enable_if&lt;sizeof(Bogus) &amp;&amp;                   \</span></div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">        condition, return_type&gt;::type</span></div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;</div>
-<div class="line"><a name="l00030"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html">   30</a></span>&#160;<span class="keyword">class </span><a class="code" href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a> : <span class="keyword">public</span> std::exception {</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00037"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">   37</a></span>&#160;    <a class="code" href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">libcuckoo_load_factor_too_low</a>(<span class="keyword">const</span> <span class="keywordtype">double</span> lf)</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;        : load_factor_(lf) {}</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    <span class="keyword">virtual</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* what() const noexcept {</div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;        <span class="keywordflow">return</span> <span class="stringliteral">&quot;Automatic expansion triggered when load factor was below &quot;</span></div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;            <span class="stringliteral">&quot;minimum threshold&quot;</span>;</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    }</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;</div>
-<div class="line"><a name="l00048"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">   48</a></span>&#160;    <span class="keywordtype">double</span> <a class="code" href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">load_factor</a>() {</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;        <span class="keywordflow">return</span> load_factor_;</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;    }</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;<span class="keyword">private</span>:</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">double</span> load_factor_;</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;};</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;<span class="preprocessor">#endif // _CUCKOOHASH_UTIL_HH</span></div>
+<a href="cuckoohash__util_8hh.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;</div>
+<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="preprocessor">#ifndef _CUCKOOHASH_UTIL_HH</span></div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#define _CUCKOOHASH_UTIL_HH</span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;</div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="preprocessor">#include &lt;exception&gt;</span></div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#include &lt;pthread.h&gt;</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="cuckoohash__config_8hh.html">cuckoohash_config.hh</a>&quot;</span> <span class="comment">// for LIBCUCKOO_DEBUG</span></div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="preprocessor">#if LIBCUCKOO_DEBUG</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)                                   \</span></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor">     fprintf(stderr, &quot;\x1b[32m&quot;&quot;[libcuckoo:%s:%d:%lu] &quot; fmt&quot;&quot; &quot;\x1b[0m&quot;, \</span></div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="preprocessor">             __FILE__,__LINE__, (unsigned long)pthread_self(), ##args)</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)  do {} while (0)</span></div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="comment">// For enabling certain methods based on a condition. Here&#39;s an example.</span></div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="comment">// ENABLE_IF(some_cond, type, static, inline) method() {</span></div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="comment">//     ...</span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="comment">// }</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#define ENABLE_IF(preamble, condition, return_type)                     \</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">    template &lt;class Bogus=void*&gt;                                        \</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">    preamble typename std::enable_if&lt;sizeof(Bogus) &amp;&amp;                   \</span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">        condition, return_type&gt;::type</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;</div>
+<div class="line"><a name="l00034"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html">   34</a></span>&#160;<span class="keyword">class </span><a class="code" href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a> : <span class="keyword">public</span> std::exception {</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00041"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">   41</a></span>&#160;    <a class="code" href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">libcuckoo_load_factor_too_low</a>(<span class="keyword">const</span> <span class="keywordtype">double</span> lf)</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        : load_factor_(lf) {}</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    <span class="keyword">virtual</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* what() const noexcept {</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;        <span class="keywordflow">return</span> <span class="stringliteral">&quot;Automatic expansion triggered when load factor was below &quot;</span></div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;            <span class="stringliteral">&quot;minimum threshold&quot;</span>;</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    }</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;</div>
+<div class="line"><a name="l00052"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">   52</a></span>&#160;    <span class="keywordtype">double</span> <a class="code" href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">load_factor</a>() {</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;        <span class="keywordflow">return</span> load_factor_;</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    }</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">double</span> load_factor_;</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;};</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;</div>
+<div class="line"><a name="l00064"></a><span class="lineno"><a class="line" href="classlibcuckoo__maximum__hashpower__exceeded.html">   64</a></span>&#160;<span class="keyword">class </span><a class="code" href="classlibcuckoo__maximum__hashpower__exceeded.html">libcuckoo_maximum_hashpower_exceeded</a> : <span class="keyword">public</span> std::exception {</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00071"></a><span class="lineno"><a class="line" href="classlibcuckoo__maximum__hashpower__exceeded.html#a4e08219f34a32603ad4ebd3cc864d09c">   71</a></span>&#160;    <a class="code" href="classlibcuckoo__maximum__hashpower__exceeded.html#a4e08219f34a32603ad4ebd3cc864d09c">libcuckoo_maximum_hashpower_exceeded</a>(<span class="keyword">const</span> <span class="keywordtype">size_t</span> hp)</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;        : hashpower_(hp) {}</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <span class="keyword">virtual</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* what() const noexcept {</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;        <span class="keywordflow">return</span> <span class="stringliteral">&quot;Expansion beyond maximum hashpower&quot;</span>;</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    }</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;</div>
+<div class="line"><a name="l00081"></a><span class="lineno"><a class="line" href="classlibcuckoo__maximum__hashpower__exceeded.html#ab062de5b7de577171501c32303bc0f92">   81</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classlibcuckoo__maximum__hashpower__exceeded.html#ab062de5b7de577171501c32303bc0f92">hashpower</a>() {</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;        <span class="keywordflow">return</span> hashpower_;</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;    }</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">size_t</span> hashpower_;</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;};</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;<span class="preprocessor">#endif // _CUCKOOHASH_UTIL_HH</span></div>
 <div class="ttc" id="cuckoohash__config_8hh_html"><div class="ttname"><a href="cuckoohash__config_8hh.html">cuckoohash_config.hh</a></div></div>
-<div class="ttc" id="classlibcuckoo__load__factor__too__low_html"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a></div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00030">cuckoohash_util.hh:30</a></div></div>
-<div class="ttc" id="classlibcuckoo__load__factor__too__low_html_a382fc73444568dce5fa2c2f2dd627b52"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">libcuckoo_load_factor_too_low::libcuckoo_load_factor_too_low</a></div><div class="ttdeci">libcuckoo_load_factor_too_low(const double lf)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00037">cuckoohash_util.hh:37</a></div></div>
-<div class="ttc" id="classlibcuckoo__load__factor__too__low_html_a6733a03a958354bb8bb3c2b8a86b3d96"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">libcuckoo_load_factor_too_low::load_factor</a></div><div class="ttdeci">double load_factor()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00048">cuckoohash_util.hh:48</a></div></div>
+<div class="ttc" id="classlibcuckoo__load__factor__too__low_html"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a></div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00034">cuckoohash_util.hh:34</a></div></div>
+<div class="ttc" id="classlibcuckoo__load__factor__too__low_html_a382fc73444568dce5fa2c2f2dd627b52"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">libcuckoo_load_factor_too_low::libcuckoo_load_factor_too_low</a></div><div class="ttdeci">libcuckoo_load_factor_too_low(const double lf)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00041">cuckoohash_util.hh:41</a></div></div>
+<div class="ttc" id="classlibcuckoo__maximum__hashpower__exceeded_html"><div class="ttname"><a href="classlibcuckoo__maximum__hashpower__exceeded.html">libcuckoo_maximum_hashpower_exceeded</a></div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00064">cuckoohash_util.hh:64</a></div></div>
+<div class="ttc" id="classlibcuckoo__maximum__hashpower__exceeded_html_ab062de5b7de577171501c32303bc0f92"><div class="ttname"><a href="classlibcuckoo__maximum__hashpower__exceeded.html#ab062de5b7de577171501c32303bc0f92">libcuckoo_maximum_hashpower_exceeded::hashpower</a></div><div class="ttdeci">size_t hashpower()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00081">cuckoohash_util.hh:81</a></div></div>
+<div class="ttc" id="classlibcuckoo__maximum__hashpower__exceeded_html_a4e08219f34a32603ad4ebd3cc864d09c"><div class="ttname"><a href="classlibcuckoo__maximum__hashpower__exceeded.html#a4e08219f34a32603ad4ebd3cc864d09c">libcuckoo_maximum_hashpower_exceeded::libcuckoo_maximum_hashpower_exceeded</a></div><div class="ttdeci">libcuckoo_maximum_hashpower_exceeded(const size_t hp)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00071">cuckoohash_util.hh:71</a></div></div>
+<div class="ttc" id="classlibcuckoo__load__factor__too__low_html_a6733a03a958354bb8bb3c2b8a86b3d96"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">libcuckoo_load_factor_too_low::load_factor</a></div><div class="ttdeci">double load_factor()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00052">cuckoohash_util.hh:52</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_7da76f3c08bcb9cfedda4a1d9f14bb3a.html">src</a></li><li class="navelem"><b>cuckoohash_util.hh</b></li>
-    <li class="footer">Generated on Sun Oct 4 2015 14:45:49 for libcuckoo by
+    <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_7da76f3c08bcb9cfedda4a1d9f14bb3a.html">src</a></li><li class="navelem"><a class="el" href="cuckoohash__util_8hh.html">cuckoohash_util.hh</a></li>
+    <li class="footer">Generated on Sun Oct 11 2015 23:53:18 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

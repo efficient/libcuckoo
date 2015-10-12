@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['slot_5fper_5fbucket',['slot_per_bucket',['../classcuckoohash__map.html#a5b1a0f2f2e8af1c843fa1ff05585905a',1,'cuckoohash_map']]]
+  ['no_5fmaximum_5fhashpower',['NO_MAXIMUM_HASHPOWER',['../cuckoohash__config_8hh.html#a90230759e548fba0533ba58d58629dde',1,'cuckoohash_config.hh']]]
 ];

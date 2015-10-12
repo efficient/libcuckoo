@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.10"/>
-<title>libcuckoo: libcuckoo_load_factor_too_low Class Reference</title>
+<title>libcuckoo: libcuckoo_maximum_hashpower_exceeded Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -88,7 +88,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('classlibcuckoo__load__factor__too__low.html','');});
+$(document).ready(function(){initNavTree('classlibcuckoo__maximum__hashpower__exceeded.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -108,38 +108,38 @@ $(document).ready(function(){initNavTree('classlibcuckoo__load__factor__too__low
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="classlibcuckoo__load__factor__too__low-members.html">List of all members</a>  </div>
+<a href="classlibcuckoo__maximum__hashpower__exceeded-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">libcuckoo_load_factor_too_low Class Reference</div>  </div>
+<div class="title">libcuckoo_maximum_hashpower_exceeded Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
 <p><code>#include &lt;<a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for libcuckoo_load_factor_too_low:</div>
+Inheritance diagram for libcuckoo_maximum_hashpower_exceeded:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="classlibcuckoo__load__factor__too__low.png" usemap="#libcuckoo_load_factor_too_low_map" alt=""/>
-  <map id="libcuckoo_load_factor_too_low_map" name="libcuckoo_load_factor_too_low_map">
+  <img src="classlibcuckoo__maximum__hashpower__exceeded.png" usemap="#libcuckoo_maximum_hashpower_exceeded_map" alt=""/>
+  <map id="libcuckoo_maximum_hashpower_exceeded_map" name="libcuckoo_maximum_hashpower_exceeded_map">
 </map>
  </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a382fc73444568dce5fa2c2f2dd627b52"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">libcuckoo_load_factor_too_low</a> (const double lf)</td></tr>
-<tr class="separator:a382fc73444568dce5fa2c2f2dd627b52"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa298e2b5a2c543704b0b27d51629afb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaa298e2b5a2c543704b0b27d51629afb"></a>
+<tr class="memitem:a4e08219f34a32603ad4ebd3cc864d09c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__maximum__hashpower__exceeded.html#a4e08219f34a32603ad4ebd3cc864d09c">libcuckoo_maximum_hashpower_exceeded</a> (const size_t hp)</td></tr>
+<tr class="separator:a4e08219f34a32603ad4ebd3cc864d09c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0de23726895cd4770d70972c14c4ce87"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0de23726895cd4770d70972c14c4ce87"></a>
 virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () const  noexcept</td></tr>
-<tr class="separator:aaa298e2b5a2c543704b0b27d51629afb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6733a03a958354bb8bb3c2b8a86b3d96"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">load_factor</a> ()</td></tr>
-<tr class="separator:a6733a03a958354bb8bb3c2b8a86b3d96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a0de23726895cd4770d70972c14c4ce87"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab062de5b7de577171501c32303bc0f92"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__maximum__hashpower__exceeded.html#ab062de5b7de577171501c32303bc0f92">hashpower</a> ()</td></tr>
+<tr class="separator:ab062de5b7de577171501c32303bc0f92"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Thrown when an automatic expansion is triggered, but the load factor of the table is below a minimum threshold, which can be set by the <a class="el" href="classcuckoohash__map.html#aeecfff17d1b8c0193fd64f184c0b3bd8">cuckoohash_map::minimum_load_factor</a> method. This can happen if the hash function does not properly distribute keys, or for certain adversarial workloads. </p>
+<div class="textblock"><p>Thrown when an expansion is triggered, but the hashpower specified is greater than the maximum, which can be set with the <a class="el" href="classcuckoohash__map.html#aa6671fe9f95df4ef80ce59c904796731">cuckoohash_map::maximum_hashpower</a> method. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00034">34</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00064">64</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="a382fc73444568dce5fa2c2f2dd627b52"></a>
+<a class="anchor" id="a4e08219f34a32603ad4ebd3cc864d09c"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -147,10 +147,10 @@ virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what<
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">libcuckoo_load_factor_too_low::libcuckoo_load_factor_too_low </td>
+          <td class="memname">libcuckoo_maximum_hashpower_exceeded::libcuckoo_maximum_hashpower_exceeded </td>
           <td>(</td>
-          <td class="paramtype">const double&#160;</td>
-          <td class="paramname"><em>lf</em></td><td>)</td>
+          <td class="paramtype">const size_t&#160;</td>
+          <td class="paramname"><em>hp</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -163,17 +163,17 @@ virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what<
 <p>Constructor</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">lf</td><td>the load factor of the table when the exception was thrown </td></tr>
+    <tr><td class="paramname">hp</td><td>the hash power we were trying to expand to </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00041">41</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00071">71</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a6733a03a958354bb8bb3c2b8a86b3d96"></a>
+<a class="anchor" id="ab062de5b7de577171501c32303bc0f92"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -181,7 +181,7 @@ virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what<
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">double libcuckoo_load_factor_too_low::load_factor </td>
+          <td class="memname">size_t libcuckoo_maximum_hashpower_exceeded::hashpower </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -193,9 +193,9 @@ virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what<
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>the load factor of the table when the exception was thrown </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the hashpower we were trying to expand to </dd></dl>
 
-<p>Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00052">52</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00081">81</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
 
 </div>
 </div>
@@ -207,7 +207,7 @@ virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what<
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a></li>
+    <li class="navelem"><a class="el" href="classlibcuckoo__maximum__hashpower__exceeded.html">libcuckoo_maximum_hashpower_exceeded</a></li>
     <li class="footer">Generated on Sun Oct 11 2015 23:53:18 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
