@@ -12,7 +12,7 @@ public:
     }
 };
 
-TEST_CASE("minimum load factor caps automatic expansion", "[insert]") {
+TEST_CASE("caps automatic expansion", "[minimum load fator]") {
     const size_t slot_per_bucket = 4;
     cuckoohash_map<int, int, BadHashFunction, std::equal_to<int>,
                    std::allocator<std::pair<const int, int>>,
@@ -22,8 +22,16 @@ TEST_CASE("minimum load factor caps automatic expansion", "[insert]") {
         tbl.insert(i, i);
     }
 
-    std::cout << "load factor = " << tbl.load_factor() << std::endl;
-
     REQUIRE_THROWS_AS(tbl.insert(2*slot_per_bucket, 0),
                       libcuckoo_load_factor_too_low);
+}
+
+TEST_CASE("invalid minimum load factor", "[minimum load factor]") {
+    REQUIRE_THROWS_AS(IntIntTable(5, -0.01), std::invalid_argument);
+    REQUIRE_THROWS_AS(IntIntTable(5, 1.01), std::invalid_argument);
+
+    IntIntTable t;
+    REQUIRE(t.minimum_load_factor() == DEFAULT_MINIMUM_LOAD_FACTOR);
+    REQUIRE_THROWS_AS(t.minimum_load_factor(-0.01), std::invalid_argument);
+    REQUIRE_THROWS_AS(t.minimum_load_factor(1.01), std::invalid_argument);
 }

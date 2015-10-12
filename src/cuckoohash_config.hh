@@ -1,4 +1,4 @@
-/*! \file */
+/** \file */
 
 #ifndef _CUCKOOHASH_CONFIG_HH
 #define _CUCKOOHASH_CONFIG_HH
@@ -16,6 +16,11 @@ const size_t DEFAULT_SIZE = (1U << 16) * DEFAULT_SLOT_PER_BUCKET;
 //! libcuckoo_load_factor_too_low if the load factor falls below this value
 //! during an automatic expansion.
 const double DEFAULT_MINIMUM_LOAD_FACTOR = 0.05;
+
+//! An alias for the value that sets no limit on the maximum hashpower. If this
+//! value is set as the maximum hashpower limit, there will be no limit. Since 0
+//! is the only hashpower that can never occur, it should stay at 0.
+const size_t NO_MAXIMUM_HASHPOWER = 0;
 
 //! set LIBCUCKOO_DEBUG to 1 to enable debug output
 #define LIBCUCKOO_DEBUG 0

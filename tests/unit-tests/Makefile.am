@@ -8,6 +8,7 @@ test_runner_out_SOURCES = \
 	test_resize.cc \
 	test_constructor.cc \
 	test_free_old_tables.cc \
-	test_insert.cc \
+	test_minimum_load_factor.cc \
+	test_maximum_hashpower.cc \
 	unit_test_util.cc \
 	test_runner.cc catch.hpp

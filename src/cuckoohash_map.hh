@@ -1,3 +1,5 @@
+/** \file */
+
 #ifndef _CUCKOOHASH_MAP_HH
 #define _CUCKOOHASH_MAP_HH
 
@@ -395,6 +397,10 @@ private:
     // used to signal when the hash function is bad or the input adversarial.
     std::atomic<double> minimum_load_factor_;
 
+    // stores the maximum hashpower allowed for any expansions. If set to
+    // NO_MAXIMUM_HASHPOWER, this limit will be disregarded.
+    std::atomic<size_t> maximum_hashpower_;
+
     // AllUnlocker is deleter class which releases all the locks on the given
     // table info.
     struct AllUnlocker {
@@ -450,12 +456,16 @@ public:
      * @param n the number of elements to reserve space for initially
      * @param mlf the minimum load factor required that the
      * table allows for automatic expansion.
+     * @param mhp the maximum hashpower that the table can take on (pass in 0
+     * for no limit)
      * @throw std::invalid_argument if the given minimum load factor is invalid
      */
     cuckoohash_map(size_t n = DEFAULT_SIZE,
-                   double mlf = DEFAULT_MINIMUM_LOAD_FACTOR) {
+                   double mlf = DEFAULT_MINIMUM_LOAD_FACTOR,
+                   size_t mhp = NO_MAXIMUM_HASHPOWER) {
         const size_t hp = reserve_calc(n);
         minimum_load_factor(mlf);
+        maximum_hashpower(mhp);
         TableInfo* ptr = get_tableinfo_allocator().allocate(1);
         try {
             get_tableinfo_allocator().construct(ptr, hp);
@@ -539,6 +549,23 @@ public:
         return minimum_load_factor_;
     }
 
+    /**
+     * Sets the maximum hashpower the table can be. If set to \ref
+     * NO_MAXIMUM_HASHPOWER, there will be no limit on the hashpower.
+     *
+     * @param mhp the hashpower to set the maximum to
+     */
+    void maximum_hashpower(size_t mhp) {
+        maximum_hashpower_ = mhp;
+    }
+
+    /**
+     * @return the maximum hashpower of the table
+     */
+    size_t maximum_hashpower() {
+        return maximum_hashpower_;
+    }
+
     //! find searches through the table for \p key, and stores the associated
     //! value it finds in \p val.
     ENABLE_IF(, value_copy_assignable, bool)
@@ -584,7 +611,9 @@ public:
      * @return true if the insertion succeeded, false if there was a duplicate
      * key
      * @throw libcuckoo_load_factor_too_low if the load factor is below the
-     * minimum_load_factor threshold if expansion is required
+     * minimum_load_factor threshold, if expansion is required
+     * @throw libcuckoo_maximum_hashpower_exceeded if expansion is required
+     * beyond the maximum hash power, if one was set
      */
     template <class V>
     bool insert(const key_type& key, V&& val) {
@@ -667,15 +696,17 @@ public:
         } while (st != ok);
     }
 
-    //! rehash will size the table using a hashpower of \p n. Note that the
-    //! number of buckets in the table will be 2<SUP>\p n</SUP> after rehashing,
-    //! so the table will have 2<SUP>\p n</SUP> &times; \ref slot_per_bucket
-    //! slots to store items in. If \p n is not larger than the current
-    //! hashpower, then it decreases the hashpower to either \p n or the
-    //! smallest power that can hold all the elements currently in the table. It
-    //! returns true if the table rehash succeeded, and false otherwise. rehash
-    //! can throw an exception if the rehash fails to allocate enough memory for
-    //! the larger table.
+    /**
+     * Resizes the table to the given hashpower. If this hashpower is not larger
+     * than the current hashpower, then it decreases the hashpower to the
+     * maximum of the specified value and the smallest hashpower that can hold
+     * all the elements currently in the table.
+     *
+     * @param n the hashpower to set for the table
+     * @return true if the table changed size, false otherwise
+     * @throw libcuckoo_maximum_hashpower_exceeded if the specified hashpower is
+     * greater than the maximum, if one was set
+     */
     bool rehash(size_t n) {
         auto res = snapshot_table_nolock();
         if (n == res.ti.hashpower) {
@@ -686,14 +717,17 @@ public:
         return (st == ok);
     }
 
-    //! reserve will size the table to have enough slots for at least \p n
-    //! elements. If the table can already hold that many elements, the function
-    //! will shrink the table to the smallest hashpower that can hold the
-    //! maximum of \p n and the current table size. Otherwise, the function will
-    //! expand the table to a hashpower sufficient to hold \p n elements. It
-    //! will return true if there was an change in size, and false otherwise.
-    //! reserve can throw an exception if the expansion fails to allocate enough
-    //! memory for the larger table.
+    /**
+     * Reserve enough space in the table for the given number of elements. If
+     * the table can already hold that many elements, the function will shrink
+     * the table to the smallest hashpower that can hold the maximum of the
+     * specified amount and the current table size.
+     *
+     * @param n the number of elements to reserve space for
+     * @return true if the size of the table changed, false otherwise
+     * @throw libcuckoo_maximum_hashpower_exceeded if the specified hashpower is
+     * greater than the maximum, if one was set
+     */
     bool reserve(size_t n) {
         auto res = snapshot_table_nolock();
         size_t new_hashpower = reserve_calc(n);
@@ -1732,9 +1766,14 @@ private:
     // contains more elements than can be held by new_hashpower, the resulting
     // hashpower will be greater than new_hashpower. It needs to take all the
     // bucket locks, since no other operations can change the table during
-    // expansion.
+    // expansion. Throws libcuckoo_maximum_hashpower_exceeded if we're expanding
+    // beyond the maximum hashpower, and we have an actual limit.
     cuckoo_status cuckoo_expand_simple(size_t new_hashpower,
                                        bool is_expansion) {
+        size_t mhp = maximum_hashpower();
+        if (mhp != NO_MAXIMUM_HASHPOWER && new_hashpower > mhp) {
+            throw libcuckoo_maximum_hashpower_exceeded(new_hashpower);
+        }
         auto res = snapshot_and_lock_all();
         assert(res.ti.get() == table_info.load());
         if ((is_expansion && new_hashpower <= res.ti->hashpower) ||

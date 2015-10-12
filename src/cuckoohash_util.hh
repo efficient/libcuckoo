@@ -1,3 +1,5 @@
+/** \file */
+
 #ifndef _CUCKOOHASH_UTIL_HH
 #define _CUCKOOHASH_UTIL_HH
 
@@ -24,8 +26,10 @@
 
 /**
  * Thrown when an automatic expansion is triggered, but the load factor of the
- * table is below a minimum threshold. This can happen if the hash function does
- * not properly distribute keys, or for certain adversarial workloads.
+ * table is below a minimum threshold, which can be set by the \ref
+ * cuckoohash_map::minimum_load_factor method. This can happen if the hash
+ * function does not properly distribute keys, or for certain adversarial
+ * workloads.
  */
 class libcuckoo_load_factor_too_low : public std::exception {
 public:
@@ -50,6 +54,35 @@ public:
     }
 private:
     const double load_factor_;
+};
+
+/**
+ * Thrown when an expansion is triggered, but the hashpower specified is greater
+ * than the maximum, which can be set with the \ref
+ * cuckoohash_map::maximum_hashpower method.
+ */
+class libcuckoo_maximum_hashpower_exceeded : public std::exception {
+public:
+    /**
+     * Constructor
+     *
+     * @param hp the hash power we were trying to expand to
+     */
+    libcuckoo_maximum_hashpower_exceeded(const size_t hp)
+        : hashpower_(hp) {}
+
+    virtual const char* what() const noexcept {
+        return "Expansion beyond maximum hashpower";
+    }
+
+    /**
+     * @return the hashpower we were trying to expand to
+     */
+    size_t hashpower() {
+        return hashpower_;
+    }
+private:
+    const size_t hashpower_;
 };
 
 #endif // _CUCKOOHASH_UTIL_HH
