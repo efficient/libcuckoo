@@ -1030,12 +1030,12 @@ private:
     // bytes of the hashed key. This is used for partial-key cuckoohashing. If
     // the key type is POD and small, we don't use partial keys, so we just
     // return 0.
-    ENABLE_IF(static inline, is_simple, partial_t)
+    ENABLE_IF(static inline, !is_simple, partial_t)
     partial_key(const size_t hv) {
         return (partial_t)(hv >> ((sizeof(size_t)-sizeof(partial_t)) * 8));
     }
 
-    ENABLE_IF(static inline, !is_simple, partial_t) partial_key(const size_t&) {
+    ENABLE_IF(static inline, is_simple, partial_t) partial_key(const size_t&) {
         return 0;
     }
 
