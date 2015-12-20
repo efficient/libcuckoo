@@ -128,8 +128,8 @@ public:
 private:
     // Constants used internally
 
-    // true if the key is small and simple, which means using partial keys would
-    // probably slow us down
+    // true if the key is small and simple, which means using partial keys for
+    // lookup would probably slow us down
     static const bool is_simple =
         std::is_pod<key_type>::value && sizeof(key_type) <= 8;
 
@@ -179,48 +179,29 @@ private:
     } cuckoo_status;
 
     typedef char partial_t;
-    // Two partial key containers. One for when we're actually using partial
-    // keys and another that mocks partial keys for when the type is simple. The
-    // bucket will derive the correct class depending on whether the type is
-    // simple or not.
-    class RealPartialContainer {
-        std::array<partial_t, slot_per_bucket> partials_;
-    public:
-        const partial_t& partial(size_t ind) const {
-            return partials_[ind];
-        }
-        partial_t& partial(size_t ind) {
-            return partials_[ind];
-        }
-    };
 
-    class FakePartialContainer {
-    public:
-        // These methods should never be called, so we raise an exception if
-        // they are.
-        const partial_t& partial(size_t) const {
-            throw std::logic_error(
-                "FakePartialContainer::partial should never be called");
-        }
-        partial_t& partial(size_t) {
-            throw std::logic_error(
-                "FakePartialContainer::partial should never be called");
-        }
-    };
-
-    // The Bucket type holds slot_per_bucket keys and values, and a occupied
-    // bitset, which indicates whether the slot at the given bit index is in
-    // the table or not. It uses aligned_storage arrays to store the keys and
-    // values to allow constructing and destroying key-value pairs in place.
-    class Bucket : public std::conditional<is_simple, FakePartialContainer,
-                                           RealPartialContainer>::type {
+    // The Bucket type holds slot_per_bucket partial keys, key-value pairs, and
+    // a occupied bitset, which indicates whether the slot at the given bit
+    // index is in the table or not. It uses aligned_storage arrays to store the
+    // keys and values to allow constructing and destroying key-value pairs in
+    // place.
+    class Bucket {
     private:
+        std::array<partial_t, slot_per_bucket> partials_;
         std::array<typename std::aligned_storage<
                        sizeof(value_type), alignof(value_type)>::type,
                    slot_per_bucket> kvpairs_;
         std::bitset<slot_per_bucket> occupied_;
 
     public:
+        const partial_t& partial(size_t ind) const {
+            return partials_[ind];
+        }
+
+        partial_t& partial(size_t ind) {
+            return partials_[ind];
+        }
+
         const value_type& kvpair(size_t ind) const {
             return *static_cast<const value_type*>(
                 static_cast<const void*>(&kvpairs_[ind]));
@@ -933,7 +914,7 @@ private:
                 continue;
             }
             i1 = index_hash(*ti, hv);
-            i2 = alt_index(*ti, hv, i1);
+            i2 = alt_index(*ti, partial_key(hv), i1);
             lock_two(*ti, i1, i2);
             // Check the table info again
             if (ti != table_info.load()) {
@@ -1016,27 +997,21 @@ private:
     // alt_index returns the other possible bucket that the given hashed key
     // could be. It takes the first possible bucket as a parameter. Note that
     // this function will return the first possible bucket if index is the
-    // second possible bucket, so alt_index(ti, hv, alt_index(ti, hv,
+    // second possible bucket, so alt_index(ti, partial, alt_index(ti, partial,
     // index_hash(ti, hv))) == index_hash(ti, hv).
     static inline size_t alt_index(
-        const TableInfo& ti, const size_t hv, const size_t index) {
-        // ensure tag is nonzero for the multiply
-        const size_t tag = (hv >> ti.hashpower) + 1;
-        // 0x5bd1e995 is the hash constant from MurmurHash2
-        return (index ^ (tag * 0x5bd1e995)) & hashmask(ti.hashpower);
+        const TableInfo& ti, const partial_t partial, const size_t index) {
+        // ensure tag is nonzero for the multiply. 0xc6a4a7935bd1e995 is the
+        // hash constant from 64-bit MurmurHash2
+        const size_t hash_of_tag = (partial + 1) * 0xc6a4a7935bd1e995;
+        return (index ^ hash_of_tag) & hashmask(ti.hashpower);
     }
 
     // partial_key returns a partial_t representing the upper sizeof(partial_t)
-    // bytes of the hashed key. This is used for partial-key cuckoohashing. If
-    // the key type is POD and small, we don't use partial keys, so we just
-    // return 0.
-    ENABLE_IF(static inline, !is_simple, partial_t)
-    partial_key(const size_t hv) {
+    // bytes of the hashed key. This is used for partial-key cuckoohashing, and
+    // for finding the alternate bucket of that a key hashes to.
+    static inline partial_t partial_key(const size_t hv) {
         return (partial_t)(hv >> ((sizeof(size_t)-sizeof(partial_t)) * 8));
-    }
-
-    ENABLE_IF(static inline, is_simple, partial_t) partial_key(const size_t&) {
-        return 0;
     }
 
     // A constexpr version of pow that we can use for static_asserts
@@ -1052,6 +1027,7 @@ private:
         size_t bucket;
         size_t slot;
         key_type key;
+        partial_t partial;
     }  CuckooRecord;
 
     typedef std::array<CuckooRecord, MAX_BFS_PATH_LEN> CuckooRecords;
@@ -1159,10 +1135,10 @@ private:
                 // create a new b_slot item, that represents the bucket we would
                 // have come from if we kicked out the item at this slot.
                 if (x.depth < MAX_BFS_PATH_LEN - 1) {
-                    const size_t hv = hashed_key(
-                        ti.buckets[x.bucket].key(slot));
+                    const partial_t partial =
+                        ti.buckets[x.bucket].partial(slot);
                     unlock(ti, x.bucket);
-                    b_slot y(alt_index(ti, hv, x.bucket),
+                    b_slot y(alt_index(ti, partial, x.bucket),
                              x.pathcode * slot_per_bucket + slot, x.depth+1);
                     q.enqueue(y);
                 }
@@ -1204,6 +1180,7 @@ private:
                 unlock(ti, first.bucket);
                 return 0;
             }
+            first.partial = ti.buckets[first.bucket].partial(first.slot);
             first.key = ti.buckets[first.bucket].key(first.slot);
             unlock(ti, first.bucket);
         } else {
@@ -1215,6 +1192,7 @@ private:
                 unlock(ti, first.bucket);
                 return 0;
             }
+            first.partial = ti.buckets[first.bucket].partial(first.slot);
             first.key = ti.buckets[first.bucket].key(first.slot);
             unlock(ti, first.bucket);
         }
@@ -1223,17 +1201,18 @@ private:
             CuckooRecord& prev = cuckoo_path[i-1];
             const size_t prevhv = hashed_key(prev.key);
             assert(prev.bucket == index_hash(ti, prevhv) ||
-                   prev.bucket == alt_index(ti, prevhv, index_hash(ti,
-                                                                   prevhv)));
+                   prev.bucket == alt_index(ti, prev.partial,
+                                            index_hash(ti, prevhv)));
             // We get the bucket that this slot is on by computing the alternate
             // index of the previous bucket
-            curr.bucket = alt_index(ti, prevhv, prev.bucket);
+            curr.bucket = alt_index(ti, prev.partial, prev.bucket);
             lock(ti, curr.bucket);
             if (!ti.buckets[curr.bucket].occupied(curr.slot)) {
                 // We can terminate here
                 unlock(ti, curr.bucket);
                 return i;
             }
+            curr.partial = ti.buckets[curr.bucket].partial(curr.slot);
             curr.key = ti.buckets[curr.bucket].key(curr.slot);
             unlock(ti, curr.bucket);
         }
@@ -1304,11 +1283,9 @@ private:
                 return false;
             }
 
-            if (!is_simple) {
-                ti.buckets[tb].partial(ts) = ti.buckets[fb].partial(fs);
-            }
+            ti.buckets[tb].partial(ts) = ti.buckets[fb].partial(fs);
             ti.buckets[tb].setKV(ts, ti.buckets[fb].key(fs),
-                                   std::move(ti.buckets[fb].val(fs)));
+                                 std::move(ti.buckets[fb].val(fs)));
             ti.buckets[fb].eraseKV(fs);
             if (depth == 1) {
                 // Don't unlock fb or ob, since they are needed in
@@ -1434,9 +1411,7 @@ private:
                               const key_type &key, V&& val,
                               const size_t i, const size_t j) {
         assert(!ti.buckets[i].occupied(j));
-        if (!is_simple) {
-            ti.buckets[i].partial(j) = partial;
-        }
+        ti.buckets[i].partial(j) = partial;
         ti.buckets[i].setKV(j, key, std::forward<V>(val));
         ti.num_inserts[get_counterid()].num.fetch_add(
             1, std::memory_order_relaxed);
@@ -1610,7 +1585,7 @@ private:
             assert(!ti.locks[lock_ind(i2)].try_lock());
             assert(!ti.buckets[insert_bucket].occupied(insert_slot));
             assert(insert_bucket == index_hash(ti, hv) ||
-                   insert_bucket == alt_index(ti, hv, index_hash(ti, hv)));
+                   insert_bucket == alt_index(ti, partial, index_hash(ti, hv)));
             // Since we unlocked the buckets during run_cuckoo, another insert
             // could have inserted the same key into either i1 or i2, so we
             // check for that before doing the insert.
