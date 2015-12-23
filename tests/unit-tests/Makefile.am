@@ -10,5 +10,6 @@ test_runner_out_SOURCES = \
 	test_free_old_tables.cc \
 	test_minimum_load_factor.cc \
 	test_maximum_hashpower.cc \
+	test_hash_properties.cc \
 	unit_test_util.cc \
 	test_runner.cc catch.hpp

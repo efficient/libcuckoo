@@ -913,8 +913,8 @@ private:
             if (ti != table_info.load()) {
                 continue;
             }
-            i1 = index_hash(*ti, hv);
-            i2 = alt_index(*ti, partial_key(hv), i1);
+            i1 = index_hash(ti->hashpower, hv);
+            i2 = alt_index(ti->hashpower, partial_key(hv), i1);
             lock_two(*ti, i1, i2);
             // Check the table info again
             if (ti != table_info.load()) {
@@ -990,8 +990,8 @@ private:
 
     // index_hash returns the first possible bucket that the given hashed key
     // could be.
-    static inline size_t index_hash(const TableInfo& ti, const size_t hv) {
-        return hv & hashmask(ti.hashpower);
+    static inline size_t index_hash(const size_t hashpower, const size_t hv) {
+        return hv & hashmask(hashpower);
     }
 
     // alt_index returns the other possible bucket that the given hashed key
@@ -1000,11 +1000,12 @@ private:
     // second possible bucket, so alt_index(ti, partial, alt_index(ti, partial,
     // index_hash(ti, hv))) == index_hash(ti, hv).
     static inline size_t alt_index(
-        const TableInfo& ti, const partial_t partial, const size_t index) {
-        // ensure tag is nonzero for the multiply. 0xc6a4a7935bd1e995 is the
-        // hash constant from 64-bit MurmurHash2
-        const size_t hash_of_tag = (partial + 1) * 0xc6a4a7935bd1e995;
-        return (index ^ hash_of_tag) & hashmask(ti.hashpower);
+        const size_t hashpower, const partial_t partial, const size_t index) {
+        // ensure tag is nonzero for the multiply.
+        const partial_t nonzero_tag = (partial >> 1 << 1) + 1;
+        // 0xc6a4a7935bd1e995 is the hash constant from 64-bit MurmurHash2
+        const size_t hash_of_tag = nonzero_tag * 0xc6a4a7935bd1e995;
+        return (index ^ hash_of_tag) & hashmask(hashpower);
     }
 
     // partial_key returns a partial_t representing the upper sizeof(partial_t)
@@ -1138,7 +1139,7 @@ private:
                     const partial_t partial =
                         ti.buckets[x.bucket].partial(slot);
                     unlock(ti, x.bucket);
-                    b_slot y(alt_index(ti, partial, x.bucket),
+                    b_slot y(alt_index(ti.hashpower, partial, x.bucket),
                              x.pathcode * slot_per_bucket + slot, x.depth+1);
                     q.enqueue(y);
                 }
@@ -1200,12 +1201,12 @@ private:
             CuckooRecord& curr = cuckoo_path[i];
             CuckooRecord& prev = cuckoo_path[i-1];
             const size_t prevhv = hashed_key(prev.key);
-            assert(prev.bucket == index_hash(ti, prevhv) ||
-                   prev.bucket == alt_index(ti, prev.partial,
-                                            index_hash(ti, prevhv)));
+            assert(prev.bucket == index_hash(ti.hashpower, prevhv) ||
+                   prev.bucket == alt_index(ti.hashpower, prev.partial,
+                                            index_hash(ti.hashpower, prevhv)));
             // We get the bucket that this slot is on by computing the alternate
             // index of the previous bucket
-            curr.bucket = alt_index(ti, prev.partial, prev.bucket);
+            curr.bucket = alt_index(ti.hashpower, prev.partial, prev.bucket);
             lock(ti, curr.bucket);
             if (!ti.buckets[curr.bucket].occupied(curr.slot)) {
                 // We can terminate here
@@ -1584,8 +1585,9 @@ private:
             assert(!ti.locks[lock_ind(i1)].try_lock());
             assert(!ti.locks[lock_ind(i2)].try_lock());
             assert(!ti.buckets[insert_bucket].occupied(insert_slot));
-            assert(insert_bucket == index_hash(ti, hv) ||
-                   insert_bucket == alt_index(ti, partial, index_hash(ti, hv)));
+            assert(insert_bucket == index_hash(ti.hashpower, hv) ||
+                   insert_bucket == alt_index(ti.hashpower, partial,
+                                              index_hash(ti.hashpower, hv)));
             // Since we unlocked the buckets during run_cuckoo, another insert
             // could have inserted the same key into either i1 or i2, so we
             // check for that before doing the insert.
