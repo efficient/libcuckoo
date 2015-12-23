@@ -29,11 +29,12 @@
 
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
+#include "default_hasher.hh"
 
 //! cuckoohash_map is the hash table class.
 template < class Key,
            class T,
-           class Hash = std::hash<Key>,
+           class Hash = DefaultHasher<Key>,
            class Pred = std::equal_to<Key>,
            class Alloc = std::allocator<std::pair<const Key, T>>,
            size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET
@@ -125,6 +126,8 @@ public:
 
     typedef const mapped_type const_reference;
 
+    typedef char partial_t;
+
 private:
     // Constants used internally
 
@@ -177,8 +180,6 @@ private:
         failure_table_full,
         failure_under_expansion,
     } cuckoo_status;
-
-    typedef char partial_t;
 
     // The Bucket type holds slot_per_bucket partial keys, key-value pairs, and
     // a occupied bitset, which indicates whether the slot at the given bit
