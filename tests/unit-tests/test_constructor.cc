@@ -31,10 +31,9 @@ TEST_CASE("frees even with exceptions", "[constructor]") {
     REQUIRE(get_unfreed_bytes() == 0);
 
     typedef IntIntTableWithAlloc<
-        TrackingAllocator<int, UnitTestInternalAccess::IntIntTableInfoSize>>
+        TrackingAllocator<int, UnitTestInternalAccess::IntIntBucketSize*2>>
         some_space_table;
-    // Should throw when constructing the TableInfo struct, which involves
-    // allocating the buckets and counters
+    // Should throw when allocating the counters, after the buckets
     REQUIRE_THROWS_AS(some_space_table(1), std::bad_alloc);
     REQUIRE(get_unfreed_bytes() == 0);
 }

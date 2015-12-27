@@ -129,7 +129,7 @@ size_t table_capacity(const CuckoohashMap& table) {
 // This class is a friend of the table, so it can access those.
 class UnitTestInternalAccess {
 public:
-    static const size_t IntIntTableInfoSize = sizeof(IntIntTable::TableInfo);
+    static const size_t IntIntBucketSize = sizeof(IntIntTable::Bucket);
 
     template <class CuckoohashMap>
     static size_t old_table_info_size(const CuckoohashMap& table) {
