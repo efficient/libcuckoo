@@ -695,17 +695,13 @@ private:
     void lock_two(const size_t hp, size_t i1, size_t i2) const {
         i1 = lock_ind(i1);
         i2 = lock_ind(i2);
-        if (i1 < i2) {
-            locks_[i1].lock();
-            check_hashpower(hp, i1);
+        if (i2 < i1) {
+            std::swap(i1, i2);
+        }
+        locks_[i1].lock();
+        check_hashpower(hp, i1);
+        if (i2 != i1) {
             locks_[i2].lock();
-        } else if (i2 < i1) {
-            locks_[i2].lock();
-            check_hashpower(hp, i2);
-            locks_[i1].lock();
-        } else {
-            locks_[i1].lock();
-            check_hashpower(hp, i1);
         }
     }
 
@@ -735,39 +731,20 @@ private:
         } else if (i1 == i3) {
             lock_two(hp, i1, i2);
         } else {
-            if (i1 < i2) {
-                if (i2 < i3) {
-                    locks_[i1].lock();
-                    check_hashpower(hp, i1);
-                    locks_[i2].lock();
-                    locks_[i3].lock();
-                } else if (i1 < i3) {
-                    locks_[i1].lock();
-                    check_hashpower(hp, i1);
-                    locks_[i3].lock();
-                    locks_[i2].lock();
-                } else {
-                    locks_[i3].lock();
-                    check_hashpower(hp, i3);
-                    locks_[i1].lock();
-                    locks_[i2].lock();
-                }
-            } else if (i2 < i3) {
-                locks_[i2].lock();
-                check_hashpower(hp, i2);
-                if (i1 < i3) {
-                    locks_[i1].lock();
-                    locks_[i3].lock();
-                } else {
-                    locks_[i3].lock();
-                    locks_[i1].lock();
-                }
-            } else {
-                locks_[i3].lock();
-                check_hashpower(hp, i3);
-                locks_[i2].lock();
-                locks_[i1].lock();
+            if (i2 < i1) {
+                std::swap(i1, i2);
             }
+            if (i3 < i2) {
+                std::swap(i2, i3);
+            }
+            // Now i3 is the largest, but i2 could now be less than i1
+            if (i2 < i1) {
+                std::swap(i1, i2);
+            }
+            locks_[i1].lock();
+            check_hashpower(hp, i1);
+            locks_[i2].lock();
+            locks_[i3].lock();
         }
     }
 
