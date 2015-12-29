@@ -231,9 +231,9 @@ private:
 
         template <class... Args>
         void setKV(size_t ind, Args&&... args) {
+            static allocator_type pair_allocator;
             occupied_.set(ind);
-            new ((void*)&kvpair(ind)) value_type(
-                std::forward<Args>(args)...);
+            pair_allocator.construct(&kvpair(ind), std::forward<Args>(args)...);
         }
 
         void eraseKV(size_t ind) {
