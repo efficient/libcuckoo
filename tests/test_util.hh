@@ -8,6 +8,7 @@
 #include <cstring>
 #include <iostream>
 #include <mutex>
+#include <random>
 #include "../src/cuckoohash_map.hh"
 
 std::mutex print_lock;
@@ -200,6 +201,41 @@ public:
                 reads++;
             }
         }
+    }
+};
+
+// An overloaded class that does a mixture of reads and inserts for different
+// table types. It repeatedly searches for the keys in the given range until
+// everything has been inserted.
+template <class Table>
+class read_insert_thread {
+public:
+    typedef typename std::vector<typename Table::key_type>::iterator it_t;
+    static void func(Table& table, it_t begin, it_t end,
+                     std::atomic<size_t>& counter, const double insert_prob,
+                     const size_t start_seed) {
+        typename Table::mapped_type v;
+        std::mt19937_64 gen(start_seed);
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
+        auto inserter_it = begin;
+        auto reader_it = begin;
+        size_t ops = 0;
+        while (inserter_it != end) {
+            if (dist(gen) < insert_prob) {
+                // Do an insert
+                ASSERT_TRUE(table.insert(*inserter_it, 0));
+                ++inserter_it;
+            } else {
+                // Do a read
+                ASSERT_EQ(table.find(*reader_it, v), (reader_it < inserter_it));
+                ++reader_it;
+                if (reader_it == end) {
+                    reader_it = begin;
+                }
+            }
+            ++ops;
+        }
+        counter.fetch_add(ops);
     }
 };
 
