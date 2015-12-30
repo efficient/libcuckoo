@@ -1262,7 +1262,7 @@ private:
     // check_in_bucket will search the bucket for the given key and return true
     // if the key is in the bucket, and false if it isn't.
     bool check_in_bucket(const partial_t partial, const key_type &key,
-                         const size_t i) {
+                         const size_t i) const {
         for (size_t j = 0; j < slot_per_bucket; ++j) {
             if (!buckets_[i].occupied(j)) {
                 continue;
@@ -1293,7 +1293,7 @@ private:
     // search the entire bucket and return false if it finds the key already in
     // the table (duplicate key error) and true otherwise.
     bool try_find_insert_bucket(const partial_t partial, const key_type &key,
-                                const size_t i, int& j) {
+                                const size_t i, int& j) const {
         j = -1;
         bool found_empty = false;
         for (size_t k = 0; k < slot_per_bucket; ++k) {
@@ -1395,7 +1395,7 @@ private:
     // it's in the table and false otherwise. It expects the locks to be taken
     // and released outside the function.
     bool cuckoo_contains(const key_type& key, const size_t hv,
-                         const size_t i1, const size_t i2) {
+                         const size_t i1, const size_t i2) const {
         const partial_t partial = partial_key(hv);
         if (check_in_bucket(partial, key, i1)) {
             return true;
