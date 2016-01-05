@@ -436,14 +436,14 @@ public:
                 "load factor " + std::to_string(mlf) + " cannot be "
                 " greater than 1");
         }
-        minimum_load_factor_ = mlf;
+        minimum_load_factor_.store(mlf, std::memory_order_release);
     }
 
     /**
      * @return the minimum load factor of the table
      */
     double minimum_load_factor() noexcept {
-        return minimum_load_factor_;
+        return minimum_load_factor_.load(std::memory_order_acquire);
     }
 
     /**
@@ -453,14 +453,14 @@ public:
      * @param mhp the hashpower to set the maximum to
      */
     void maximum_hashpower(size_t mhp) noexcept {
-        maximum_hashpower_ = mhp;
+        maximum_hashpower_.store(mhp, std::memory_order_release);
     }
 
     /**
      * @return the maximum hashpower of the table
      */
     size_t maximum_hashpower() noexcept {
-        return maximum_hashpower_;
+        return maximum_hashpower_.load(std::memory_order_acquire);
     }
 
     //! find searches through the table for \p key, and stores the associated
