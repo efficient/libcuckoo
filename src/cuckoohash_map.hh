@@ -254,6 +254,12 @@ private:
         }
     };
 
+
+    // The type of the buckets container
+    typedef std::vector<
+        Bucket, typename allocator_type::template rebind<Bucket>::other>
+    buckets_t;
+
     // cacheint is a cache-aligned atomic integer type.
     struct cacheint {
         std::atomic<size_t> num;
@@ -271,13 +277,6 @@ private:
         }
     } __attribute__((aligned(64)));
 
-
-    // 2**hashpower is the number of buckets. This cannot be changed unless all
-    // the locks are taken on the table. Since it is still read and written by
-    // multiple threads not necessarily synchronized by a lock, we keep it
-    // atomic
-    std::atomic<size_t> hashpower_;
-
     // Helper methods to read and write hashpower_ with the correct memory
     // barriers
     size_t get_hashpower() const {
@@ -287,36 +286,6 @@ private:
     void set_hashpower(size_t val) {
         hashpower_.store(val, std::memory_order_release);
     }
-
-    // vector of buckets. The size or memory location of the buckets cannot be
-    // changed unless al the locks are taken on the table. Thus, it is only safe
-    // to access the buckets_ vector when you have at least one lock held.
-    typedef std::vector<
-        Bucket, typename allocator_type::template rebind<Bucket>::other>
-    buckets_t;
-    buckets_t buckets_;
-
-    // array of locks. marked mutable, so that const methods can take locks.
-    // Even though it's a vector, it should not ever change in size after the
-    // initial allocation.
-    typedef std::vector<spinlock> locks_t;
-    mutable locks_t locks_;
-
-    // per-core counters for the number of inserts and deletes
-    std::vector<
-        cacheint, typename allocator_type::template rebind<cacheint>::other>
-    num_inserts_, num_deletes_;
-
-    // stores the minimum load factor allowed for automatic expansions. Whenever
-    // an automatic expansion is triggered (during an insertion where cuckoo
-    // hashing fails, for example), we check the load factor against this
-    // double, and throw an exception if it's lower than this value. It can be
-    // used to signal when the hash function is bad or the input adversarial.
-    std::atomic<double> minimum_load_factor_;
-
-    // stores the maximum hashpower allowed for any expansions. If set to
-    // NO_MAXIMUM_HASHPOWER, this limit will be disregarded.
-    std::atomic<size_t> maximum_hashpower_;
 
     // get_counterid returns the counterid for the current thread.
     static inline int get_counterid() {
@@ -673,6 +642,9 @@ private:
             throw hashpower_changed();
         }
     }
+
+    // The type of the locks container
+    typedef std::vector<spinlock> locks_t;
 
     // locks the given bucket index.
     //
@@ -1956,6 +1928,41 @@ public:
 
     // This class is a friend for unit testing
     friend class UnitTestInternalAccess;
+
+    // Member variables
+private:
+    // 2**hashpower is the number of buckets. This cannot be changed unless all
+    // the locks are taken on the table. Since it is still read and written by
+    // multiple threads not necessarily synchronized by a lock, we keep it
+    // atomic
+    std::atomic<size_t> hashpower_;
+
+    // vector of buckets. The size or memory location of the buckets cannot be
+    // changed unless al the locks are taken on the table. Thus, it is only safe
+    // to access the buckets_ vector when you have at least one lock held.
+    buckets_t buckets_;
+
+    // array of locks. marked mutable, so that const methods can take locks.
+    // Even though it's a vector, it should not ever change in size after the
+    // initial allocation.
+    mutable locks_t locks_;
+
+    // per-core counters for the number of inserts and deletes
+    std::vector<
+        cacheint, typename allocator_type::template rebind<cacheint>::other>
+    num_inserts_, num_deletes_;
+
+    // stores the minimum load factor allowed for automatic expansions. Whenever
+    // an automatic expansion is triggered (during an insertion where cuckoo
+    // hashing fails, for example), we check the load factor against this
+    // double, and throw an exception if it's lower than this value. It can be
+    // used to signal when the hash function is bad or the input adversarial.
+    std::atomic<double> minimum_load_factor_;
+
+    // stores the maximum hashpower allowed for any expansions. If set to
+    // NO_MAXIMUM_HASHPOWER, this limit will be disregarded.
+    std::atomic<size_t> maximum_hashpower_;
+
 };
 
 #endif // _CUCKOOHASH_MAP_HH
