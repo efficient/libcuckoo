@@ -10,12 +10,12 @@ void check_key(size_t hashpower,
                const typename CuckoohashMap::key_type& key) {
     auto hashfn = typename CuckoohashMap::hasher();
     size_t hv = hashfn(key);
-    auto partial = UnitTestInternalAccess::partial_key<IntIntTable>(hv);
-    size_t bucket = UnitTestInternalAccess::index_hash<IntIntTable>(
+    auto partial = UnitTestInternalAccess::partial_key<CuckoohashMap>(hv);
+    size_t bucket = UnitTestInternalAccess::index_hash<CuckoohashMap>(
         hashpower, hv);
-    size_t alt_bucket = UnitTestInternalAccess::alt_index<IntIntTable>(
+    size_t alt_bucket = UnitTestInternalAccess::alt_index<CuckoohashMap>(
         hashpower, partial, bucket);
-    size_t orig_bucket = UnitTestInternalAccess::alt_index<IntIntTable>(
+    size_t orig_bucket = UnitTestInternalAccess::alt_index<CuckoohashMap>(
         hashpower, partial, alt_bucket);
 
     REQUIRE(bucket != alt_bucket);
