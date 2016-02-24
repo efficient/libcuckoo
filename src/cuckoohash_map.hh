@@ -29,6 +29,7 @@
 
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
+#include "lazy_array.hh"
 #include "default_hasher.hh"
 
 //! cuckoohash_map is the hash table class.
@@ -281,7 +282,13 @@ private:
     buckets_t;
 
     // The type of the locks container
-    typedef std::vector<spinlock> locks_t;
+    static_assert(LOCK_ARRAY_GRANULARITY >= 0 && LOCK_ARRAY_GRANULARITY <= 16,
+                  "LOCK_ARRAY_GRANULARITY constant must be between 0 and 16,"
+                  " inclusive");
+    typedef lazy_array<
+        16 - LOCK_ARRAY_GRANULARITY, LOCK_ARRAY_GRANULARITY,
+        spinlock,
+        typename allocator_type::template rebind<spinlock>::other> locks_t;
 
     // cacheint is a cache-aligned atomic integer type.
     struct cacheint {
@@ -357,8 +364,7 @@ public:
      */
     cuckoohash_map(size_t n = DEFAULT_SIZE,
                    double mlf = DEFAULT_MINIMUM_LOAD_FACTOR,
-                   size_t mhp = NO_MAXIMUM_HASHPOWER)
-        : locks_(kNumLocks) {
+                   size_t mhp = NO_MAXIMUM_HASHPOWER) {
         minimum_load_factor(mlf);
         maximum_hashpower(mhp);
         size_t hp = reserve_calc(n);
@@ -369,6 +375,7 @@ public:
         }
         set_hashpower(hp);
         buckets_.resize(hashsize(hp));
+        locks_.allocate(std::min(locks_t::size(), hashsize(hp)));
         num_inserts_.resize(kNumCores(), 0);
         num_deletes_.resize(kNumCores(), 0);
     }
@@ -841,8 +848,8 @@ private:
 
         void release() {
             if (locks_) {
-                for (auto& lock : *locks_) {
-                    lock.unlock();
+                for (size_t i = 0; i < locks_->allocated_size(); ++i) {
+                    (*locks_)[i].unlock();
                 }
                 locks_ = nullptr;
             }
@@ -858,8 +865,8 @@ private:
     // locks, it is okay to change the buckets_ vector and the hashpower_, since
     // no other threads should be accessing the buckets.
     AllUnlocker snapshot_and_lock_all() const noexcept {
-        for (auto& lock : locks_) {
-            lock.lock();
+        for (size_t i = 0; i < locks_.allocated_size(); ++i) {
+            locks_[i].lock();
         }
         return AllUnlocker(&locks_);
     }

@@ -85,4 +85,38 @@ private:
     const size_t hashpower_;
 };
 
+// Allocates an array of the given size and value-initializes each element with
+// the 0-argument constructor
+template <class T, class Alloc>
+T* create_array(const size_t size) {
+    Alloc allocator;
+    T* arr = allocator.allocate(size);
+    // Initialize all the elements, safely deallocating and destroying
+    // everything in case of error.
+    size_t i;
+    try {
+        for (i = 0; i < size; ++i) {
+            allocator.construct(&arr[i]);
+        }
+    } catch (...) {
+        for (size_t j = 0; j < i; ++j) {
+            allocator.destroy(&arr[j]);
+        }
+        allocator.deallocate(arr, size);
+        throw;
+    }
+    return arr;
+}
+
+// Destroys every element of an array of the given size and then deallocates the
+// memory.
+template <class T, class Alloc>
+void destroy_array(T* arr, const size_t size) {
+    Alloc allocator;
+    for (size_t i = 0; i < size; ++i) {
+        allocator.destroy(&arr[i]);
+    }
+    allocator.deallocate(arr, size);
+}
+
 #endif // _CUCKOOHASH_UTIL_HH
