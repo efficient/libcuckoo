@@ -214,7 +214,7 @@ private:
         }
 
         bool occupied(size_t ind) const {
-            return occupied_.test(ind);
+            return occupied_[ind];
         }
 
         const key_type& key(size_t ind) const {
@@ -232,12 +232,12 @@ private:
         template <class... Args>
         void setKV(size_t ind, Args&&... args) {
             static allocator_type pair_allocator;
-            occupied_.set(ind);
+            occupied_[ind] = true;
             pair_allocator.construct(&kvpair(ind), std::forward<Args>(args)...);
         }
 
         void eraseKV(size_t ind) {
-            occupied_.reset(ind);
+            occupied_[ind] = false;
             (&kvpair(ind))->~value_type();
         }
 
