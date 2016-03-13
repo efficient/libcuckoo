@@ -1047,7 +1047,9 @@ private:
         for (int i = 1; i <= x.depth; ++i) {
             CuckooRecord& curr = cuckoo_path[i];
             CuckooRecord& prev = cuckoo_path[i-1];
+#if !NDEBUG
             const size_t prevhv = hashed_key(prev.key);
+#endif
             assert(prev.bucket == index_hash(hp, prevhv) ||
                    prev.bucket == alt_index(hp, prev.partial,
                                             index_hash(hp, prevhv)));
