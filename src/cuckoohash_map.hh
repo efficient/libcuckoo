@@ -1002,10 +1002,9 @@ private:
                 // If x has less than the maximum number of path components,
                 // create a new b_slot item, that represents the bucket we would
                 // have come from if we kicked out the item at this slot.
+                const partial_t partial = buckets_[x.bucket].partial(slot);
+                unlock_one(x.bucket);
                 if (x.depth < MAX_BFS_PATH_LEN - 1) {
-                    const partial_t partial =
-                        buckets_[x.bucket].partial(slot);
-                    unlock_one(x.bucket);
                     b_slot y(alt_index(hp, partial, x.bucket),
                              x.pathcode * slot_per_bucket + slot, x.depth+1);
                     q.enqueue(y);
