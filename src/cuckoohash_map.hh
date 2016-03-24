@@ -275,11 +275,13 @@ private:
         }
     };
 
-
     // The type of the buckets container
     typedef std::vector<
         Bucket, typename allocator_type::template rebind<Bucket>::other>
     buckets_t;
+
+    // The type of the locks container
+    typedef std::vector<spinlock> locks_t;
 
     // cacheint is a cache-aligned atomic integer type.
     struct cacheint {
@@ -458,8 +460,7 @@ public:
     bool find(const key_type& key, mapped_type& val) const {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
-        const cuckoo_status st = cuckoo_find(key, val, hv, b.first, b.second);
-        unlock_two(b.first, b.second);
+        const cuckoo_status st = cuckoo_find(key, val, hv, b.i[0], b.i[1]);
         return (st == ok);
     }
 
@@ -481,8 +482,7 @@ public:
     bool contains(const key_type& key) const {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
-        const bool result = cuckoo_contains(key, hv, b.first, b.second);
-        unlock_two(b.first, b.second);
+        const bool result = cuckoo_contains(key, hv, b.i[0], b.i[1]);
         return result;
     }
 
@@ -511,8 +511,7 @@ public:
     bool erase(const key_type& key) {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
-        const cuckoo_status st = cuckoo_delete(key, hv, b.first, b.second);
-        unlock_two(b.first, b.second);
+        const cuckoo_status st = cuckoo_delete(key, hv, b.i[0], b.i[1]);
         return (st == ok);
     }
 
@@ -522,9 +521,8 @@ public:
     bool update(const key_type& key, V&& val) {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
-        const cuckoo_status st = cuckoo_update(hv, b.first, b.second,
+        const cuckoo_status st = cuckoo_update(hv, b.i[0], b.i[1],
                                                key, std::forward<V>(val));
-        unlock_two(b.first, b.second);
         return (st == ok);
     }
 
@@ -538,9 +536,7 @@ public:
         bool>::type update_fn(const key_type& key, Updater fn) {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
-        const cuckoo_status st = cuckoo_update_fn(key, fn, hv, b.first,
-                                                  b.second);
-        unlock_two(b.first, b.second);
+        const cuckoo_status st = cuckoo_update_fn(key, fn, hv, b.i[0], b.i[1]);
         return (st == ok);
     }
 
@@ -558,9 +554,8 @@ public:
         do {
             auto b = snapshot_and_lock_two(hv);
             size_t hp = get_hashpower();
-            st = cuckoo_update_fn(key, fn, hv, b.first, b.second);
+            st = cuckoo_update_fn(key, fn, hv, b.i[0], b.i[1]);
             if (st == ok) {
-                unlock_two(b.first, b.second);
                 break;
             }
 
@@ -568,7 +563,7 @@ public:
             // the locks, we don't run cuckoo_insert_loop immediately, to avoid
             // releasing and re-grabbing the locks. Recall, that the locks will
             // be released at the end of this call to cuckoo_insert.
-            st = cuckoo_insert(hv, b.first, b.second, std::forward<K>(key),
+            st = cuckoo_insert(hv, std::move(b), std::forward<K>(key),
                                std::forward<Args>(val)...);
             if (st == failure_table_full) {
                 cuckoo_expand_simple(hp + 1, true);
@@ -648,6 +643,69 @@ public:
 
 private:
 
+    template <size_t N>
+    struct BucketContainer {
+        static_assert(N > 0, "Cannot have empty BucketContainer");
+        const cuckoohash_map* map;
+        std::array<size_t, N> i;
+
+        BucketContainer() : map(nullptr) {}
+
+        template <typename... Args>
+        BucketContainer(const cuckoohash_map* _map, Args&&... inds)
+            : map(_map), i{{inds...}} {}
+
+        BucketContainer(const cuckoohash_map* _map, std::array<size_t, N> _i)
+            : map(_map), i(_i) {}
+
+        BucketContainer(const BucketContainer&) = delete;
+        BucketContainer& operator=(const BucketContainer&) = delete;
+
+        // Moving will not invalidate the bucket bucket indices
+        BucketContainer(BucketContainer&& bp) {
+            *this = std::move(bp);
+        }
+
+        BucketContainer& operator=(BucketContainer&& bp) {
+            map = bp.map;
+            i = bp.i;
+            bp.map = nullptr;
+            return *this;
+        }
+
+        void release() {
+            this->~BucketContainer();
+            map = nullptr;
+        }
+
+        bool is_active() const {
+            return map != nullptr;
+        }
+
+        ~BucketContainer() {
+            if (map) {
+                std::array<size_t, N> l;
+                for (size_t ind = 0; ind < N; ++ind) {
+                    l[ind] = lock_ind(i[ind]);
+                }
+                map->locks_[l[0]].unlock();
+                for (size_t ind = 1; ind < N; ++ind) {
+                    bool uniqueind = true;
+                    for (size_t prev = 0; uniqueind && prev < ind; ++prev) {
+                        uniqueind = uniqueind && l[ind] != l[prev];
+                    }
+                    if (uniqueind) {
+                        map->locks_[l[ind]].unlock();
+                    }
+                }
+            }
+        }
+    };
+
+    typedef BucketContainer<1> OneBucket;
+    typedef BucketContainer<2> TwoBuckets;
+    typedef BucketContainer<3> ThreeBuckets;
+
     // This exception is thrown whenever we try to lock a bucket, but the
     // hashpower is not what was expected
     class hashpower_changed {};
@@ -664,95 +722,60 @@ private:
         }
     }
 
-    // The type of the locks container
-    typedef std::vector<spinlock> locks_t;
-
     // locks the given bucket index.
     //
     // throws hashpower_changed if it changed after taking the lock.
-    inline void lock_one(const size_t hp, size_t i) const {
-        i = lock_ind(i);
-        locks_[i].lock();
-        check_hashpower(hp, i);
-    }
-
-    // unlocks the given bucket index.
-    inline void unlock_one(const size_t i) const {
-        locks_[lock_ind(i)].unlock();
+    inline OneBucket lock_one(const size_t hp, const size_t i) const {
+        const size_t l = lock_ind(i);
+        locks_[l].lock();
+        check_hashpower(hp, l);
+        return OneBucket{this, i};
     }
 
     // locks the two bucket indexes, always locking the earlier index first to
     // avoid deadlock. If the two indexes are the same, it just locks one.
     //
     // throws hashpower_changed if it changed after taking the lock.
-    void lock_two(const size_t hp, size_t i1, size_t i2) const {
-        i1 = lock_ind(i1);
-        i2 = lock_ind(i2);
-        if (i2 < i1) {
-            std::swap(i1, i2);
+    TwoBuckets lock_two(const size_t hp, const size_t i1,
+                        const size_t i2) const {
+        size_t l1 = lock_ind(i1);
+        size_t l2 = lock_ind(i2);
+        if (l2 < l1) {
+            std::swap(l1, l2);
         }
-        locks_[i1].lock();
-        check_hashpower(hp, i1);
-        if (i2 != i1) {
-            locks_[i2].lock();
+        locks_[l1].lock();
+        check_hashpower(hp, l1);
+        if (l2 != l1) {
+            locks_[l2].lock();
         }
+        return TwoBuckets{this, i1, i2};
     }
 
-    // unlock_two unlocks both of the given bucket indexes, or only one if they
-    // are equal. Order doesn't matter here.
-    void unlock_two(size_t i1, size_t i2) const {
-        i1 = lock_ind(i1);
-        i2 = lock_ind(i2);
-        locks_[i1].unlock();
-        if (i1 != i2) {
-            locks_[i2].unlock();
-        }
-    }
-
-    // lock_three locks the three bucket indexes in numerical order.
+    // lock_two_one locks the three bucket indexes in numerical order, returning
+    // the containers as a two (i1 and i2) and a one (i3). The one will not be
+    // active if i3 shares a lock index with i1 or i2.
     //
     // throws hashpower_changed if it changed after taking the lock.
-    void lock_three(const size_t hp, size_t i1, size_t i2, size_t i3) const {
-        i1 = lock_ind(i1);
-        i2 = lock_ind(i2);
-        i3 = lock_ind(i3);
-        // If any are the same, we just run lock_two
-        if (i1 == i2) {
-            lock_two(hp, i1, i3);
-        } else if (i2 == i3) {
-            lock_two(hp, i1, i3);
-        } else if (i1 == i3) {
-            lock_two(hp, i1, i2);
-        } else {
-            if (i2 < i1) {
-                std::swap(i1, i2);
-            }
-            if (i3 < i2) {
-                std::swap(i2, i3);
-            }
-            // Now i3 is the largest, but i2 could now be less than i1
-            if (i2 < i1) {
-                std::swap(i1, i2);
-            }
-            locks_[i1].lock();
-            check_hashpower(hp, i1);
-            locks_[i2].lock();
-            locks_[i3].lock();
+    std::pair<TwoBuckets, OneBucket>
+    lock_three(const size_t hp, const size_t i1,
+               const size_t i2, const size_t i3) const {
+        std::array<size_t, 3> l{{
+                lock_ind(i1), lock_ind(i2), lock_ind(i3)}};
+        std::sort(l.begin(), l.end());
+        locks_[l[0]].lock();
+        check_hashpower(hp, l[0]);
+        if (l[1] != l[0]) {
+            locks_[l[1]].lock();
         }
-    }
-
-    // unlock_three unlocks the three given buckets
-    void unlock_three(size_t i1, size_t i2, size_t i3) const {
-        i1 = lock_ind(i1);
-        i2 = lock_ind(i2);
-        i3 = lock_ind(i3);
-        locks_[i1].unlock();
-        if (i2 != i1) {
-            locks_[i2].unlock();
+        if (l[2] != l[1]) {
+            locks_[l[2]].lock();
         }
-        if (i3 != i1 && i3 != i2) {
-            locks_[i3].unlock();
-        }
+        return std::make_pair(
+            TwoBuckets{this, i1, i2},
+            OneBucket{
+                (lock_ind(i3) == lock_ind(i1) ||
+                 lock_ind(i3) == lock_ind(i2)) ?
+                    nullptr : this, i3});
     }
 
     // snapshot_and_lock_two loads locks the buckets associated with the given
@@ -761,21 +784,19 @@ private:
     // hash value will stay correct as long as the locks are held. It returns
     // the bucket indices associated with the hash value and the current
     // hashpower.
-    std::pair<size_t, size_t>
+    TwoBuckets
     snapshot_and_lock_two(const size_t hv) const noexcept {
-        size_t i1, i2;
         while (true) {
             // Store the current hashpower we're using to compute the buckets
             size_t hp = get_hashpower();
-            i1 = index_hash(hp, hv);
-            i2 = alt_index(hp, partial_key(hv), i1);
+            size_t i1 = index_hash(hp, hv);
+            size_t i2 = alt_index(hp, partial_key(hv), i1);
             try {
-                lock_two(hp, i1, i2);
+                return lock_two(hp, i1, i2);
             } catch (hashpower_changed&) {
                 // The hashpower changed while taking the locks. Try again.
                 continue;
             }
-            return {i1, i2};
         }
     }
 
@@ -799,16 +820,12 @@ private:
             au.locks_ = nullptr;
         }
 
-        void deactivate() {
-            locks_ = nullptr;
-        }
-
         void release() {
             if (locks_) {
                 for (auto& lock : *locks_) {
                     lock.unlock();
                 }
-                deactivate();
+                locks_ = nullptr;
             }
         }
 
@@ -991,11 +1008,10 @@ private:
             for (size_t i = 0; i < slot_per_bucket && !q.full();
                  ++i) {
                 size_t slot = (starting_slot + i) % slot_per_bucket;
-                lock_one(hp, x.bucket);
+                OneBucket ob = lock_one(hp, x.bucket);
                 if (!buckets_[x.bucket].occupied(slot)) {
                     // We can terminate the search here
                     x.pathcode = x.pathcode * slot_per_bucket + slot;
-                    unlock_one(x.bucket);
                     return x;
                 }
 
@@ -1003,7 +1019,6 @@ private:
                 // create a new b_slot item, that represents the bucket we would
                 // have come from if we kicked out the item at this slot.
                 const partial_t partial = buckets_[x.bucket].partial(slot);
-                unlock_one(x.bucket);
                 if (x.depth < MAX_BFS_PATH_LEN - 1) {
                     b_slot y(alt_index(hp, partial, x.bucket),
                              x.pathcode * slot_per_bucket + slot, x.depth+1);
@@ -1048,14 +1063,14 @@ private:
             assert(x.pathcode == 1);
             first.bucket = i2;
         }
-        lock_one(hp, first.bucket);
-        if (!buckets_[first.bucket].occupied(first.slot)) {
-            // We can terminate here
-            unlock_one(first.bucket);
-            return 0;
+        {
+            OneBucket ob = lock_one(hp, first.bucket);
+            if (!buckets_[first.bucket].occupied(first.slot)) {
+                // We can terminate here
+                return 0;
+            }
+            first.hv = hashed_key(buckets_[first.bucket].key(first.slot));
         }
-        first.hv = hashed_key(buckets_[first.bucket].key(first.slot));
-        unlock_one(first.bucket);
         for (int i = 1; i <= x.depth; ++i) {
             CuckooRecord& curr = cuckoo_path[i];
             CuckooRecord& prev = cuckoo_path[i-1];
@@ -1065,14 +1080,12 @@ private:
             // We get the bucket that this slot is on by computing the alternate
             // index of the previous bucket
             curr.bucket = alt_index(hp, partial_key(prev.hv), prev.bucket);
-            lock_one(hp, curr.bucket);
+            OneBucket ob = lock_one(hp, curr.bucket);
             if (!buckets_[curr.bucket].occupied(curr.slot)) {
                 // We can terminate here
-                unlock_one(curr.bucket);
                 return i;
             }
             curr.hv = hashed_key(buckets_[curr.bucket].key(curr.slot));
-            unlock_one(curr.bucket);
         }
         return x.depth;
     }
@@ -1081,29 +1094,27 @@ private:
     // an empty slot in one of the buckets in cuckoo_insert. Before the start of
     // this function, the two insert-locked buckets were unlocked in run_cuckoo.
     // At the end of the function, if the function returns true (success), then
-    // the last bucket it looks at (which is either i1 or i2 in run_cuckoo)
-    // remains locked. If the function is unsuccessful, then both insert-locked
-    // buckets will be unlocked.
+    // the both insert-locked buckets remain locked. If the function is
+    // unsuccessful, then both insert-locked buckets will be unlocked.
     //
-
     // throws hashpower_changed if it changed during the move
-    bool cuckoopath_move(const size_t hp,
-                         CuckooRecords& cuckoo_path, size_t depth,
-                         const size_t i1, const size_t i2) {
+    bool cuckoopath_move(const size_t hp, CuckooRecords& cuckoo_path,
+                         size_t depth, TwoBuckets& b) {
+        assert(!b.is_active());
         if (depth == 0) {
-            // There is a chance that depth == 0, when try_add_to_bucket sees i1
-            // and i2 as full and cuckoopath_search finds one empty. In this
-            // case, we lock both buckets. If the bucket that cuckoopath_search
-            // found empty isn't empty anymore, we unlock them and return false.
-            // Otherwise, the bucket is empty and insertable, so we hold the
-            // locks and return true.
+            // There is a chance that depth == 0, when try_add_to_bucket sees
+            // both buckets as full and cuckoopath_search finds one empty. In
+            // this case, we lock both buckets. If the slot that
+            // cuckoopath_search found empty isn't empty anymore, we unlock them
+            // and return false. Otherwise, the bucket is empty and insertable,
+            // so we hold the locks and return true.
             const size_t bucket = cuckoo_path[0].bucket;
-            assert(bucket == i1 || bucket == i2);
-            lock_two(hp, i1, i2);
+            assert(bucket == b.i[0] || bucket == b.i[1]);
+            b = lock_two(hp, b.i[0], b.i[1]);
             if (!buckets_[bucket].occupied(cuckoo_path[0].slot)) {
                 return true;
             } else {
-                unlock_two(i1, i2);
+                b.release();
                 return false;
             }
         }
@@ -1111,20 +1122,21 @@ private:
         while (depth > 0) {
             CuckooRecord& from = cuckoo_path[depth-1];
             CuckooRecord& to   = cuckoo_path[depth];
-            size_t fb = from.bucket;
-            size_t fs = from.slot;
-            size_t tb = to.bucket;
-            size_t ts = to.slot;
-
-            size_t ob = 0;
+            const size_t fb = from.bucket;
+            const size_t fs = from.slot;
+            const size_t tb = to.bucket;
+            const size_t ts = to.slot;
+            TwoBuckets twob;
+            OneBucket extrab;
             if (depth == 1) {
-                // Even though we are only swapping out of i1 or i2, we have to
-                // lock both of them along with the slot we are swapping to,
-                // since at the end of this function, i1 and i2 must be locked.
-                ob = (fb == i1) ? i2 : i1;
-                lock_three(hp, fb, tb, ob);
+                // Even though we are only swapping out of one of the original
+                // buckets, we have to lock both of them along with the slot we
+                // are swapping to, since at the end of this function, they both
+                // must be locked. We store tb inside the extrab container so it
+                // is unlocked at the end of the loop.
+                std::tie(twob, extrab) = lock_three(hp, b.i[0], b.i[1], tb);
             } else {
-                lock_two(hp, fb, tb);
+                twob = lock_two(hp, fb, tb);
             }
 
             // We plan to kick out fs, but let's check if it is still there;
@@ -1137,25 +1149,13 @@ private:
             // the cuckoopath is still valid.
             if (hashed_key(buckets_[fb].key(fs)) != from.hv ||
                 buckets_[tb].occupied(ts) || !buckets_[fb].occupied(fs)) {
-                if (depth == 1) {
-                    unlock_three(fb, tb, ob);
-                } else {
-                    unlock_two(fb, tb);
-                }
                 return false;
             }
 
             Bucket::move_to_bucket(buckets_[fb], fs, buckets_[tb], ts);
             if (depth == 1) {
-                // Don't unlock fb or ob, since they are needed in
-                // cuckoo_insert. Only unlock tb if it doesn't unlock the same
-                // bucket as fb or ob.
-                if (lock_ind(tb) != lock_ind(fb) &&
-                    lock_ind(tb) != lock_ind(ob)) {
-                    unlock_one(tb);
-                }
-            } else {
-                unlock_two(fb, tb);
+                // Hold onto the locks contained in twob
+                b = std::move(twob);
             }
             depth--;
         }
@@ -1163,50 +1163,50 @@ private:
     }
 
     // run_cuckoo performs cuckoo hashing on the table in an attempt to free up
-    // a slot on either i1 or i2, which are assumed to be locked before the
-    // start. On success, the bucket and slot that was freed up is stored in
-    // insert_bucket and insert_slot. In order to perform the search and the
-    // swaps, it has to unlock both i1 and i2, which can lead to certain
+    // a slot on either of the insert buckets, which are assumed to be locked
+    // before the start. On success, the bucket and slot that was freed up is
+    // stored in insert_bucket and insert_slot. In order to perform the search
+    // and the swaps, it has to release the locks, which can lead to certain
     // concurrency issues, the details of which are explained in the function.
-    // If run_cuckoo returns ok (success), then the slot it freed up is still
-    // locked. Otherwise it is unlocked.
-    cuckoo_status run_cuckoo(const size_t i1, const size_t i2,
-                             size_t &insert_bucket, size_t &insert_slot) {
-        // We must unlock i1 and i2 here, so that cuckoopath_search and
+    // If run_cuckoo returns ok (success), then the bucket container will be
+    // active, otherwise it will not.
+    cuckoo_status run_cuckoo(TwoBuckets& b, size_t &insert_bucket,
+                             size_t &insert_slot) {
+        // We must unlock the buckets here, so that cuckoopath_search and
         // cuckoopath_move can lock buckets as desired without deadlock.
-        // cuckoopath_move has to look at either i1 or i2 as its last slot, and
-        // it will lock both buckets and leave them locked after finishing. This
-        // way, we know that if cuckoopath_move succeeds, then the buckets
-        // needed for insertion are still locked. If cuckoopath_move fails, the
-        // buckets are unlocked and we try again. This unlocking does present
-        // two problems. The first is that another insert on the same key runs
-        // and, finding that the key isn't in the table, inserts the key into
-        // the table. Then we insert the key into the table, causing a
-        // duplication. To check for this, we search i1 and i2 for the key we
-        // are trying to insert before doing so (this is done in cuckoo_insert,
-        // and requires that both i1 and i2 are locked). Another problem is that
-        // an expansion runs and changes the hashpower, meaning the buckets may
-        // not be valid anymore. In this case, the cuckoopath functions will
-        // have thrown a hashpower_changed exception, which we catch and handle
-        // here.
+        // cuckoopath_move has to move something out of one of the original
+        // buckets as its last operation, and it will lock both buckets and
+        // leave them locked after finishing. This way, we know that if
+        // cuckoopath_move succeeds, then the buckets needed for insertion are
+        // still locked. If cuckoopath_move fails, the buckets are unlocked and
+        // we try again. This unlocking does present two problems. The first is
+        // that another insert on the same key runs and, finding that the key
+        // isn't in the table, inserts the key into the table. Then we insert
+        // the key into the table, causing a duplication. To check for this, we
+        // search the buckets for the key we are trying to insert before doing
+        // so (this is done in cuckoo_insert, and requires that both buckets are
+        // locked). Another problem is that an expansion runs and changes the
+        // hashpower, meaning the buckets may not be valid anymore. In this
+        // case, the cuckoopath functions will have thrown a hashpower_changed
+        // exception, which we catch and handle here.
         size_t hp = get_hashpower();
-        unlock_two(i1, i2);
-
+        assert(b.is_active());
+        b.release();
         CuckooRecords cuckoo_path;
         bool done = false;
         try {
             while (!done) {
-                int depth = cuckoopath_search(hp, cuckoo_path, i1, i2);
+                int depth = cuckoopath_search(hp, cuckoo_path, b.i[0], b.i[1]);
                 if (depth < 0) {
                     break;
                 }
 
-                if (cuckoopath_move(hp, cuckoo_path, depth, i1, i2)) {
+                if (cuckoopath_move(hp, cuckoo_path, depth, b)) {
                     insert_bucket = cuckoo_path[0].bucket;
                     insert_slot = cuckoo_path[0].slot;
-                    assert(insert_bucket == i1 || insert_bucket == i2);
-                    assert(!locks_[lock_ind(i1)].try_lock());
-                    assert(!locks_[lock_ind(i2)].try_lock());
+                    assert(insert_bucket == b.i[0] || insert_bucket == b.i[1]);
+                    assert(!locks_[lock_ind(b.i[0])].try_lock());
+                    assert(!locks_[lock_ind(b.i[1])].try_lock());
                     assert(!buckets_[insert_bucket].occupied(insert_slot));
                     done = true;
                     break;
@@ -1214,7 +1214,8 @@ private:
             }
         } catch (hashpower_changed&) {
             // The hashpower changed while we were trying to cuckoo, which means
-            // we want to retry. i1 and i2 should not be locked in this case.
+            // we want to retry. b.i[0] and b.i[1] should not be locked in this
+            // case.
             return failure_under_expansion;
         }
         return done ? ok : failure;
@@ -1361,8 +1362,7 @@ private:
     // value in the val if it finds the key. It expects the locks to be taken
     // and released outside the function.
     cuckoo_status cuckoo_find(const key_type& key, mapped_type& val,
-                              const size_t hv, const size_t i1,
-                              const size_t i2) const {
+                              const size_t hv, size_t i1, size_t i2) const {
         const partial_t partial = partial_key(hv);
         if (try_read_from_bucket(partial, key, val, i1)) {
             return ok;
@@ -1389,65 +1389,59 @@ private:
     }
 
     // cuckoo_insert tries to insert the given key-value pair into an empty slot
-    // in i1 or i2, performing cuckoo hashing if necessary. It expects the locks
-    // to be taken outside the function, but they are released here, since
-    // different scenarios require different handling of the locks. Before
-    // inserting, it checks that the key isn't already in the table. cuckoo
-    // hashing presents multiple concurrency issues, which are explained in the
-    // function. If the insert fails, the key and value won't be
+    // in either of the buckets, performing cuckoo hashing if necessary. It
+    // expects the locks to be taken outside the function, but they are released
+    // here, since different scenarios require different handling of the locks.
+    // Before inserting, it checks that the key isn't already in the table.
+    // cuckoo hashing presents multiple concurrency issues, which are explained
+    // in the function. If the insert fails, the key and value won't be
     // move-constructed, so they can be retried.
     template <typename K, typename... Args>
-    cuckoo_status cuckoo_insert(const size_t hv, const size_t i1,
-                                const size_t i2, K&& key, Args&&... val) {
+    cuckoo_status cuckoo_insert(const size_t hv, TwoBuckets b,
+                                K&& key, Args&&... val) {
         int res1, res2;
         const partial_t partial = partial_key(hv);
-        if (!try_find_insert_bucket(partial, key, i1, res1)) {
-            unlock_two(i1, i2);
+        if (!try_find_insert_bucket(partial, key, b.i[0], res1)) {
             return failure_key_duplicated;
         }
-        if (!try_find_insert_bucket(partial, key, i2, res2)) {
-            unlock_two(i1, i2);
+        if (!try_find_insert_bucket(partial, key, b.i[1], res2)) {
             return failure_key_duplicated;
         }
         if (res1 != -1) {
-            add_to_bucket(partial, i1, res1, std::forward<K>(key),
+            add_to_bucket(partial, b.i[0], res1, std::forward<K>(key),
                           std::forward<Args>(val)...);
-            unlock_two(i1, i2);
             return ok;
         }
         if (res2 != -1) {
-            add_to_bucket(partial, i2, res2, std::forward<K>(key),
+            add_to_bucket(partial, b.i[1], res2, std::forward<K>(key),
                           std::forward<Args>(val)...);
-            unlock_two(i1, i2);
             return ok;
         }
 
         // we are unlucky, so let's perform cuckoo hashing
         size_t insert_bucket = 0;
         size_t insert_slot = 0;
-        cuckoo_status st = run_cuckoo(i1, i2, insert_bucket, insert_slot);
+        cuckoo_status st = run_cuckoo(b, insert_bucket, insert_slot);
         if (st == failure_under_expansion) {
             // The run_cuckoo operation operated on an old version of the table,
             // so we have to try again. We signal to the calling insert method
             // to try again by returning failure_under_expansion.
             return failure_under_expansion;
         } else if (st == ok) {
-            assert(!locks_[lock_ind(i1)].try_lock());
-            assert(!locks_[lock_ind(i2)].try_lock());
+            assert(!locks_[lock_ind(b.i[0])].try_lock());
+            assert(!locks_[lock_ind(b.i[1])].try_lock());
             assert(!buckets_[insert_bucket].occupied(insert_slot));
             assert(insert_bucket == index_hash(get_hashpower(), hv) ||
                    insert_bucket == alt_index(get_hashpower(), partial,
                                               index_hash(get_hashpower(), hv)));
             // Since we unlocked the buckets during run_cuckoo, another insert
-            // could have inserted the same key into either i1 or i2, so we
-            // check for that before doing the insert.
-            if (cuckoo_contains(key, hv, i1, i2)) {
-                unlock_two(i1, i2);
+            // could have inserted the same key into either b.i[0] or b.i[1], so
+            // we check for that before doing the insert.
+            if (cuckoo_contains(key, hv, b.i[0], b.i[1])) {
                 return failure_key_duplicated;
             }
             add_to_bucket(partial, insert_bucket, insert_slot,
                           std::forward<K>(key), std::forward<Args>(val)...);
-            unlock_two(i1, i2);
             return ok;
         }
         assert(st == failure);
@@ -1475,7 +1469,7 @@ private:
         do {
             auto b = snapshot_and_lock_two(hv);
             size_t hp = get_hashpower();
-            st = cuckoo_insert(hv, b.first, b.second, std::forward<K>(key),
+            st = cuckoo_insert(hv, std::move(b), std::forward<K>(key),
                                std::forward<Args>(val)...);
             if (st == failure_key_duplicated) {
                 return false;
