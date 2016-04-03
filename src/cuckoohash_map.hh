@@ -645,7 +645,8 @@ private:
 
     template <size_t N>
     struct BucketContainer {
-        static_assert(N > 0, "Cannot have empty BucketContainer");
+        static_assert(N >= 1 && N <= 3, "BucketContainer should only be used"
+                      " for between 1 and 3 locks");
         const cuckoohash_map* map;
         std::array<size_t, N> i;
 
@@ -684,20 +685,38 @@ private:
 
         ~BucketContainer() {
             if (map) {
-                std::array<size_t, N> l;
-                for (size_t ind = 0; ind < N; ++ind) {
-                    l[ind] = lock_ind(i[ind]);
-                }
-                map->locks_[l[0]].unlock();
-                for (size_t ind = 1; ind < N; ++ind) {
-                    bool uniqueind = true;
-                    for (size_t prev = 0; uniqueind && prev < ind; ++prev) {
-                        uniqueind = uniqueind && l[ind] != l[prev];
-                    }
-                    if (uniqueind) {
-                        map->locks_[l[ind]].unlock();
-                    }
-                }
+                unlock(i);
+            }
+        }
+
+    private:
+        // unlocks the given bucket index.
+        void unlock(std::array<size_t, 1> inds) const {
+            map->locks_[lock_ind(inds[0])].unlock();
+        }
+
+        // unlocks both of the given bucket indexes, or only one if they are
+        // equal. Order doesn't matter here.
+        void unlock(std::array<size_t, 2> inds) const {
+            const size_t l0 = lock_ind(inds[0]);
+            const size_t l1 = lock_ind(inds[1]);
+            map->locks_[l0].unlock();
+            if (l0 != l1) {
+                map->locks_[l1].unlock();
+            }
+        }
+
+        // unlocks the three given buckets
+        void unlock(std::array<size_t, 3> inds) const {
+            const size_t l0 = lock_ind(inds[0]);
+            const size_t l1 = lock_ind(inds[1]);
+            const size_t l2 = lock_ind(inds[2]);
+            map->locks_[l0].unlock();
+            if (l1 != l0) {
+                map->locks_[l1].unlock();
+            }
+            if (l2 != l0 && l2 != l1) {
+                map->locks_[l2].unlock();
             }
         }
     };
