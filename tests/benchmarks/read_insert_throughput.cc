@@ -31,6 +31,10 @@ typedef uint32_t ValType;
 // The number of keys to size the table with, expressed as a power of
 // 2. This can be set with the command line flag --power
 size_t power = 25;
+// The initial capacity of the table, expressed as a power of 2. If 0, the table
+// is initialized to the number of keys. This can be set with the command line
+// flag --table-capacity
+size_t table_capacity = 0;
 // The number of threads spawned for inserts. This can be set with the
 // command line flag --thread-num
 size_t thread_num = sysconf(_SC_NPROCESSORS_ONLN);
@@ -56,7 +60,8 @@ class ReadInsertEnvironment {
     typedef typename T::key_type KType;
 public:
     ReadInsertEnvironment()
-        : numkeys(1U << power), table(numkeys), keys(numkeys) {
+        : numkeys(1U << power),
+          table(table_capacity ? table_capacity : numkeys), keys(numkeys) {
         // Sets up the random number generator
         if (seed == 0) {
             seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -135,12 +140,15 @@ void ReadInsertThroughputTest(ReadInsertEnvironment<T> *env) {
 }
 
 int main(int argc, char** argv) {
-    const char* args[] = {"--power", "--thread-num", "--begin-load",
-                          "--end-load", "--seed", "--insert-percent"};
-    size_t* arg_vars[] = {&power, &thread_num, &begin_load, &end_load,
-                          &seed, &insert_percent};
+    const char* args[] = {"--power", "--table-capacity", "--thread-num",
+                          "--begin-load", "--end-load", "--seed",
+                          "--insert-percent"};
+    size_t* arg_vars[] = {&power, &table_capacity, &thread_num, &begin_load,
+                          &end_load, &seed, &insert_percent};
     const char* arg_help[] = {
         "The number of keys to size the table with, expressed as a power of 2",
+        "The initial capacity of the table, expressed as a power of 2. "
+        "If 0, the table is initialized to the number of keys",
         "The number of threads to spawn for each type of operation",
         "The load factor to fill the table up to before testing throughput",
         "The maximum load factor to fill the table up to when testing "
