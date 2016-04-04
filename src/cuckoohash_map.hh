@@ -23,9 +23,10 @@
 #include <thread>
 #include <tuple>
 #include <type_traits>
-#include <unistd.h>
+//#include <unistd.h>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
@@ -144,12 +145,11 @@ private:
     // number of locks in the locks array
     static const size_t kNumLocks = 1 << 16;
 
-    // number of cores on the machine
-    static size_t kNumCores() {
-        static size_t cores = std::thread::hardware_concurrency() == 0 ?
-            sysconf(_SC_NPROCESSORS_ONLN) : std::thread::hardware_concurrency();
-        return cores;
-    }
+  // number of cores on the machine
+  static size_t kNumCores() {
+    static size_t cores = std::thread::hardware_concurrency();
+    return cores;
+  }
 
     // A fast, lightweight spinlock
     class spinlock {
@@ -167,11 +167,10 @@ private:
             lock_.clear(std::memory_order_release);
         }
 
-        inline bool try_lock() {
-            return !lock_.test_and_set(std::memory_order_acquire);
-        }
-
-    } __attribute__((aligned(64)));
+    inline bool try_lock() {
+      return !lock_.test_and_set(std::memory_order_acquire);
+    }
+  };
 
     typedef enum {
         ok,
@@ -290,22 +289,22 @@ private:
         spinlock,
         typename allocator_type::template rebind<spinlock>::other> locks_t;
 
-    // cacheint is a cache-aligned atomic integer type.
-    struct cacheint {
-        std::atomic<size_t> num;
-        cacheint(): num(0) {}
-        cacheint(size_t x): num(x) {}
-        cacheint(const cacheint& x): num(x.num.load()) {}
-        cacheint(cacheint&& x): num(x.num.load()) {}
-        cacheint& operator=(const cacheint& x) {
-            num = x.num.load();
-            return *this;
-        }
-        cacheint& operator=(const cacheint&& x) {
-            num = x.num.load();
-            return *this;
-        }
-    } __attribute__((aligned(64)));
+  // cacheint is a cache-aligned atomic integer type.
+  struct cacheint {
+    std::atomic<size_t> num;
+    cacheint() : num(0) {}
+    cacheint(size_t x) : num(x) {}
+    cacheint(const cacheint& x) : num(x.num.load()) {}
+    cacheint(cacheint&& x) : num(x.num.load()) {}
+    cacheint& operator=(const cacheint& x) {
+      num = x.num.load();
+      return *this;
+    }
+    cacheint& operator=(const cacheint&& x) {
+      num = x.num.load();
+      return *this;
+    }
+  };
 
     // Helper methods to read and write hashpower_ with the correct memory
     // barriers
@@ -317,11 +316,11 @@ private:
         hashpower_.store(val, std::memory_order_release);
     }
 
-    // get_counterid returns the counterid for the current thread.
-    static inline int get_counterid() {
-        // counterid stores the per-thread counter index of each thread. Each
-        // counter value corresponds to a core on the machine.
-        static __thread int counterid = -1;
+  // get_counterid returns the counterid for the current thread.
+  static inline int get_counterid() {
+    // counterid stores the per-thread counter index of each thread. Each
+    // counter value corresponds to a core on the machine.
+    static  int counterid = -1;
 
         if (counterid < 0) {
             counterid = rand() % kNumCores();
@@ -940,34 +939,34 @@ private:
 
     typedef std::array<CuckooRecord, MAX_BFS_PATH_LEN> CuckooRecords;
 
-    // b_slot holds the information for a BFS path through the table
-    struct b_slot {
-        // The bucket of the last item in the path
-        size_t bucket;
-        // a compressed representation of the slots for each of the buckets in
-        // the path. pathcode is sort of like a base-slot_per_bucket number, and
-        // we need to hold at most MAX_BFS_PATH_LEN slots. Thus we need the
-        // maximum pathcode to be at least slot_per_bucket^(MAX_BFS_PATH_LEN)
-        size_t pathcode;
-        static_assert(const_pow(slot_per_bucket, MAX_BFS_PATH_LEN) <
-                      std::numeric_limits<decltype(pathcode)>::max(),
-                      "pathcode may not be large enough to encode a cuckoo"
-                      " path");
-        // The 0-indexed position in the cuckoo path this slot occupies. It must
-        // be less than MAX_BFS_PATH_LEN, and also able to hold negative values.
-        int_fast8_t depth;
-        static_assert(MAX_BFS_PATH_LEN - 1 <=
-                      std::numeric_limits<decltype(depth)>::max(),
-                      "The depth type must able to hold a value of"
-                      " MAX_BFS_PATH_LEN - 1");
-        static_assert(-1 >= std::numeric_limits<decltype(depth)>::min(),
-                      "The depth type must be able to hold a value of -1");
-        b_slot() {}
-        b_slot(const size_t b, const size_t p, const decltype(depth) d)
-            : bucket(b), pathcode(p), depth(d) {
-            assert(d < MAX_BFS_PATH_LEN);
-        }
-    } __attribute__((__packed__));
+  // b_slot holds the information for a BFS path through the table
+  struct b_slot {
+    // The bucket of the last item in the path
+    size_t bucket;
+    // a compressed representation of the slots for each of the buckets in
+    // the path. pathcode is sort of like a base-slot_per_bucket number, and
+    // we need to hold at most MAX_BFS_PATH_LEN slots. Thus we need the
+    // maximum pathcode to be at least slot_per_bucket^(MAX_BFS_PATH_LEN)
+    size_t pathcode;
+    static_assert(const_pow(slot_per_bucket, MAX_BFS_PATH_LEN) <
+                  std::numeric_limits<decltype(pathcode)>::max(),
+                  "pathcode may not be large enough to encode a cuckoo"
+                  " path");
+    // The 0-indexed position in the cuckoo path this slot occupies. It must
+    // be less than MAX_BFS_PATH_LEN, and also able to hold negative values.
+    int_fast8_t depth;
+    static_assert(MAX_BFS_PATH_LEN - 1 <=
+                  std::numeric_limits<decltype(depth)>::max(),
+                  "The depth type must able to hold a value of"
+                  " MAX_BFS_PATH_LEN - 1");
+    static_assert(-1 >= std::numeric_limits<decltype(depth)>::min(),
+                  "The depth type must be able to hold a value of -1");
+    b_slot() {}
+    b_slot(const size_t b, const size_t p, const decltype(depth) d)
+      : bucket(b), pathcode(p), depth(d) {
+      assert(d < MAX_BFS_PATH_LEN);
+    }
+  };
 
     // b_queue is the queue used to store b_slots for BFS cuckoo hashing.
     class b_queue {
@@ -1009,10 +1008,10 @@ private:
             return first == last;
         }
 
-        bool full() {
-            return increment(last) == first;
-        }
-    } __attribute__((__packed__));
+    bool full() {
+      return increment(last) == first;
+    }
+  };
 
     // slot_search searches for a cuckoo path using breadth-first search. It
     // starts with the i1 and i2 buckets, and, until it finds a bucket with an
@@ -1724,19 +1723,17 @@ public:
             release();
         }
 
-    private:
-        //! A templated iterator whose implementation works for both const and
-        //! non_const iterators. It is an STL-style BidirectionalIterator that
-        //! can be used to iterate over a locked table.
-        template <bool IS_CONST>
-        class templated_iterator :
-            public std::iterator<std::bidirectional_iterator_tag, value_type> {
-
-            // The buckets locked and owned by the locked table being iterated
-            // over.
-            std::reference_wrapper<
-                typename std::conditional<
-                IS_CONST, const buckets_t, buckets_t>::type> buckets_;
+  private:
+    //! A templated iterator whose implementation works for both const and
+    //! non_const iterators. It is an STL-style BidirectionalIterator that
+    //! can be used to iterate over a locked table.
+    template <bool IS_CONST>
+    class templated_iterator :
+      public std::iterator<std::bidirectional_iterator_tag, value_type> {
+      // The buckets locked and owned by the locked table being iterated
+      // over.
+      std::reference_wrapper<
+        typename std::conditional<IS_CONST, const buckets_t, buckets_t>::type> buckets_;
 
             // The shared boolean indicating whether the iterator points to a
             // still-locked table or not. It should never be nullptr.
@@ -1873,28 +1870,32 @@ public:
                 return {buckets.size(), 0};
             }
 
-            // The private constructor is used by locked_table to create
-            // iterators from scratch. If the given index_-slot_ pair is at the
-            // end of the table, or that spot is occupied, stay. Otherwise, step
-            // forward to the next data item, or to the end of the table.
-            templated_iterator(
-                typename decltype(buckets_)::type& buckets,
-                std::shared_ptr<bool> has_table_lock, size_t index, size_t slot)
-                : buckets_(buckets), has_table_lock_(has_table_lock),
-                  index_(index), slot_(slot) {
-                if (std::make_pair(index_, slot_) != end_pos(buckets) &&
-                    !buckets[index_].occupied(slot_)) {
-                    operator++();
-                }
-            }
+	      // The private constructor is used by locked_table to create
+	      // iterators from scratch. If the given index_-slot_ pair is at the
+	      // end of the table, or that spot is occupied, stay. Otherwise, step
+	      // forward to the next data item, or to the end of the table.
+	      templated_iterator(
+	        typename std::conditional<IS_CONST, const buckets_t, buckets_t>::type & buckets,
+	        std::shared_ptr<bool> has_table_lock,
+	        size_t index,
+	        size_t slot)
+	        : buckets_(buckets),
+	        has_table_lock_(has_table_lock),
+	        index_(index),
+	        slot_(slot) {
+	        if (std::make_pair(index_, slot_) != end_pos(buckets) &&
+	            !buckets[index_].occupied(slot_)) {
+	          operator++();
+	        }
+	      }
 
-            // Throws an exception if the iterator has been invalidated because
-            // the locked_table lost ownership of the table info.
-            void check_iterator() const {
-                if (!(*has_table_lock_)) {
-                    throw std::runtime_error("Iterator has been invalidated");
-                }
-            }
+	      // Throws an exception if the iterator has been invalidated because
+	      // the locked_table lost ownership of the table info.
+	      void check_iterator() const {
+	        if (!(*has_table_lock_)) {
+	          throw std::runtime_error("Iterator has been invalidated");
+	        }
+	      }
 
             friend class cuckoohash_map<Key, T, Hash, Pred,
                                         Alloc, SLOT_PER_BUCKET>;

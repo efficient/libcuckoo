@@ -35,3 +35,7 @@ ltmain.sh
 missing
 stamp-h1
 test-driver
+/mvs/staticlib_cityhash/x64/Release
+/mvs/x64/Release
+/mvs/unit_tests/x64/Release
+/mvs/test_cityhash/x64/Release
