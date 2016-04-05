@@ -39,3 +39,12 @@ test-driver
 /mvs/x64/Release
 /mvs/unit_tests/x64/Release
 /mvs/test_cityhash/x64/Release
+
+# Visual C++ cache files
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile

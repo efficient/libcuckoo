@@ -144,11 +144,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\staticlib_libcuckoo\staticlib_libcuckoo.vcxproj">
-      <Project>{77c83722-50aa-4501-bca0-5e39ac7d8a23}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\..\tests\stress-tests\stress_unchecked.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

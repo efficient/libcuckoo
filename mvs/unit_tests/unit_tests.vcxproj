@@ -159,11 +159,6 @@
     <ClInclude Include="..\..\tests\unit-tests\catch.hpp" />
     <ClInclude Include="..\..\tests\unit-tests\unit_test_util.hh" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\staticlib_libcuckoo\staticlib_libcuckoo.vcxproj">
-      <Project>{77c83722-50aa-4501-bca0-5e39ac7d8a23}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
