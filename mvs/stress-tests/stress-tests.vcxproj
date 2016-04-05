@@ -19,10 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{A95119CF-B2AB-4833-B992-12D8CAD2EB10}</ProjectGuid>
+    <ProjectGuid>{72C3B07A-DCE2-4CA1-919B-F877C2B6252E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>unit_tests</RootNamespace>
+    <RootNamespace>stresstests</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>stress-tests_checked</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -144,25 +145,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\tests\unit-tests\test_bracket_operator.cc" />
-    <ClCompile Include="..\..\tests\unit-tests\test_constructor.cc" />
-    <ClCompile Include="..\..\tests\unit-tests\test_hash_properties.cc" />
-    <ClCompile Include="..\..\tests\unit-tests\test_iterator.cc" />
-    <ClCompile Include="..\..\tests\unit-tests\test_maximum_hashpower.cc" />
-    <ClCompile Include="..\..\tests\unit-tests\test_minimum_load_factor.cc" />
-    <ClCompile Include="..\..\tests\unit-tests\test_noncopyable_types.cc" />
-    <ClCompile Include="..\..\tests\unit-tests\test_resize.cc" />
-    <ClCompile Include="..\..\tests\unit-tests\test_runner.cc" />
-    <ClCompile Include="..\..\tests\unit-tests\unit_test_util.cc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\tests\unit-tests\catch.hpp" />
-    <ClInclude Include="..\..\tests\unit-tests\unit_test_util.hh" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\staticlib_libcuckoo\staticlib_libcuckoo.vcxproj">
       <Project>{77c83722-50aa-4501-bca0-5e39ac7d8a23}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\tests\stress-tests\stress_checked.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
