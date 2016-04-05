@@ -467,7 +467,8 @@ public:
     bool find(const key_type& key, mapped_type& val) const {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
-        const cuckoo_status st = cuckoo_find(key, val, hv, b.i[0], b.i[1]);
+        const cuckoo_status st = cuckoo_find(key, val, hv, buckets_[b.i[0]],
+                                             buckets_[b.i[1]]);
         return (st == ok);
     }
 
@@ -489,7 +490,8 @@ public:
     bool contains(const key_type& key) const {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
-        const bool result = cuckoo_contains(key, hv, b.i[0], b.i[1]);
+        const bool result = cuckoo_contains(key, hv, buckets_[b.i[0]],
+                                            buckets_[b.i[1]]);
         return result;
     }
 
@@ -1035,7 +1037,8 @@ private:
                  ++i) {
                 size_t slot = (starting_slot + i) % slot_per_bucket;
                 OneBucket ob = lock_one(hp, x.bucket);
-                if (!buckets_[x.bucket].occupied(slot)) {
+                Bucket& b = buckets_[x.bucket];
+                if (!b.occupied(slot)) {
                     // We can terminate the search here
                     x.pathcode = x.pathcode * slot_per_bucket + slot;
                     return x;
@@ -1044,7 +1047,7 @@ private:
                 // If x has less than the maximum number of path components,
                 // create a new b_slot item, that represents the bucket we would
                 // have come from if we kicked out the item at this slot.
-                const partial_t partial = buckets_[x.bucket].partial(slot);
+                const partial_t partial = b.partial(slot);
                 if (x.depth < MAX_BFS_PATH_LEN - 1) {
                     b_slot y(alt_index(hp, partial, x.bucket),
                              x.pathcode * slot_per_bucket + slot, x.depth+1);
@@ -1091,11 +1094,12 @@ private:
         }
         {
             OneBucket ob = lock_one(hp, first.bucket);
-            if (!buckets_[first.bucket].occupied(first.slot)) {
+            Bucket& b = buckets_[first.bucket];
+            if (!b.occupied(first.slot)) {
                 // We can terminate here
                 return 0;
             }
-            first.hv = hashed_key(buckets_[first.bucket].key(first.slot));
+            first.hv = hashed_key(b.key(first.slot));
         }
         for (int i = 1; i <= x.depth; ++i) {
             CuckooRecord& curr = cuckoo_path[i];
@@ -1107,11 +1111,12 @@ private:
             // index of the previous bucket
             curr.bucket = alt_index(hp, partial_key(prev.hv), prev.bucket);
             OneBucket ob = lock_one(hp, curr.bucket);
-            if (!buckets_[curr.bucket].occupied(curr.slot)) {
+            Bucket& b = buckets_[curr.bucket];
+            if (!b.occupied(curr.slot)) {
                 // We can terminate here
                 return i;
             }
-            curr.hv = hashed_key(buckets_[curr.bucket].key(curr.slot));
+            curr.hv = hashed_key(b.key(curr.slot));
         }
         return x.depth;
     }
@@ -1148,9 +1153,9 @@ private:
         while (depth > 0) {
             CuckooRecord& from = cuckoo_path[depth-1];
             CuckooRecord& to   = cuckoo_path[depth];
-            const size_t fb = from.bucket;
+            Bucket& fb = buckets_[from.bucket];
             const size_t fs = from.slot;
-            const size_t tb = to.bucket;
+            Bucket& tb = buckets_[to.bucket];
             const size_t ts = to.slot;
             TwoBuckets twob;
             OneBucket extrab;
@@ -1160,9 +1165,10 @@ private:
                 // are swapping to, since at the end of this function, they both
                 // must be locked. We store tb inside the extrab container so it
                 // is unlocked at the end of the loop.
-                std::tie(twob, extrab) = lock_three(hp, b.i[0], b.i[1], tb);
+                std::tie(twob, extrab) = lock_three(hp, b.i[0], b.i[1],
+                                                    to.bucket);
             } else {
-                twob = lock_two(hp, fb, tb);
+                twob = lock_two(hp, from.bucket, to.bucket);
             }
 
             // We plan to kick out fs, but let's check if it is still there;
@@ -1173,12 +1179,12 @@ private:
             // We only need to check that the hash value is the same, because,
             // even if the keys are different and have the same hash value, then
             // the cuckoopath is still valid.
-            if (hashed_key(buckets_[fb].key(fs)) != from.hv ||
-                buckets_[tb].occupied(ts) || !buckets_[fb].occupied(fs)) {
+            if (hashed_key(fb.key(fs)) != from.hv || tb.occupied(ts) ||
+                !fb.occupied(fs)) {
                 return false;
             }
 
-            Bucket::move_to_bucket(buckets_[fb], fs, buckets_[tb], ts);
+            Bucket::move_to_bucket(fb, fs, tb, ts);
             if (depth == 1) {
                 // Hold onto the locks contained in twob
                 b = std::move(twob);
@@ -1388,12 +1394,13 @@ private:
     // value in the val if it finds the key. It expects the locks to be taken
     // and released outside the function.
     cuckoo_status cuckoo_find(const key_type& key, mapped_type& val,
-                              const size_t hv, size_t i1, size_t i2) const {
+                              const size_t hv, const Bucket& b1,
+                              const Bucket& b2) const {
         const partial_t partial = partial_key(hv);
-        if (try_read_from_bucket(partial, key, val, buckets_[i1])) {
+        if (try_read_from_bucket(partial, key, val, b1)) {
             return ok;
         }
-        if (try_read_from_bucket(partial, key, val, buckets_[i2])) {
+        if (try_read_from_bucket(partial, key, val, b2)) {
             return ok;
         }
         return failure_key_not_found;
@@ -1402,13 +1409,13 @@ private:
     // cuckoo_contains searches the table for the given key, returning true if
     // it's in the table and false otherwise. It expects the locks to be taken
     // and released outside the function.
-    bool cuckoo_contains(const key_type& key, const size_t hv,
-                         const size_t i1, const size_t i2) const {
+    bool cuckoo_contains(const key_type& key, const size_t hv, const Bucket& b1,
+                         const Bucket& b2) const {
         const partial_t partial = partial_key(hv);
-        if (check_in_bucket(partial, key, buckets_[i1])) {
+        if (check_in_bucket(partial, key, b1)) {
             return true;
         }
-        if (check_in_bucket(partial, key, buckets_[i2])) {
+        if (check_in_bucket(partial, key, b2)) {
             return true;
         }
         return false;
@@ -1427,19 +1434,21 @@ private:
                                 K&& key, Args&&... val) {
         int res1, res2;
         const partial_t partial = partial_key(hv);
-        if (!try_find_insert_bucket(partial, key, buckets_[b.i[0]], res1)) {
+        Bucket& b0 = buckets_[b.i[0]];
+        if (!try_find_insert_bucket(partial, key, b0, res1)) {
             return failure_key_duplicated;
         }
-        if (!try_find_insert_bucket(partial, key, buckets_[b.i[1]], res2)) {
+        Bucket& b1 = buckets_[b.i[1]];
+        if (!try_find_insert_bucket(partial, key, b1, res2)) {
             return failure_key_duplicated;
         }
         if (res1 != -1) {
-            add_to_bucket(partial, buckets_[b.i[0]], res1, std::forward<K>(key),
+            add_to_bucket(partial, b0, res1, std::forward<K>(key),
                           std::forward<Args>(val)...);
             return ok;
         }
         if (res2 != -1) {
-            add_to_bucket(partial, buckets_[b.i[1]], res2, std::forward<K>(key),
+            add_to_bucket(partial, b1, res2, std::forward<K>(key),
                           std::forward<Args>(val)...);
             return ok;
         }
@@ -1463,7 +1472,7 @@ private:
             // Since we unlocked the buckets during run_cuckoo, another insert
             // could have inserted the same key into either b.i[0] or b.i[1], so
             // we check for that before doing the insert.
-            if (cuckoo_contains(key, hv, b.i[0], b.i[1])) {
+            if (cuckoo_contains(key, hv, b0, b1)) {
                 return failure_key_duplicated;
             }
             add_to_bucket(partial, buckets_[insert_bucket], insert_slot,
