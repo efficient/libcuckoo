@@ -290,6 +290,9 @@ private:
         spinlock,
         typename allocator_type::template rebind<spinlock>::other> locks_t;
 
+    // The type of the expansion lock
+    typedef std::mutex expansion_lock_t;
+
     // cacheint is a cache-aligned atomic integer type.
     struct cacheint {
         std::atomic<size_t> num;
@@ -575,7 +578,7 @@ public:
             st = cuckoo_insert(hv, std::move(b), std::forward<K>(key),
                                std::forward<Args>(val)...);
             if (st == failure_table_full) {
-                cuckoo_expand_simple(hp + 1, true);
+                cuckoo_fast_double(hp);
                 // Retry until the insert doesn't fail due to expansion.
                 if (cuckoo_insert_loop(hv, std::forward<K>(key),
                                        std::forward<Args>(val)...)) {
@@ -848,12 +851,16 @@ private:
             au.locks_ = nullptr;
         }
 
+        void deactivate() {
+            locks_ = nullptr;
+        }
+
         void release() {
             if (locks_) {
                 for (size_t i = 0; i < locks_->allocated_size(); ++i) {
                     (*locks_)[i].unlock();
                 }
-                locks_ = nullptr;
+                deactivate();
             }
         }
 
@@ -1513,7 +1520,7 @@ private:
                     throw libcuckoo_load_factor_too_low(minimum_load_factor());
                 }
                 // Expand the table and try again
-                cuckoo_expand_simple(hp + 1, true);
+                cuckoo_fast_double(hp);
             }
         } while (st != ok);
         return true;
@@ -1599,6 +1606,103 @@ private:
     double cuckoo_loadfactor(const size_t hp) const noexcept {
         return (static_cast<double>(cuckoo_size()) / slot_per_bucket /
                 hashsize(hp));
+    }
+
+    void move_buckets(size_t current_hp, size_t new_hp,
+                      size_t start_lock_ind, size_t end_lock_ind) {
+        for (; start_lock_ind < end_lock_ind; ++start_lock_ind) {
+            for (size_t bucket_i = start_lock_ind;
+                 bucket_i < hashsize(current_hp);
+                 bucket_i += locks_t::size()) {
+                // By doubling the table size, the index_hash and alt_index of
+                // each key got one bit added to the top, at position
+                // current_hp, which means anything we have to move will either
+                // be at the same bucket position, or exactly
+                // hashsize(current_hp) later than the current bucket
+                Bucket& old_bucket = buckets_[bucket_i];
+                const size_t new_bucket_i = bucket_i + hashsize(current_hp);
+                Bucket& new_bucket = buckets_[new_bucket_i];
+                size_t new_bucket_slot = 0;
+
+                // Move each item from the old bucket that needs moving into the
+                // new bucket
+                for (size_t slot = 0; slot < slot_per_bucket; ++slot) {
+                    if (!old_bucket.occupied(slot)) {
+                        continue;
+                    }
+                    const size_t hv = hashed_key(old_bucket.key(slot));
+                    const size_t old_ihash = index_hash(current_hp, hv);
+                    const size_t old_ahash = alt_index(
+                        current_hp, old_bucket.partial(slot), old_ihash);
+                    const size_t new_ihash = index_hash(new_hp, hv);
+                    const size_t new_ahash = alt_index(
+                        new_hp, old_bucket.partial(slot), new_ihash);
+                    if ((bucket_i == old_ihash && new_ihash == new_bucket_i) ||
+                        (bucket_i == old_ahash && new_ahash == new_bucket_i)) {
+                        // We're moving the key from the old bucket to the new
+                        // one
+                        Bucket::move_to_bucket(
+                            old_bucket, slot, new_bucket, new_bucket_slot++);
+                    } else {
+                        // Check that we don't want to move the new key
+                        assert(
+                            (bucket_i == old_ihash && new_ihash == old_ihash) ||
+                            (bucket_i == old_ahash && new_ahash == old_ahash));
+                    }
+                }
+            }
+            // Now we can unlock the lock, because all the buckets corresponding
+            // to it have been unlocked
+            locks_[start_lock_ind].unlock();
+        }
+    }
+
+    // cuckoo_fast_double will double the size of the table by taking advantage
+    // of the properties of index_hash and alt_index.
+    cuckoo_status cuckoo_fast_double(size_t current_hp) {
+        size_t new_hp = current_hp + 1;
+        size_t mhp = maximum_hashpower();
+        if (mhp != NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
+            throw libcuckoo_maximum_hashpower_exceeded(new_hp);
+        }
+
+        std::lock_guard<expansion_lock_t> l(expansion_lock_);
+        if (get_hashpower() != current_hp) {
+            // Most likely another expansion ran before this one could grab the
+            // locks
+            LIBCUCKOO_DBG("another expansion is on-going\n");
+            return failure_under_expansion;
+        }
+
+        locks_.allocate(std::min(locks_t::size(), hashsize(new_hp)));
+        auto unlocker = snapshot_and_lock_all();
+        buckets_.resize(buckets_.size() * 2);
+        set_hashpower(new_hp);
+
+        // We gradually unlock the new table, by processing each of the buckets
+        // corresponding to each lock we took. For each slot in an old bucket,
+        // we either leave it in the old bucket, or move it to the corresponding
+        // new bucket. After we're done with the bucket, we release the lock on
+        // it and the new bucket, letting other threads using the new map
+        // gradually. We only unlock the locks being used by the old table,
+        // because unlocking new locks would enable operations on the table
+        // before we want them.
+        const size_t locks_to_move = std::min(locks_t::size(),
+                                              hashsize(current_hp));
+        parallel_exec(0, locks_to_move, kNumCores(),
+                      [this, current_hp, new_hp](size_t start, size_t end) {
+                          move_buckets(current_hp, new_hp, start, end);
+                      });
+        parallel_exec(locks_to_move, locks_.allocated_size(), kNumCores(),
+                      [this](size_t i, size_t end) {
+                          for (; i < end; ++i) {
+                              locks_[i].unlock();
+                          }
+                      });
+        // Since we've unlocked the buckets ourselves, we don't need the
+        // unlocker to do it for us.
+        unlocker.deactivate();
+        return ok;
     }
 
     // insert_into_table is a helper function used by cuckoo_expand_simple to
@@ -1992,6 +2096,9 @@ private:
     // Even though it's a vector, it should not ever change in size after the
     // initial allocation.
     mutable locks_t locks_;
+
+    // a lock to synchronize expansions
+    expansion_lock_t expansion_lock_;
 
     // per-core counters for the number of inserts and deletes
     std::vector<

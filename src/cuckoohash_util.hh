@@ -5,6 +5,8 @@
 
 #include <exception>
 #include <pthread.h>
+#include <thread>
+#include <vector>
 #include "cuckoohash_config.hh" // for LIBCUCKOO_DEBUG
 
 #if LIBCUCKOO_DEBUG
@@ -117,6 +119,22 @@ void destroy_array(T* arr, const size_t size) {
         allocator.destroy(&arr[i]);
     }
     allocator.deallocate(arr, size);
+}
+
+// executes the function over the given range split over num_threads threads
+template <class F>
+static void parallel_exec(size_t start, size_t end,
+                          size_t num_threads, F func) {
+    size_t work_per_thread = (end - start) / num_threads;
+    std::vector<std::thread> threads(num_threads);
+    for (size_t i = 0; i < num_threads - 1; ++i) {
+        threads[i] = std::thread(func, start, start + work_per_thread);
+        start += work_per_thread;
+    }
+    threads[num_threads - 1] = std::thread(func, start, end);
+    for (std::thread& t : threads) {
+        t.join();
+    }
 }
 
 #endif // _CUCKOOHASH_UTIL_HH
