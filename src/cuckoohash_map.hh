@@ -1250,16 +1250,16 @@ private:
     // try_read_from_bucket will search the bucket for the given key and store
     // the associated value if it finds it.
     bool try_read_from_bucket(const partial_t partial, const key_type &key,
-                              mapped_type &val, const size_t i) const {
-        for (size_t j = 0; j < slot_per_bucket; ++j) {
-            if (!buckets_[i].occupied(j)) {
+                              mapped_type &val, const Bucket& b) const {
+        for (size_t i = 0; i < slot_per_bucket; ++i) {
+            if (!b.occupied(i)) {
                 continue;
             }
-            if (!is_simple && partial != buckets_[i].partial(j)) {
+            if (!is_simple && partial != b.partial(i)) {
                 continue;
             }
-            if (eqfn()(key, buckets_[i].key(j))) {
-                val = buckets_[i].val(j);
+            if (eqfn()(key, b.key(i))) {
+                val = b.val(i);
                 return true;
             }
         }
@@ -1269,15 +1269,15 @@ private:
     // check_in_bucket will search the bucket for the given key and return true
     // if the key is in the bucket, and false if it isn't.
     bool check_in_bucket(const partial_t partial, const key_type &key,
-                         const size_t i) const {
-        for (size_t j = 0; j < slot_per_bucket; ++j) {
-            if (!buckets_[i].occupied(j)) {
+                         const Bucket& b) const {
+        for (size_t i = 0; i < slot_per_bucket; ++i) {
+            if (!b.occupied(i)) {
                 continue;
             }
-            if (!is_simple && partial != buckets_[i].partial(j)) {
+            if (!is_simple && partial != b.partial(i)) {
                 continue;
             }
-            if (eqfn()(key, buckets_[i].key(j))) {
+            if (eqfn()(key, b.key(i))) {
                 return true;
             }
         }
@@ -1288,11 +1288,11 @@ private:
     // and value will be move-constructed into the table, so they are not valid
     // for use afterwards.
     template <typename K, typename... Args>
-    void add_to_bucket(const partial_t partial, const size_t i,
-                       const size_t j, K&& key, Args&&... val) {
-        assert(!buckets_[i].occupied(j));
-        buckets_[i].partial(j) = partial;
-        buckets_[i].setKV(j, std::forward<K>(key), std::forward<Args>(val)...);
+    void add_to_bucket(const partial_t partial, Bucket& b,
+                       const size_t slot, K&& key, Args&&... val) {
+        assert(!b.occupied(slot));
+        b.partial(slot) = partial;
+        b.setKV(slot, std::forward<K>(key), std::forward<Args>(val)...);
         num_inserts_[get_counterid()].num.fetch_add(
             1, std::memory_order_relaxed);
     }
@@ -1302,21 +1302,21 @@ private:
     // search the entire bucket and return false if it finds the key already in
     // the table (duplicate key error) and true otherwise.
     bool try_find_insert_bucket(const partial_t partial, const key_type &key,
-                                const size_t i, int& j) const {
-        j = -1;
+                                const Bucket& b, int& slot) const {
+        slot = -1;
         bool found_empty = false;
-        for (size_t k = 0; k < slot_per_bucket; ++k) {
-            if (buckets_[i].occupied(k)) {
-                if (!is_simple && partial != buckets_[i].partial(k)) {
+        for (size_t i = 0; i < slot_per_bucket; ++i) {
+            if (b.occupied(i)) {
+                if (!is_simple && partial != b.partial(i)) {
                     continue;
                 }
-                if (eqfn()(key, buckets_[i].key(k))) {
+                if (eqfn()(key, b.key(i))) {
                     return false;
                 }
             } else {
                 if (!found_empty) {
                     found_empty = true;
-                    j = k;
+                    slot = i;
                 }
             }
         }
@@ -1326,16 +1326,16 @@ private:
     // try_del_from_bucket will search the bucket for the given key, and set the
     // slot of the key to empty if it finds it.
     bool try_del_from_bucket(const partial_t partial,
-                             const key_type &key, const size_t i) {
-        for (size_t j = 0; j < slot_per_bucket; ++j) {
-            if (!buckets_[i].occupied(j)) {
+                             const key_type &key, Bucket& b) {
+        for (size_t i = 0; i < slot_per_bucket; ++i) {
+            if (!b.occupied(i)) {
                 continue;
             }
-            if (!is_simple && buckets_[i].partial(j) != partial) {
+            if (!is_simple && b.partial(i) != partial) {
                 continue;
             }
-            if (eqfn()(buckets_[i].key(j), key)) {
-                buckets_[i].eraseKV(j);
+            if (eqfn()(b.key(i), key)) {
+                b.eraseKV(i);
                 num_deletes_[get_counterid()].num.fetch_add(
                     1, std::memory_order_relaxed);
                 return true;
@@ -1347,17 +1347,17 @@ private:
     // try_update_bucket will search the bucket for the given key and change its
     // associated value if it finds it.
     template <typename V>
-    bool try_update_bucket(const partial_t partial, const size_t i,
+    bool try_update_bucket(const partial_t partial, Bucket& b,
                            const key_type &key, V&& val) {
-        for (size_t j = 0; j < slot_per_bucket; ++j) {
-            if (!buckets_[i].occupied(j)) {
+        for (size_t i = 0; i < slot_per_bucket; ++i) {
+            if (!b.occupied(i)) {
                 continue;
             }
-            if (!is_simple && buckets_[i].partial(j) != partial) {
+            if (!is_simple && b.partial(i) != partial) {
                 continue;
             }
-            if (eqfn()(buckets_[i].key(j), key)) {
-                buckets_[i].val(j) = std::forward<V>(val);
+            if (eqfn()(b.key(i), key)) {
+                b.val(i) = std::forward<V>(val);
                 return true;
             }
         }
@@ -1368,16 +1368,16 @@ private:
     // its associated value with the given function if it finds it.
     template <typename Updater>
     bool try_update_bucket_fn(const partial_t partial, const key_type &key,
-                              Updater fn, const size_t i) {
-        for (size_t j = 0; j < slot_per_bucket; ++j) {
-            if (!buckets_[i].occupied(j)) {
+                              Updater fn, Bucket& b) {
+        for (size_t i = 0; i < slot_per_bucket; ++i) {
+            if (!b.occupied(i)) {
                 continue;
             }
-            if (!is_simple && buckets_[i].partial(j) != partial) {
+            if (!is_simple && b.partial(i) != partial) {
                 continue;
             }
-            if (eqfn()(buckets_[i].key(j), key)) {
-                fn(buckets_[i].val(j));
+            if (eqfn()(b.key(i), key)) {
+                fn(b.val(i));
                 return true;
             }
         }
@@ -1390,10 +1390,10 @@ private:
     cuckoo_status cuckoo_find(const key_type& key, mapped_type& val,
                               const size_t hv, size_t i1, size_t i2) const {
         const partial_t partial = partial_key(hv);
-        if (try_read_from_bucket(partial, key, val, i1)) {
+        if (try_read_from_bucket(partial, key, val, buckets_[i1])) {
             return ok;
         }
-        if (try_read_from_bucket(partial, key, val, i2)) {
+        if (try_read_from_bucket(partial, key, val, buckets_[i2])) {
             return ok;
         }
         return failure_key_not_found;
@@ -1405,10 +1405,10 @@ private:
     bool cuckoo_contains(const key_type& key, const size_t hv,
                          const size_t i1, const size_t i2) const {
         const partial_t partial = partial_key(hv);
-        if (check_in_bucket(partial, key, i1)) {
+        if (check_in_bucket(partial, key, buckets_[i1])) {
             return true;
         }
-        if (check_in_bucket(partial, key, i2)) {
+        if (check_in_bucket(partial, key, buckets_[i2])) {
             return true;
         }
         return false;
@@ -1427,19 +1427,19 @@ private:
                                 K&& key, Args&&... val) {
         int res1, res2;
         const partial_t partial = partial_key(hv);
-        if (!try_find_insert_bucket(partial, key, b.i[0], res1)) {
+        if (!try_find_insert_bucket(partial, key, buckets_[b.i[0]], res1)) {
             return failure_key_duplicated;
         }
-        if (!try_find_insert_bucket(partial, key, b.i[1], res2)) {
+        if (!try_find_insert_bucket(partial, key, buckets_[b.i[1]], res2)) {
             return failure_key_duplicated;
         }
         if (res1 != -1) {
-            add_to_bucket(partial, b.i[0], res1, std::forward<K>(key),
+            add_to_bucket(partial, buckets_[b.i[0]], res1, std::forward<K>(key),
                           std::forward<Args>(val)...);
             return ok;
         }
         if (res2 != -1) {
-            add_to_bucket(partial, b.i[1], res2, std::forward<K>(key),
+            add_to_bucket(partial, buckets_[b.i[1]], res2, std::forward<K>(key),
                           std::forward<Args>(val)...);
             return ok;
         }
@@ -1466,7 +1466,7 @@ private:
             if (cuckoo_contains(key, hv, b.i[0], b.i[1])) {
                 return failure_key_duplicated;
             }
-            add_to_bucket(partial, insert_bucket, insert_slot,
+            add_to_bucket(partial, buckets_[insert_bucket], insert_slot,
                           std::forward<K>(key), std::forward<Args>(val)...);
             return ok;
         }
@@ -1516,10 +1516,10 @@ private:
     cuckoo_status cuckoo_delete(const key_type &key, const size_t hv,
                                 const size_t i1, const size_t i2) {
         const partial_t partial = partial_key(hv);
-        if (try_del_from_bucket(partial, key, i1)) {
+        if (try_del_from_bucket(partial, key, buckets_[i1])) {
             return ok;
         }
-        if (try_del_from_bucket(partial, key, i2)) {
+        if (try_del_from_bucket(partial, key, buckets_[i2])) {
             return ok;
         }
         return failure_key_not_found;
@@ -1532,10 +1532,12 @@ private:
     cuckoo_status cuckoo_update(const size_t hv, const size_t i1,
                                 const size_t i2, const key_type &key, V&& val) {
         const partial_t partial = partial_key(hv);
-        if (try_update_bucket(partial, i1, key, std::forward<V>(val))) {
+        if (try_update_bucket(partial, buckets_[i1], key,
+                              std::forward<V>(val))) {
             return ok;
         }
-        if (try_update_bucket(partial, i2, key, std::forward<V>(val))) {
+        if (try_update_bucket(partial, buckets_[i2], key,
+                              std::forward<V>(val))) {
             return ok;
         }
         return failure_key_not_found;
@@ -1547,13 +1549,13 @@ private:
     // outside the function.
     template <typename Updater>
     cuckoo_status cuckoo_update_fn(const key_type &key, Updater fn,
-                                   const size_t hv,
-                                   const size_t i1, const size_t i2) {
+                                   const size_t hv, const size_t i1,
+                                   const size_t i2) {
         const partial_t partial = partial_key(hv);
-        if (try_update_bucket_fn(partial, key, fn, i1)) {
+        if (try_update_bucket_fn(partial, key, fn, buckets_[i1])) {
             return ok;
         }
-        if (try_update_bucket_fn(partial, key, fn, i2)) {
+        if (try_update_bucket_fn(partial, key, fn, buckets_[i2])) {
             return ok;
         }
         return failure_key_not_found;
