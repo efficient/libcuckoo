@@ -29,7 +29,7 @@
     <ClInclude Include="..\..\cityhash-1.1.1\src\citycrc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\cityhash-1.1.1\config.h">
+    <ClInclude Include="config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

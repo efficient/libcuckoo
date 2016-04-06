@@ -149,6 +149,11 @@
   <ItemGroup>
     <ClInclude Include="..\..\tests\benchmarks\chrono.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\staticlib_cityhash\staticlib_cityhash.vcxproj">
+      <Project>{56b0a08e-3337-4e98-bda2-ae9111ba2d56}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
