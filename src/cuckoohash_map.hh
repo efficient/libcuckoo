@@ -470,8 +470,7 @@ public:
     bool find(const key_type& key, mapped_type& val) const {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
-        const cuckoo_status st = cuckoo_find(key, val, hv, buckets_[b.i[0]],
-                                             buckets_[b.i[1]]);
+        const cuckoo_status st = cuckoo_find(key, val, hv, b.i[0], b.i[1]);
         return (st == ok);
     }
 
@@ -493,8 +492,7 @@ public:
     bool contains(const key_type& key) const {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
-        const bool result = cuckoo_contains(key, hv, buckets_[b.i[0]],
-                                            buckets_[b.i[1]]);
+        const bool result = cuckoo_contains(key, hv, b.i[0], b.i[1]);
         return result;
     }
 
@@ -1401,13 +1399,13 @@ private:
     // value in the val if it finds the key. It expects the locks to be taken
     // and released outside the function.
     cuckoo_status cuckoo_find(const key_type& key, mapped_type& val,
-                              const size_t hv, const Bucket& b1,
-                              const Bucket& b2) const {
+                              const size_t hv, const size_t i1,
+                              const size_t i2) const {
         const partial_t partial = partial_key(hv);
-        if (try_read_from_bucket(partial, key, val, b1)) {
+        if (try_read_from_bucket(partial, key, val, buckets_[i1])) {
             return ok;
         }
-        if (try_read_from_bucket(partial, key, val, b2)) {
+        if (try_read_from_bucket(partial, key, val, buckets_[i2])) {
             return ok;
         }
         return failure_key_not_found;
@@ -1416,13 +1414,13 @@ private:
     // cuckoo_contains searches the table for the given key, returning true if
     // it's in the table and false otherwise. It expects the locks to be taken
     // and released outside the function.
-    bool cuckoo_contains(const key_type& key, const size_t hv, const Bucket& b1,
-                         const Bucket& b2) const {
+    bool cuckoo_contains(const key_type& key, const size_t hv, const size_t i1,
+                         const size_t i2) const {
         const partial_t partial = partial_key(hv);
-        if (check_in_bucket(partial, key, b1)) {
+        if (check_in_bucket(partial, key, buckets_[i1])) {
             return true;
         }
-        if (check_in_bucket(partial, key, b2)) {
+        if (check_in_bucket(partial, key, buckets_[i2])) {
             return true;
         }
         return false;
@@ -1479,7 +1477,7 @@ private:
             // Since we unlocked the buckets during run_cuckoo, another insert
             // could have inserted the same key into either b.i[0] or b.i[1], so
             // we check for that before doing the insert.
-            if (cuckoo_contains(key, hv, b0, b1)) {
+            if (cuckoo_contains(key, hv, b.i[0], b.i[1])) {
                 return failure_key_duplicated;
             }
             add_to_bucket(partial, buckets_[insert_bucket], insert_slot,
