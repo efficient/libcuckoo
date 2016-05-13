@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\IndexerLib\libcuckoo\examples\nested_table.cc">
+    <ClCompile Include="..\..\examples\nested_table.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

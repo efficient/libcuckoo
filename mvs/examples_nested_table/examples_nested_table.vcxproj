@@ -144,7 +144,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\IndexerLib\libcuckoo\examples\nested_table.cc" />
+    <ClCompile Include="..\..\examples\nested_table.cc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\staticlib_cityhash\staticlib_cityhash.vcxproj">

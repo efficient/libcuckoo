@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\IndexerLib\libcuckoo\examples\hellohash.cc">
+    <ClCompile Include="..\..\examples\hellohash.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\IndexerLib\libcuckoo\examples\count_freq.cc">
+    <ClCompile Include="..\..\examples\count_freq.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

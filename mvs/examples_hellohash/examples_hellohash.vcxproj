@@ -144,7 +144,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\IndexerLib\libcuckoo\examples\hellohash.cc" />
+    <ClCompile Include="..\..\examples\hellohash.cc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\staticlib_cityhash\staticlib_cityhash.vcxproj">
