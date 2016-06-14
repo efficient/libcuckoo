@@ -52,3 +52,24 @@ TEST_CASE("reserve calc", "[resize]") {
                 ((1UL << 61) + 1) * slot_per_bucket == 61));
 
 }
+
+static size_t no_double_free_test_num_deletes = 0;
+TEST_CASE("Resizing no double free", "[resize]") {
+    struct my_type {
+        int x;
+        ~my_type() {
+            ++no_double_free_test_num_deletes;
+        }
+    };
+
+    my_type val{0};
+    {
+        // Should allocate 2 buckets of 4 slots
+        cuckoohash_map<int, my_type, std::hash<int>, std::equal_to<int>,
+                       std::allocator<std::pair<const int, my_type>>, 4> map(2);
+        for (int i = 0; i < 9; ++i) {
+            map.insert(i, val);
+        }
+    }
+    REQUIRE(no_double_free_test_num_deletes == 9);
+}

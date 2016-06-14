@@ -259,10 +259,6 @@ private:
             }
         }
 
-        ~Bucket() {
-            clear();
-        }
-
         // Moves the item in b1[slot1] into b2[slot2] without copying
         static void move_to_bucket(
             Bucket& b1, size_t slot1,
@@ -392,6 +388,10 @@ public:
         locks_.allocate(std::min(locks_t::size(), hashsize(hp)));
         num_inserts_.resize(kNumCores(), 0);
         num_deletes_.resize(kNumCores(), 0);
+    }
+
+    ~cuckoohash_map() {
+        cuckoo_clear();
     }
 
     //! clear removes all the elements in the hash table, calling their
