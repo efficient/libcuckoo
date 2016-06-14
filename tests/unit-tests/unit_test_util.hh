@@ -159,6 +159,11 @@ public:
                             const size_t index) {
         return CuckoohashMap::alt_index(hashpower, partial, index);
     }
+
+    template <class CuckoohashMap>
+    static size_t reserve_calc(size_t n) {
+        return CuckoohashMap::reserve_calc(n);
+    }
 };
 
 #endif // UNIT_TEST_UTIL_HH_

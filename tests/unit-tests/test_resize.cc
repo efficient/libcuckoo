@@ -25,3 +25,30 @@ TEST_CASE("reserve empty table", "[resize]") {
     table.reserve(2);
     REQUIRE(table.hashpower() == 1);
 }
+
+TEST_CASE("reserve calc", "[resize]") {
+    const size_t slot_per_bucket = IntIntTable::slot_per_bucket;
+    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(0) == 1);
+    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+                1 * slot_per_bucket) == 1);
+
+    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+                2 * slot_per_bucket) == 1);
+    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+                3 * slot_per_bucket) == 2);
+    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+                4 * slot_per_bucket) == 2);
+    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+                2500000 * slot_per_bucket) == 22);
+
+    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+                (1UL << 31) * slot_per_bucket) == 31);
+    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+                ((1UL << 31) + 1) * slot_per_bucket == 31));
+
+    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+                (1UL << 61) * slot_per_bucket) == 61);
+    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+                ((1UL << 61) + 1) * slot_per_bucket == 61));
+
+}
