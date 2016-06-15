@@ -37,3 +37,30 @@ TEST_CASE("frees even with exceptions", "[constructor]") {
     REQUIRE_THROWS_AS(some_space_table(1), std::bad_alloc);
     REQUIRE(get_unfreed_bytes() == 0);
 }
+
+TEST_CASE("custom hasher", "[constructor]") {
+    auto hashfn = [](size_t item) -> size_t {
+        return 0;
+    };
+    cuckoohash_map<size_t, size_t, decltype(hashfn)> map(
+        DEFAULT_SIZE, DEFAULT_MINIMUM_LOAD_FACTOR, NO_MAXIMUM_HASHPOWER,
+        hashfn);
+    for (int i = 0; i < 1000; ++i) {
+        REQUIRE(map.hash_function()(i) == 0);
+    }
+}
+
+TEST_CASE("custom equality", "[constructor]") {
+    auto eqfn = [](size_t i1, size_t i2) -> bool {
+        return false;
+    };
+    cuckoohash_map<size_t, size_t, std::hash<size_t>,
+                   decltype(eqfn)> map(
+        DEFAULT_SIZE, DEFAULT_MINIMUM_LOAD_FACTOR, NO_MAXIMUM_HASHPOWER,
+        std::hash<size_t>(), eqfn);
+
+    for (int i = 0; i < 1000; ++i) {
+        REQUIRE(map.key_eq()(i, i) == false);
+        REQUIRE(map.key_eq()(i, i+1) == false);
+    }
+}

@@ -348,18 +348,6 @@ private:
         return blog2;
     }
 
-    // hashfn returns an instance of the hash function
-    static hasher hashfn() {
-        static hasher hash;
-        return hash;
-    }
-
-    // eqfn returns an instance of the equality predicate
-    static key_equal eqfn() {
-        static key_equal eq;
-        return eq;
-    }
-
 public:
     /**
      * Creates a new cuckohash_map instance
@@ -374,7 +362,10 @@ public:
      */
     cuckoohash_map(size_t n = DEFAULT_SIZE,
                    double mlf = DEFAULT_MINIMUM_LOAD_FACTOR,
-                   size_t mhp = NO_MAXIMUM_HASHPOWER) {
+                   size_t mhp = NO_MAXIMUM_HASHPOWER,
+                   const hasher& hf = hasher(),
+                   const key_equal eql = key_equal())
+        : hash_fn(hf), eq_fn(eql) {
         minimum_load_factor(mlf);
         maximum_hashpower(mhp);
         size_t hp = reserve_calc(n);
@@ -640,12 +631,12 @@ public:
 
     //! hash_function returns the hash function object used by the table.
     hasher hash_function() const noexcept {
-        return hashfn();
+        return hash_fn;
     }
 
     //! key_eq returns the equality predicate object used by the table.
     key_equal key_eq() const noexcept {
-        return eqfn();
+        return eq_fn;
     }
 
     //! Returns a \ref reference to the mapped value stored at the given key.
@@ -907,8 +898,8 @@ private:
     }
 
     // hashed_key hashes the given key.
-    static inline size_t hashed_key(const key_type &key) {
-        return hashfn()(key);
+    inline size_t hashed_key(const key_type &key) const {
+        return hash_function()(key);
     }
 
     // index_hash returns the first possible bucket that the given hashed key
@@ -1280,7 +1271,7 @@ private:
             if (!is_simple && partial != b.partial(i)) {
                 continue;
             }
-            if (eqfn()(key, b.key(i))) {
+            if (key_eq()(key, b.key(i))) {
                 val = b.val(i);
                 return true;
             }
@@ -1299,7 +1290,7 @@ private:
             if (!is_simple && partial != b.partial(i)) {
                 continue;
             }
-            if (eqfn()(key, b.key(i))) {
+            if (key_eq()(key, b.key(i))) {
                 return true;
             }
         }
@@ -1332,7 +1323,7 @@ private:
                 if (!is_simple && partial != b.partial(i)) {
                     continue;
                 }
-                if (eqfn()(key, b.key(i))) {
+                if (key_eq()(key, b.key(i))) {
                     return false;
                 }
             } else {
@@ -1356,7 +1347,7 @@ private:
             if (!is_simple && b.partial(i) != partial) {
                 continue;
             }
-            if (eqfn()(b.key(i), key)) {
+            if (key_eq()(b.key(i), key)) {
                 b.eraseKV(i);
                 num_deletes_[get_counterid()].num.fetch_add(
                     1, std::memory_order_relaxed);
@@ -1378,7 +1369,7 @@ private:
             if (!is_simple && b.partial(i) != partial) {
                 continue;
             }
-            if (eqfn()(b.key(i), key)) {
+            if (key_eq()(b.key(i), key)) {
                 b.val(i) = std::forward<V>(val);
                 return true;
             }
@@ -1398,7 +1389,7 @@ private:
             if (!is_simple && b.partial(i) != partial) {
                 continue;
             }
-            if (eqfn()(b.key(i), key)) {
+            if (key_eq()(b.key(i), key)) {
                 fn(b.val(i));
                 return true;
             }
@@ -2125,6 +2116,11 @@ private:
     // NO_MAXIMUM_HASHPOWER, this limit will be disregarded.
     std::atomic<size_t> maximum_hashpower_;
 
+    // The hash function
+    hasher hash_fn;
+
+    // The equality function
+    key_equal eq_fn;
 };
 
 #endif // _CUCKOOHASH_MAP_HH
