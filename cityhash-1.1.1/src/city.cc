@@ -28,7 +28,7 @@
 // compromising on hash quality.
 
 #include "config.h"
-#include "city.h"
+#include <city.h>
 
 #include <algorithm>
 #include <string.h>  // for memcpy and memset
@@ -109,7 +109,8 @@ static const uint32_t c1 = 0xcc9e2d51;
 static const uint32_t c2 = 0x1b873593;
 
 // A 32-bit to 32-bit integer hash copied from Murmur3.
-static uint32 fmix(uint32 h) {
+static uint32 fmix(uint32 h)
+{
   h ^= h >> 16;
   h *= 0x85ebca6b;
   h ^= h >> 13;
@@ -170,8 +171,8 @@ static uint32 Hash32Len5to12(const char *s, size_t len) {
 uint32 CityHash32(const char *s, size_t len) {
   if (len <= 24) {
     return len <= 12 ?
-      (len <= 4 ? Hash32Len0to4(s, len) : Hash32Len5to12(s, len)) :
-      Hash32Len13to24(s, len);
+        (len <= 4 ? Hash32Len0to4(s, len) : Hash32Len5to12(s, len)) :
+        Hash32Len13to24(s, len);
   }
 
   // len > 24
@@ -301,7 +302,7 @@ static uint64 HashLen17to32(const char *s, size_t len) {
 // Return a 16-byte hash for 48 bytes.  Quick and dirty.
 // Callers do best to use "random-looking" values for a and b.
 static pair<uint64, uint64> WeakHashLen32WithSeeds(
-  uint64 w, uint64 x, uint64 y, uint64 z, uint64 a, uint64 b) {
+    uint64 w, uint64 x, uint64 y, uint64 z, uint64 a, uint64 b) {
   a += w;
   b = Rotate(b + a + z, 21);
   uint64 c = a;
@@ -313,7 +314,7 @@ static pair<uint64, uint64> WeakHashLen32WithSeeds(
 
 // Return a 16-byte hash for s[0] ... s[31], a, and b.  Quick and dirty.
 static pair<uint64, uint64> WeakHashLen32WithSeeds(
-  const char* s, uint64 a, uint64 b) {
+    const char* s, uint64 a, uint64 b) {
   return WeakHashLen32WithSeeds(Fetch64(s),
                                 Fetch64(s + 8),
                                 Fetch64(s + 16),
@@ -488,9 +489,9 @@ uint128 CityHash128WithSeed(const char *s, size_t len, uint128 seed) {
 
 uint128 CityHash128(const char *s, size_t len) {
   return len >= 16 ?
-    CityHash128WithSeed(s + 16, len - 16,
-                        uint128(Fetch64(s), Fetch64(s + 8) + k0)) :
-    CityHash128WithSeed(s, len, uint128(k0, k1));
+      CityHash128WithSeed(s + 16, len - 16,
+                          uint128(Fetch64(s), Fetch64(s + 8) + k0)) :
+      CityHash128WithSeed(s, len, uint128(k0, k1));
 }
 
 #ifdef __SSE4_2__

@@ -5,7 +5,6 @@
 
 #include <exception>
 #include <thread>
-#include <thread>
 #include <vector>
 #include "cuckoohash_config.hh" // for LIBCUCKOO_DEBUG
 

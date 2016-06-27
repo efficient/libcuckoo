@@ -109,7 +109,7 @@ public:
         //! reference. Instead, it has the same behavior as operator=(const
         //! mapped_type& val).
         reference& operator=(const reference& ref) {
-      *this = (mapped_type)ref;
+            *this = (mapped_type) ref;
             return *this;
         }
 
@@ -149,7 +149,8 @@ private:
 
     // number of cores on the machine
     static size_t kNumCores() {
-    static size_t cores = std::thread::hardware_concurrency();
+        static size_t cores = std::thread::hardware_concurrency() == 0 ?
+            sysconf(_SC_NPROCESSORS_ONLN) : std::thread::hardware_concurrency();
         return cores;
     }
 
@@ -172,7 +173,8 @@ private:
         inline bool try_lock() {
             return !lock_.test_and_set(std::memory_order_acquire);
         }
-  };
+
+    } __attribute__((aligned(64)));
 
     typedef enum {
         ok,
@@ -260,10 +262,6 @@ private:
             }
         }
 
-        ~Bucket() {
-            clear();
-        }
-
         // Moves the item in b1[slot1] into b2[slot2] without copying
         static void move_to_bucket(
             Bucket& b1, size_t slot1,
@@ -297,10 +295,10 @@ private:
     // cacheint is a cache-aligned atomic integer type.
     struct cacheint {
         std::atomic<size_t> num;
-    cacheint() : num(0) {}
-    cacheint(size_t x) : num(x) {}
-    cacheint(const cacheint& x) : num(x.num.load()) {}
-    cacheint(cacheint&& x) : num(x.num.load()) {}
+        cacheint(): num(0) {}
+        cacheint(size_t x): num(x) {}
+        cacheint(const cacheint& x): num(x.num.load()) {}
+        cacheint(cacheint&& x): num(x.num.load()) {}
         cacheint& operator=(const cacheint& x) {
             num = x.num.load();
             return *this;
@@ -309,7 +307,7 @@ private:
             num = x.num.load();
             return *this;
         }
-  };
+    } __attribute__((aligned(64)));
 
     // Helper methods to read and write hashpower_ with the correct memory
     // barriers
@@ -325,7 +323,7 @@ private:
     static inline int get_counterid() {
         // counterid stores the per-thread counter index of each thread. Each
         // counter value corresponds to a core on the machine.
-    static  int counterid = -1;
+        static __thread int counterid = -1;
 
         if (counterid < 0) {
             counterid = rand() % kNumCores();
@@ -335,23 +333,22 @@ private:
 
     // reserve_calc takes in a parameter specifying a certain number of slots
     // for a table and returns the smallest hashpower that will hold n elements.
-    static size_t reserve_calc(size_t n) {
-        double nhd = ceil(log2((double)n / (double)slot_per_bucket));
-    size_t new_hp = (size_t)(nhd <= 0 ? 1.0 : nhd);
-        assert(n <= hashsize(new_hp) * slot_per_bucket);
-        return new_hp;
+    static size_t reserve_calc(const size_t n) {
+        size_t buckets = (n + slot_per_bucket - 1) / slot_per_bucket;
+        size_t blog2;
+        if (buckets <= 1) {
+            blog2 = 1;
+        } else {
+            blog2 = 0;
+            for (size_t bcounter = buckets; bcounter > 1; bcounter >>= 1) {
+                ++blog2;
     }
-
-    // hashfn returns an instance of the hash function
-    static hasher hashfn() {
-        static hasher hash;
-        return hash;
+            if (hashsize(blog2) < buckets) {
+                ++blog2;
     }
-
-    // eqfn returns an instance of the equality predicate
-    static key_equal eqfn() {
-        static key_equal eq;
-        return eq;
+    }
+        assert(n <= hashsize(blog2) * slot_per_bucket);
+        return blog2;
     }
 
 public:
@@ -368,7 +365,10 @@ public:
      */
     cuckoohash_map(size_t n = DEFAULT_SIZE,
                    double mlf = DEFAULT_MINIMUM_LOAD_FACTOR,
-                   size_t mhp = NO_MAXIMUM_HASHPOWER) {
+                   size_t mhp = NO_MAXIMUM_HASHPOWER,
+                   const hasher& hf = hasher(),
+                   const key_equal eql = key_equal())
+        : hash_fn(hf), eq_fn(eql) {
         minimum_load_factor(mlf);
         maximum_hashpower(mhp);
         size_t hp = reserve_calc(n);
@@ -382,6 +382,10 @@ public:
         locks_.allocate(std::min(locks_t::size(), hashsize(hp)));
         num_inserts_.resize(kNumCores(), 0);
         num_deletes_.resize(kNumCores(), 0);
+    }
+
+    ~cuckoohash_map() {
+        cuckoo_clear();
     }
 
     //! clear removes all the elements in the hash table, calling their
@@ -630,12 +634,12 @@ public:
 
     //! hash_function returns the hash function object used by the table.
     hasher hash_function() const noexcept {
-        return hashfn();
+        return hash_fn;
     }
 
     //! key_eq returns the equality predicate object used by the table.
     key_equal key_eq() const noexcept {
-        return eqfn();
+        return eq_fn;
     }
 
     //! Returns a \ref reference to the mapped value stored at the given key.
@@ -665,7 +669,7 @@ private:
 
         template <typename... Args>
         BucketContainer(const cuckoohash_map* _map, Args&&... inds)
-      : map(_map), i{ {inds...} } {}
+            : map(_map), i{{inds...}} {}
 
         BucketContainer(const cuckoohash_map* _map, std::array<size_t, N> _i)
             : map(_map), i(_i) {}
@@ -759,7 +763,7 @@ private:
         const size_t l = lock_ind(i);
         locks_[l].lock();
         check_hashpower(hp, l);
-    return OneBucket{ this, i };
+        return OneBucket{this, i};
     }
 
     // locks the two bucket indexes, always locking the earlier index first to
@@ -778,7 +782,7 @@ private:
         if (l2 != l1) {
             locks_[l2].lock();
         }
-    return TwoBuckets{ this, i1, i2 };
+        return TwoBuckets{this, i1, i2};
     }
 
     // lock_two_one locks the three bucket indexes in numerical order, returning
@@ -789,8 +793,8 @@ private:
     std::pair<TwoBuckets, OneBucket>
     lock_three(const size_t hp, const size_t i1,
                const size_t i2, const size_t i3) const {
-    std::array<size_t, 3> l{ {
-            lock_ind(i1), lock_ind(i2), lock_ind(i3)} };
+        std::array<size_t, 3> l{{
+                lock_ind(i1), lock_ind(i2), lock_ind(i3)}};
         std::sort(l.begin(), l.end());
         locks_[l[0]].lock();
         check_hashpower(hp, l[0]);
@@ -801,11 +805,11 @@ private:
             locks_[l[2]].lock();
         }
         return std::make_pair(
-      TwoBuckets{ this, i1, i2 },
+            TwoBuckets{this, i1, i2},
             OneBucket{
                 (lock_ind(i3) == lock_ind(i1) ||
                  lock_ind(i3) == lock_ind(i2)) ?
-              nullptr : this, i3 });
+                    nullptr : this, i3});
     }
 
     // snapshot_and_lock_two loads locks the buckets associated with the given
@@ -837,7 +841,7 @@ private:
         // If nullptr, do nothing
         locks_t* locks_;
     public:
-    AllUnlocker(locks_t* locks) : locks_(locks) {}
+        AllUnlocker(locks_t* locks): locks_(locks) {}
 
         AllUnlocker(const AllUnlocker&) = delete;
         AllUnlocker(AllUnlocker&& au) : locks_(au.locks_) {
@@ -887,7 +891,7 @@ private:
     // hashsize returns the number of buckets corresponding to a given
     // hashpower.
     static inline size_t hashsize(const size_t hp) {
-        return 1U << hp;
+        return 1UL << hp;
     }
 
     // hashmask returns the bitmask for the buckets array corresponding to a
@@ -897,8 +901,8 @@ private:
     }
 
     // hashed_key hashes the given key.
-    static inline size_t hashed_key(const key_type &key) {
-        return hashfn()(key);
+    inline size_t hashed_key(const key_type &key) const {
+        return hash_function()(key);
     }
 
     // index_hash returns the first possible bucket that the given hashed key
@@ -925,7 +929,7 @@ private:
     // bytes of the hashed key. This is used for partial-key cuckoohashing, and
     // for finding the alternate bucket of that a key hashes to.
     static inline partial_t partial_key(const size_t hv) {
-    return (partial_t)(hv >> ((sizeof(size_t) - sizeof(partial_t)) * 8));
+        return (partial_t)(hv >> ((sizeof(size_t)-sizeof(partial_t)) * 8));
     }
 
     // A constexpr version of pow that we can use for static_asserts
@@ -958,24 +962,24 @@ private:
         // maximum pathcode to be at least slot_per_bucket^(MAX_BFS_PATH_LEN)
         size_t pathcode;
         static_assert(const_pow(slot_per_bucket, MAX_BFS_PATH_LEN) <
-                  (std::numeric_limits<decltype(pathcode)>::max)(),
+                      std::numeric_limits<decltype(pathcode)>::max(),
                       "pathcode may not be large enough to encode a cuckoo"
                       " path");
         // The 0-indexed position in the cuckoo path this slot occupies. It must
         // be less than MAX_BFS_PATH_LEN, and also able to hold negative values.
         int_fast8_t depth;
         static_assert(MAX_BFS_PATH_LEN - 1 <=
-                  (std::numeric_limits<decltype(depth)>::max)(),
+                      std::numeric_limits<decltype(depth)>::max(),
                       "The depth type must able to hold a value of"
                       " MAX_BFS_PATH_LEN - 1");
-    static_assert(-1 >= (std::numeric_limits<decltype(depth)>::min)(),
+        static_assert(-1 >= std::numeric_limits<decltype(depth)>::min(),
                       "The depth type must be able to hold a value of -1");
         b_slot() {}
         b_slot(const size_t b, const size_t p, const decltype(depth) d)
             : bucket(b), pathcode(p), depth(d) {
             assert(d < MAX_BFS_PATH_LEN);
         }
-  };
+    } __attribute__((__packed__));
 
     // b_queue is the queue used to store b_slots for BFS cuckoo hashing.
     class b_queue {
@@ -1020,7 +1024,7 @@ private:
         bool full() {
             return increment(last) == first;
         }
-  };
+    } __attribute__((__packed__));
 
     // slot_search searches for a cuckoo path using breadth-first search. It
     // starts with the i1 and i2 buckets, and, until it finds a bucket with an
@@ -1056,7 +1060,7 @@ private:
                 const partial_t partial = b.partial(slot);
                 if (x.depth < MAX_BFS_PATH_LEN - 1) {
                     b_slot y(alt_index(hp, partial, x.bucket),
-                   x.pathcode * slot_per_bucket + slot, x.depth + 1);
+                             x.pathcode * slot_per_bucket + slot, x.depth+1);
                     q.enqueue(y);
                 }
             }
@@ -1109,7 +1113,7 @@ private:
         }
         for (int i = 1; i <= x.depth; ++i) {
             CuckooRecord& curr = cuckoo_path[i];
-      CuckooRecord& prev = cuckoo_path[i - 1];
+            CuckooRecord& prev = cuckoo_path[i-1];
             assert(prev.bucket == index_hash(hp, prev.hv) ||
                    prev.bucket == alt_index(hp, partial_key(prev.hv),
                                             index_hash(hp, prev.hv)));
@@ -1270,7 +1274,7 @@ private:
             if (!is_simple && partial != b.partial(i)) {
                 continue;
             }
-            if (eqfn()(key, b.key(i))) {
+            if (key_eq()(key, b.key(i))) {
                 val = b.val(i);
                 return true;
             }
@@ -1289,7 +1293,7 @@ private:
             if (!is_simple && partial != b.partial(i)) {
                 continue;
             }
-            if (eqfn()(key, b.key(i))) {
+            if (key_eq()(key, b.key(i))) {
                 return true;
             }
         }
@@ -1322,7 +1326,7 @@ private:
                 if (!is_simple && partial != b.partial(i)) {
                     continue;
                 }
-                if (eqfn()(key, b.key(i))) {
+                if (key_eq()(key, b.key(i))) {
                     return false;
                 }
             } else {
@@ -1346,7 +1350,7 @@ private:
             if (!is_simple && b.partial(i) != partial) {
                 continue;
             }
-            if (eqfn()(b.key(i), key)) {
+            if (key_eq()(b.key(i), key)) {
                 b.eraseKV(i);
                 num_deletes_[get_counterid()].num.fetch_add(
                     1, std::memory_order_relaxed);
@@ -1368,7 +1372,7 @@ private:
             if (!is_simple && b.partial(i) != partial) {
                 continue;
             }
-            if (eqfn()(b.key(i), key)) {
+            if (key_eq()(b.key(i), key)) {
                 b.val(i) = std::forward<V>(val);
                 return true;
             }
@@ -1388,7 +1392,7 @@ private:
             if (!is_simple && b.partial(i) != partial) {
                 continue;
             }
-            if (eqfn()(b.key(i), key)) {
+            if (key_eq()(b.key(i), key)) {
                 fn(b.val(i));
                 return true;
             }
@@ -1598,7 +1602,7 @@ private:
             inserts += num_inserts_[i].num.load();
             deletes += num_deletes_[i].num.load();
         }
-    return inserts - deletes;
+        return inserts-deletes;
     }
 
     // cuckoo_loadfactor returns the load factor of the given table.
@@ -1758,7 +1762,7 @@ private:
         for (size_t i = 0; i < threadnum; ++i) {
             insertion_threads[i] = std::thread(
                 insert_into_table, std::ref(new_map), std::ref(buckets_),
-        i*buckets_per_thread, std::min((i + 1)*buckets_per_thread,
+                i*buckets_per_thread, std::min((i+1)*buckets_per_thread,
                                                hashsize(hp)));
         }
         for (size_t i = 0; i < threadnum; ++i) {
@@ -1845,10 +1849,12 @@ public:
         template <bool IS_CONST>
         class templated_iterator :
             public std::iterator<std::bidirectional_iterator_tag, value_type> {
+
             // The buckets locked and owned by the locked table being iterated
             // over.
             std::reference_wrapper<
-        typename std::conditional<IS_CONST, const buckets_t, buckets_t>::type> buckets_;
+                typename std::conditional<
+                IS_CONST, const buckets_t, buckets_t>::type> buckets_;
 
             // The shared boolean indicating whether the iterator points to a
             // still-locked table or not. It should never be nullptr.
@@ -1910,6 +1916,7 @@ public:
                 check_iterator();
                 return &buckets_.get()[index_].kvpair(slot_);
             }
+
 
             //! Advance the iterator to the next item in the table, or to the
             //! end of the table. Returns the iterator at its new position.
@@ -1981,7 +1988,7 @@ public:
                 // the table. If there is nothing in the table, index_ ==
                 // buckets.size() and slot_ == 0 also means we're at the
                 // beginning of the table (so begin() == end()).
-        return{ buckets.size(), 0 };
+                return {buckets.size(), 0};
             }
 
             // The private constructor is used by locked_table to create
@@ -1989,14 +1996,10 @@ public:
             // end of the table, or that spot is occupied, stay. Otherwise, step
             // forward to the next data item, or to the end of the table.
             templated_iterator(
-        typename std::conditional<IS_CONST, const buckets_t, buckets_t>::type & buckets,
-        std::shared_ptr<bool> has_table_lock,
-        size_t index,
-        size_t slot)
-        : buckets_(buckets),
-        has_table_lock_(has_table_lock),
-        index_(index),
-        slot_(slot) {
+                typename decltype(buckets_)::type& buckets,
+                std::shared_ptr<bool> has_table_lock, size_t index, size_t slot)
+                : buckets_(buckets), has_table_lock_(has_table_lock),
+                  index_(index), slot_(slot) {
                 if (std::make_pair(index_, slot_) != end_pos(buckets) &&
                     !buckets[index_].occupied(slot_)) {
                     operator++();
@@ -2115,6 +2118,12 @@ private:
     // stores the maximum hashpower allowed for any expansions. If set to
     // NO_MAXIMUM_HASHPOWER, this limit will be disregarded.
     std::atomic<size_t> maximum_hashpower_;
+
+    // The hash function
+    hasher hash_fn;
+
+    // The equality function
+    key_equal eq_fn;
 };
 
 #endif // _CUCKOOHASH_MAP_HH
