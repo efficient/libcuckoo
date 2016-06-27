@@ -149,8 +149,12 @@ private:
 
     // number of cores on the machine
     static size_t kNumCores() {
+#ifdef _WIN32
+        static size_t cores = std::thread::hardware_concurrency();
+#else
         static size_t cores = std::thread::hardware_concurrency() == 0 ?
             sysconf(_SC_NPROCESSORS_ONLN) : std::thread::hardware_concurrency();
+#endif
         return cores;
     }
 
@@ -174,7 +178,11 @@ private:
             return !lock_.test_and_set(std::memory_order_acquire);
         }
 
-    } __attribute__((aligned(64)));
+    } 
+#ifndef _WIN32 
+    __attribute__((aligned(64)))
+#endif
+      ;
 
     typedef enum {
         ok,
@@ -307,7 +315,11 @@ private:
             num = x.num.load();
             return *this;
         }
-    } __attribute__((aligned(64)));
+    } 
+#ifndef _WIN32 
+    __attribute__((aligned(64)))
+#endif
+      ;
 
     // Helper methods to read and write hashpower_ with the correct memory
     // barriers
@@ -323,7 +335,11 @@ private:
     static inline int get_counterid() {
         // counterid stores the per-thread counter index of each thread. Each
         // counter value corresponds to a core on the machine.
-        static __thread int counterid = -1;
+        static 
+#ifndef _WIN32  
+          __thread 
+#endif
+        int counterid = -1;
 
         if (counterid < 0) {
             counterid = rand() % kNumCores();
@@ -342,11 +358,11 @@ private:
             blog2 = 0;
             for (size_t bcounter = buckets; bcounter > 1; bcounter >>= 1) {
                 ++blog2;
-    }
+            }
             if (hashsize(blog2) < buckets) {
                 ++blog2;
-    }
-    }
+            }
+        }
         assert(n <= hashsize(blog2) * slot_per_bucket);
         return blog2;
     }
@@ -979,7 +995,11 @@ private:
             : bucket(b), pathcode(p), depth(d) {
             assert(d < MAX_BFS_PATH_LEN);
         }
-    } __attribute__((__packed__));
+    } 
+#ifndef _WIN32 
+    __attribute__((__packed__))
+#endif
+      ;
 
     // b_queue is the queue used to store b_slots for BFS cuckoo hashing.
     class b_queue {
@@ -1024,7 +1044,11 @@ private:
         bool full() {
             return increment(last) == first;
         }
-    } __attribute__((__packed__));
+    } 
+#ifndef _WIN32 
+    __attribute__((__packed__))
+#endif
+      ;
 
     // slot_search searches for a cuckoo path using breadth-first search. It
     // starts with the i1 and i2 buckets, and, until it finds a bucket with an
@@ -1996,7 +2020,7 @@ public:
             // end of the table, or that spot is occupied, stay. Otherwise, step
             // forward to the next data item, or to the end of the table.
             templated_iterator(
-                typename decltype(buckets_)::type& buckets,
+                typename std::conditional<IS_CONST, const buckets_t, buckets_t>::type & buckets,
                 std::shared_ptr<bool> has_table_lock, size_t index, size_t slot)
                 : buckets_(buckets), has_table_lock_(has_table_lock),
                   index_(index), slot_(slot) {
