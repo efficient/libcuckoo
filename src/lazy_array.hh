@@ -104,8 +104,9 @@ public:
     // contiguously from the beginning.
     size_t allocated_size() const {
         size_t num_allocated_segments = 0;
-        for (; segments_[num_allocated_segments] != nullptr &&
-                 num_allocated_segments < NUM_SEGMENTS;
+        for (;
+             (num_allocated_segments < NUM_SEGMENTS &&
+              segments_[num_allocated_segments] != nullptr);
              ++num_allocated_segments) {}
         return num_allocated_segments * SEGMENT_SIZE;
     }
