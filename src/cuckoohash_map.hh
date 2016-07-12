@@ -238,12 +238,15 @@ private:
             return kvpair(ind).second;
         }
 
-        template <class... Args>
-        void setKV(size_t ind, Args&&... args) {
+        template <typename K, typename... Args>
+        void setKV(size_t ind, K&& key, Args&&... args) {
             static allocator_type pair_allocator;
             occupied_[ind] = true;
-            pair_allocator.construct(&storage_kvpair(ind),
-                                     std::forward<Args>(args)...);
+            pair_allocator.construct(
+                &storage_kvpair(ind),
+                std::piecewise_construct,
+                std::forward_as_tuple(std::forward<K>(key)),
+                std::forward_as_tuple(std::forward<Args>(args)...));
         }
 
         void eraseKV(size_t ind) {
@@ -265,7 +268,8 @@ private:
             Bucket& b2, size_t slot2) {
             assert(b1.occupied(slot1));
             assert(!b2.occupied(slot2));
-            b2.setKV(slot2, std::move(b1.storage_kvpair(slot1)));
+            storage_value_type& tomove = b1.storage_kvpair(slot1);
+            b2.setKV(slot2, std::move(tomove.first), std::move(tomove.second));
             b2.partial(slot2) = b1.partial(slot1);
             b1.occupied_.reset(slot1);
             b2.occupied_.set(slot2);
