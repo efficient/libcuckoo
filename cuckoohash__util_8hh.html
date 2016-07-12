@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.10"/>
-<title>libcuckoo: /Users/manu/Dropbox/dev/src/libcuckoo/libcuckoo/src/cuckoohash_util.hh File Reference</title>
+<title>libcuckoo: /Users/manu/Dropbox/dev/libcuckoo/libcuckoo/src/cuckoohash_util.hh File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -106,13 +106,16 @@ $(document).ready(function(){initNavTree('cuckoohash__util_8hh.html','');});
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#define-members">Macros</a>  </div>
+<a href="#define-members">Macros</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">cuckoohash_util.hh File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;exception&gt;</code><br />
 <code>#include &lt;pthread.h&gt;</code><br />
+<code>#include &lt;thread&gt;</code><br />
+<code>#include &lt;vector&gt;</code><br />
 <code>#include &quot;<a class="el" href="cuckoohash__config_8hh_source.html">cuckoohash_config.hh</a>&quot;</code><br />
 </div>
 <p><a href="cuckoohash__util_8hh_source.html">Go to the source code of this file.</a></p>
@@ -131,6 +134,17 @@ Macros</h2></td></tr>
 <tr class="separator:ac18754e17b69d65ddd84f9e8fe1f520c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3427f3b9ad8f7a6326b50d0d5c07de0"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><b>ENABLE_IF</b>(preamble,  condition,  return_type)                                      </td></tr>
 <tr class="separator:ad3427f3b9ad8f7a6326b50d0d5c07de0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:acd630a2f8109a02bb8652c35bc4c9b76"><td class="memTemplParams" colspan="2"><a class="anchor" id="acd630a2f8109a02bb8652c35bc4c9b76"></a>
+template&lt;class T , class Alloc &gt; </td></tr>
+<tr class="memitem:acd630a2f8109a02bb8652c35bc4c9b76"><td class="memTemplItemLeft" align="right" valign="top">T *&#160;</td><td class="memTemplItemRight" valign="bottom"><b>create_array</b> (const size_t size)</td></tr>
+<tr class="separator:acd630a2f8109a02bb8652c35bc4c9b76"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa56ed277decbd035fba211f73f26cf2f"><td class="memTemplParams" colspan="2"><a class="anchor" id="aa56ed277decbd035fba211f73f26cf2f"></a>
+template&lt;class T , class Alloc &gt; </td></tr>
+<tr class="memitem:aa56ed277decbd035fba211f73f26cf2f"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>destroy_array</b> (T *arr, const size_t size)</td></tr>
+<tr class="separator:aa56ed277decbd035fba211f73f26cf2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a class="anchor" id="ad3427f3b9ad8f7a6326b50d0d5c07de0"></a>
@@ -166,7 +180,7 @@ Macros</h2></td></tr>
 <div class="line">    preamble <span class="keyword">typename</span> std::enable_if&lt;<span class="keyword">sizeof</span>(Bogus) &amp;&amp;                   \</div>
 <div class="line">        condition, return_type&gt;::type</div>
 </div><!-- fragment -->
-<p>Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00022">22</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00024">24</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
 
 </div>
 </div>
@@ -176,7 +190,7 @@ Macros</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_7da76f3c08bcb9cfedda4a1d9f14bb3a.html">src</a></li><li class="navelem"><a class="el" href="cuckoohash__util_8hh.html">cuckoohash_util.hh</a></li>
-    <li class="footer">Generated on Sun Oct 11 2015 23:53:18 for libcuckoo by
+    <li class="footer">Generated on Mon Jul 11 2016 22:32:55 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

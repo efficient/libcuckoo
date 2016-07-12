@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.10"/>
-<title>libcuckoo: /Users/manu/Dropbox/dev/src/libcuckoo/libcuckoo/src/cuckoohash_map.hh File Reference</title>
+<title>libcuckoo: /Users/manu/Dropbox/dev/libcuckoo/libcuckoo/src/cuckoohash_map.hh File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -137,6 +137,8 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh.html','');});
 <code>#include &lt;vector&gt;</code><br />
 <code>#include &quot;<a class="el" href="cuckoohash__config_8hh_source.html">cuckoohash_config.hh</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="lazy__array_8hh_source.html">lazy_array.hh</a>&quot;</code><br />
+<code>#include &quot;default_hasher.hh&quot;</code><br />
 </div>
 <p><a href="cuckoohash__map_8hh_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -176,6 +178,12 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>try_lock</b> ()</td><
 <tr class="memitem:a5583cae7567efe05f34af049aea1d462"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5583cae7567efe05f34af049aea1d462"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>cacheint</b> (cacheint &amp;&amp;x)</td></tr>
 <tr class="separator:a5583cae7567efe05f34af049aea1d462"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d466d605395fd4b841f7f9eeb511b43"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3d466d605395fd4b841f7f9eeb511b43"></a>
+cacheint &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const cacheint &amp;x)</td></tr>
+<tr class="separator:a3d466d605395fd4b841f7f9eeb511b43"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65d961fe64630fef5836c22d6a8ce045"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a65d961fe64630fef5836c22d6a8ce045"></a>
+cacheint &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const cacheint &amp;&amp;x)</td></tr>
+<tr class="separator:a65d961fe64630fef5836c22d6a8ce045"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6eb6db5a0f59fb7a91468bdfc7389a96"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6eb6db5a0f59fb7a91468bdfc7389a96"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>b_slot</b> ()</td></tr>
 <tr class="separator:a6eb6db5a0f59fb7a91468bdfc7389a96"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -234,7 +242,7 @@ size_t&#160;</td><td class="memItemRight" valign="bottom"><b>last</b></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_7da76f3c08bcb9cfedda4a1d9f14bb3a.html">src</a></li><li class="navelem"><a class="el" href="cuckoohash__map_8hh.html">cuckoohash_map.hh</a></li>
-    <li class="footer">Generated on Sun Oct 11 2015 23:53:18 for libcuckoo by
+    <li class="footer">Generated on Mon Jul 11 2016 22:32:55 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -10,8 +10,8 @@ var classcuckoohash__map_1_1locked__table =
     [ "cend", "classcuckoohash__map_1_1locked__table.html#a3a590cf68557f397352d5fc7737ced3a", null ],
     [ "end", "classcuckoohash__map_1_1locked__table.html#a822c6900c7dd3d726e2dead0e16bb478", null ],
     [ "end", "classcuckoohash__map_1_1locked__table.html#a1678e0dfb434db438d340748fb8bc628", null ],
-    [ "has_table_lock", "classcuckoohash__map_1_1locked__table.html#a705232185e8f25508b86cca45a4bb96e", null ],
+    [ "has_table_lock", "classcuckoohash__map_1_1locked__table.html#a4967eac459c2f1ef914b86c03ef1ad50", null ],
     [ "operator=", "classcuckoohash__map_1_1locked__table.html#abf709dbeb6fd489a30499818629c05e7", null ],
-    [ "release", "classcuckoohash__map_1_1locked__table.html#a7565d79616908dfc5b9098d08fcc2380", null ],
+    [ "release", "classcuckoohash__map_1_1locked__table.html#a075879a71a3b9c0d4559dd80e72bae12", null ],
     [ "cuckoohash_map< Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET >", "classcuckoohash__map_1_1locked__table.html#a72169178c757849e81ddf150e9d4aa77", null ]
 ];

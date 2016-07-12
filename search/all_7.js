@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['insert',['insert',['../classcuckoohash__map.html#ab2b3f7cb9458c7176cf43d1ebe00b337',1,'cuckoohash_map']]]
+  ['insert',['insert',['../classcuckoohash__map.html#ab08585b4f46cd93ce38b71eba0c1046c',1,'cuckoohash_map']]]
 ];

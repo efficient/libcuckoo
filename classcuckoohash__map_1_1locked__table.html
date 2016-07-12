@@ -136,10 +136,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:abf709dbeb6fd489a30499818629c05e7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abf709dbeb6fd489a30499818629c05e7"></a>
 <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> &amp;&amp;lt)</td></tr>
 <tr class="separator:abf709dbeb6fd489a30499818629c05e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a705232185e8f25508b86cca45a4bb96e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table.html#a705232185e8f25508b86cca45a4bb96e">has_table_lock</a> () const </td></tr>
-<tr class="separator:a705232185e8f25508b86cca45a4bb96e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7565d79616908dfc5b9098d08fcc2380"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table.html#a7565d79616908dfc5b9098d08fcc2380">release</a> ()</td></tr>
-<tr class="separator:a7565d79616908dfc5b9098d08fcc2380"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4967eac459c2f1ef914b86c03ef1ad50"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table.html#a4967eac459c2f1ef914b86c03ef1ad50">has_table_lock</a> () const  noexcept</td></tr>
+<tr class="separator:a4967eac459c2f1ef914b86c03ef1ad50"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a075879a71a3b9c0d4559dd80e72bae12"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table.html#a075879a71a3b9c0d4559dd80e72bae12">release</a> () noexcept</td></tr>
+<tr class="separator:a075879a71a3b9c0d4559dd80e72bae12"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a384dcbc1133ca15a7c77b24f490681ff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a384dcbc1133ca15a7c77b24f490681ff"></a>
 iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table.html#a384dcbc1133ca15a7c77b24f490681ff">begin</a> ()</td></tr>
 <tr class="memdesc:a384dcbc1133ca15a7c77b24f490681ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">begin returns an iterator to the beginning of the table <br /></td></tr>
@@ -172,18 +172,18 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>cuckoohash_map&lt; K
 <tr class="separator:a72169178c757849e81ddf150e9d4aa77"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = std::equal_to&lt;Key&gt;, class Alloc = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET&gt;<br />
+<div class="textblock"><h3>template&lt;class Key, class T, class Hash = DefaultHasher&lt;Key&gt;, class Pred = std::equal_to&lt;Key&gt;, class Alloc = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET&gt;<br />
 class cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::locked_table</h3>
 
-<p>A <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> is an ownership wrapper around a <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a> table instance. When given a table instance, it takes all the locks on the table, blocking all outside operations on the table. Because the <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> has unique ownership of the table, it can provide a set of operations on the table that aren't possible in a concurrent context. Right now, this includes the ability to construct STL-compatible iterators on the table. When the <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> is destroyed (or the <a class="el" href="classcuckoohash__map_1_1locked__table.html#a7565d79616908dfc5b9098d08fcc2380">release</a> method is called), it will release all locks on the table. This will invalidate all existing iterators. </p>
+<p>A <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> is an ownership wrapper around a <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a> table instance. When given a table instance, it takes all the locks on the table, blocking all outside operations on the table. Because the <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> has unique ownership of the table, it can provide a set of operations on the table that aren't possible in a concurrent context. Right now, this includes the ability to construct STL-compatible iterators on the table. When the <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> is destroyed (or the <a class="el" href="classcuckoohash__map_1_1locked__table.html#a075879a71a3b9c0d4559dd80e72bae12">release</a> method is called), it will release all locks on the table. This will invalidate all existing iterators. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01838">1838</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01793">1793</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a705232185e8f25508b86cca45a4bb96e"></a>
+<a class="anchor" id="a4967eac459c2f1ef914b86c03ef1ad50"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = std::equal_to&lt;Key&gt;, class Alloc = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET&gt; </div>
+template&lt;class Key, class T, class Hash = DefaultHasher&lt;Key&gt;, class Pred = std::equal_to&lt;Key&gt;, class Alloc = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -197,21 +197,21 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 <p>Returns true if the locked table still has ownership of the hashtable, false otherwise. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01868">1868</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01828">1828</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a7565d79616908dfc5b9098d08fcc2380"></a>
+<a class="anchor" id="a075879a71a3b9c0d4559dd80e72bae12"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = std::equal_to&lt;Key&gt;, class Alloc = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET&gt; </div>
+template&lt;class Key, class T, class Hash = DefaultHasher&lt;Key&gt;, class Pred = std::equal_to&lt;Key&gt;, class Alloc = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -225,18 +225,18 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 <p>release unlocks the table, thereby freeing it up for other operations, but also invalidating all iterators and future operations with this table. It is idempotent. </p>
 
-<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01875">1875</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p>Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01835">1835</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>/Users/manu/Dropbox/dev/src/libcuckoo/libcuckoo/src/<a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a></li>
+<li>/Users/manu/Dropbox/dev/libcuckoo/libcuckoo/src/<a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -244,7 +244,7 @@ template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a></li><li class="navelem"><a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a></li>
-    <li class="footer">Generated on Sun Oct 11 2015 23:53:18 for libcuckoo by
+    <li class="footer">Generated on Mon Jul 11 2016 22:32:55 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

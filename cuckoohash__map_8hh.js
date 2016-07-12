@@ -16,6 +16,8 @@ var cuckoohash__map_8hh =
     [ "full", "cuckoohash__map_8hh.html#a6e92197c9686fdc5a1202c1849d02112", null ],
     [ "increment", "cuckoohash__map_8hh.html#a32cfecf1584b54591fa36b143e4ebf15", null ],
     [ "lock", "cuckoohash__map_8hh.html#a292876717f2834aa06ae7a2d6d220a7a", null ],
+    [ "operator=", "cuckoohash__map_8hh.html#a3d466d605395fd4b841f7f9eeb511b43", null ],
+    [ "operator=", "cuckoohash__map_8hh.html#a65d961fe64630fef5836c22d6a8ce045", null ],
     [ "spinlock", "cuckoohash__map_8hh.html#a438dc68864d21dac503df69e63402d20", null ],
     [ "try_lock", "cuckoohash__map_8hh.html#a5a6f394da8f3417024854662c6b130ab", null ],
     [ "unlock", "cuckoohash__map_8hh.html#ae907ba9752bc38d7f643cf219aeabbf1", null ],

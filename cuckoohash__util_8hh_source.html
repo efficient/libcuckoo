@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.10"/>
-<title>libcuckoo: /Users/manu/Dropbox/dev/src/libcuckoo/libcuckoo/src/cuckoohash_util.hh Source File</title>
+<title>libcuckoo: /Users/manu/Dropbox/dev/libcuckoo/libcuckoo/src/cuckoohash_util.hh Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -114,73 +114,125 @@ $(document).ready(function(){initNavTree('cuckoohash__util_8hh_source.html','');
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;</div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="preprocessor">#include &lt;exception&gt;</span></div>
 <div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#include &lt;pthread.h&gt;</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="cuckoohash__config_8hh.html">cuckoohash_config.hh</a>&quot;</span> <span class="comment">// for LIBCUCKOO_DEBUG</span></div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="preprocessor">#if LIBCUCKOO_DEBUG</span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)                                   \</span></div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor">     fprintf(stderr, &quot;\x1b[32m&quot;&quot;[libcuckoo:%s:%d:%lu] &quot; fmt&quot;&quot; &quot;\x1b[0m&quot;, \</span></div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="preprocessor">             __FILE__,__LINE__, (unsigned long)pthread_self(), ##args)</span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)  do {} while (0)</span></div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;</div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="comment">// For enabling certain methods based on a condition. Here&#39;s an example.</span></div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="comment">// ENABLE_IF(some_cond, type, static, inline) method() {</span></div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="comment">//     ...</span></div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="comment">// }</span></div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#define ENABLE_IF(preamble, condition, return_type)                     \</span></div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">    template &lt;class Bogus=void*&gt;                                        \</span></div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">    preamble typename std::enable_if&lt;sizeof(Bogus) &amp;&amp;                   \</span></div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">        condition, return_type&gt;::type</span></div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;</div>
-<div class="line"><a name="l00034"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html">   34</a></span>&#160;<span class="keyword">class </span><a class="code" href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a> : <span class="keyword">public</span> std::exception {</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00041"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">   41</a></span>&#160;    <a class="code" href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">libcuckoo_load_factor_too_low</a>(<span class="keyword">const</span> <span class="keywordtype">double</span> lf)</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        : load_factor_(lf) {}</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    <span class="keyword">virtual</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* what() const noexcept {</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;        <span class="keywordflow">return</span> <span class="stringliteral">&quot;Automatic expansion triggered when load factor was below &quot;</span></div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;            <span class="stringliteral">&quot;minimum threshold&quot;</span>;</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    }</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;</div>
-<div class="line"><a name="l00052"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">   52</a></span>&#160;    <span class="keywordtype">double</span> <a class="code" href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">load_factor</a>() {</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;        <span class="keywordflow">return</span> load_factor_;</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    }</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;<span class="keyword">private</span>:</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">double</span> load_factor_;</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;};</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;</div>
-<div class="line"><a name="l00064"></a><span class="lineno"><a class="line" href="classlibcuckoo__maximum__hashpower__exceeded.html">   64</a></span>&#160;<span class="keyword">class </span><a class="code" href="classlibcuckoo__maximum__hashpower__exceeded.html">libcuckoo_maximum_hashpower_exceeded</a> : <span class="keyword">public</span> std::exception {</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00071"></a><span class="lineno"><a class="line" href="classlibcuckoo__maximum__hashpower__exceeded.html#a4e08219f34a32603ad4ebd3cc864d09c">   71</a></span>&#160;    <a class="code" href="classlibcuckoo__maximum__hashpower__exceeded.html#a4e08219f34a32603ad4ebd3cc864d09c">libcuckoo_maximum_hashpower_exceeded</a>(<span class="keyword">const</span> <span class="keywordtype">size_t</span> hp)</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;        : hashpower_(hp) {}</div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <span class="keyword">virtual</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* what() const noexcept {</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;        <span class="keywordflow">return</span> <span class="stringliteral">&quot;Expansion beyond maximum hashpower&quot;</span>;</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    }</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;</div>
-<div class="line"><a name="l00081"></a><span class="lineno"><a class="line" href="classlibcuckoo__maximum__hashpower__exceeded.html#ab062de5b7de577171501c32303bc0f92">   81</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classlibcuckoo__maximum__hashpower__exceeded.html#ab062de5b7de577171501c32303bc0f92">hashpower</a>() {</div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;        <span class="keywordflow">return</span> hashpower_;</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;    }</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;<span class="keyword">private</span>:</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">size_t</span> hashpower_;</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;};</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;<span class="preprocessor">#endif // _CUCKOOHASH_UTIL_HH</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor">#include &lt;thread&gt;</span></div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="cuckoohash__config_8hh.html">cuckoohash_config.hh</a>&quot;</span> <span class="comment">// for LIBCUCKOO_DEBUG</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;</div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor">#if LIBCUCKOO_DEBUG</span></div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)                                   \</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">     fprintf(stderr, &quot;\x1b[32m&quot;&quot;[libcuckoo:%s:%d:%lu] &quot; fmt&quot;&quot; &quot;\x1b[0m&quot;, \</span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor">             __FILE__,__LINE__, (unsigned long)pthread_self(), ##args)</span></div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="preprocessor">#  define LIBCUCKOO_DBG(fmt, args...)  do {} while (0)</span></div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;</div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="comment">// For enabling certain methods based on a condition. Here&#39;s an example.</span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="comment">// ENABLE_IF(some_cond, type, static, inline) method() {</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="comment">//     ...</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="comment">// }</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#define ENABLE_IF(preamble, condition, return_type)                     \</span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">    template &lt;class Bogus=void*&gt;                                        \</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">    preamble typename std::enable_if&lt;sizeof(Bogus) &amp;&amp;                   \</span></div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor">        condition, return_type&gt;::type</span></div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;</div>
+<div class="line"><a name="l00036"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html">   36</a></span>&#160;<span class="keyword">class </span><a class="code" href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a> : <span class="keyword">public</span> std::exception {</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00043"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">   43</a></span>&#160;    <a class="code" href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">libcuckoo_load_factor_too_low</a>(<span class="keyword">const</span> <span class="keywordtype">double</span> lf)</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        : load_factor_(lf) {}</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    <span class="keyword">virtual</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* what() const noexcept {</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;        <span class="keywordflow">return</span> <span class="stringliteral">&quot;Automatic expansion triggered when load factor was below &quot;</span></div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;            <span class="stringliteral">&quot;minimum threshold&quot;</span>;</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;    }</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;</div>
+<div class="line"><a name="l00054"></a><span class="lineno"><a class="line" href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">   54</a></span>&#160;    <span class="keywordtype">double</span> <a class="code" href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">load_factor</a>() {</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;        <span class="keywordflow">return</span> load_factor_;</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    }</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">double</span> load_factor_;</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;};</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
+<div class="line"><a name="l00066"></a><span class="lineno"><a class="line" href="classlibcuckoo__maximum__hashpower__exceeded.html">   66</a></span>&#160;<span class="keyword">class </span><a class="code" href="classlibcuckoo__maximum__hashpower__exceeded.html">libcuckoo_maximum_hashpower_exceeded</a> : <span class="keyword">public</span> std::exception {</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00073"></a><span class="lineno"><a class="line" href="classlibcuckoo__maximum__hashpower__exceeded.html#a4e08219f34a32603ad4ebd3cc864d09c">   73</a></span>&#160;    <a class="code" href="classlibcuckoo__maximum__hashpower__exceeded.html#a4e08219f34a32603ad4ebd3cc864d09c">libcuckoo_maximum_hashpower_exceeded</a>(<span class="keyword">const</span> <span class="keywordtype">size_t</span> hp)</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;        : hashpower_(hp) {}</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    <span class="keyword">virtual</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* what() const noexcept {</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;        <span class="keywordflow">return</span> <span class="stringliteral">&quot;Expansion beyond maximum hashpower&quot;</span>;</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;    }</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;</div>
+<div class="line"><a name="l00083"></a><span class="lineno"><a class="line" href="classlibcuckoo__maximum__hashpower__exceeded.html#ab062de5b7de577171501c32303bc0f92">   83</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classlibcuckoo__maximum__hashpower__exceeded.html#ab062de5b7de577171501c32303bc0f92">hashpower</a>() {</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;        <span class="keywordflow">return</span> hashpower_;</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;    }</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">size_t</span> hashpower_;</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;};</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;<span class="comment">// Allocates an array of the given size and value-initializes each element with</span></div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;<span class="comment">// the 0-argument constructor</span></div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> T, <span class="keyword">class</span> Alloc&gt;</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;T* create_array(<span class="keyword">const</span> <span class="keywordtype">size_t</span> size) {</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    Alloc allocator;</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    T* arr = allocator.allocate(size);</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;    <span class="comment">// Initialize all the elements, safely deallocating and destroying</span></div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;    <span class="comment">// everything in case of error.</span></div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;    <span class="keywordtype">size_t</span> i;</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;    <span class="keywordflow">try</span> {</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;        <span class="keywordflow">for</span> (i = 0; i &lt; size; ++i) {</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;            allocator.construct(&amp;arr[i]);</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;        }</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    } <span class="keywordflow">catch</span> (...) {</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;        <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> j = 0; j &lt; i; ++j) {</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;            allocator.destroy(&amp;arr[j]);</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;        }</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;        allocator.deallocate(arr, size);</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;        <span class="keywordflow">throw</span>;</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;    }</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;    <span class="keywordflow">return</span> arr;</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;}</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;</div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;<span class="comment">// Destroys every element of an array of the given size and then deallocates the</span></div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;<span class="comment">// memory.</span></div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> T, <span class="keyword">class</span> Alloc&gt;</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;<span class="keywordtype">void</span> destroy_array(T* arr, <span class="keyword">const</span> <span class="keywordtype">size_t</span> size) {</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    Alloc allocator;</div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; size; ++i) {</div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;        allocator.destroy(&amp;arr[i]);</div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;    }</div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;    allocator.deallocate(arr, size);</div>
+<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;}</div>
+<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;</div>
+<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;<span class="comment">// executes the function over the given range split over num_threads threads</span></div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> F&gt;</div>
+<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;<span class="keyword">static</span> <span class="keywordtype">void</span> parallel_exec(<span class="keywordtype">size_t</span> start, <span class="keywordtype">size_t</span> end,</div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;                          <span class="keywordtype">size_t</span> num_threads, F func) {</div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;    <span class="keywordtype">size_t</span> work_per_thread = (end - start) / num_threads;</div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;    std::vector&lt;std::thread&gt; threads(num_threads);</div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; num_threads - 1; ++i) {</div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;        threads[i] = std::thread(func, start, start + work_per_thread);</div>
+<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;        start += work_per_thread;</div>
+<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;    }</div>
+<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;    threads[num_threads - 1] = std::thread(func, start, end);</div>
+<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;    <span class="keywordflow">for</span> (std::thread&amp; t : threads) {</div>
+<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;        t.join();</div>
+<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;    }</div>
+<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;}</div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;</div>
+<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;<span class="preprocessor">#endif // _CUCKOOHASH_UTIL_HH</span></div>
 <div class="ttc" id="cuckoohash__config_8hh_html"><div class="ttname"><a href="cuckoohash__config_8hh.html">cuckoohash_config.hh</a></div></div>
-<div class="ttc" id="classlibcuckoo__load__factor__too__low_html"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a></div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00034">cuckoohash_util.hh:34</a></div></div>
-<div class="ttc" id="classlibcuckoo__load__factor__too__low_html_a382fc73444568dce5fa2c2f2dd627b52"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">libcuckoo_load_factor_too_low::libcuckoo_load_factor_too_low</a></div><div class="ttdeci">libcuckoo_load_factor_too_low(const double lf)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00041">cuckoohash_util.hh:41</a></div></div>
-<div class="ttc" id="classlibcuckoo__maximum__hashpower__exceeded_html"><div class="ttname"><a href="classlibcuckoo__maximum__hashpower__exceeded.html">libcuckoo_maximum_hashpower_exceeded</a></div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00064">cuckoohash_util.hh:64</a></div></div>
-<div class="ttc" id="classlibcuckoo__maximum__hashpower__exceeded_html_ab062de5b7de577171501c32303bc0f92"><div class="ttname"><a href="classlibcuckoo__maximum__hashpower__exceeded.html#ab062de5b7de577171501c32303bc0f92">libcuckoo_maximum_hashpower_exceeded::hashpower</a></div><div class="ttdeci">size_t hashpower()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00081">cuckoohash_util.hh:81</a></div></div>
-<div class="ttc" id="classlibcuckoo__maximum__hashpower__exceeded_html_a4e08219f34a32603ad4ebd3cc864d09c"><div class="ttname"><a href="classlibcuckoo__maximum__hashpower__exceeded.html#a4e08219f34a32603ad4ebd3cc864d09c">libcuckoo_maximum_hashpower_exceeded::libcuckoo_maximum_hashpower_exceeded</a></div><div class="ttdeci">libcuckoo_maximum_hashpower_exceeded(const size_t hp)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00071">cuckoohash_util.hh:71</a></div></div>
-<div class="ttc" id="classlibcuckoo__load__factor__too__low_html_a6733a03a958354bb8bb3c2b8a86b3d96"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">libcuckoo_load_factor_too_low::load_factor</a></div><div class="ttdeci">double load_factor()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00052">cuckoohash_util.hh:52</a></div></div>
+<div class="ttc" id="classlibcuckoo__load__factor__too__low_html"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a></div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00036">cuckoohash_util.hh:36</a></div></div>
+<div class="ttc" id="classlibcuckoo__load__factor__too__low_html_a382fc73444568dce5fa2c2f2dd627b52"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">libcuckoo_load_factor_too_low::libcuckoo_load_factor_too_low</a></div><div class="ttdeci">libcuckoo_load_factor_too_low(const double lf)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00043">cuckoohash_util.hh:43</a></div></div>
+<div class="ttc" id="classlibcuckoo__maximum__hashpower__exceeded_html"><div class="ttname"><a href="classlibcuckoo__maximum__hashpower__exceeded.html">libcuckoo_maximum_hashpower_exceeded</a></div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00066">cuckoohash_util.hh:66</a></div></div>
+<div class="ttc" id="classlibcuckoo__maximum__hashpower__exceeded_html_ab062de5b7de577171501c32303bc0f92"><div class="ttname"><a href="classlibcuckoo__maximum__hashpower__exceeded.html#ab062de5b7de577171501c32303bc0f92">libcuckoo_maximum_hashpower_exceeded::hashpower</a></div><div class="ttdeci">size_t hashpower()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00083">cuckoohash_util.hh:83</a></div></div>
+<div class="ttc" id="classlibcuckoo__maximum__hashpower__exceeded_html_a4e08219f34a32603ad4ebd3cc864d09c"><div class="ttname"><a href="classlibcuckoo__maximum__hashpower__exceeded.html#a4e08219f34a32603ad4ebd3cc864d09c">libcuckoo_maximum_hashpower_exceeded::libcuckoo_maximum_hashpower_exceeded</a></div><div class="ttdeci">libcuckoo_maximum_hashpower_exceeded(const size_t hp)</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00073">cuckoohash_util.hh:73</a></div></div>
+<div class="ttc" id="classlibcuckoo__load__factor__too__low_html_a6733a03a958354bb8bb3c2b8a86b3d96"><div class="ttname"><a href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">libcuckoo_load_factor_too_low::load_factor</a></div><div class="ttdeci">double load_factor()</div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__util_8hh_source.html#l00054">cuckoohash_util.hh:54</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_7da76f3c08bcb9cfedda4a1d9f14bb3a.html">src</a></li><li class="navelem"><a class="el" href="cuckoohash__util_8hh.html">cuckoohash_util.hh</a></li>
-    <li class="footer">Generated on Sun Oct 11 2015 23:53:18 for libcuckoo by
+    <li class="footer">Generated on Mon Jul 11 2016 22:32:55 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>
