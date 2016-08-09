@@ -57,10 +57,10 @@ use CityHash, which we recommend, we have provided a wrapper
 compatible with the `std::hash` type around it in the
 `libcuckoo/city_hasher.hh` file. If compiling with CityHash, add the
 `-lcityhash` flag. You must also enable C++11 features on your
-compiler. Compiling the file `examples/count_freq.cpp` with g++
+compiler. Compiling the file `examples/count_freq.cc` with g++
 might look like this:
 
-    $ g++ -std=c++11 examples/count_freq.cpp -lcityhash
+    $ g++ -std=c++11 examples/count_freq.cc -lcityhash
 
 The
 [examples directory](https://github.com/efficient/libcuckoo/tree/master/examples)
