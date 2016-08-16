@@ -18,9 +18,12 @@
 #include <random>
 #include <stdexcept>
 #include <thread>
-#include <unistd.h>
+#include <chrono>
 #include <utility>
 #include <vector>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 #include "../../src/cuckoohash_map.hh"
 #include "../test_util.hh"
@@ -286,7 +289,7 @@ void StressTest(AllEnvironment<KType> *env) {
         }
     }
     // Sleeps before ending the threads
-    sleep(test_len);
+    std::this_thread::sleep_for(std::chrono::seconds(test_len));
     env->finished.store(true);
     for (size_t i = 0; i < threads.size(); i++) {
         threads[i].join();

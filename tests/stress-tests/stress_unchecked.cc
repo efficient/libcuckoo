@@ -17,9 +17,12 @@
 #include <random>
 #include <stdint.h>
 #include <thread>
-#include <unistd.h>
+#include <chrono>
 #include <utility>
 #include <vector>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 #include "../../src/cuckoohash_config.hh"
 #include "../../src/cuckoohash_map.hh"
@@ -167,7 +170,7 @@ void resize_thread(AllEnvironment<KType> *env, size_t seed) {
     std::mt19937_64 gen(seed);
     // Resizes at a random time
     const size_t sleep_time = gen() % test_len;
-    sleep(sleep_time);
+  std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
     if (env->finished.load()) {
         return;
     }
@@ -186,7 +189,7 @@ void iterator_thread(AllEnvironment<KType> *env, size_t seed) {
     std::mt19937_64 gen(seed);
     // Runs an iteration operation at a random time
     const size_t sleep_time = gen() % test_len;
-    sleep(sleep_time);
+  std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
     if (env->finished.load()) {
         return;
     }
@@ -217,7 +220,7 @@ void clear_thread(AllEnvironment<KType> *env, size_t seed) {
     std::mt19937_64 gen(seed);
     // Runs a clear operation at a random time
     const size_t sleep_time = gen() % test_len;
-    sleep(sleep_time);
+  std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
     if (env->finished.load()) {
         return;
     }
@@ -256,7 +259,7 @@ void StressTest(AllEnvironment<KType> *env) {
         }
     }
     // Sleeps before ending the threads
-    sleep(test_len);
+    std::this_thread::sleep_for(std::chrono::seconds(test_len));
     env->finished.store(true);
     for (size_t i = 0; i < threads.size(); i++) {
         threads[i].join();

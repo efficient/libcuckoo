@@ -15,14 +15,22 @@
 #include <mutex>
 #include <random>
 #include <stdint.h>
+#ifdef _WIN32
+#include <time.h>
+//#include <Windows.h>
+//#include <Winbase.h>
+#else
 #include <sys/time.h>
-#include <thread>
 #include <unistd.h>
+#endif
+#include <thread>
 #include <utility>
 #include <vector>
 
 #include "../../src/cuckoohash_map.hh"
 #include "../test_util.hh"
+
+#include "chrono.h"
 
 typedef uint32_t KeyType;
 typedef std::string KeyType2;
@@ -37,7 +45,8 @@ size_t power = 25;
 size_t table_capacity = 0;
 // The number of threads spawned for inserts. This can be set with the
 // command line flag --thread-num
-size_t thread_num = sysconf(_SC_NPROCESSORS_ONLN);
+unsigned concurentThreadsSupported = std::thread::hardware_concurrency();
+size_t thread_num = static_cast<size_t>(concurentThreadsSupported);
 // The load factor to fill the table up to before testing throughput.
 // This can be set with the command line flag --begin-load.
 size_t begin_load = 0;
@@ -106,8 +115,8 @@ void InsertThroughputTest(InsertEnvironment<T> *env) {
     std::vector<std::thread> threads;
     size_t keys_per_thread = env->numkeys * ((end_load-begin_load) / 100.0) /
         thread_num;
-    timeval t1, t2;
-    gettimeofday(&t1, NULL);
+    chronowrap::Chronometer chrono;
+    chrono.GetTime();
     for (size_t i = 0; i < thread_num; i++) {
         threads.emplace_back(
             insert_thread<T>::func, std::ref(env->table),
@@ -117,26 +126,35 @@ void InsertThroughputTest(InsertEnvironment<T> *env) {
     for (size_t i = 0; i < threads.size(); i++) {
         threads[i].join();
     }
-    gettimeofday(&t2, NULL);
-    double elapsed_time = (t2.tv_sec - t1.tv_sec) * 1000.0; // sec to ms
-    elapsed_time += (t2.tv_usec - t1.tv_usec) / 1000.0; // us to ms
+    chrono.StopTime();
+    double elapsed_time = chrono.GetElapsedTime();
     size_t num_inserts = env->table.size() - env->init_size;
     // Reports the results
     std::cout << "----------Results----------" << std::endl;
     std::cout << "Final load factor:\t" << end_load << "%" << std::endl;
     std::cout << "Number of inserts:\t" << num_inserts << std::endl;
-    std::cout << "Time elapsed:\t" << elapsed_time/1000 << " seconds"
+    std::cout << "Time elapsed:\t" << elapsed_time << " seconds"
               << std::endl;
     std::cout << "Throughput: " << std::fixed
-              << (double)num_inserts / (elapsed_time/1000)
+    << (double)num_inserts / elapsed_time
               << " inserts/sec" << std::endl;
 }
 
 int main(int argc, char** argv) {
-    const char* args[] = {"--power", "--table-capacity", "--thread-num",
-                          "--begin-load", "--end-load", "--seed"};
-    size_t* arg_vars[] = {&power, &table_capacity, &thread_num, &begin_load,
-                          &end_load, &seed};
+    if (thread_num == 0) {
+#ifdef _WIN32
+        //SYSTEM_INFO sysinfo;
+        //GetSystemInfo(&sysinfo);
+        //thread_num = sysinfo.dwNumberOfProcessors;
+#else
+        thread_num = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+    }
+
+    const char* args[] = { "--power", "--table-capacity", "--thread-num",
+                        "--begin-load", "--end-load", "--seed" };
+    size_t* arg_vars[] = { &power, &table_capacity, &thread_num, &begin_load,
+                        &end_load, &seed };
     const char* arg_help[] = {
         "The number of keys to size the table with, expressed as a power of 2",
         "The initial capacity of the table, expressed as a power of 2. "

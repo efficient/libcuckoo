@@ -44,13 +44,7 @@ TEST_CASE("reserve calc", "[resize]") {
     REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
                 (1UL << 31) * slot_per_bucket) == 31);
     REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-                ((1UL << 31) + 1) * slot_per_bucket == 31));
-
-    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-                (1UL << 61) * slot_per_bucket) == 61);
-    REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-                ((1UL << 61) + 1) * slot_per_bucket == 61));
-
+                ((1UL << 31) + 1) * slot_per_bucket) == 32);
 }
 
 static size_t no_double_free_test_num_deletes = 0;

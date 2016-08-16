@@ -16,14 +16,22 @@
 #include <numeric>
 #include <random>
 #include <stdint.h>
+#ifdef _WIN32
+#include <time.h>
+ //#include <Windows.h>
+ //#include <Winbase.h>
+#else
 #include <sys/time.h>
-#include <thread>
 #include <unistd.h>
+#endif
+#include <thread>
 #include <utility>
 #include <vector>
 
 #include "../../src/cuckoohash_map.hh"
 #include "../test_util.hh"
+
+#include "chrono.h"
 
 typedef uint32_t KeyType;
 typedef std::string KeyType2;
@@ -34,7 +42,8 @@ typedef uint32_t ValType;
 size_t power = 25;
 // The number of threads spawned for inserts. This can be set with the
 // command line flag --thread-num
-size_t thread_num = sysconf(_SC_NPROCESSORS_ONLN);
+unsigned concurentThreadsSupported = std::thread::hardware_concurrency();
+size_t thread_num = static_cast<size_t>(concurentThreadsSupported);
 // The load factor to fill the table up to before testing throughput.
 // This can be set with the --load flag
 size_t load = 90;
@@ -128,7 +137,7 @@ void ReadThroughputTest(ReadEnvironment<T> *env) {
             env->keys.begin() + (i+1)*out_keys_per_thread + env->init_size,
             std::ref(counter), false, std::ref(finished));
     }
-    sleep(test_len);
+    std::this_thread::sleep_for(std::chrono::seconds(test_len));
     finished.store(true, std::memory_order_release);
     for (size_t i = 0; i < threads.size(); i++) {
         threads[i].join();
@@ -142,9 +151,18 @@ void ReadThroughputTest(ReadEnvironment<T> *env) {
 }
 
 int main(int argc, char** argv) {
-    const char* args[] = {"--power", "--thread-num", "--load",
-                          "--time", "--seed"};
-    size_t* arg_vars[] = {&power, &thread_num, &load, &test_len, &seed};
+    if (thread_num == 0) {
+#ifdef _WIN32
+        //SYSTEM_INFO sysinfo;
+        //GetSystemInfo(&sysinfo);
+        //thread_num = sysinfo.dwNumberOfProcessors;
+#else
+        thread_num = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+  }
+    const char* args[] = { "--power", "--thread-num", "--load",
+                        "--time", "--seed" };
+    size_t* arg_vars[] = { &power, &thread_num, &load, &test_len, &seed };
     const char* arg_help[] = {
         "The number of keys to size the table with, expressed as a power of 2",
         "The number of threads to spawn for each type of operation",
