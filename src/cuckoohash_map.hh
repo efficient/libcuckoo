@@ -150,7 +150,8 @@ private:
     }
 
     // A fast, lightweight spinlock
-    class spinlock {
+    LIBCUCKOO_SQUELCH_PADDING_WARNING
+    class LIBCUCKOO_ALIGNAS(64) spinlock {
         std::atomic_flag lock_;
     public:
         spinlock() {
@@ -169,7 +170,7 @@ private:
             return !lock_.test_and_set(std::memory_order_acquire);
         }
 
-    } __attribute__((aligned(64)));
+    };
 
     typedef enum {
         ok,
@@ -292,7 +293,8 @@ private:
     typedef std::mutex expansion_lock_t;
 
     // cacheint is a cache-aligned atomic integer type.
-    struct cacheint {
+    LIBCUCKOO_SQUELCH_PADDING_WARNING
+    struct LIBCUCKOO_ALIGNAS(64) cacheint {
         std::atomic<size_t> num;
         cacheint(): num(0) {}
         cacheint(size_t x): num(x) {}
@@ -306,7 +308,7 @@ private:
             num = x.num.load();
             return *this;
         }
-    } __attribute__((aligned(64)));
+    };
 
     // Helper methods to read and write hashpower_ with the correct memory
     // barriers

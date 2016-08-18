@@ -16,6 +16,26 @@
 #  define LIBCUCKOO_DBG(fmt, ...)  do {} while (0)
 #endif
 
+/**
+ * alignas() requires GCC >= 4.9, so we stick with the alignment attribute for
+ * GCC.
+ */
+#ifdef __GNUC__
+#define LIBCUCKOO_ALIGNAS(x) __attribute__((aligned(x)))
+#else
+#define LIBCUCKOO_ALIGNAS(x) alignas(x)
+#endif
+
+/**
+ * At higher warning levels, MSVC produces an annoying warning that alignment
+ * may cause wasted space: "structure was padded due to __declspec(align())".
+ */
+#ifdef _MSC_VER
+#define LIBCUCKOO_SQUELCH_PADDING_WARNING __pragma(warning(suppress : 4324))
+#else
+#define LIBCUCKOO_SQUELCH_PADDING_WARNING
+#endif
+
 // For enabling certain methods based on a condition. Here's an example.
 // ENABLE_IF(some_cond, type, static, inline) method() {
 //     ...
