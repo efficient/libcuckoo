@@ -922,7 +922,8 @@ private:
         // ensure tag is nonzero for the multiply.
         const partial_t nonzero_tag = (partial >> 1 << 1) + 1;
         // 0xc6a4a7935bd1e995 is the hash constant from 64-bit MurmurHash2
-        const size_t hash_of_tag = nonzero_tag * 0xc6a4a7935bd1e995;
+        const size_t hash_of_tag =
+            static_cast<size_t>(nonzero_tag * 0xc6a4a7935bd1e995);
         return (index ^ hash_of_tag) & hashmask(hp);
     }
 
