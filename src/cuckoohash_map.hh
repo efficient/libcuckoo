@@ -1910,7 +1910,8 @@ public:
             //! iterator is at the end.
             ENABLE_IF(, !IS_CONST, value_type&) operator*() {
                 check_iterator();
-                return buckets_.get()[index_].kvpair(slot_);
+                return buckets_.get()[static_cast<size_t>(index_)].
+                    kvpair(static_cast<size_t>(slot_));
             }
 
             //! Return a pointer to the immutable key-value pair pointed to by
@@ -1939,7 +1940,8 @@ public:
                 check_iterator();
                 for (; (size_t)index_ < buckets_.get().size(); ++index_) {
                     while ((size_t)++slot_ < SLOT_PER_BUCKET) {
-                        if (buckets_.get()[index_].occupied(slot_)) {
+                        if (buckets_.get()[static_cast<size_t>(index_)].
+                            occupied(static_cast<size_t>(slot_))) {
                             return *this;
                         }
                     }
@@ -2013,7 +2015,8 @@ public:
                 : buckets_(buckets), has_table_lock_(has_table_lock),
                   index_(index), slot_(slot) {
                 if (std::make_pair(index_, slot_) != end_pos(buckets) &&
-                    !buckets[index_].occupied(slot_)) {
+                    !buckets[static_cast<size_t>(index_)].
+                    occupied(static_cast<size_t>(slot_))) {
                     operator++();
                 }
             }
@@ -2056,7 +2059,8 @@ public:
             check_table();
             const auto end_pos = const_iterator::end_pos(buckets_.get());
             return iterator(buckets_.get(), has_table_lock_,
-                            end_pos.first, end_pos.second);
+                            static_cast<size_t>(end_pos.first),
+                            static_cast<size_t>(end_pos.second));
         }
 
         //! end returns a const_iterator to the end of the table
