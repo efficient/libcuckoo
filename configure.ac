@@ -26,8 +26,8 @@ LIBS="$PTHREAD_LIBS $LIBS"
 CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 CC="$PTHREAD_CC"
 
-AX_CXX_COMPILE_STDCXX_11(,[mandatory])
+AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
 
-CXXFLAGS="$CXXFLAGS -Wall -Wextra -Wshadow"
+CXXFLAGS="$CXXFLAGS -Wall -Wextra -Wshadow -pedantic"
 
 AC_OUTPUT
