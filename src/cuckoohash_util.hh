@@ -43,7 +43,7 @@ public:
     libcuckoo_load_factor_too_low(const double lf)
         : load_factor_(lf) {}
 
-    virtual const char* what() const noexcept {
+    virtual const char* what() const noexcept override {
         return "Automatic expansion triggered when load factor was below "
             "minimum threshold";
     }
@@ -73,7 +73,7 @@ public:
     libcuckoo_maximum_hashpower_exceeded(const size_t hp)
         : hashpower_(hp) {}
 
-    virtual const char* what() const noexcept {
+    virtual const char* what() const noexcept override {
         return "Expansion beyond maximum hashpower";
     }
 
