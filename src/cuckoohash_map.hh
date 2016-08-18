@@ -239,13 +239,13 @@ private:
         }
 
         template <typename K, typename... Args>
-        void setKV(size_t ind, K&& key, Args&&... args) {
+        void setKV(size_t ind, K&& k, Args&&... args) {
             static allocator_type pair_allocator;
             occupied_[ind] = true;
             pair_allocator.construct(
                 &storage_kvpair(ind),
                 std::piecewise_construct,
-                std::forward_as_tuple(std::forward<K>(key)),
+                std::forward_as_tuple(std::forward<K>(k)),
                 std::forward_as_tuple(std::forward<Args>(args)...));
         }
 
