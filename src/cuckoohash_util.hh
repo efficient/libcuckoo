@@ -10,11 +10,11 @@
 #include "cuckoohash_config.hh" // for LIBCUCKOO_DEBUG
 
 #if LIBCUCKOO_DEBUG
-#  define LIBCUCKOO_DBG(fmt, args...)                                   \
+#  define LIBCUCKOO_DBG(fmt, ...)                                        \
      fprintf(stderr, "\x1b[32m""[libcuckoo:%s:%d:%lu] " fmt"" "\x1b[0m", \
-             __FILE__,__LINE__, (unsigned long)pthread_self(), ##args)
+             __FILE__,__LINE__, (unsigned long)pthread_self(), __VA_ARGS__)
 #else
-#  define LIBCUCKOO_DBG(fmt, args...)  do {} while (0)
+#  define LIBCUCKOO_DBG(fmt, ...)  do {} while (0)
 #endif
 
 // For enabling certain methods based on a condition. Here's an example.
