@@ -752,7 +752,7 @@ private:
     inline void check_hashpower(const size_t hp, const size_t lock) const {
         if (get_hashpower() != hp) {
             locks_[lock].unlock();
-            LIBCUCKOO_DBG("hashpower changed\n");
+            LIBCUCKOO_DBG("%s", "hashpower changed\n");
             throw hashpower_changed();
         }
     }
@@ -1674,7 +1674,7 @@ private:
         if (get_hashpower() != current_hp) {
             // Most likely another expansion ran before this one could grab the
             // locks
-            LIBCUCKOO_DBG("another expansion is on-going\n");
+            LIBCUCKOO_DBG("%s", "another expansion is on-going\n");
             return failure_under_expansion;
         }
 
@@ -1748,7 +1748,7 @@ private:
             (!is_expansion && new_hp >= hp)) {
             // Most likely another expansion ran before this one could grab the
             // locks
-            LIBCUCKOO_DBG("another expansion is on-going\n");
+            LIBCUCKOO_DBG("%s", "another expansion is on-going\n");
             return failure_under_expansion;
         }
 
