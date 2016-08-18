@@ -892,7 +892,7 @@ private:
     // hashsize returns the number of buckets corresponding to a given
     // hashpower.
     static inline size_t hashsize(const size_t hp) {
-        return 1UL << hp;
+        return size_t(1) << hp;
     }
 
     // hashmask returns the bitmask for the buckets array corresponding to a
