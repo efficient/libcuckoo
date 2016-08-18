@@ -1859,11 +1859,13 @@ public:
         class templated_iterator :
             public std::iterator<std::bidirectional_iterator_tag, value_type> {
 
+            typedef typename std::conditional<
+                IS_CONST, const buckets_t, buckets_t>::type
+            maybe_const_buckets_t;
+
             // The buckets locked and owned by the locked table being iterated
             // over.
-            std::reference_wrapper<
-                typename std::conditional<
-                IS_CONST, const buckets_t, buckets_t>::type> buckets_;
+            std::reference_wrapper<maybe_const_buckets_t> buckets_;
 
             // The shared boolean indicating whether the iterator points to a
             // still-locked table or not. It should never be nullptr.
@@ -2005,7 +2007,7 @@ public:
             // end of the table, or that spot is occupied, stay. Otherwise, step
             // forward to the next data item, or to the end of the table.
             templated_iterator(
-                typename decltype(buckets_)::type& buckets,
+                maybe_const_buckets_t& buckets,
                 std::shared_ptr<bool> has_table_lock, size_t index, size_t slot)
                 : buckets_(buckets), has_table_lock_(has_table_lock),
                   index_(index), slot_(slot) {
