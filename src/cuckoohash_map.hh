@@ -1328,7 +1328,7 @@ private:
         (void)partial;
         slot = -1;
         bool found_empty = false;
-        for (size_t i = 0; i < slot_per_bucket; ++i) {
+        for (int i = 0; i < static_cast<int>(slot_per_bucket); ++i) {
             if (b.occupied(i)) {
                 if (!is_simple && partial != b.partial(i)) {
                     continue;
