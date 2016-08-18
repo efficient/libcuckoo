@@ -4,7 +4,6 @@
 #define _CUCKOOHASH_UTIL_HH
 
 #include <exception>
-#include <pthread.h>
 #include <thread>
 #include <vector>
 #include "cuckoohash_config.hh" // for LIBCUCKOO_DEBUG
@@ -12,7 +11,7 @@
 #if LIBCUCKOO_DEBUG
 #  define LIBCUCKOO_DBG(fmt, ...)                                        \
      fprintf(stderr, "\x1b[32m""[libcuckoo:%s:%d:%lu] " fmt"" "\x1b[0m", \
-             __FILE__,__LINE__, (unsigned long)pthread_self(), __VA_ARGS__)
+             __FILE__,__LINE__, (unsigned long)std::this_thread::get_id(), __VA_ARGS__)
 #else
 #  define LIBCUCKOO_DBG(fmt, ...)  do {} while (0)
 #endif

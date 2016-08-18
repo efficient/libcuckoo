@@ -23,7 +23,6 @@
 #include <thread>
 #include <tuple>
 #include <type_traits>
-#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -146,8 +145,7 @@ private:
 
     // number of cores on the machine
     static size_t kNumCores() {
-        static size_t cores = std::thread::hardware_concurrency() == 0 ?
-            sysconf(_SC_NPROCESSORS_ONLN) : std::thread::hardware_concurrency();
+        static size_t cores = std::thread::hardware_concurrency();
         return cores;
     }
 
@@ -324,7 +322,7 @@ private:
     static inline int get_counterid() {
         // counterid stores the per-thread counter index of each thread. Each
         // counter value corresponds to a core on the machine.
-        static __thread int counterid = -1;
+        static thread_local int counterid = -1;
 
         if (counterid < 0) {
             counterid = rand() % kNumCores();
