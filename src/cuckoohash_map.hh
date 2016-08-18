@@ -954,6 +954,7 @@ private:
     typedef std::array<CuckooRecord, MAX_BFS_PATH_LEN> CuckooRecords;
 
     // b_slot holds the information for a BFS path through the table
+    #pragma pack(push,1)
     struct b_slot {
         // The bucket of the last item in the path
         size_t bucket;
@@ -980,9 +981,11 @@ private:
             : bucket(b), pathcode(p), depth(d) {
             assert(d < MAX_BFS_PATH_LEN);
         }
-    } __attribute__((__packed__));
+    };
+    #pragma pack(pop)
 
     // b_queue is the queue used to store b_slots for BFS cuckoo hashing.
+    #pragma pack(push,1)
     class b_queue {
         // The maximum size of the BFS queue. Note that unless it's less than
         // SLOT_PER_BUCKET^MAX_BFS_PATH_LEN, it won't really mean anything.
@@ -1025,7 +1028,8 @@ private:
         bool full() {
             return increment(last) == first;
         }
-    } __attribute__((__packed__));
+    };
+    #pragma pack(pop)
 
     // slot_search searches for a cuckoo path using breadth-first search. It
     // starts with the i1 and i2 buckets, and, until it finds a bucket with an
