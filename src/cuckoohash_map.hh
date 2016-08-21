@@ -324,7 +324,7 @@ private:
     static inline int get_counterid() {
         // counterid stores the per-thread counter index of each thread. Each
         // counter value corresponds to a core on the machine.
-        static thread_local int counterid = -1;
+        static LIBCUCKOO_THREAD_LOCAL int counterid = -1;
 
         if (counterid < 0) {
             counterid = rand() % kNumCores();
