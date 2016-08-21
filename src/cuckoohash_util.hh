@@ -10,11 +10,11 @@
 #include "cuckoohash_config.hh" // for LIBCUCKOO_DEBUG
 
 #if LIBCUCKOO_DEBUG
-#  define LIBCUCKOO_DBG(fmt, args...)                                   \
+#  define LIBCUCKOO_DBG(fmt, ...)                                        \
      fprintf(stderr, "\x1b[32m""[libcuckoo:%s:%d:%lu] " fmt"" "\x1b[0m", \
-             __FILE__,__LINE__, (unsigned long)pthread_self(), ##args)
+             __FILE__,__LINE__, (unsigned long)pthread_self(), __VA_ARGS__)
 #else
-#  define LIBCUCKOO_DBG(fmt, args...)  do {} while (0)
+#  define LIBCUCKOO_DBG(fmt, ...)  do {} while (0)
 #endif
 
 // For enabling certain methods based on a condition. Here's an example.
@@ -43,7 +43,7 @@ public:
     libcuckoo_load_factor_too_low(const double lf)
         : load_factor_(lf) {}
 
-    virtual const char* what() const noexcept {
+    virtual const char* what() const noexcept override {
         return "Automatic expansion triggered when load factor was below "
             "minimum threshold";
     }
@@ -73,7 +73,7 @@ public:
     libcuckoo_maximum_hashpower_exceeded(const size_t hp)
         : hashpower_(hp) {}
 
-    virtual const char* what() const noexcept {
+    virtual const char* what() const noexcept override {
         return "Expansion beyond maximum hashpower";
     }
 

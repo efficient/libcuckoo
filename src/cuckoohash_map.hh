@@ -239,13 +239,13 @@ private:
         }
 
         template <typename K, typename... Args>
-        void setKV(size_t ind, K&& key, Args&&... args) {
+        void setKV(size_t ind, K&& k, Args&&... args) {
             static allocator_type pair_allocator;
             occupied_[ind] = true;
             pair_allocator.construct(
                 &storage_kvpair(ind),
                 std::piecewise_construct,
-                std::forward_as_tuple(std::forward<K>(key)),
+                std::forward_as_tuple(std::forward<K>(k)),
                 std::forward_as_tuple(std::forward<Args>(args)...));
         }
 
@@ -666,7 +666,7 @@ private:
         const cuckoohash_map* map;
         std::array<size_t, N> i;
 
-        BucketContainer() : map(nullptr) {}
+        BucketContainer() : map(nullptr), i() {}
 
         template <typename... Args>
         BucketContainer(const cuckoohash_map* _map, Args&&... inds)
@@ -752,7 +752,7 @@ private:
     inline void check_hashpower(const size_t hp, const size_t lock) const {
         if (get_hashpower() != hp) {
             locks_[lock].unlock();
-            LIBCUCKOO_DBG("hashpower changed\n");
+            LIBCUCKOO_DBG("%s", "hashpower changed\n");
             throw hashpower_changed();
         }
     }
@@ -1674,7 +1674,7 @@ private:
         if (get_hashpower() != current_hp) {
             // Most likely another expansion ran before this one could grab the
             // locks
-            LIBCUCKOO_DBG("another expansion is on-going\n");
+            LIBCUCKOO_DBG("%s", "another expansion is on-going\n");
             return failure_under_expansion;
         }
 
@@ -1748,7 +1748,7 @@ private:
             (!is_expansion && new_hp >= hp)) {
             // Most likely another expansion ran before this one could grab the
             // locks
-            LIBCUCKOO_DBG("another expansion is on-going\n");
+            LIBCUCKOO_DBG("%s", "another expansion is on-going\n");
             return failure_under_expansion;
         }
 
