@@ -1942,8 +1942,9 @@ public:
                 // Move forward until we get to a slot that is occupied, or we
                 // get to the end
                 check_iterator();
-                for (; (size_t)index_ < buckets_.get().size(); ++index_) {
-                    while ((size_t)++slot_ < SLOT_PER_BUCKET) {
+                for (; static_cast<size_t>(index_) < buckets_.get().size();
+                     ++index_) {
+                    while (static_cast<size_t>(++slot_) < SLOT_PER_BUCKET) {
                         if (buckets_.get()[static_cast<size_t>(index_)].
                             occupied(static_cast<size_t>(slot_))) {
                             return *this;
@@ -1974,7 +1975,8 @@ public:
                 check_iterator();
                 for (; index_ >= 0; --index_) {
                     while (--slot_ >= 0) {
-                        if (buckets_.get()[index_].occupied(slot_)) {
+                        if (buckets_.get()[static_cast<size_t>(index_)]
+                            .occupied(static_cast<size_t>(slot_))) {
                             return *this;
                         }
                     }
@@ -2017,10 +2019,11 @@ public:
                 maybe_const_buckets_t& buckets,
                 std::shared_ptr<bool> has_table_lock, size_t index, size_t slot)
                 : buckets_(buckets), has_table_lock_(has_table_lock),
-                  index_(index), slot_(slot) {
+                  index_(static_cast<intmax_t>(index)),
+                  slot_(static_cast<intmax_t>(slot)) {
                 if (std::make_pair(index_, slot_) != end_pos(buckets) &&
-                    !buckets[static_cast<size_t>(index_)].
-                    occupied(static_cast<size_t>(slot_))) {
+                    !buckets[static_cast<size_t>(index_)]
+                    .occupied(static_cast<size_t>(slot_))) {
                     operator++();
                 }
             }
@@ -2072,7 +2075,8 @@ public:
             check_table();
             const auto end_pos = const_iterator::end_pos(buckets_.get());
             return const_iterator(buckets_.get(), has_table_lock_,
-                                  end_pos.first, end_pos.second);
+                                  static_cast<size_t>(end_pos.first),
+                                  static_cast<size_t>(end_pos.second));
         }
 
         //! cend returns a const_iterator to the end of the table
