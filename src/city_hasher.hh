@@ -11,7 +11,13 @@ template <class Key>
 class CityHasher {
 public:
     size_t operator()(const Key& k) const {
-        return CityHash64((const char*) &k, sizeof(k));
+        if (sizeof(size_t) < 8) {
+            return CityHash32((const char*) &k, sizeof(k));
+        }
+        /* Although the following line should be optimized away on 32-bit
+         * builds, the cast is still necessary to stop MSVC emitting a
+         * truncation warning. */
+        return static_cast<size_t>(CityHash64((const char*) &k, sizeof(k)));
     }
 };
 
@@ -21,7 +27,13 @@ template <>
 class CityHasher<std::string> {
 public:
     size_t operator()(const std::string& k) const {
-        return CityHash64(k.c_str(), k.size());
+        if (sizeof(size_t) < 8) {
+            return CityHash32(k.c_str(), k.size());
+        }
+        /* Although the following line should be optimized away on 32-bit
+         * builds, the cast is still necessary to stop MSVC emitting a
+         * truncation warning. */
+        return static_cast<size_t>(CityHash64(k.c_str(), k.size()));
     }
 };
 

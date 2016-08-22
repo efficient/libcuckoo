@@ -892,7 +892,7 @@ private:
     // hashsize returns the number of buckets corresponding to a given
     // hashpower.
     static inline size_t hashsize(const size_t hp) {
-        return 1UL << hp;
+        return size_t(1) << hp;
     }
 
     // hashmask returns the bitmask for the buckets array corresponding to a
@@ -922,7 +922,8 @@ private:
         // ensure tag is nonzero for the multiply.
         const partial_t nonzero_tag = (partial >> 1 << 1) + 1;
         // 0xc6a4a7935bd1e995 is the hash constant from 64-bit MurmurHash2
-        const size_t hash_of_tag = nonzero_tag * 0xc6a4a7935bd1e995;
+        const size_t hash_of_tag =
+            static_cast<size_t>(nonzero_tag * 0xc6a4a7935bd1e995);
         return (index ^ hash_of_tag) & hashmask(hp);
     }
 
@@ -1272,6 +1273,8 @@ private:
     // the associated value if it finds it.
     bool try_read_from_bucket(const partial_t partial, const key_type &key,
                               mapped_type &val, const Bucket& b) const {
+        // Silence a warning from MSVC about partial being unused if is_simple.
+        (void)partial;
         for (size_t i = 0; i < slot_per_bucket; ++i) {
             if (!b.occupied(i)) {
                 continue;
@@ -1291,6 +1294,8 @@ private:
     // if the key is in the bucket, and false if it isn't.
     bool check_in_bucket(const partial_t partial, const key_type &key,
                          const Bucket& b) const {
+        // Silence a warning from MSVC about partial being unused if is_simple.
+        (void)partial;
         for (size_t i = 0; i < slot_per_bucket; ++i) {
             if (!b.occupied(i)) {
                 continue;
@@ -1324,9 +1329,11 @@ private:
     // the table (duplicate key error) and true otherwise.
     bool try_find_insert_bucket(const partial_t partial, const key_type &key,
                                 const Bucket& b, int& slot) const {
+        // Silence a warning from MSVC about partial being unused if is_simple.
+        (void)partial;
         slot = -1;
         bool found_empty = false;
-        for (size_t i = 0; i < slot_per_bucket; ++i) {
+        for (int i = 0; i < static_cast<int>(slot_per_bucket); ++i) {
             if (b.occupied(i)) {
                 if (!is_simple && partial != b.partial(i)) {
                     continue;
@@ -1390,6 +1397,8 @@ private:
     template <typename Updater>
     bool try_update_bucket_fn(const partial_t partial, const key_type &key,
                               Updater fn, Bucket& b) {
+        // Silence a warning from MSVC about partial being unused if is_simple.
+        (void)partial;
         for (size_t i = 0; i < slot_per_bucket; ++i) {
             if (!b.occupied(i)) {
                 continue;
@@ -1855,11 +1864,13 @@ public:
         class templated_iterator :
             public std::iterator<std::bidirectional_iterator_tag, value_type> {
 
+            typedef typename std::conditional<
+                IS_CONST, const buckets_t, buckets_t>::type
+            maybe_const_buckets_t;
+
             // The buckets locked and owned by the locked table being iterated
             // over.
-            std::reference_wrapper<
-                typename std::conditional<
-                IS_CONST, const buckets_t, buckets_t>::type> buckets_;
+            std::reference_wrapper<maybe_const_buckets_t> buckets_;
 
             // The shared boolean indicating whether the iterator points to a
             // still-locked table or not. It should never be nullptr.
@@ -1903,7 +1914,8 @@ public:
             //! iterator is at the end.
             ENABLE_IF(, !IS_CONST, value_type&) operator*() {
                 check_iterator();
-                return buckets_.get()[index_].kvpair(slot_);
+                return buckets_.get()[static_cast<size_t>(index_)].
+                    kvpair(static_cast<size_t>(slot_));
             }
 
             //! Return a pointer to the immutable key-value pair pointed to by
@@ -1932,7 +1944,8 @@ public:
                 check_iterator();
                 for (; (size_t)index_ < buckets_.get().size(); ++index_) {
                     while ((size_t)++slot_ < SLOT_PER_BUCKET) {
-                        if (buckets_.get()[index_].occupied(slot_)) {
+                        if (buckets_.get()[static_cast<size_t>(index_)].
+                            occupied(static_cast<size_t>(slot_))) {
                             return *this;
                         }
                     }
@@ -2001,12 +2014,13 @@ public:
             // end of the table, or that spot is occupied, stay. Otherwise, step
             // forward to the next data item, or to the end of the table.
             templated_iterator(
-                typename decltype(buckets_)::type& buckets,
+                maybe_const_buckets_t& buckets,
                 std::shared_ptr<bool> has_table_lock, size_t index, size_t slot)
                 : buckets_(buckets), has_table_lock_(has_table_lock),
                   index_(index), slot_(slot) {
                 if (std::make_pair(index_, slot_) != end_pos(buckets) &&
-                    !buckets[index_].occupied(slot_)) {
+                    !buckets[static_cast<size_t>(index_)].
+                    occupied(static_cast<size_t>(slot_))) {
                     operator++();
                 }
             }
@@ -2049,7 +2063,8 @@ public:
             check_table();
             const auto end_pos = const_iterator::end_pos(buckets_.get());
             return iterator(buckets_.get(), has_table_lock_,
-                            end_pos.first, end_pos.second);
+                            static_cast<size_t>(end_pos.first),
+                            static_cast<size_t>(end_pos.second));
         }
 
         //! end returns a const_iterator to the end of the table
