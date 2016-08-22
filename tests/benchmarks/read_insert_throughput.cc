@@ -37,7 +37,7 @@ size_t power = 25;
 size_t table_capacity = 0;
 // The number of threads spawned for inserts. This can be set with the
 // command line flag --thread-num
-size_t thread_num = sysconf(_SC_NPROCESSORS_ONLN);
+size_t thread_num = std::thread::hardware_concurrency();
 // The load factor to fill the table up to before testing throughput.
 // This can be set with the command line flag --begin-load.
 size_t begin_load = 0;
