@@ -473,7 +473,8 @@ public:
 
     //! find searches through the table for \p key, and stores the associated
     //! value it finds in \p val. must be copy assignable.
-    bool find(const key_type& key, mapped_type& val) const {
+    template <typename K>
+    bool find(const K& key, mapped_type& val) const {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
         const cuckoo_status st = cuckoo_find(key, val, hv, b.i[0], b.i[1]);
@@ -483,7 +484,8 @@ public:
     //! This version of find does the same thing as the two-argument version,
     //! except it returns the value it finds, throwing an \p std::out_of_range
     //! exception if the key isn't in the table.
-    mapped_type find(const key_type& key) const {
+    template <typename K>
+    mapped_type find(const K& key) const {
         mapped_type val;
         bool done = find(key, val);
         if (done) {
@@ -495,7 +497,8 @@ public:
 
     //! contains searches through the table for \p key, and returns true if it
     //! finds it in the table, and false otherwise.
-    bool contains(const key_type& key) const {
+    template <typename K>
+    bool contains(const K& key) const {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
         const bool result = cuckoo_contains(key, hv, b.i[0], b.i[1]);
@@ -524,7 +527,8 @@ public:
     //! erase removes \p key and it's associated value from the table, calling
     //! their destructors. If \p key is not there, it returns false, otherwise
     //! it returns true.
-    bool erase(const key_type& key) {
+    template <typename K>
+    bool erase(const K& key) {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
         const cuckoo_status st = cuckoo_delete(key, hv, b.i[0], b.i[1]);
@@ -533,8 +537,8 @@ public:
 
     //! update changes the value associated with \p key to \p val. If \p key is
     //! not there, it returns false, otherwise it returns true.
-    template <typename V>
-    bool update(const key_type& key, V&& val) {
+    template <typename K, typename V>
+    bool update(const K& key, V&& val) {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
         const cuckoo_status st = cuckoo_update(hv, b.i[0], b.i[1],
@@ -546,10 +550,10 @@ public:
     //! fn. \p fn will be passed one argument of type \p mapped_type& and can
     //! modify the argument as desired, returning nothing. If \p key is not
     //! there, it returns false, otherwise it returns true.
-    template <typename Updater>
+    template <typename K,typename Updater>
     typename std::enable_if<
         std::is_convertible<Updater, updater_type>::value,
-        bool>::type update_fn(const key_type& key, Updater fn) {
+        bool>::type update_fn(const K& key, Updater fn) {
         size_t hv = hashed_key(key);
         auto b = snapshot_and_lock_two(hv);
         const cuckoo_status st = cuckoo_update_fn(key, fn, hv, b.i[0], b.i[1]);
@@ -902,7 +906,8 @@ private:
     }
 
     // hashed_key hashes the given key.
-    inline size_t hashed_key(const key_type &key) const {
+    template <typename K>
+    inline size_t hashed_key(const K& key) const {
         return hash_function()(key);
     }
 
@@ -1271,7 +1276,8 @@ private:
 
     // try_read_from_bucket will search the bucket for the given key and store
     // the associated value if it finds it.
-    bool try_read_from_bucket(const partial_t partial, const key_type &key,
+    template <typename K>
+    bool try_read_from_bucket(const partial_t partial, const K &key,
                               mapped_type &val, const Bucket& b) const {
         // Silence a warning from MSVC about partial being unused if is_simple.
         (void)partial;
@@ -1282,7 +1288,7 @@ private:
             if (!is_simple && partial != b.partial(i)) {
                 continue;
             }
-            if (key_eq()(key, b.key(i))) {
+            if (key_eq()(b.key(i), key)) {
                 val = b.val(i);
                 return true;
             }
@@ -1292,7 +1298,8 @@ private:
 
     // check_in_bucket will search the bucket for the given key and return true
     // if the key is in the bucket, and false if it isn't.
-    bool check_in_bucket(const partial_t partial, const key_type &key,
+    template <typename K>
+    bool check_in_bucket(const partial_t partial, const K &key,
                          const Bucket& b) const {
         // Silence a warning from MSVC about partial being unused if is_simple.
         (void)partial;
@@ -1303,7 +1310,7 @@ private:
             if (!is_simple && partial != b.partial(i)) {
                 continue;
             }
-            if (key_eq()(key, b.key(i))) {
+            if (key_eq()(b.key(i), key)) {
                 return true;
             }
         }
@@ -1327,7 +1334,8 @@ private:
     // empty slot if it finds one, or -1 if it doesn't. Regardless, it will
     // search the entire bucket and return false if it finds the key already in
     // the table (duplicate key error) and true otherwise.
-    bool try_find_insert_bucket(const partial_t partial, const key_type &key,
+    template <typename K>
+    bool try_find_insert_bucket(const partial_t partial, const K &key,
                                 const Bucket& b, int& slot) const {
         // Silence a warning from MSVC about partial being unused if is_simple.
         (void)partial;
@@ -1338,7 +1346,7 @@ private:
                 if (!is_simple && partial != b.partial(i)) {
                     continue;
                 }
-                if (key_eq()(key, b.key(i))) {
+                if (key_eq()(b.key(i), key)) {
                     return false;
                 }
             } else {
@@ -1353,8 +1361,9 @@ private:
 
     // try_del_from_bucket will search the bucket for the given key, and set the
     // slot of the key to empty if it finds it.
+    template <typename K>
     bool try_del_from_bucket(const partial_t partial,
-                             const key_type &key, Bucket& b) {
+                             const K &key, Bucket& b) {
         for (size_t i = 0; i < slot_per_bucket; ++i) {
             if (!b.occupied(i)) {
                 continue;
@@ -1374,9 +1383,9 @@ private:
 
     // try_update_bucket will search the bucket for the given key and change its
     // associated value if it finds it.
-    template <typename V>
+    template <typename K, typename V>
     bool try_update_bucket(const partial_t partial, Bucket& b,
-                           const key_type &key, V&& val) {
+                           const K &key, V&& val) {
         for (size_t i = 0; i < slot_per_bucket; ++i) {
             if (!b.occupied(i)) {
                 continue;
@@ -1394,8 +1403,8 @@ private:
 
     // try_update_bucket_fn will search the bucket for the given key and change
     // its associated value with the given function if it finds it.
-    template <typename Updater>
-    bool try_update_bucket_fn(const partial_t partial, const key_type &key,
+    template <typename K, typename Updater>
+    bool try_update_bucket_fn(const partial_t partial, const K &key,
                               Updater fn, Bucket& b) {
         // Silence a warning from MSVC about partial being unused if is_simple.
         (void)partial;
@@ -1417,7 +1426,8 @@ private:
     // cuckoo_find searches the table for the given key and value, storing the
     // value in the val if it finds the key. It expects the locks to be taken
     // and released outside the function.
-    cuckoo_status cuckoo_find(const key_type& key, mapped_type& val,
+    template <typename K>
+    cuckoo_status cuckoo_find(const K &key, mapped_type& val,
                               const size_t hv, const size_t i1,
                               const size_t i2) const {
         const partial_t partial = partial_key(hv);
@@ -1433,7 +1443,8 @@ private:
     // cuckoo_contains searches the table for the given key, returning true if
     // it's in the table and false otherwise. It expects the locks to be taken
     // and released outside the function.
-    bool cuckoo_contains(const key_type& key, const size_t hv, const size_t i1,
+    template <typename K>
+    bool cuckoo_contains(const K& key, const size_t hv, const size_t i1,
                          const size_t i2) const {
         const partial_t partial = partial_key(hv);
         if (check_in_bucket(partial, key, buckets_[i1])) {
@@ -1546,7 +1557,8 @@ private:
     // cuckoo_delete searches the table for the given key and sets the slot with
     // that key to empty if it finds it. It expects the locks to be taken and
     // released outside the function.
-    cuckoo_status cuckoo_delete(const key_type &key, const size_t hv,
+    template <class K>
+    cuckoo_status cuckoo_delete(const K &key, const size_t hv,
                                 const size_t i1, const size_t i2) {
         const partial_t partial = partial_key(hv);
         if (try_del_from_bucket(partial, key, buckets_[i1])) {
@@ -1561,9 +1573,9 @@ private:
     // cuckoo_update searches the table for the given key and updates its value
     // if it finds it. It expects the locks to be taken and released outside the
     // function.
-    template <typename V>
+    template <typename K, typename V>
     cuckoo_status cuckoo_update(const size_t hv, const size_t i1,
-                                const size_t i2, const key_type &key, V&& val) {
+                                const size_t i2, const K &key, V&& val) {
         const partial_t partial = partial_key(hv);
         if (try_update_bucket(partial, buckets_[i1], key,
                               std::forward<V>(val))) {
@@ -1580,8 +1592,8 @@ private:
     // function on its value if it finds it, assigning the result of the
     // function to the value. It expects the locks to be taken and released
     // outside the function.
-    template <typename Updater>
-    cuckoo_status cuckoo_update_fn(const key_type &key, Updater fn,
+    template <typename K, typename Updater>
+    cuckoo_status cuckoo_update_fn(const K &key, Updater fn,
                                    const size_t hv, const size_t i1,
                                    const size_t i2) {
         const partial_t partial = partial_key(hv);
