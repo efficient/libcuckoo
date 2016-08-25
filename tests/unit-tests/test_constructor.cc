@@ -39,7 +39,7 @@ TEST_CASE("frees even with exceptions", "[constructor]") {
 }
 
 TEST_CASE("custom hasher", "[constructor]") {
-    auto hashfn = [](size_t item) -> size_t {
+    auto hashfn = [](size_t) -> size_t {
         return 0;
     };
     cuckoohash_map<size_t, size_t, decltype(hashfn)> map(
@@ -51,7 +51,7 @@ TEST_CASE("custom hasher", "[constructor]") {
 }
 
 TEST_CASE("custom equality", "[constructor]") {
-    auto eqfn = [](size_t i1, size_t i2) -> bool {
+    auto eqfn = [](size_t, size_t) -> bool {
         return false;
     };
     cuckoohash_map<size_t, size_t, std::hash<size_t>,

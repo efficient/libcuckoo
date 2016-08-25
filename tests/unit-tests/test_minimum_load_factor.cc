@@ -7,7 +7,7 @@
 
 class BadHashFunction {
 public:
-    int operator()(int key) {
+    int operator()(int) {
         return 0;
     }
 };

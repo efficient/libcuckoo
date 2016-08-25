@@ -149,9 +149,9 @@ T generateKey(size_t i) {
 // integer, where the number is copied to the end of a long string of 'a's, in
 // order to make comparisons and hashing take time.
 template <>
-std::string generateKey<std::string>(size_t i) {
+std::string generateKey<std::string>(size_t n) {
     const size_t min_length = 100;
-    const std::string num(std::to_string(i));
+    const std::string num(std::to_string(n));
     if (num.size() >= min_length) {
         return num;
     }
