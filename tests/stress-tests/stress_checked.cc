@@ -68,7 +68,8 @@ class AllEnvironment {
 public:
     AllEnvironment()
         : table(numkeys), table2(numkeys), keys(numkeys), vals(numkeys),
-          vals2(numkeys), in_table(new bool[numkeys]), in_use(numkeys),
+          vals2(numkeys), in_table(new bool[numkeys]),
+          in_use(new std::atomic_flag[numkeys]),
           val_dist(std::numeric_limits<ValType>::min(),
                    std::numeric_limits<ValType>::max()),
           val_dist2(std::numeric_limits<ValType2>::min(),
@@ -80,7 +81,6 @@ public:
         }
         std::cout << "seed = " << seed << std::endl;
         gen_seed = seed;
-
         // Fills in all the vectors except vals, which will be filled
         // in by the insertion threads.
         for (size_t i = 0; i < numkeys; i++) {
@@ -96,7 +96,7 @@ public:
     std::vector<ValType> vals;
     std::vector<ValType2> vals2;
     std::unique_ptr<bool[]> in_table;
-    std::vector<std::atomic_flag> in_use;
+    std::unique_ptr<std::atomic_flag[]> in_use;
     std::uniform_int_distribution<ValType> val_dist;
     std::uniform_int_distribution<ValType2> val_dist2;
     std::uniform_int_distribution<size_t> ind_dist;
