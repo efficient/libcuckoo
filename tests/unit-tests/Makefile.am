@@ -1,10 +1,6 @@
 AM_CXXFLAGS = -g -O0
 
-if HAVE_CXX14
-TESTS = test_runner.out test_runner_cxx14.out
-else
 TESTS = test_runner.out
-endif
 
 noinst_PROGRAMS = $(TESTS)
 
@@ -17,11 +13,6 @@ test_runner_out_SOURCES = \
 	test_maximum_hashpower.cc \
 	test_hash_properties.cc \
 	test_noncopyable_types.cc \
+	test_heterogeneous_compare.cc \
 	unit_test_util.cc \
 	test_runner.cc catch.hpp
-
-if HAVE_CXX14
-test_runner_cxx14_out_SOURCES = \
-	test_heterogeneous_compare.cc \
-	test_runner.cc catch.hpp
-endif

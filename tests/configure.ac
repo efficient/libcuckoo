@@ -29,17 +29,4 @@ AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
 
 CXXFLAGS="$CXXFLAGS -Wall -Wextra -Wshadow -pedantic"
 
-# Create a conditional for c++14 support
-AC_LANG_PUSH([C++])
-AX_CHECK_COMPILE_FLAG(
-        [-std=c++14],
-
-        [HAVE_CXX14=1]
-        [CXXFLAGS="$CXXFLAGS -std=c++14"],
-
-        [HAVE_CXX14=0]
-)
-AC_LANG_POP([C++])
-AM_CONDITIONAL([HAVE_CXX14],[test "$HAVE_CXX14" -eq 1])
-
 AC_OUTPUT

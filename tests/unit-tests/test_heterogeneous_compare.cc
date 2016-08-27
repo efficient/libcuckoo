@@ -27,15 +27,18 @@ public:
     ~Foo() {
         ++destructions;
     }
+};
 
-    bool operator==(const Foo& y) const {
+class foo_eq {
+public:
+    bool operator()(const Foo& left, const Foo& right) const {
         ++foo_comparisons;
-        return val == y.val;
+        return left.val == right.val;
     }
 
-    bool operator==(const int y) const {
+    bool operator()(const Foo& left, const int right) const {
         ++int_comparisons;
-        return val == y;
+        return left.val == right;
     }
 };
 
@@ -52,7 +55,7 @@ public:
     }
 };
 
-typedef cuckoohash_map<Foo, bool, foo_hasher, std::equal_to<> > foo_map;
+typedef cuckoohash_map<Foo, bool, foo_hasher, foo_eq> foo_map;
 
 TEST_CASE("heterogeneous compare", "[heterogeneous compare]") {
     // setup code
