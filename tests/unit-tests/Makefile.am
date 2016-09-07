@@ -14,5 +14,6 @@ test_runner_out_SOURCES = \
 	test_hash_properties.cc \
 	test_noncopyable_types.cc \
 	test_heterogeneous_compare.cc \
+	test_user_exceptions.cc \
 	unit_test_util.cc \
 	test_runner.cc catch.hpp

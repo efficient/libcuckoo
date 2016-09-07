@@ -1687,8 +1687,15 @@ private:
     }
 
     // cuckoo_fast_double will double the size of the table by taking advantage
-    // of the properties of index_hash and alt_index.
+    // of the properties of index_hash and alt_index. If the key's move
+    // constructor is not noexcept, we use cuckoo_expand_simple, since that
+    // provides a strong exception guarantee.
     cuckoo_status cuckoo_fast_double(size_t current_hp) {
+        if (!std::is_nothrow_move_constructible<storage_value_type>::value) {
+            LIBCUCKOO_DBG("%s", "cannot run cuckoo_fast_double because kv-pair "
+                          "is not nothrow move constructible");
+            return cuckoo_expand_simple(current_hp + 1, true);
+        }
         size_t new_hp = current_hp + 1;
         size_t mhp = maximum_hashpower();
         if (mhp != NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
@@ -1719,11 +1726,16 @@ private:
         const size_t locks_to_move = std::min(locks_t::size(),
                                               hashsize(current_hp));
         parallel_exec(0, locks_to_move, kNumCores(),
-                      [this, current_hp, new_hp](size_t start, size_t end) {
-                          move_buckets(current_hp, new_hp, start, end);
+                      [this, current_hp, new_hp]
+                      (size_t start, size_t end, std::exception_ptr& eptr) {
+                          try {
+                              move_buckets(current_hp, new_hp, start, end);
+                          } catch (...) {
+                              eptr = std::current_exception();
+                          }
                       });
         parallel_exec(locks_to_move, locks_.allocated_size(), kNumCores(),
-                      [this](size_t i, size_t end) {
+                      [this](size_t i, size_t end, std::exception_ptr&) {
                           for (; i < end; ++i) {
                               locks_[i].unlock();
                           }
@@ -1732,24 +1744,6 @@ private:
         // unlocker to do it for us.
         unlocker.deactivate();
         return ok;
-    }
-
-    // insert_into_table is a helper function used by cuckoo_expand_simple to
-    // fill up the new table. It moves data out of the original table into the
-    // new one.
-    static void insert_into_table(
-        cuckoohash_map<Key, T, Hash, Pred, Alloc, slot_per_bucket>& new_map,
-        buckets_t& buckets, size_t i, size_t end) {
-        for (; i < end; ++i) {
-            for (size_t j = 0; j < slot_per_bucket; ++j) {
-                if (buckets[i].occupied(j)) {
-                    storage_value_type& kvpair = buckets[i].storage_kvpair(j);
-                    new_map.insert(
-                        std::move(kvpair.first),
-                        std::move(kvpair.second));
-                }
-            }
-        }
     }
 
     // cuckoo_expand_simple will resize the table to at least the given
@@ -1781,19 +1775,25 @@ private:
         // the elements from the old buckets
         cuckoohash_map<Key, T, Hash, Pred, Alloc, slot_per_bucket> new_map(
             hashsize(new_hp) * slot_per_bucket);
-        const size_t threadnum = kNumCores();
-        const size_t buckets_per_thread = (
-            (hashsize(hp) + threadnum - 1) / threadnum);
-        std::vector<std::thread> insertion_threads(threadnum);
-        for (size_t i = 0; i < threadnum; ++i) {
-            insertion_threads[i] = std::thread(
-                insert_into_table, std::ref(new_map), std::ref(buckets_),
-                i*buckets_per_thread, std::min((i+1)*buckets_per_thread,
-                                               hashsize(hp)));
-        }
-        for (size_t i = 0; i < threadnum; ++i) {
-            insertion_threads[i].join();
-        }
+        parallel_exec(
+            0, hashsize(hp), kNumCores(),
+            [this, &new_map]
+            (size_t i, size_t end, std::exception_ptr& eptr) {
+                try {
+                    for (; i < end; ++i) {
+                        for (size_t j = 0; j < slot_per_bucket; ++j) {
+                            if (buckets_[i].occupied(j)) {
+                                storage_value_type& kvpair = (
+                                    buckets_[i].storage_kvpair(j));
+                                new_map.insert(std::move(kvpair.first),
+                                               std::move(kvpair.second));
+                            }
+                        }
+                    }
+                } catch (...) {
+                    eptr = std::current_exception();
+                }
+            });
 
         // Swap the current buckets vector with new_map's and set the hashpower.
         // This is okay, because we have all the locks, so nobody else should be

@@ -164,13 +164,21 @@ static void parallel_exec(size_t start, size_t end,
                           size_t num_threads, F func) {
     size_t work_per_thread = (end - start) / num_threads;
     std::vector<std::thread> threads(num_threads);
+    std::vector<std::exception_ptr> eptrs(num_threads, nullptr);
     for (size_t i = 0; i < num_threads - 1; ++i) {
-        threads[i] = std::thread(func, start, start + work_per_thread);
+        threads[i] = std::thread(func, start, start + work_per_thread,
+                                 std::ref(eptrs[i]));
         start += work_per_thread;
     }
-    threads[num_threads - 1] = std::thread(func, start, end);
+    threads[num_threads - 1] = std::thread(
+        func, start, end, std::ref(eptrs[num_threads - 1]));
     for (std::thread& t : threads) {
         t.join();
+    }
+    for (std::exception_ptr& eptr : eptrs) {
+        if (eptr) {
+            std::rethrow_exception(eptr);
+        }
     }
 }
 
