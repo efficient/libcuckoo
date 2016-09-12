@@ -87,12 +87,14 @@ void checkIterTable(exceptionTable& tbl, size_t expectedSize) {
 
 TEST_CASE("user exceptions", "[user_exceptions]") {
     constructorThrow = hashThrow = equalityThrow = moveThrow = false;
-    exceptionTable tbl(100);
-    for (size_t i = 0; i < 10; ++i) {
-        tbl.insert(i, i);
-    }
+    // We don't use sub-sections because CATCH is not exactly thread-safe
 
-    SECTION("find/contains") {
+    // "find/contains"
+    {
+        exceptionTable tbl;
+        tbl.insert(1, 1);
+        tbl.insert(2, 2);
+        tbl.insert(3, 3);
         hashThrow = true;
         REQUIRE_THROWS_AS(tbl.find(3), std::runtime_error);
         REQUIRE_THROWS_AS(tbl.contains(3), std::runtime_error);
@@ -103,18 +105,25 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
         equalityThrow = false;
         REQUIRE(tbl.find(3) == 3);
         REQUIRE(tbl.contains(3));
-        checkIterTable(tbl, 10);
+        checkIterTable(tbl, 3);
     }
 
-    SECTION("insert") {
+    // "insert"
+    {
+        exceptionTable tbl;
         constructorThrow = true;
         REQUIRE_THROWS_AS(tbl.insert(100, 100), std::runtime_error);
         constructorThrow = false;
         REQUIRE(tbl.insert(100, 100));
-        checkIterTable(tbl, 11);
+        checkIterTable(tbl, 1);
     }
 
-    SECTION("erase") {
+    // "erase"
+    {
+        exceptionTable tbl;
+        for (int i = 0; i < 10; ++i) {
+            tbl.insert(i, i);
+        }
         hashThrow = true;
         REQUIRE_THROWS_AS(tbl.erase(5), std::runtime_error);
         hashThrow = false;
@@ -125,7 +134,11 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
         checkIterTable(tbl, 9);
     }
 
-    SECTION("update") {
+    // "update"
+    {
+        exceptionTable tbl;
+        tbl.insert(9, 9);
+        tbl.insert(10, 10);
         hashThrow = true;
         REQUIRE_THROWS_AS(tbl.update(9, 10), std::runtime_error);
         hashThrow = false;
@@ -133,10 +146,14 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
         REQUIRE_THROWS_AS(tbl.update(9, 10), std::runtime_error);
         equalityThrow = false;
         REQUIRE(tbl.update(9, 10));
-        checkIterTable(tbl, 10);
+        checkIterTable(tbl, 2);
     }
 
-    SECTION("update_fn") {
+    // "update_fn"
+    {
+        exceptionTable tbl;
+        tbl.insert(9, 9);
+        tbl.insert(10, 10);
         auto updater = [](size_t& val) { val++; };
         hashThrow = true;
         REQUIRE_THROWS_AS(tbl.update_fn(9, updater), std::runtime_error);
@@ -145,10 +162,13 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
         REQUIRE_THROWS_AS(tbl.update_fn(9, updater), std::runtime_error);
         equalityThrow = false;
         REQUIRE(tbl.update_fn(9, updater));
-        checkIterTable(tbl, 10);
+        checkIterTable(tbl, 2);
     }
 
-    SECTION("upsert") {
+    // "upsert"
+    {
+        exceptionTable tbl;
+        tbl.insert(9, 9);
         auto updater = [](size_t& val) { val++; };
         hashThrow = true;
         REQUIRE_THROWS_AS(tbl.upsert(9, updater, 10), std::runtime_error);
@@ -161,10 +181,15 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
         REQUIRE_THROWS_AS(tbl.upsert(10, updater, 10), std::runtime_error);
         constructorThrow = false;
         tbl.upsert(10, updater, 10);
-        checkIterTable(tbl, 11);
+        checkIterTable(tbl, 2);
     }
 
-    SECTION("rehash") {
+    // rehash
+    {
+        exceptionTable tbl;
+        for (int i = 0; i < 10; ++i) {
+            tbl.insert(i, i);
+        }
         size_t original_hashpower = tbl.hashpower();
         constructorThrow = true;
         REQUIRE_THROWS_AS(tbl.rehash(2), std::runtime_error);
@@ -184,7 +209,12 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
         checkIterTable(tbl, 10);
     }
 
-    SECTION("reserve") {
+    // "reserve"
+    {
+        exceptionTable tbl;
+        for (int i = 0; i < 10; ++i) {
+            tbl.insert(i, i);
+        }
         size_t original_hashpower = tbl.hashpower();
         constructorThrow = true;
         REQUIRE_THROWS_AS(tbl.reserve(10), std::runtime_error);
@@ -205,26 +235,28 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
         checkIterTable(tbl, 10);
     }
 
-    SECTION("insert resize") {
-        exceptionTable tbl2;
-        REQUIRE(tbl2.rehash(1));
+    // "insert resize"
+    {
+        exceptionTable tbl;
+        REQUIRE(tbl.rehash(1));
         // Fill up the entire table
         for (size_t i = 0; i < exceptionTable::slot_per_bucket * 2; ++i) {
-            tbl2.insert(i * 2, 0);
+            tbl.insert(i * 2, 0);
         }
         // Only throw on move, which should be triggered when we do a resize.
         moveThrow = true;
         REQUIRE_THROWS_AS(
-            tbl2.insert((exceptionTable::slot_per_bucket * 2) * 2, 0),
+            tbl.insert((exceptionTable::slot_per_bucket * 2) * 2, 0),
             std::runtime_error);
         moveThrow = false;
-        REQUIRE(tbl2.insert((exceptionTable::slot_per_bucket * 2) * 2, 0));
-        checkIterTable(tbl2, exceptionTable::slot_per_bucket * 2 + 1);
+        REQUIRE(tbl.insert((exceptionTable::slot_per_bucket * 2) * 2, 0));
+        checkIterTable(tbl, exceptionTable::slot_per_bucket * 2 + 1);
     }
 
-    SECTION("insert cuckoohash") {
-        exceptionTable tbl2;
-        REQUIRE(tbl2.rehash(2));
+    // "insert cuckoohash"
+    {
+        exceptionTable tbl;
+        REQUIRE(tbl.rehash(2));
         size_t cuckooKey = 0;
         size_t cuckooKeyHash = std::hash<ExceptionInt>()(cuckooKey);
         size_t cuckooKeyIndex = UnitTestInternalAccess::index_hash<
@@ -238,24 +270,24 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
             // Fill up one bucket with elements that have the same value as
             // cuckooKeyIndex mod 4.
             for (size_t i = 0; i < exceptionTable::slot_per_bucket; ++i) {
-                tbl2.insert(4 * (i + 1) + cuckooKeyIndex, 0);
+                tbl.insert(4 * (i + 1) + cuckooKeyIndex, 0);
             }
         } else {
             // Fill up one bucket on index cuckooKeyIndex, and another bucket on
             // cuckooKeyAlt
             for (size_t i = 0; i < exceptionTable::slot_per_bucket; ++i) {
-                tbl2.insert(4 * (i + 1) + cuckooKeyIndex, 0);
-                tbl2.insert(4 * (i + 1) + cuckooKeyAltIndex, 0);
+                tbl.insert(4 * (i + 1) + cuckooKeyIndex, 0);
+                tbl.insert(4 * (i + 1) + cuckooKeyAltIndex, 0);
             }
         }
 
         // Now inserting cuckooKey should trigger a cuckoo hash, which moves
         // elements around
         moveThrow = true;
-        REQUIRE_THROWS_AS(tbl2.insert(cuckooKey, 0), std::runtime_error);
+        REQUIRE_THROWS_AS(tbl.insert(cuckooKey, 0), std::runtime_error);
         moveThrow = false;
-        REQUIRE(tbl2.insert(cuckooKey, 0));
-        checkIterTable(tbl2,
+        REQUIRE(tbl.insert(cuckooKey, 0));
+        checkIterTable(tbl,
                        exceptionTable::slot_per_bucket * (
                            cuckooKeyIndex == cuckooKeyAltIndex ? 1 : 2) + 1);
     }
