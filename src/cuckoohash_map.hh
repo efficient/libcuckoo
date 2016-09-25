@@ -2160,6 +2160,130 @@ private:
 
     // The equality function
     key_equal eq_fn;
+    
+        
+public:
+	// Checker is an Updater with a bool as return value
+	//! For any update operations, the callable passed in must be convertible to
+	//! the following type
+	typedef std::function<bool(mapped_type&)> checker_type;
+
+	// try_check_bucket_fn will search the bucket for the given key and check
+	// its associated value with the given condition function if it finds it.
+	// This function is derived from try_update_bucket_fn.
+	// The difference is that in try_check_bucket_fn uses return value of Checker.
+
+	template <typename K, typename Checker>
+	bool try_check_bucket_fn(const partial_t partial, const K &key,
+		Checker fn, Bucket& b) {
+		// Silence a warning from MSVC about partial being unused if is_simple.
+		(void)partial;
+		for (size_t i = 0; i < slot_per_bucket; ++i) {
+			if (!b.occupied(i)) {
+				continue;
+			}
+			if (!is_simple && b.partial(i) != partial) {
+				continue;
+			}
+			if (key_eq()(b.key(i), key)) {
+				return fn(b.val(i));
+			}
+		}
+		return false;
+	}
+
+	// cuckoo_check_fn searches the table for the given key and runs the check
+	// function on its value if it finds it, assigning the check result of the
+	// function to the value. It expects the locks to be taken and released
+	// outside the function.
+	// cuckoo_check_fn is derived from cuckoo_update_fn
+	template <typename K, typename Checker>
+	cuckoo_status cuckoo_check_fn(const K &key, Checker fn,
+		const size_t hv, const size_t i1,
+		const size_t i2) {
+		const partial_t partial = partial_key(hv);
+		if (try_check_bucket_fn(partial, key, fn, buckets_[i1])) {
+			return ok;
+		}
+		if (try_check_bucket_fn(partial, key, fn, buckets_[i2])) {
+			return ok;
+		}
+		return failure_key_not_found;
+	}
+
+	//! erase_fn checks the value associated with \p key with the function \p
+	//! fn. \p fn will be passed one argument of type \p mapped_type& and can
+	//! modify the argument as desired, returning a bool value. If it returns true,
+	// the Key-Value should be erased.
+	// This function is derived from update_fn and also erase.
+	template <typename K, typename Checker>
+	typename std::enable_if<
+		std::is_convertible<Checker, checker_type>::value,
+		bool>::type erase_fn(const K& key, Checker fn) {
+		size_t hv = hashed_key(key);
+		auto b = snapshot_and_lock_two(hv);
+		const cuckoo_status st = cuckoo_check_fn(key, fn, hv, b.i[0], b.i[1]);
+
+		if (st == ok)
+			return	(cuckoo_delete(key, hv, b.i[0], b.i[1]) == ok);
+		else
+			return false;
+	}
+
+	// try_read_from_bucket_fn will search the bucket for the given key and store
+	// the associated value if it finds it.
+	template <typename K, typename Checker>
+	bool try_read_from_bucket_fn(const partial_t partial, const K &key,
+		mapped_type &val, Checker fn, const Bucket& b) {
+		// Silence a warning from MSVC about partial being unused if is_simple.
+		(void)partial;
+		for (size_t i = 0; i < slot_per_bucket; ++i) {
+			if (!b.occupied(i)) {
+				continue;
+			}
+			if (!is_simple && partial != b.partial(i)) {
+				continue;
+			}
+			if (key_eq()(b.key(i), key)) {
+				bool ret = fn((mapped_type)b.val(i));
+				val = b.val(i);
+				return ret;
+			}
+		}
+		return false;
+	}
+
+	// cuckoo_find_fn searches the table for the given key and value, storing the
+	// value in the val if it finds the key with valid value. It expects the locks to be taken
+	// and released outside the function.
+	template <typename K, typename Checker>
+	cuckoo_status cuckoo_find_fn(const K &key, mapped_type& val, Checker fn,
+		const size_t hv, const size_t i1,
+		const size_t i2) {
+		const partial_t partial = partial_key(hv);
+		if (try_read_from_bucket_fn(partial, key, val, fn, buckets_[i1])) {
+			return ok;
+		}
+		if (try_read_from_bucket_fn(partial, key, val, fn, buckets_[i2])) {
+			return ok;
+		}
+		return failure_key_not_found;
+	}
+
+	//! find_fn searches through the table for \p key, and stores the associated
+	//! value it finds in \p val. must be copy assignable.
+	// If the found value also get approval from the Checker, it returns true, else it returns false.
+
+	template <typename K, typename Checker>
+	typename std::enable_if<
+		std::is_convertible<Checker, checker_type>::value,
+		bool>::type find_fn(const K& key, mapped_type& val, Checker fn) {
+		size_t hv = hashed_key(key);
+		auto b = snapshot_and_lock_two(hv);
+		const cuckoo_status st = cuckoo_find_fn(key, val, fn, hv, b.i[0], b.i[1]);
+
+		return (st == ok);
+	}
 };
 
 #endif // _CUCKOOHASH_MAP_HH
