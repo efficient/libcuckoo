@@ -337,17 +337,7 @@ private:
     static size_t reserve_calc(const size_t n) {
         const size_t buckets = (n + slot_per_bucket - 1) / slot_per_bucket;
         size_t blog2;
-        if (buckets <= 1) {
-            blog2 = 1;
-        } else {
-            blog2 = 0;
-            for (size_t bcounter = buckets; bcounter > 1; bcounter >>= 1) {
-                ++blog2;
-            }
-            if (hashsize(blog2) < buckets) {
-                ++blog2;
-            }
-        }
+        for (blog2 = 1; (1UL << blog2) < buckets; ++blog2);
         assert(n <= hashsize(blog2) * slot_per_bucket);
         return blog2;
     }
@@ -530,7 +520,7 @@ public:
     template <typename K>
     bool erase(const K& key) {
         const size_t hv = hashed_key(key);
-        auto b = snapshot_and_lock_two(hv);
+        const auto b = snapshot_and_lock_two(hv);
         const cuckoo_status st = cuckoo_delete(key, hv, b.i[0], b.i[1]);
         return (st == ok);
     }
@@ -540,7 +530,7 @@ public:
     template <typename K, typename V>
     bool update(const K& key, V&& val) {
         const size_t hv = hashed_key(key);
-        auto b = snapshot_and_lock_two(hv);
+        const auto b = snapshot_and_lock_two(hv);
         const cuckoo_status st = cuckoo_update(hv, b.i[0], b.i[1],
                                                key, std::forward<V>(val));
         return (st == ok);
@@ -555,7 +545,7 @@ public:
         std::is_convertible<Updater, updater_type>::value,
         bool>::type update_fn(const K& key, Updater fn) {
         const size_t hv = hashed_key(key);
-        auto b = snapshot_and_lock_two(hv);
+        const auto b = snapshot_and_lock_two(hv);
         const cuckoo_status st = cuckoo_update_fn(key, fn, hv, b.i[0], b.i[1]);
         return (st == ok);
     }
@@ -1117,7 +1107,7 @@ private:
             first.bucket = i2;
         }
         {
-            OneBucket ob = lock_one(hp, first.bucket);
+            const OneBucket ob = lock_one(hp, first.bucket);
             const Bucket& b = buckets_[first.bucket];
             if (!b.occupied(first.slot)) {
                 // We can terminate here
@@ -1127,14 +1117,14 @@ private:
         }
         for (int i = 1; i <= x.depth; ++i) {
             CuckooRecord& curr = cuckoo_path[i];
-            CuckooRecord& prev = cuckoo_path[i-1];
+            const CuckooRecord& prev = cuckoo_path[i-1];
             assert(prev.bucket == index_hash(hp, prev.hv) ||
                    prev.bucket == alt_index(hp, partial_key(prev.hv),
                                             index_hash(hp, prev.hv)));
             // We get the bucket that this slot is on by computing the alternate
             // index of the previous bucket
             curr.bucket = alt_index(hp, partial_key(prev.hv), prev.bucket);
-            OneBucket ob = lock_one(hp, curr.bucket);
+            const OneBucket ob = lock_one(hp, curr.bucket);
             const Bucket& b = buckets_[curr.bucket];
             if (!b.occupied(curr.slot)) {
                 // We can terminate here
@@ -1764,7 +1754,7 @@ private:
         if (mhp != NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
             throw libcuckoo_maximum_hashpower_exceeded(new_hp);
         }
-        auto unlocker = snapshot_and_lock_all();
+        const auto unlocker = snapshot_and_lock_all();
         const size_t hp = get_hashpower();
         if ((is_expansion && new_hp <= hp) ||
             (!is_expansion && new_hp >= hp)) {
