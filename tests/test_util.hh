@@ -10,6 +10,7 @@
 #include <mutex>
 #include <random>
 #include "../src/cuckoohash_map.hh"
+#include "pcg/pcg_random.hpp"
 
 std::mutex print_lock;
 int main_return_value = EXIT_SUCCESS;
@@ -215,7 +216,7 @@ public:
                      std::atomic<size_t>& counter, const double insert_prob,
                      const size_t start_seed) {
         typename Table::mapped_type v;
-        std::mt19937_64 gen(start_seed);
+        pcg64_fast gen(start_seed);
         std::uniform_real_distribution<double> dist(0.0, 1.0);
         auto inserter_it = begin;
         auto reader_it = begin;

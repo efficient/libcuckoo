@@ -100,9 +100,8 @@ public:
     size_t numkeys;
     T table;
     std::vector<KType> keys;
-    // Default RNG seed
+    // RNG seed and engine.
     pcg_extras::seed_seq_from<std::random_device> seed_source;
-    // Make a random number engine
     pcg64_fast gen;
     size_t init_size;
 };

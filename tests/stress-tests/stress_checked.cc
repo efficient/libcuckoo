@@ -24,6 +24,7 @@
 
 #include "../../src/cuckoohash_map.hh"
 #include "../test_util.hh"
+#include "../pcg/pcg_random.hpp"
 
 typedef uint32_t KeyType;
 typedef std::string KeyType2;
@@ -107,7 +108,7 @@ public:
 
 template <class KType>
 void stress_insert_thread(AllEnvironment<KType> *env) {
-    std::mt19937_64 gen(env->gen_seed);
+    pcg64_fast gen(env->gen_seed);
     while (!env->finished.load()) {
         // Pick a random number between 0 and numkeys. If that slot is
         // not in use, lock the slot. Insert a random value into both
@@ -140,7 +141,7 @@ void stress_insert_thread(AllEnvironment<KType> *env) {
 
 template <class KType>
 void delete_thread(AllEnvironment<KType> *env) {
-    std::mt19937_64 gen(env->gen_seed);
+    pcg64_fast gen(env->gen_seed);
     while (!env->finished.load()) {
         // Run deletes on a random key, check that the deletes
         // succeeded only if the keys were in the table. If the
@@ -168,7 +169,7 @@ void delete_thread(AllEnvironment<KType> *env) {
 
 template <class KType>
 void update_thread(AllEnvironment<KType> *env) {
-    std::mt19937_64 gen(env->gen_seed);
+    pcg64_fast gen(env->gen_seed);
     std::uniform_int_distribution<size_t> third(0, 2);
     auto updatefn = [](ValType& v) { v += 3; };
     auto updatefn2 = [](ValType2& v) { v += 10; };
@@ -242,7 +243,7 @@ void update_thread(AllEnvironment<KType> *env) {
 
 template <class KType>
 void find_thread(AllEnvironment<KType> *env) {
-    std::mt19937_64 gen(env->gen_seed);
+    pcg64_fast gen(env->gen_seed);
     while (!env->finished.load()) {
         // Run finds on a random key and check that the presence of
         // the keys matches in_table

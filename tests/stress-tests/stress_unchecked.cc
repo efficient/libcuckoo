@@ -24,6 +24,7 @@
 #include "../../src/cuckoohash_config.hh"
 #include "../../src/cuckoohash_map.hh"
 #include "../test_util.hh"
+#include "../pcg/pcg_random.hpp"
 
 typedef uint32_t KeyType;
 typedef std::string KeyType2;
@@ -93,7 +94,7 @@ void stress_insert_thread(AllEnvironment<KType> *env, size_t thread_seed) {
     std::uniform_int_distribution<size_t> ind_dist;
     std::uniform_int_distribution<ValType> val_dist;
     std::uniform_int_distribution<ValType2> val_dist2;
-    std::mt19937_64 gen(thread_seed);
+    pcg64_fast gen(thread_seed);
     while (!env->finished.load()) {
         // Insert a random key into the table
         KType k = generateKey<KType>(ind_dist(gen));
@@ -106,7 +107,7 @@ void stress_insert_thread(AllEnvironment<KType> *env, size_t thread_seed) {
 template <class KType>
 void delete_thread(AllEnvironment<KType> *env, size_t thread_seed) {
     std::uniform_int_distribution<size_t> ind_dist;
-    std::mt19937_64 gen(thread_seed);
+    pcg64_fast gen(thread_seed);
     while (!env->finished.load()) {
         // Run deletes on a random key.
         const KType k = generateKey<KType>(ind_dist(gen));
@@ -121,7 +122,7 @@ void update_thread(AllEnvironment<KType> *env, size_t thread_seed) {
     std::uniform_int_distribution<ValType> val_dist;
     std::uniform_int_distribution<ValType2> val_dist2;
     std::uniform_int_distribution<size_t> third(0, 2);
-    std::mt19937_64 gen(thread_seed);
+    pcg64_fast gen(thread_seed);
     auto updatefn = [](ValType& v) { v += 3; };
     while (!env->finished.load()) {
         // Run updates, update_funcs, or upserts on a random key.
@@ -150,7 +151,7 @@ void update_thread(AllEnvironment<KType> *env, size_t thread_seed) {
 template <class KType>
 void find_thread(AllEnvironment<KType> *env, size_t thread_seed) {
     std::uniform_int_distribution<size_t> ind_dist;
-    std::mt19937_64 gen(thread_seed);
+    pcg64_fast gen(thread_seed);
     ValType v;
     while (!env->finished.load()) {
         // Run finds on a random key.
@@ -164,7 +165,7 @@ void find_thread(AllEnvironment<KType> *env, size_t thread_seed) {
 
 template <class KType>
 void resize_thread(AllEnvironment<KType> *env, size_t thread_seed) {
-    std::mt19937_64 gen(thread_seed);
+    pcg64_fast gen(thread_seed);
     // Resizes at a random time
     const size_t sleep_time = gen() % test_len;
     sleep(sleep_time);
@@ -183,7 +184,7 @@ void resize_thread(AllEnvironment<KType> *env, size_t thread_seed) {
 
 template <class KType>
 void iterator_thread(AllEnvironment<KType> *env, size_t thread_seed) {
-    std::mt19937_64 gen(thread_seed);
+    pcg64_fast gen(thread_seed);
     // Runs an iteration operation at a random time
     const size_t sleep_time = gen() % test_len;
     sleep(sleep_time);
@@ -201,7 +202,7 @@ void iterator_thread(AllEnvironment<KType> *env, size_t thread_seed) {
 template <class KType>
 void misc_thread(AllEnvironment<KType> *env) {
     // Runs all the misc functions
-    std::mt19937_64 gen(seed);
+    pcg64_fast gen(seed);
     while (!env->finished.load()) {
         env->table.size();
         env->table.empty();
@@ -214,7 +215,7 @@ void misc_thread(AllEnvironment<KType> *env) {
 
 template <class KType>
 void clear_thread(AllEnvironment<KType> *env, size_t thread_seed) {
-    std::mt19937_64 gen(thread_seed);
+    pcg64_fast gen(thread_seed);
     // Runs a clear operation at a random time
     const size_t sleep_time = gen() % test_len;
     sleep(sleep_time);
