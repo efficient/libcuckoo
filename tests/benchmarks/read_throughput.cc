@@ -24,6 +24,7 @@
 
 #include "../../src/cuckoohash_map.hh"
 #include "../test_util.hh"
+#include "../pcg/pcg_random.hpp"
 
 typedef uint32_t KeyType;
 typedef std::string KeyType2;
@@ -53,13 +54,14 @@ class ReadEnvironment {
 public:
     // We allocate the vectors with 2^power keys.
     ReadEnvironment()
-        : numkeys(1U<<power), table(numkeys), keys(numkeys) {
+        : numkeys(1U<<power), table(numkeys), keys(numkeys), gen(seed_source) {
         // Sets up the random number generator
         if (seed == 0) {
-            seed = std::chrono::system_clock::now().time_since_epoch().count();
+	  std::cout << "seed = random" << std::endl;
+	} else {
+	    std::cout << "seed = " << seed << std::endl;
+	    gen.seed(seed);
         }
-        std::cout << "seed = " << seed << std::endl;
-        gen.seed(seed);
 
         // We fill the keys array with integers between numkeys and
         // 2*numkeys, shuffled randomly
@@ -94,7 +96,8 @@ public:
     size_t numkeys;
     T table;
     std::vector<KType> keys;
-    std::mt19937_64 gen;
+    pcg_extras::seed_seq_from<std::random_device> seed_source;
+    pcg64_fast gen;
     size_t init_size;
 };
 

@@ -23,6 +23,7 @@
 
 #include "../../src/cuckoohash_map.hh"
 #include "../test_util.hh"
+#include "../pcg/pcg_random.hpp"
 
 typedef uint32_t KeyType;
 typedef std::string KeyType2;
@@ -57,13 +58,15 @@ class InsertEnvironment {
 public:
     InsertEnvironment()
         : numkeys(1U << power),
-          table(table_capacity ? table_capacity : numkeys), keys(numkeys) {
+          table(table_capacity ? table_capacity : numkeys), keys(numkeys),
+	  gen(seed_source) {
         // Sets up the random number generator
-        if (seed == 0) {
-            seed = std::chrono::system_clock::now().time_since_epoch().count();
-        }
-        std::cout << "seed = " << seed << std::endl;
-        gen.seed(seed);
+        if (seed != 0) {
+	    std::cout << "seed = " << seed << std::endl;
+	    gen.seed(seed);
+        } else {
+	    std::cout << "seed = random" << std::endl;
+	}
 
         // We fill the keys array with integers between numkeys and
         // 2*numkeys, shuffled randomly
@@ -97,7 +100,10 @@ public:
     size_t numkeys;
     T table;
     std::vector<KType> keys;
-    std::mt19937_64 gen;
+    // Default RNG seed
+    pcg_extras::seed_seq_from<std::random_device> seed_source;
+    // Make a random number engine
+    pcg64_fast gen;
     size_t init_size;
 };
 
