@@ -88,7 +88,7 @@ public:
     /**
      * @return the load factor of the table when the exception was thrown
      */
-    double load_factor() {
+    double load_factor() const {
         return load_factor_;
     }
 private:
@@ -117,7 +117,7 @@ public:
     /**
      * @return the hashpower we were trying to expand to
      */
-    size_t hashpower() {
+    size_t hashpower() const {
         return hashpower_;
     }
 private:
@@ -162,7 +162,7 @@ void destroy_array(T* arr, const size_t size) {
 template <class F>
 static void parallel_exec(size_t start, size_t end,
                           size_t num_threads, F func) {
-    size_t work_per_thread = (end - start) / num_threads;
+    const size_t work_per_thread = (end - start) / num_threads;
     std::vector<std::thread> threads(num_threads);
     std::vector<std::exception_ptr> eptrs(num_threads, nullptr);
     for (size_t i = 0; i < num_threads - 1; ++i) {

@@ -22,8 +22,8 @@ class lazy_array {
                   "The number of segment and offset bits cannot exceed "
                   " the number of bits in a size_t");
 private:
-    static const size_t SEGMENT_SIZE = 1UL << OFFSET_BITS;
-    static const size_t NUM_SEGMENTS = 1UL << SEGMENT_BITS;
+    static constexpr size_t SEGMENT_SIZE = 1UL << OFFSET_BITS;
+    static constexpr size_t NUM_SEGMENTS = 1UL << SEGMENT_BITS;
     // The segments array itself is mutable, so that the const subscript
     // operator can still add segments
     mutable std::array<T*, NUM_SEGMENTS> segments_;
@@ -35,12 +35,12 @@ private:
         std::fill(arr.segments_.begin(), arr.segments_.end(), nullptr);
     }
 
-    inline size_t get_segment(size_t i) {
+    inline size_t get_segment(size_t i) const {
         return i >> OFFSET_BITS;
     }
 
-    static const size_t OFFSET_MASK = ((1UL << OFFSET_BITS) - 1);
-    inline size_t get_offset(size_t i) {
+    static constexpr size_t OFFSET_MASK = ((1UL << OFFSET_BITS) - 1);
+    inline size_t get_offset(size_t i) const {
         return i & OFFSET_MASK;
     }
 
