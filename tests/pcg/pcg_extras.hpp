@@ -220,7 +220,7 @@ operator<<(std::basic_ostream<CharT,Traits>&out, uint8_t value)
 
 template <typename CharT, typename Traits>
 std::basic_istream<CharT,Traits>&
-operator>>(std::basic_istream<CharT,Traits>& in, uint8_t target)
+operator>>(std::basic_istream<CharT,Traits>& in, uint8_t& target)
 {
     uint32_t value = 0xdecea5edU;
     in >> value;

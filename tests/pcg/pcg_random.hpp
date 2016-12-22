@@ -1235,8 +1235,8 @@ public:
         datainit(data);
     }
 
-    extended(const result_type* data, state_type seed)
-        : baseclass(seed)
+    extended(const result_type* data, state_type seed_)
+        : baseclass(seed_)
     {
         datainit(data);
     }
@@ -1245,9 +1245,9 @@ public:
     // to use SFINAE; users don't have to worry about its template-ness.
 
     template <typename bc = baseclass>
-    extended(const result_type* data, state_type seed,
+    extended(const result_type* data, state_type seed_,
             typename bc::stream_state stream_seed)
-        : baseclass(seed, stream_seed)
+        : baseclass(seed_, stream_seed)
     {
         datainit(data);
     }
@@ -1258,8 +1258,8 @@ public:
         selfinit();
     }
 
-    extended(state_type seed)
-        : baseclass(seed)
+    extended(state_type seed_)
+        : baseclass(seed_)
     {
         selfinit();
     }
@@ -1268,8 +1268,8 @@ public:
     // to use SFINAE; users don't have to worry about its template-ness.
 
     template <typename bc = baseclass>
-    extended(state_type seed, typename bc::stream_state stream_seed)
-        : baseclass(seed, stream_seed)
+    extended(state_type seed_, typename bc::stream_state stream_seed)
+        : baseclass(seed_, stream_seed)
     {
         selfinit();
     }
