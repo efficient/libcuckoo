@@ -33,54 +33,54 @@ typedef int32_t ValType2;
 
 // The number of keys to size the table with, expressed as a power of
 // 2. This can be set with the command line flag --power
-size_t power = 24;
-size_t numkeys; // Holds 2^power
+size_t g_power = 24;
+size_t g_numkeys; // Holds 2^power
 // The number of threads spawned for each type of operation. This can
 // be set with the command line flag --thread-num
-size_t thread_num = 4;
+size_t g_thread_num = 4;
 // Whether to disable inserts or not. This can be set with the command
 // line flag --disable-inserts
-bool disable_inserts = false;
+bool g_disable_inserts = false;
 // Whether to disable deletes or not. This can be set with the command
 // line flag --disable-deletes
-bool disable_deletes = false;
+bool g_disable_deletes = false;
 // Whether to disable updates or not. This can be set with the command
 // line flag --disable-updates
-bool disable_updates = false;
+bool g_disable_updates = false;
 // Whether to disable finds or not. This can be set with the command
 // line flag --disable-finds
-bool disable_finds = false;
+bool g_disable_finds = false;
 // Whether to disable resizes operations or not. This can be set with
 // the command line flag --disable-resizes
-bool disable_resizes = false;
+bool g_disable_resizes = false;
 // Whether to disable iterator operations or not. This can be set with
 // the command line flag --disable-iterators
-bool disable_iterators = false;
+bool g_disable_iterators = false;
 // Whether to disable statistic operations or not. This can be set with
 // the command line flag --disable-misc
-bool disable_misc = false;
+bool g_disable_misc = false;
 // Whether to disable clear operations or not. This can be set with
 // the command line flag --disable-clears
-bool disable_clears = false;
+bool g_disable_clears = false;
 // How many seconds to run the test for. This can be set with the
 // command line flag --time
-size_t test_len = 10;
+size_t g_test_len = 10;
 // The seed for the random number generator. If this isn't set to a
 // nonzero value with the --seed flag, the current time is used
-size_t seed = 0;
+size_t g_seed = 0;
 // Whether to use strings as the key
-bool use_strings = false;
+bool g_use_strings = false;
 
 template <class KType>
 class AllEnvironment {
 public:
-    AllEnvironment() : table(numkeys), table2(numkeys), finished(false) {
+    AllEnvironment() : table(g_numkeys), table2(g_numkeys), finished(false) {
         // Sets up the random number generator
-        if (seed == 0) {
-            seed = std::chrono::system_clock::now().time_since_epoch().count();
+        if (g_seed == 0) {
+            g_seed = std::chrono::system_clock::now().time_since_epoch().count();
         }
-        std::cout << "seed = " << seed << std::endl;
-        gen_seed = seed;
+        std::cout << "seed = " << g_seed << std::endl;
+        gen_seed = g_seed;
     }
 
     cuckoohash_map<KType, ValType> table;
@@ -167,7 +167,7 @@ template <class KType>
 void resize_thread(AllEnvironment<KType> *env, size_t thread_seed) {
     pcg64_fast gen(thread_seed);
     // Resizes at a random time
-    const size_t sleep_time = gen() % test_len;
+    const size_t sleep_time = gen() % g_test_len;
     sleep(sleep_time);
     if (env->finished.load()) {
         return;
@@ -186,7 +186,7 @@ template <class KType>
 void iterator_thread(AllEnvironment<KType> *env, size_t thread_seed) {
     pcg64_fast gen(thread_seed);
     // Runs an iteration operation at a random time
-    const size_t sleep_time = gen() % test_len;
+    const size_t sleep_time = gen() % g_test_len;
     sleep(sleep_time);
     if (env->finished.load()) {
         return;
@@ -202,7 +202,7 @@ void iterator_thread(AllEnvironment<KType> *env, size_t thread_seed) {
 template <class KType>
 void misc_thread(AllEnvironment<KType> *env) {
     // Runs all the misc functions
-    pcg64_fast gen(seed);
+    pcg64_fast gen(g_seed);
     while (!env->finished.load()) {
         env->table.size();
         env->table.empty();
@@ -217,7 +217,7 @@ template <class KType>
 void clear_thread(AllEnvironment<KType> *env, size_t thread_seed) {
     pcg64_fast gen(thread_seed);
     // Runs a clear operation at a random time
-    const size_t sleep_time = gen() % test_len;
+    const size_t sleep_time = gen() % g_test_len;
     sleep(sleep_time);
     if (env->finished.load()) {
         return;
@@ -229,35 +229,35 @@ void clear_thread(AllEnvironment<KType> *env, size_t thread_seed) {
 template <class KType>
 void StressTest(AllEnvironment<KType> *env) {
     std::vector<std::thread> threads;
-    for (size_t i = 0; i < thread_num; i++) {
-        if (!disable_inserts) {
+    for (size_t i = 0; i < g_thread_num; i++) {
+        if (!g_disable_inserts) {
             threads.emplace_back(stress_insert_thread<KType>, env,
                                  env->gen_seed++);
         }
-        if (!disable_deletes) {
+        if (!g_disable_deletes) {
             threads.emplace_back(delete_thread<KType>, env, env->gen_seed++);
         }
-        if (!disable_updates) {
+        if (!g_disable_updates) {
             threads.emplace_back(update_thread<KType>, env, env->gen_seed++);
         }
-        if (!disable_finds) {
+        if (!g_disable_finds) {
             threads.emplace_back(find_thread<KType>, env, env->gen_seed++);
         }
-        if (!disable_resizes) {
+        if (!g_disable_resizes) {
             threads.emplace_back(resize_thread<KType>, env, env->gen_seed++);
         }
-        if (!disable_iterators) {
+        if (!g_disable_iterators) {
             threads.emplace_back(iterator_thread<KType>, env, env->gen_seed++);
         }
-        if (!disable_misc) {
+        if (!g_disable_misc) {
             threads.emplace_back(misc_thread<KType>, env);
         }
-        if (!disable_clears) {
+        if (!g_disable_clears) {
             threads.emplace_back(clear_thread<KType>, env, env->gen_seed++);
         }
     }
     // Sleeps before ending the threads
-    sleep(test_len);
+    sleep(g_test_len);
     env->finished.store(true);
     for (size_t i = 0; i < threads.size(); i++) {
         threads[i].join();
@@ -269,7 +269,7 @@ void StressTest(AllEnvironment<KType> *env) {
 
 int main(int argc, char** argv) {
     const char* args[] = {"--power", "--thread-num", "--time", "--seed"};
-    size_t* arg_vars[] = {&power, &thread_num, &test_len, &seed};
+    size_t* arg_vars[] = {&g_power, &g_thread_num, &g_test_len, &g_seed};
     const char* arg_help[] = {
         "The number of keys to size the table with, expressed as a power of 2",
         "The number of threads to spawn for each type of operation",
@@ -281,9 +281,9 @@ int main(int argc, char** argv) {
         "--disable-finds", "--disable-resizes", "--disable-iterators",
         "--disable-misc", "--disable-clears", "--use-strings"
     };
-    bool* flag_vars[] = {&disable_inserts, &disable_deletes, &disable_updates,
-                         &disable_finds, &disable_resizes, &disable_iterators,
-                         &disable_misc, &disable_clears, &use_strings};
+    bool* flag_vars[] = {&g_disable_inserts, &g_disable_deletes, &g_disable_updates,
+                         &g_disable_finds, &g_disable_resizes, &g_disable_iterators,
+                         &g_disable_misc, &g_disable_clears, &g_use_strings};
     const char* flag_help[] = {
         "If set, no inserts will be run",
         "If set, no deletes will be run",
@@ -298,9 +298,9 @@ int main(int argc, char** argv) {
     parse_flags(argc, argv, "Runs a stress test on inserts, deletes, and finds",
                 args, arg_vars, arg_help, sizeof(args)/sizeof(const char*),
                 flags, flag_vars, flag_help, sizeof(flags)/sizeof(const char*));
-    numkeys = 1U << power;
+    g_numkeys = 1U << g_power;
 
-    if (use_strings) {
+    if (g_use_strings) {
         auto *env = new AllEnvironment<KeyType2>;
         StressTest(env);
         delete env;

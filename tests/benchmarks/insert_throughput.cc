@@ -31,41 +31,41 @@ typedef uint32_t ValType;
 
 // The number of keys to size the table with, expressed as a power of
 // 2. This can be set with the command line flag --power
-size_t power = 25;
+size_t g_power = 25;
 // The initial capacity of the table, expressed as a power of 2. If 0, the table
 // is initialized to the number of keys. This can be set with the command line
 // flag --table-capacity
-size_t table_capacity = 0;
+size_t g_table_capacity = 0;
 // The number of threads spawned for inserts. This can be set with the
 // command line flag --thread-num
-size_t thread_num = std::thread::hardware_concurrency();
+size_t g_thread_num = std::thread::hardware_concurrency();
 // The load factor to fill the table up to before testing throughput.
 // This can be set with the command line flag --begin-load.
-size_t begin_load = 0;
+size_t g_begin_load = 0;
 // The maximum load factor to fill the table up to when testing
 // throughput. This can be set with the command line flag
 // --end-load.
-size_t end_load = 90;
+size_t g_end_load = 90;
 // The seed which the random number generator uses. This can be set
 // with the command line flag --seed
-size_t seed = 0;
+size_t g_seed = 0;
 // Whether to use strings as the key
-bool use_strings = false;
+bool g_use_strings = false;
 
 template <class T>
 class InsertEnvironment {
     typedef typename T::key_type KType;
 public:
     InsertEnvironment()
-        : numkeys(1U << power),
-          table(table_capacity ? table_capacity : numkeys), keys(numkeys),
-	  gen(seed_source) {
+        : numkeys(1U << g_power),
+          table(g_table_capacity ? g_table_capacity : numkeys), keys(numkeys),
+          gen(seed_source) {
         // Sets up the random number generator
-        if (seed != 0) {
-	    std::cout << "seed = " << seed << std::endl;
-	    gen.seed(seed);
+        if (g_seed != 0) {
+            std::cout << "seed = " << g_seed << std::endl;
+            gen.seed(g_seed);
         } else {
-	    std::cout << "seed = random" << std::endl;
+            std::cout << "seed = random" << std::endl;
 	}
 
         // We fill the keys array with integers between numkeys and
@@ -77,11 +77,11 @@ public:
             keys[swapind] = generateKey<KType>(i+numkeys);
         }
 
-        // We prefill the table to begin_load with thread_num threads,
+        // We prefill the table to g_begin_load with g_thread_num threads,
         // giving each thread enough keys to insert
         std::vector<std::thread> threads;
-        size_t keys_per_thread = numkeys * (begin_load / 100.0) / thread_num;
-        for (size_t i = 0; i < thread_num; i++) {
+        size_t keys_per_thread = numkeys * (g_begin_load / 100.0) / g_thread_num;
+        for (size_t i = 0; i < g_thread_num; i++) {
             threads.emplace_back(insert_thread<T>::func, std::ref(table),
                                  keys.begin()+i*keys_per_thread,
                                  keys.begin()+(i+1)*keys_per_thread);
@@ -91,10 +91,10 @@ public:
         }
 
         init_size = table.size();
-        ASSERT_TRUE(init_size == keys_per_thread * thread_num);
+        ASSERT_TRUE(init_size == keys_per_thread * g_thread_num);
 
         std::cout << "Table with capacity " << numkeys <<
-            " prefilled to a load factor of " << begin_load << "%" << std::endl;
+            " prefilled to a load factor of " << g_begin_load << "%" << std::endl;
     }
 
     size_t numkeys;
@@ -109,11 +109,11 @@ public:
 template <class T>
 void InsertThroughputTest(InsertEnvironment<T> *env) {
     std::vector<std::thread> threads;
-    size_t keys_per_thread = env->numkeys * ((end_load-begin_load) / 100.0) /
-        thread_num;
+    size_t keys_per_thread = env->numkeys * ((g_end_load-g_begin_load) / 100.0) /
+        g_thread_num;
     timeval t1, t2;
     gettimeofday(&t1, NULL);
-    for (size_t i = 0; i < thread_num; i++) {
+    for (size_t i = 0; i < g_thread_num; i++) {
         threads.emplace_back(
             insert_thread<T>::func, std::ref(env->table),
             env->keys.begin()+(i*keys_per_thread)+env->init_size,
@@ -128,7 +128,7 @@ void InsertThroughputTest(InsertEnvironment<T> *env) {
     size_t num_inserts = env->table.size() - env->init_size;
     // Reports the results
     std::cout << "----------Results----------" << std::endl;
-    std::cout << "Final load factor:\t" << end_load << "%" << std::endl;
+    std::cout << "Final load factor:\t" << g_end_load << "%" << std::endl;
     std::cout << "Number of inserts:\t" << num_inserts << std::endl;
     std::cout << "Time elapsed:\t" << elapsed_time/1000 << " seconds"
               << std::endl;
@@ -140,8 +140,8 @@ void InsertThroughputTest(InsertEnvironment<T> *env) {
 int main(int argc, char** argv) {
     const char* args[] = {"--power", "--table-capacity", "--thread-num",
                           "--begin-load", "--end-load", "--seed"};
-    size_t* arg_vars[] = {&power, &table_capacity, &thread_num, &begin_load,
-                          &end_load, &seed};
+    size_t* arg_vars[] = {&g_power, &g_table_capacity, &g_thread_num, &g_begin_load,
+                          &g_end_load, &g_seed};
     const char* arg_help[] = {
         "The number of keys to size the table with, expressed as a power of 2",
         "The initial capacity of the table, expressed as a power of 2. "
@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
         "The seed used by the random number generator"
     };
     const char* flags[] = {"--use-strings"};
-    bool* flag_vars[] = {&use_strings};
+    bool* flag_vars[] = {&g_use_strings};
     const char* flag_help[] = {
         "If set, the key type of the map will be std::string"
     };
@@ -161,16 +161,16 @@ int main(int argc, char** argv) {
                 sizeof(args)/sizeof(const char*), flags, flag_vars, flag_help,
                 sizeof(flags)/sizeof(const char*));
 
-    if (begin_load >= 100) {
+    if (g_begin_load >= 100) {
         std::cerr << "--begin-load must be between 0 and 99" << std::endl;
         exit(1);
-    } else if (begin_load >= end_load) {
+    } else if (g_begin_load >= g_end_load) {
         std::cerr << "--end-load must be greater than --begin-load"
                   << std::endl;
         exit(1);
     }
 
-    if (use_strings) {
+    if (g_use_strings) {
         auto *env = new InsertEnvironment<cuckoohash_map<KeyType2, ValType>>;
         InsertThroughputTest(env);
         delete env;

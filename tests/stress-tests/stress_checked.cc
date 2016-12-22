@@ -33,31 +33,31 @@ typedef int32_t ValType2;
 
 // The number of keys to size the table with, expressed as a power of
 // 2. This can be set with the command line flag --power
-size_t power = 25;
-size_t numkeys; // Holds 2^power
+size_t g_power = 25;
+size_t g_numkeys; // Holds 2^power
 // The number of threads spawned for each type of operation. This can
 // be set with the command line flag --thread-num
-size_t thread_num = 4;
+size_t g_thread_num = 4;
 // Whether to disable inserts or not. This can be set with the command
 // line flag --disable-inserts
-bool disable_inserts = false;
+bool g_disable_inserts = false;
 // Whether to disable deletes or not. This can be set with the command
 // line flag --disable-deletes
-bool disable_deletes = false;
+bool g_disable_deletes = false;
 // Whether to disable updates or not. This can be set with the command
 // line flag --disable-updates
-bool disable_updates = false;
+bool g_disable_updates = false;
 // Whether to disable finds or not. This can be set with the command
 // line flag --disable-finds
-bool disable_finds = false;
+bool g_disable_finds = false;
 // How many seconds to run the test for. This can be set with the
 // command line flag --time
-size_t test_len = 10;
+size_t g_test_len = 10;
 // The seed for the random number generator. If this isn't set to a
 // nonzero value with the --seed flag, the current time is used
-size_t seed = 0;
+size_t g_seed = 0;
 // Whether to use strings as the key
-bool use_strings = false;
+bool g_use_strings = false;
 
 std::atomic<size_t> num_inserts = ATOMIC_VAR_INIT(0);
 std::atomic<size_t> num_deletes = ATOMIC_VAR_INIT(0);
@@ -68,23 +68,23 @@ template <class KType>
 class AllEnvironment {
 public:
     AllEnvironment()
-        : table(numkeys), table2(numkeys), keys(numkeys), vals(numkeys),
-          vals2(numkeys), in_table(new bool[numkeys]),
-          in_use(new std::atomic_flag[numkeys]),
+        : table(g_numkeys), table2(g_numkeys), keys(g_numkeys), vals(g_numkeys),
+          vals2(g_numkeys), in_table(new bool[g_numkeys]),
+          in_use(new std::atomic_flag[g_numkeys]),
           val_dist(std::numeric_limits<ValType>::min(),
                    std::numeric_limits<ValType>::max()),
           val_dist2(std::numeric_limits<ValType2>::min(),
                     std::numeric_limits<ValType2>::max()),
-          ind_dist(0, numkeys-1), finished(false) {
+          ind_dist(0, g_numkeys-1), finished(false) {
         // Sets up the random number generator
-        if (seed == 0) {
-            seed = std::chrono::system_clock::now().time_since_epoch().count();
+        if (g_seed == 0) {
+            g_seed = std::chrono::system_clock::now().time_since_epoch().count();
         }
-        std::cout << "seed = " << seed << std::endl;
-        gen_seed = seed;
+        std::cout << "seed = " << g_seed << std::endl;
+        gen_seed = g_seed;
         // Fills in all the vectors except vals, which will be filled
         // in by the insertion threads.
-        for (size_t i = 0; i < numkeys; i++) {
+        for (size_t i = 0; i < g_numkeys; i++) {
             keys[i] = generateKey<KType>(i);
             in_table[i] = false;
             in_use[i].clear();
@@ -110,7 +110,7 @@ template <class KType>
 void stress_insert_thread(AllEnvironment<KType> *env) {
     pcg64_fast gen(env->gen_seed);
     while (!env->finished.load()) {
-        // Pick a random number between 0 and numkeys. If that slot is
+        // Pick a random number between 0 and g_numkeys. If that slot is
         // not in use, lock the slot. Insert a random value into both
         // tables. The inserts should only be successful if the key
         // wasn't in the table. If the inserts succeeded, check that
@@ -268,33 +268,33 @@ void find_thread(AllEnvironment<KType> *env) {
     }
 }
 
-// Spawns thread_num insert, delete, update, and find threads
+// Spawns g_thread_num insert, delete, update, and find threads
 template <class KType>
 void StressTest(AllEnvironment<KType> *env) {
     std::vector<std::thread> threads;
-    for (size_t i = 0; i < thread_num; i++) {
-        if (!disable_inserts) {
+    for (size_t i = 0; i < g_thread_num; i++) {
+        if (!g_disable_inserts) {
             threads.emplace_back(stress_insert_thread<KType>, env);
         }
-        if (!disable_deletes) {
+        if (!g_disable_deletes) {
             threads.emplace_back(delete_thread<KType>, env);
         }
-        if (!disable_updates) {
+        if (!g_disable_updates) {
             threads.emplace_back(update_thread<KType>, env);
         }
-        if (!disable_finds) {
+        if (!g_disable_finds) {
             threads.emplace_back(find_thread<KType>, env);
         }
     }
     // Sleeps before ending the threads
-    sleep(test_len);
+    sleep(g_test_len);
     env->finished.store(true);
     for (size_t i = 0; i < threads.size(); i++) {
         threads[i].join();
     }
     // Finds the number of slots that are filled
     size_t numfilled = 0;
-    for (size_t i = 0; i < numkeys; i++) {
+    for (size_t i = 0; i < g_numkeys; i++) {
         if (env->in_table[i]) {
             numfilled++;
         }
@@ -309,7 +309,7 @@ void StressTest(AllEnvironment<KType> *env) {
 
 int main(int argc, char** argv) {
     const char* args[] = {"--power", "--thread-num", "--time", "--seed"};
-    size_t* arg_vars[] = {&power, &thread_num, &test_len, &seed};
+    size_t* arg_vars[] = {&g_power, &g_thread_num, &g_test_len, &g_seed};
     const char* arg_help[] = {
         "The number of keys to size the table with, expressed as a power of 2",
         "The number of threads to spawn for each type of operation",
@@ -321,8 +321,8 @@ int main(int argc, char** argv) {
         "--disable-finds", "--use-strings"
     };
     bool* flag_vars[] = {
-        &disable_inserts, &disable_deletes, &disable_updates,
-        &disable_finds, &use_strings
+        &g_disable_inserts, &g_disable_deletes, &g_disable_updates,
+        &g_disable_finds, &g_use_strings
     };
     const char* flag_help[] = {
         "If set, no inserts will be run",
@@ -334,9 +334,9 @@ int main(int argc, char** argv) {
     parse_flags(argc, argv, "Runs a stress test on inserts, deletes, and finds",
                 args, arg_vars, arg_help, sizeof(args)/sizeof(const char*),
                 flags, flag_vars, flag_help, sizeof(flags)/sizeof(const char*));
-    numkeys = 1U << power;
+    g_numkeys = 1U << g_power;
 
-    if (use_strings) {
+    if (g_use_strings) {
         auto *env = new AllEnvironment<KeyType2>;
         StressTest(env);
         delete env;

@@ -31,28 +31,28 @@ typedef uint32_t ValType;
 
 // The number of keys to size the table with, expressed as a power of
 // 2. This can be set with the command line flag --power
-size_t power = 25;
+size_t g_power = 25;
 // The initial capacity of the table, expressed as a power of 2. If 0, the table
 // is initialized to the number of keys. This can be set with the command line
 // flag --table-capacity
-size_t table_capacity = 0;
+size_t g_table_capacity = 0;
 // The number of threads spawned for inserts. This can be set with the
 // command line flag --thread-num
-size_t thread_num = std::thread::hardware_concurrency();
+size_t g_thread_num = std::thread::hardware_concurrency();
 // The load factor to fill the table up to before testing throughput.
 // This can be set with the command line flag --begin-load.
-size_t begin_load = 0;
+size_t g_begin_load = 0;
 // The maximum load factor to fill the table up to when testing
 // throughput. This can be set with the command line flag
 // --end-load.
-size_t end_load = 90;
+size_t g_end_load = 90;
 // The seed which the random number generator uses. This can be set
 // with the command line flag --seed
-size_t seed = 0;
+size_t g_seed = 0;
 // The percentage of operations that should be inserts. This should be
 // at least 10. This can be set with the command line flag
 // --insert-percent
-size_t insert_percent = 10;
+size_t g_insert_percent = 10;
 // Whether to use strings as the key
 bool use_strings = false;
 
@@ -61,15 +61,15 @@ class ReadInsertEnvironment {
     typedef typename T::key_type KType;
 public:
     ReadInsertEnvironment()
-        : numkeys(1U << power),
-          table(table_capacity ? table_capacity : numkeys), keys(numkeys),
-	  gen(seed_source) {
+        : numkeys(1U << g_power),
+          table(g_table_capacity ? g_table_capacity : numkeys), keys(numkeys),
+          gen(seed_source) {
         // Sets up the random number generator
-        if (seed == 0) {
-	    std::cout << "seed = random" << std::endl;
+        if (g_seed == 0) {
+            std::cout << "seed = random" << std::endl;
 	} else {
-	    std::cout << "seed = " << seed << std::endl;
-	    gen.seed(seed);
+            std::cout << "seed = " << g_seed << std::endl;
+            gen.seed(g_seed);
 	}
 
         // We fill the keys array with integers between numkeys and
@@ -81,11 +81,11 @@ public:
             keys[swapind] = generateKey<KType>(i+numkeys);
         }
 
-        // We prefill the table to begin_load with thread_num threads,
+        // We prefill the table to g_begin_load with g_thread_num threads,
         // giving each thread enough keys to insert
         std::vector<std::thread> threads;
-        size_t keys_per_thread = numkeys * (begin_load / 100.0) / thread_num;
-        for (size_t i = 0; i < thread_num; i++) {
+        size_t keys_per_thread = numkeys * (g_begin_load / 100.0) / g_thread_num;
+        for (size_t i = 0; i < g_thread_num; i++) {
             threads.emplace_back(insert_thread<T>::func, std::ref(table),
                                  keys.begin()+i*keys_per_thread,
                                  keys.begin()+(i+1)*keys_per_thread);
@@ -95,10 +95,10 @@ public:
         }
 
         init_size = table.size();
-        ASSERT_TRUE(init_size == keys_per_thread * thread_num);
+        ASSERT_TRUE(init_size == keys_per_thread * g_thread_num);
 
         std::cout << "Table with capacity " << numkeys <<
-            " prefilled to a load factor of " << begin_load << "%" << std::endl;
+            " prefilled to a load factor of " << g_begin_load << "%" << std::endl;
     }
 
     size_t numkeys;
@@ -115,16 +115,16 @@ void ReadInsertThroughputTest(ReadInsertEnvironment<T> *env) {
                                .time_since_epoch().count());
     std::atomic<size_t> counter(0);
     std::vector<std::thread> threads;
-    size_t keys_per_thread = env->numkeys * ((end_load-begin_load) / 100.0) /
-        thread_num;
+    size_t keys_per_thread = env->numkeys * ((g_end_load-g_begin_load) / 100.0) /
+        g_thread_num;
     timeval t1, t2;
     gettimeofday(&t1, NULL);
-    for (size_t i = 0; i < thread_num; i++) {
+    for (size_t i = 0; i < g_thread_num; i++) {
         threads.emplace_back(
             read_insert_thread<T>::func, std::ref(env->table),
             env->keys.begin()+(i*keys_per_thread)+env->init_size,
             env->keys.begin()+((i+1)*keys_per_thread)+env->init_size,
-            std::ref(counter), (double)insert_percent / 100.0, start_seed +i);
+            std::ref(counter), (double)g_insert_percent / 100.0, start_seed +i);
     }
     for (size_t i = 0; i < threads.size(); i++) {
         threads[i].join();
@@ -134,7 +134,7 @@ void ReadInsertThroughputTest(ReadInsertEnvironment<T> *env) {
     elapsed_time += (t2.tv_usec - t1.tv_usec) / 1000.0; // us to ms
     // Reports the results
     std::cout << "----------Results----------" << std::endl;
-    std::cout << "Final load factor:\t" << end_load << "%" << std::endl;
+    std::cout << "Final load factor:\t" << g_end_load << "%" << std::endl;
     std::cout << "Number of operations:\t" << counter.load() << std::endl;
     std::cout << "Time elapsed:\t" << elapsed_time/1000 << " seconds"
               << std::endl;
@@ -147,8 +147,8 @@ int main(int argc, char** argv) {
     const char* args[] = {"--power", "--table-capacity", "--thread-num",
                           "--begin-load", "--end-load", "--seed",
                           "--insert-percent"};
-    size_t* arg_vars[] = {&power, &table_capacity, &thread_num, &begin_load,
-                          &end_load, &seed, &insert_percent};
+    size_t* arg_vars[] = {&g_power, &g_table_capacity, &g_thread_num, &g_begin_load,
+                          &g_end_load, &g_seed, &g_insert_percent};
     const char* arg_help[] = {
         "The number of keys to size the table with, expressed as a power of 2",
         "The initial capacity of the table, expressed as a power of 2. "
@@ -169,14 +169,14 @@ int main(int argc, char** argv) {
                 sizeof(args)/sizeof(const char*), flags, flag_vars, flag_help,
                 sizeof(flags)/sizeof(const char*));
 
-    if (begin_load >= 100) {
+    if (g_begin_load >= 100) {
         std::cerr << "--begin-load must be between 0 and 99" << std::endl;
         exit(1);
-    } else if (begin_load >= end_load) {
+    } else if (g_begin_load >= g_end_load) {
         std::cerr << "--end-load must be greater than --begin-load"
                   << std::endl;
         exit(1);
-    } else if (insert_percent < 1 || insert_percent > 99) {
+    } else if (g_insert_percent < 1 || g_insert_percent > 99) {
         std::cerr << "--insert-percent must be between 1 and 99, inclusive"
                   << std::endl;
         exit(1);
