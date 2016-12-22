@@ -33,13 +33,14 @@ size_t g_erase_percentage = 0;
 size_t g_update_percentage = 0;
 size_t g_upsert_percentage = 0;
 
-// Total number of operations we are running, specified as a power of 2
-size_t g_total_ops = 25;
 // The initial capacity of the table, specified as a power of 2.
 size_t g_initial_capacity = 25;
 // The percentage of the initial table capacity should we fill the table to
 // before running the benchmark.
 size_t g_prefill_percentage = 0;
+// Total number of operations we are running, specified as a percentage of the
+// initial capacity. This can exceed 100.
+size_t g_total_ops_percentage = 90;
 
 // Number of threads to run with
 size_t g_threads = std::thread::hardware_concurrency();
@@ -50,9 +51,9 @@ const char* args[] = {
     "--erases",
     "--updates",
     "--upserts",
-    "--total-ops",
     "--initial-capacity",
     "--prefill",
+    "--total-ops",
     "--num-threads",
 };
 
@@ -62,9 +63,9 @@ size_t* arg_vars[] = {
     &g_erase_percentage,
     &g_update_percentage,
     &g_upsert_percentage,
-    &g_total_ops,
     &g_initial_capacity,
     &g_prefill_percentage,
+    &g_total_ops_percentage,
     &g_threads,
 };
 
@@ -74,9 +75,9 @@ const char* arg_descriptions[] = {
     "Percentage of mix that is erases",
     "Percentage of mix that is updates",
     "Percentage of mix that is upserts",
-    "Total number of operations, as a power of 2",
     "Initial capacity of table, as a power of 2",
     "Percentage of final size to pre-fill table",
+    "Number of operations, as a percentage of the initial capacity. This can exceed 100",
     "Number of threads",
 };
 
@@ -152,15 +153,6 @@ public:
         return 0;
     }
 };
-
-// template <> uint64_t unique_key<uint64_t> (seq_t seq, thread_id_t thread_id) {
-//     // Per-thread, the seq will be an incrementing number and the thread_id
-//     // will be constant, so we want the lower bits to be from the seq, and
-//     // the upper bits to be a mixture of the two that preserves uniqueness.
-//     return (static_cast<uint64_t>(seq) |
-//             (static_cast<uint64_t>(thread_id) << 32) |
-//             (static_cast<uint64_t>(seq ^ thread_id) << 48));
-// };
 
 void check_percentage(size_t value, const char* name) {
     if (value > 100) {
@@ -289,8 +281,8 @@ int main(int argc, char** argv) {
         throw std::runtime_error("Operation mix percentages must sum to 100");
     }
 
-    g_total_ops = 1UL << g_total_ops;
-    g_initial_capacity = 1UL << g_initial_capacity;
+    const size_t initial_capacity = 1UL << g_initial_capacity;
+    const size_t total_ops = initial_capacity * g_total_ops_percentage / 100;
 
     // Create and size the table
     cuckoohash_map<KEY, VALUE> tbl(g_initial_capacity);
@@ -317,7 +309,7 @@ int main(int argc, char** argv) {
                  std::mt19937(std::random_device()()));
 
     // Pre-fill the table
-    const size_t prefill_elems = (g_initial_capacity * g_prefill_percentage / 100);
+    const size_t prefill_elems = (initial_capacity * g_prefill_percentage / 100);
     std::vector<std::thread> prefill_threads(g_threads);
     for (size_t i = 0; i < g_threads; ++i) {
         size_t thread_prefill = prefill_elems / g_threads;
@@ -336,13 +328,14 @@ int main(int argc, char** argv) {
 
     // Run the operation mix, timed
     std::vector<std::thread> mix_threads(g_threads);
+    const size_t initial_hashpower = tbl.hashpower();
     auto start = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < g_threads; ++i) {
         size_t thread_prefill = prefill_elems / g_threads;
-        size_t thread_ops = g_total_ops / g_threads;
+        size_t thread_ops = total_ops / g_threads;
         if (i == g_threads - 1) {
             thread_prefill += prefill_elems % g_threads;
-            thread_ops += g_total_ops % g_threads;
+            thread_ops += total_ops % g_threads;
         }
         mix_threads[i] = std::thread(
             mix_thread<decltype(tbl)>,
@@ -356,8 +349,14 @@ int main(int argc, char** argv) {
         t.join();
     }
     auto end = std::chrono::high_resolution_clock::now();
+    const size_t final_hashpower = tbl.hashpower();
     double seconds_elapsed = std::chrono::duration_cast<
         std::chrono::duration<double> >(end - start).count();
-    std::cout << "throughput (ops/sec): " << std::fixed
-              << g_total_ops / seconds_elapsed << std::endl;
+    std::cout << std::fixed;
+    std::cout << "total ops: " << total_ops << std::endl;
+    std::cout << "time elapsed (sec): " << seconds_elapsed << std::endl;
+    std::cout << "number of expansions: " << final_hashpower - initial_hashpower
+              << std::endl;
+    std::cout << "throughput (ops/sec): "
+              << total_ops / seconds_elapsed << std::endl;
 }
