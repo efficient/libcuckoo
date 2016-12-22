@@ -9,4 +9,4 @@ read_throughput_out_SOURCES = read_throughput.cc
 read_insert_throughput_out_SOURCES = read_insert_throughput.cc
 
 universal_benchmark_out_SOURCES = universal_benchmark.cc
-universal_benchmark_out_CXXFLAGS = -DKEY=$(KEY) -DVALUE=$(VALUE)
+universal_benchmark_out_CXXFLAGS = $(AM_CXXFLAGS) -DKEY=$(KEY) -DVALUE=$(VALUE)
