@@ -62,8 +62,8 @@ public:
     }
 };
 
-// Should be 1MB
-using BigBlob = std::bitset<8388608>;
+// Should be 10KB
+using BigBlob = std::bitset<81920>;
 
 template <>
 class Gen<BigBlob> {
