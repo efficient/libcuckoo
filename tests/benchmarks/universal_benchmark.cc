@@ -282,7 +282,7 @@ int main(int argc, char** argv) {
     const size_t total_ops = initial_capacity * g_total_ops_percentage / 100;
 
     // Create and size the table
-    cuckoohash_map<KEY, VALUE> tbl(g_initial_capacity);
+    cuckoohash_map<KEY, VALUE> tbl(initial_capacity);
 
     // Pre-generate an operation mix based on our percentages.
     std::array<Ops, 100> op_mix;
