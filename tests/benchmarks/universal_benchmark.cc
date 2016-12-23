@@ -140,13 +140,10 @@ class Gen {
 template <>
 class Gen<uint64_t> {
 public:
+    // Per-thread, the seq will be an incrementing number and the thread_id will
+    // be constant. We assume thread_id < g_threads.
     static uint64_t key(seq_t seq, thread_id_t thread_id) {
-        // Per-thread, the seq will be an incrementing number and the thread_id
-        // will be constant, so we want the lower bits to be from the seq, and
-        // the upper bits to be a mixture of the two that preserves uniqueness.
-        return (static_cast<uint64_t>(seq) |
-                (static_cast<uint64_t>(thread_id) << 32) |
-                (static_cast<uint64_t>(seq ^ thread_id) << 48));
+        return seq * g_threads + thread_id;
     }
 
     static uint64_t value() {
