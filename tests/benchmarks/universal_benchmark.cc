@@ -14,34 +14,6 @@
 #include "universal_gen.hh"
 #include "universal_table_wrapper.hh"
 
-/* Compile-time parameters -- key and value type and table type */
-
-#ifndef KEY
-#error Must define KEY symbol as valid key type
-#endif
-
-auto KeyGen = Gen<KEY>::key;
-
-#ifndef VALUE
-#error Must define VALUE symbol as valid value type
-#endif
-
-auto ValueGen = Gen<VALUE>::value;
-
-#ifdef USE_LIBCUCKOO
-#include "../../src/cuckoohash_map.hh"
-using Tbl = cuckoohash_map<KEY, VALUE>;
-using Wrapper = TableWrapper<Tbl>;
-#else
-#ifdef USE_TBB
-#include <tbb/concurrent_hash_map.h>
-using Tbl = tbb::concurrent_hash_map<KEY, VALUE>;
-using Wrapper = TableWrapper<Tbl>;
-#else
-#error Must define either USE_LIBCUCKOO or USE_TBB
-#endif
-#endif
-
 /* Run-time parameters -- operation mix and table configuration */
 
 // The following specify what percentage of operations should be of each type.
@@ -124,15 +96,16 @@ enum Ops {
     UPSERT,
 };
 
-void prefill_thread(const thread_id_t thread_id, Tbl& tbl,
+void prefill_thread(const thread_id_t thread_id, Table& tbl,
                     const seq_t prefill_elems) {
     for (seq_t i = 0; i < prefill_elems; ++i) {
-        ASSERT_TRUE(Wrapper::insert(tbl, KeyGen(i, thread_id, g_threads),
-                                    ValueGen()));
+        ASSERT_TRUE(
+            tbl.insert(Gen<KEY>::key(i, thread_id, g_threads),
+                       Gen<VALUE>::value()));
     }
 }
 
-void mix_thread(const thread_id_t thread_id, Tbl& tbl,
+void mix_thread(const thread_id_t thread_id, Table& tbl,
                 const seq_t num_ops,
                 const std::array<Ops, 100>& op_mix,
                 const seq_t prefill_elems) {
@@ -144,10 +117,13 @@ void mix_thread(const thread_id_t thread_id, Tbl& tbl,
     uint64_t x;
     seq_t seq;
     VALUE v;
-    // Shorthand for the key function
+
+    // Shorthand for the key and value functions
     auto key = [&thread_id] (seq_t s) {
-        return KeyGen(s, thread_id, g_threads);
+        return Gen<KEY>::key(s, thread_id, g_threads);
     };
+    auto val = Gen<VALUE>::value;
+
     // Run the operation mix for num_ops operations
     for (size_t i = 0; i < num_ops;) {
         for (size_t j = 0; j < 100 && i < num_ops; ++i, ++j) {
@@ -165,12 +141,12 @@ void mix_thread(const thread_id_t thread_id, Tbl& tbl,
                 seq = x % num_ops;
                 ASSERT_EQ(
                     seq >= erase_seq && seq < insert_seq,
-                    Wrapper::read(tbl, key(seq), v));
+                    tbl.read(key(seq), v));
                 break;
             case INSERT:
                 // Insert sequence number `insert_seq`. This should always
                 // succeed and be inserting a new value.
-                ASSERT_TRUE(Wrapper::insert(tbl, key(insert_seq), ValueGen()));
+                ASSERT_TRUE(tbl.insert(key(insert_seq), val()));
                 ++insert_seq;
                 break;
             case ERASE:
@@ -179,8 +155,7 @@ void mix_thread(const thread_id_t thread_id, Tbl& tbl,
                 // if it is less than `insert_seq`, this will keep erasing the
                 // same element if we have not inserted anything in a while, but
                 // a good mix probably shouldn't be doing that.
-                ASSERT_EQ(erase_seq < insert_seq,
-                          Wrapper::erase(tbl, key(erase_seq)));
+                ASSERT_EQ(erase_seq < insert_seq, tbl.erase(key(erase_seq)));
                 if (erase_seq < insert_seq) {
                     ++erase_seq;
                 }
@@ -190,7 +165,7 @@ void mix_thread(const thread_id_t thread_id, Tbl& tbl,
                 seq = x % num_ops;
                 ASSERT_EQ(
                     seq >= erase_seq && seq < insert_seq,
-                    Wrapper::update(tbl, key(seq), ValueGen()));
+                    tbl.update(key(seq), val()));
                 break;
             case UPSERT:
                 // If insert_seq == 0 or x & 1 == 0, then do an insert,
@@ -198,11 +173,10 @@ void mix_thread(const thread_id_t thread_id, Tbl& tbl,
                 // balance of inserts and updates across a changing set of
                 // numbers, regardless of the mix.
                 if ((x & 1) == 0 || insert_seq == 0) {
-                    ASSERT_TRUE(Wrapper::insert(tbl, key(insert_seq), ValueGen()));
+                    ASSERT_TRUE(tbl.insert(key(insert_seq), val()));
                     ++insert_seq;
                 } else {
-                    ASSERT_TRUE(Wrapper::update(tbl, key(insert_seq - 1),
-                                                ValueGen()));
+                    ASSERT_TRUE(tbl.update(key(insert_seq - 1), val()));
                 }
             }
         }
@@ -228,7 +202,7 @@ int main(int argc, char** argv) {
     const size_t total_ops = initial_capacity * g_total_ops_percentage / 100;
 
     // Create and size the table
-    Tbl tbl(initial_capacity);
+    Table tbl(initial_capacity);
 
     // Pre-generate an operation mix based on our percentages.
     std::array<Ops, 100> op_mix;

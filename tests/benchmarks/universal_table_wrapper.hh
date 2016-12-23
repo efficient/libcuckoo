@@ -1,69 +1,88 @@
+/* For each table to support, we define a wrapper class which holds the table
+ * and implements all of the benchmarked operations. Below we list all the
+ * methods each wrapper must implement.
+ *
+ * constructor(size_t n) // n is the initial capacity
+ * bool read(T& tbl, const KEY& k, VALUE& v) const
+ * bool insert(const T& tbl, const KEY& k, const VALUE& v)
+ * bool erase(T& tbl, const KEY& k)
+ * bool update(T& tbl, const KEY& k, const VALUE& v)
+ * void upsert(T& tbl, const KEY& k, Updater fn, const VALUE& v)
+ *
+ */
+
 #ifndef _UNIVERSAL_TABLE_WRAPPER_HH
 #define _UNIVERSAL_TABLE_WRAPPER_HH
 
 #include <utility>
 
-/* A wrapper for all operations being benchmarked that can be specialized for
- * different tables. This un-specialized template implementation lists out all
- * the methods necessary to implement. Each method is static and returns true on
- * successful action and false on failure. */
-template <typename T>
-class TableWrapper {
-    // bool read(T& tbl, const KEY& k, VALUE& v)
-    // bool insert(const T& tbl, const KEY& k, const VALUE& v)
-    // bool erase(T& tbl, const KEY& k)
-    // bool update(T& tbl, const KEY& k, const VALUE& v)
-    // bool upsert(T& tbl, const KEY& k, Updater fn, const VALUE& v)
-};
+#ifndef KEY
+#error Must define KEY symbol as valid key type
+#endif
+
+#ifndef VALUE
+#error Must define VALUE symbol as valid value type
+#endif
 
 #ifdef USE_LIBCUCKOO
 
 #include "../../src/cuckoohash_map.hh"
 
-template <typename Hash, typename Pred, typename Alloc,
-          size_t SLOT_PER_BUCKET>
-class TableWrapper< cuckoohash_map<KEY, VALUE, Hash, Pred,
-                                   Alloc, SLOT_PER_BUCKET> > {
+class Table {
 public:
-    typedef cuckoohash_map<KEY, VALUE, Hash, Pred,
-                           Alloc, SLOT_PER_BUCKET> tbl;
-    static bool read(const tbl& tbl, const KEY& k, VALUE& v) {
+    Table(size_t n) : tbl(n) {}
+
+    bool read(const KEY& k, VALUE& v) const {
         return tbl.find(k, v);
     }
 
-    static bool insert(tbl& tbl, const KEY& k, const VALUE& v) {
+    bool insert(const KEY& k, const VALUE& v) {
         return tbl.insert(k, v);
     }
 
-    static bool erase(tbl& tbl, const KEY& k) {
+    bool erase(const KEY& k) {
         return tbl.erase(k);
     }
 
-    static bool update(tbl& tbl, const KEY& k, const VALUE& v) {
+    bool update(const KEY& k, const VALUE& v) {
         return tbl.update(k, v);
     }
 
     template <typename Updater>
-    static bool upsert(tbl& tbl, const KEY& k, Updater fn, const VALUE& v) {
+    void upsert(const KEY& k, Updater fn, const VALUE& v) {
         tbl.upsert(k, fn, v);
-        return true;
     }
+
+private:
+    cuckoohash_map<KEY, VALUE, std::hash<KEY> > tbl;
 };
 
-#endif
+#else
 
 #ifdef USE_TBB
 
 #include <tbb/concurrent_hash_map.h>
 
-template <typename HashCompare, typename A>
-class TableWrapper<
-    tbb::concurrent_hash_map<KEY, VALUE, HashCompare, A> > {
-public:
-    typedef tbb::concurrent_hash_map<KEY, VALUE, HashCompare, A> tbl;
+struct CustomHashCompare {
+    static size_t hash(const KEY& k) {
+        return hashfn(k);
+    }
 
-    static bool read(const tbl& tbl, const KEY& k, VALUE& v) {
-        typename tbl::const_accessor a;
+    static bool equal(const KEY& k1, const KEY& k2) {
+        return k1 == k2;
+    }
+private:
+    static std::hash<KEY> hashfn;
+};
+
+std::hash<KEY> CustomHashCompare::hashfn;
+
+class Table {
+public:
+    Table(size_t n): tbl(n) {}
+
+    bool read(const KEY& k, VALUE& v) const {
+        typename decltype(tbl)::const_accessor a;
         if (tbl.find(a, k)) {
             v = a->second;
             return true;
@@ -72,16 +91,16 @@ public:
         }
     }
 
-    static bool insert(tbl& tbl, const KEY& k, const VALUE& v) {
+    bool insert(const KEY& k, const VALUE& v) {
         return tbl.insert(std::make_pair(k, v));
     }
 
-    static bool erase(tbl& tbl, const KEY& k) {
+    bool erase(const KEY& k) {
         return tbl.erase(k);
     }
 
-    static bool update(tbl& tbl, const KEY& k, const VALUE& v) {
-        typename tbl::accessor a;
+    bool update(const KEY& k, const VALUE& v) {
+        typename decltype(tbl)::accessor a;
         if (tbl.find(a, k)) {
             a->second = v;
             return true;
@@ -91,17 +110,21 @@ public:
     }
 
     template <typename Updater>
-    static bool upsert(tbl& tbl, const KEY& k, Updater fn, const VALUE& v) {
-        typename tbl::accessor a;
+    void upsert(const KEY& k, Updater fn, const VALUE& v) {
+        typename decltype(tbl)::accessor a;
         if (tbl.insert(a, k)) {
             a->second = v;
         } else {
             fn(a->second);
         }
-        return true;
     }
+
+    tbb::concurrent_hash_map<KEY, VALUE, CustomHashCompare> tbl;
 };
 
+#else
+#error Must define either USE_LIBCUCKOO or USE_TBB
+#endif
 #endif
 
 #endif // _UNIVERSAL_TABLE_WRAPPER_HH
