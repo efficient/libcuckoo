@@ -13,6 +13,8 @@
 #include "../../src/cuckoohash_map.hh"
 #include "../test_util.hh"
 
+#include "universal_gen.hh"
+
 /* Compile-time parameters -- key and value type */
 
 #ifndef KEY
@@ -129,27 +131,6 @@ public:
     }
 };
 
-/* A specialized functor for generating unique keys and values from a sequence
- * number and thread id. Must define one for each type we want to use. */
-using seq_t = uint32_t;
-using thread_id_t = uint16_t;
-template <typename T>
-class Gen {
-};
-
-template <>
-class Gen<uint64_t> {
-public:
-    // Per-thread, the seq will be an incrementing number and the thread_id will
-    // be constant. We assume thread_id < g_threads.
-    static uint64_t key(seq_t seq, thread_id_t thread_id) {
-        return seq * g_threads + thread_id;
-    }
-
-    static uint64_t value() {
-        return 0;
-    }
-};
 
 void check_percentage(size_t value, const char* name) {
     if (value > 100) {
@@ -174,7 +155,7 @@ void prefill_thread(const thread_id_t thread_id,
                     const seq_t prefill_elems) {
     for (seq_t i = 0; i < prefill_elems; ++i) {
         ASSERT_TRUE(BenchmarkWrapper<T>::insert(
-                        tbl, Gen<KEY>::key(i, thread_id),
+                        tbl, Gen<KEY>::key(i, thread_id, g_threads),
                         Gen<VALUE>::value()));
     }
 }
@@ -210,13 +191,13 @@ void mix_thread(const thread_id_t thread_id,
                 ASSERT_EQ(
                     seq >= erase_seq && seq < insert_seq,
                     BenchmarkWrapper<T>::read(
-                        tbl, Gen<KEY>::key(seq, thread_id)));
+                        tbl, Gen<KEY>::key(seq, thread_id, g_threads)));
                 break;
             case INSERT:
                 // Insert sequence number `insert_seq`. This should always
                 // succeed and be inserting a new value.
                 ASSERT_TRUE(BenchmarkWrapper<T>::insert(
-                                tbl, Gen<KEY>::key(insert_seq, thread_id),
+                                tbl, Gen<KEY>::key(insert_seq, thread_id, g_threads),
                                 Gen<VALUE>::value()));
                 ++insert_seq;
                 break;
@@ -228,7 +209,7 @@ void mix_thread(const thread_id_t thread_id,
                 // a good mix probably shouldn't be doing that.
                 ASSERT_EQ(erase_seq < insert_seq,
                           BenchmarkWrapper<T>::erase(
-                              tbl, Gen<KEY>::key(erase_seq, thread_id)));
+                              tbl, Gen<KEY>::key(erase_seq, thread_id, g_threads)));
                 if (erase_seq < insert_seq) {
                     ++erase_seq;
                 }
@@ -239,7 +220,7 @@ void mix_thread(const thread_id_t thread_id,
                 ASSERT_EQ(
                     seq >= erase_seq && seq < insert_seq,
                     BenchmarkWrapper<T>::update(
-                        tbl, Gen<KEY>::key(seq, thread_id),
+                        tbl, Gen<KEY>::key(seq, thread_id, g_threads),
                         Gen<VALUE>::value()));
                 break;
             case UPSERT:
@@ -249,13 +230,13 @@ void mix_thread(const thread_id_t thread_id,
                 // numbers, regardless of the mix.
                 if ((x & 1) == 0 || insert_seq == 0) {
                     ASSERT_TRUE(BenchmarkWrapper<T>::insert(
-                                    tbl, Gen<KEY>::key(insert_seq, thread_id),
+                                    tbl, Gen<KEY>::key(insert_seq, thread_id, g_threads),
                                     Gen<VALUE>::value()));
                     ++insert_seq;
                 } else {
                     ASSERT_TRUE(
                         BenchmarkWrapper<T>::update(
-                            tbl, Gen<KEY>::key(insert_seq - 1, thread_id),
+                            tbl, Gen<KEY>::key(insert_seq - 1, thread_id, g_threads),
                             Gen<VALUE>::value()));
                 }
             }
