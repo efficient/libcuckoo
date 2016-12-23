@@ -1,4 +1,4 @@
-CITYHASH_DIR = ../cityhash-1.1.1
+CITYHASH_DIR = $(top_srcdir)/cityhash-1.1.1
 AM_LDFLAGS=-L$(CITYHASH_DIR)/src -lcityhash
 AM_CXXFLAGS=-I$(CITYHASH_DIR)/src
 
