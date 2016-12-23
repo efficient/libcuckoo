@@ -24,7 +24,7 @@ public:
     // be constant. We assume thread_id < num_threads.
     static uint64_t key(seq_t seq, thread_id_t thread_id,
                         thread_id_t num_threads) {
-        return seq * num_threads + thread_id;
+        return static_cast<uint64_t>(seq) * num_threads + thread_id;
     }
 
     static uint64_t value() {

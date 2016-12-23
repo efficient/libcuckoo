@@ -63,7 +63,7 @@ public:
     typedef tbb::concurrent_hash_map<KEY, VALUE, HashCompare, A> tbl;
 
     static bool read(const tbl& tbl, const KEY& k, VALUE& v) {
-        static typename tbl::const_accessor a;
+        typename tbl::const_accessor a;
         if (tbl.find(a, k)) {
             v = a->second;
             return true;
@@ -81,7 +81,7 @@ public:
     }
 
     static bool update(tbl& tbl, const KEY& k, const VALUE& v) {
-        static typename tbl::accessor a;
+        typename tbl::accessor a;
         if (tbl.find(a, k)) {
             a->second = v;
             return true;
@@ -92,7 +92,7 @@ public:
 
     template <typename Updater>
     static bool upsert(tbl& tbl, const KEY& k, Updater fn, const VALUE& v) {
-        static typename tbl::accessor a;
+        typename tbl::accessor a;
         if (tbl.insert(a, k)) {
             a->second = v;
         } else {
