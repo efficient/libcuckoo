@@ -10,20 +10,36 @@
 #include <thread>
 #include <vector>
 
-#include "../../src/cuckoohash_map.hh"
 #include "../test_util.hh"
-
 #include "universal_gen.hh"
 #include "universal_table_wrapper.hh"
 
-/* Compile-time parameters -- key and value type */
+/* Compile-time parameters -- key and value type and table type */
 
 #ifndef KEY
 #error Must define KEY symbol as valid key type
 #endif
 
+auto KeyGen = Gen<KEY>::key;
+
 #ifndef VALUE
 #error Must define VALUE symbol as valid value type
+#endif
+
+auto ValueGen = Gen<VALUE>::value;
+
+#ifdef USE_LIBCUCKOO
+#include "../../src/cuckoohash_map.hh"
+using Tbl = cuckoohash_map<KEY, VALUE>;
+using Wrapper = TableWrapper<Tbl>;
+#else
+#ifdef USE_TBB
+#include <tbb/concurrent_hash_map.h>
+using Tbl = tbb::concurrent_hash_map<KEY, VALUE>;
+using Wrapper = TableWrapper<Tbl>;
+#else
+#error Must define either USE_LIBCUCKOO or USE_TBB
+#endif
 #endif
 
 /* Run-time parameters -- operation mix and table configuration */
@@ -108,20 +124,15 @@ enum Ops {
     UPSERT,
 };
 
-template <typename T>
-void prefill_thread(const thread_id_t thread_id,
-                    T& tbl,
+void prefill_thread(const thread_id_t thread_id, Tbl& tbl,
                     const seq_t prefill_elems) {
     for (seq_t i = 0; i < prefill_elems; ++i) {
-        ASSERT_TRUE(TableWrapper<T>::insert(
-                        tbl, Gen<KEY>::key(i, thread_id, g_threads),
-                        Gen<VALUE>::value()));
+        ASSERT_TRUE(Wrapper::insert(tbl, KeyGen(i, thread_id, g_threads),
+                                    ValueGen()));
     }
 }
 
-template <typename T>
-void mix_thread(const thread_id_t thread_id,
-                T& tbl,
+void mix_thread(const thread_id_t thread_id, Tbl& tbl,
                 const seq_t num_ops,
                 const std::array<Ops, 100>& op_mix,
                 const seq_t prefill_elems) {
@@ -132,6 +143,10 @@ void mix_thread(const thread_id_t thread_id,
     // declared outside so that we don't initialize new variables in the loop;
     uint64_t x;
     seq_t seq;
+    // Shorthand for the key function
+    auto key = [&thread_id, &g_threads] (seq_t s) {
+        return KeyGen(s, thread_id, g_threads);
+    };
     // Run the operation mix for num_ops operations
     for (size_t i = 0; i < num_ops;) {
         for (size_t j = 0; j < 100 && i < num_ops; ++i, ++j) {
@@ -149,15 +164,12 @@ void mix_thread(const thread_id_t thread_id,
                 seq = x % num_ops;
                 ASSERT_EQ(
                     seq >= erase_seq && seq < insert_seq,
-                    TableWrapper<T>::read(
-                        tbl, Gen<KEY>::key(seq, thread_id, g_threads)));
+                    Wrapper::read(tbl, key(seq)));
                 break;
             case INSERT:
                 // Insert sequence number `insert_seq`. This should always
                 // succeed and be inserting a new value.
-                ASSERT_TRUE(TableWrapper<T>::insert(
-                                tbl, Gen<KEY>::key(insert_seq, thread_id, g_threads),
-                                Gen<VALUE>::value()));
+                ASSERT_TRUE(Wrapper::insert(tbl, key(insert_seq), ValueGen()));
                 ++insert_seq;
                 break;
             case ERASE:
@@ -167,8 +179,7 @@ void mix_thread(const thread_id_t thread_id,
                 // same element if we have not inserted anything in a while, but
                 // a good mix probably shouldn't be doing that.
                 ASSERT_EQ(erase_seq < insert_seq,
-                          TableWrapper<T>::erase(
-                              tbl, Gen<KEY>::key(erase_seq, thread_id, g_threads)));
+                          Wrapper::erase(tbl, key(erase_seq)));
                 if (erase_seq < insert_seq) {
                     ++erase_seq;
                 }
@@ -178,9 +189,7 @@ void mix_thread(const thread_id_t thread_id,
                 seq = x % num_ops;
                 ASSERT_EQ(
                     seq >= erase_seq && seq < insert_seq,
-                    TableWrapper<T>::update(
-                        tbl, Gen<KEY>::key(seq, thread_id, g_threads),
-                        Gen<VALUE>::value()));
+                    Wrapper::update(tbl, key(seq), ValueGen()));
                 break;
             case UPSERT:
                 // If insert_seq == 0 or x & 1 == 0, then do an insert,
@@ -188,15 +197,11 @@ void mix_thread(const thread_id_t thread_id,
                 // balance of inserts and updates across a changing set of
                 // numbers, regardless of the mix.
                 if ((x & 1) == 0 || insert_seq == 0) {
-                    ASSERT_TRUE(TableWrapper<T>::insert(
-                                    tbl, Gen<KEY>::key(insert_seq, thread_id, g_threads),
-                                    Gen<VALUE>::value()));
+                    ASSERT_TRUE(Wrapper::insert(tbl, key(insert_seq), ValueGen()));
                     ++insert_seq;
                 } else {
-                    ASSERT_TRUE(
-                        TableWrapper<T>::update(
-                            tbl, Gen<KEY>::key(insert_seq - 1, thread_id, g_threads),
-                            Gen<VALUE>::value()));
+                    ASSERT_TRUE(Wrapper::update(tbl, key(insert_seq - 1),
+                                                ValueGen()));
                 }
             }
         }
@@ -222,7 +227,7 @@ int main(int argc, char** argv) {
     const size_t total_ops = initial_capacity * g_total_ops_percentage / 100;
 
     // Create and size the table
-    cuckoohash_map<KEY, VALUE> tbl(initial_capacity);
+    Tbl tbl(initial_capacity);
 
     // Pre-generate an operation mix based on our percentages.
     std::array<Ops, 100> op_mix;
@@ -254,10 +259,7 @@ int main(int argc, char** argv) {
             thread_prefill += prefill_elems % g_threads;
         }
         prefill_threads[i] = std::thread(
-            prefill_thread<decltype(tbl)>,
-            i,
-            std::ref(tbl),
-            thread_prefill);
+            prefill_thread, i, std::ref(tbl), thread_prefill);
     }
     for (std::thread& t : prefill_threads) {
         t.join();
@@ -265,7 +267,6 @@ int main(int argc, char** argv) {
 
     // Run the operation mix, timed
     std::vector<std::thread> mix_threads(g_threads);
-    const size_t initial_hashpower = tbl.hashpower();
     auto start = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < g_threads; ++i) {
         size_t thread_prefill = prefill_elems / g_threads;
@@ -275,25 +276,18 @@ int main(int argc, char** argv) {
             thread_ops += total_ops % g_threads;
         }
         mix_threads[i] = std::thread(
-            mix_thread<decltype(tbl)>,
-            i,
-            std::ref(tbl),
-            thread_ops,
-            std::ref(op_mix),
+            mix_thread, i, std::ref(tbl), thread_ops, std::ref(op_mix),
             thread_prefill);
     }
     for (std::thread& t : mix_threads) {
         t.join();
     }
     auto end = std::chrono::high_resolution_clock::now();
-    const size_t final_hashpower = tbl.hashpower();
     double seconds_elapsed = std::chrono::duration_cast<
         std::chrono::duration<double> >(end - start).count();
     std::cout << std::fixed;
     std::cout << "total ops: " << total_ops << std::endl;
     std::cout << "time elapsed (sec): " << seconds_elapsed << std::endl;
-    std::cout << "number of expansions: " << final_hashpower - initial_hashpower
-              << std::endl;
     std::cout << "throughput (ops/sec): "
               << total_ops / seconds_elapsed << std::endl;
 }

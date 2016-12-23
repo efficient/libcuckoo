@@ -1,7 +1,7 @@
 #ifndef _UNIVERSAL_TABLE_WRAPPER_HH
 #define _UNIVERSAL_TABLE_WRAPPER_HH
 
-#include "../../src/cuckoohash_map.hh"
+#include <utility>
 
 /* A wrapper for all operations being benchmarked that can be specialized for
  * different tables. This un-specialized template implementation lists out all
@@ -15,6 +15,10 @@ class TableWrapper {
     // bool update(T& tbl, const KEY& k, const VALUE& v)
     // bool upsert(T& tbl, const KEY& k, Updater fn, const VALUE& v)
 };
+
+#ifdef USE_LIBCUCKOO
+
+#include "../../src/cuckoohash_map.hh"
 
 template <typename Hash, typename Pred, typename Alloc,
           size_t SLOT_PER_BUCKET>
@@ -46,5 +50,54 @@ public:
         return true;
     }
 };
+
+#endif
+
+#ifdef USE_TBB
+
+#include <tbb/concurrent_hash_map.h>
+
+template <typename HashCompare, typename A>
+class TableWrapper<
+    tbb::concurrent_hash_map<KEY, VALUE, HashCompare, A> > {
+public:
+    typedef tbb::concurrent_hash_map<KEY, VALUE, HashCompare, A> tbl;
+
+    static bool read(const tbl& tbl, const KEY& k) {
+        static typename tbl::const_accessor a;
+        return tbl.find(a, k);
+    }
+
+    static bool insert(tbl& tbl, const KEY& k, const VALUE& v) {
+        return tbl.insert(std::make_pair(k, v));
+    }
+
+    static bool erase(tbl& tbl, const KEY& k) {
+        return tbl.erase(k);
+    }
+
+    static bool update(tbl& tbl, const KEY& k, const VALUE& v) {
+        static typename tbl::accessor a;
+        if (tbl.find(a, k)) {
+            a->second = v;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    template <typename Updater>
+    static bool upsert(tbl& tbl, const KEY& k, Updater fn, const VALUE& v) {
+        static typename tbl::accessor a;
+        if (tbl.insert(a, k)) {
+            a->second = v;
+        } else {
+            fn(a->second);
+        }
+        return true;
+    }
+};
+
+#endif
 
 #endif // _UNIVERSAL_TABLE_WRAPPER_HH
