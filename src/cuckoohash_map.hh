@@ -9,6 +9,7 @@
 #include <bitset>
 #include <cassert>
 #include <chrono>
+#include <climits>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -29,12 +30,11 @@
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
 #include "lazy_array.hh"
-#include "default_hasher.hh"
 
 //! cuckoohash_map is the hash table class.
 template < class Key,
            class T,
-           class Hash = DefaultHasher<Key>,
+           class Hash = std::hash<Key>,
            class Pred = std::equal_to<Key>,
            class Alloc = std::allocator<std::pair<const Key, T>>,
            size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET
@@ -126,7 +126,7 @@ public:
 
     typedef const mapped_type const_reference;
 
-    typedef char partial_t;
+    typedef uint8_t partial_t;
 
 private:
     // Constants used internally
@@ -917,19 +917,17 @@ private:
     // index_hash(ti, hv))) == index_hash(ti, hv).
     static inline size_t alt_index(const size_t hp, const partial_t partial,
                                    const size_t index) {
-        // ensure tag is nonzero for the multiply.
-        const partial_t nonzero_tag = (partial >> 1 << 1) + 1;
-        // 0xc6a4a7935bd1e995 is the hash constant from 64-bit MurmurHash2
-        const size_t hash_of_tag =
-            static_cast<size_t>(nonzero_tag * 0xc6a4a7935bd1e995);
-        return (index ^ hash_of_tag) & hashmask(hp);
+        // ensure tag is nonzero for the multiply. 0xc6a4a7935bd1e995 is the
+        // hash constant from 64-bit MurmurHash2
+        const size_t nonzero_tag = static_cast<size_t>(partial) + 1;
+        return (index ^ (nonzero_tag * 0xc6a4a7935bd1e995)) & hashmask(hp);
     }
 
     // partial_key returns a partial_t representing the upper sizeof(partial_t)
     // bytes of the hashed key. This is used for partial-key cuckoohashing, and
     // for finding the alternate bucket of that a key hashes to.
     static inline partial_t partial_key(const size_t hv) {
-        return (partial_t)(hv >> ((sizeof(size_t)-sizeof(partial_t)) * 8));
+        return hv >> ((sizeof(size_t) - sizeof(partial_t)) * CHAR_BIT);
     }
 
     // A constexpr version of pow that we can use for static_asserts
