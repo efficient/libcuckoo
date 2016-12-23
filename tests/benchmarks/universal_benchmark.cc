@@ -143,8 +143,9 @@ void mix_thread(const thread_id_t thread_id, Tbl& tbl,
     // declared outside so that we don't initialize new variables in the loop;
     uint64_t x;
     seq_t seq;
+    VALUE v;
     // Shorthand for the key function
-    auto key = [&thread_id, &g_threads] (seq_t s) {
+    auto key = [&thread_id] (seq_t s) {
         return KeyGen(s, thread_id, g_threads);
     };
     // Run the operation mix for num_ops operations
@@ -164,7 +165,7 @@ void mix_thread(const thread_id_t thread_id, Tbl& tbl,
                 seq = x % num_ops;
                 ASSERT_EQ(
                     seq >= erase_seq && seq < insert_seq,
-                    Wrapper::read(tbl, key(seq)));
+                    Wrapper::read(tbl, key(seq), v));
                 break;
             case INSERT:
                 // Insert sequence number `insert_seq`. This should always

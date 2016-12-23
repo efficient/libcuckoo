@@ -9,7 +9,7 @@
  * successful action and false on failure. */
 template <typename T>
 class TableWrapper {
-    // bool read(T& tbl, const KEY& k)
+    // bool read(T& tbl, const KEY& k, VALUE& v)
     // bool insert(const T& tbl, const KEY& k, const VALUE& v)
     // bool erase(T& tbl, const KEY& k)
     // bool update(T& tbl, const KEY& k, const VALUE& v)
@@ -27,8 +27,7 @@ class TableWrapper< cuckoohash_map<KEY, VALUE, Hash, Pred,
 public:
     typedef cuckoohash_map<KEY, VALUE, Hash, Pred,
                            Alloc, SLOT_PER_BUCKET> tbl;
-    static bool read(const tbl& tbl, const KEY& k) {
-        static VALUE v;
+    static bool read(const tbl& tbl, const KEY& k, VALUE& v) {
         return tbl.find(k, v);
     }
 
@@ -63,9 +62,14 @@ class TableWrapper<
 public:
     typedef tbb::concurrent_hash_map<KEY, VALUE, HashCompare, A> tbl;
 
-    static bool read(const tbl& tbl, const KEY& k) {
+    static bool read(const tbl& tbl, const KEY& k, VALUE& v) {
         static typename tbl::const_accessor a;
-        return tbl.find(a, k);
+        if (tbl.find(a, k)) {
+            v = a->second;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     static bool insert(tbl& tbl, const KEY& k, const VALUE& v) {
