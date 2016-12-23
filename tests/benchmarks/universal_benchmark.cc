@@ -4,6 +4,7 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -83,7 +84,7 @@ void check_percentage(size_t value, const char* name) {
     if (value > 100) {
         std::string msg("Percentage for `");
         msg += name;
-        msg += "` cannot exceed 100";
+        msg += "` cannot exceed 100\n";
         throw std::runtime_error(msg.c_str());
     }
 }
@@ -184,85 +185,90 @@ void mix_thread(const thread_id_t thread_id, Table& tbl,
 }
 
 int main(int argc, char** argv) {
-    // Parse parameters and check them.
-    parse_flags(argc, argv, description, args, arg_vars, arg_descriptions,
-                sizeof(args)/sizeof(const char*), nullptr, nullptr, nullptr, 0);
-    check_percentage(g_read_percentage, "reads");
-    check_percentage(g_insert_percentage, "inserts");
-    check_percentage(g_erase_percentage, "erases");
-    check_percentage(g_update_percentage, "updates");
-    check_percentage(g_upsert_percentage, "upserts");
-    check_percentage(g_prefill_percentage, "prefill");
-    if (g_read_percentage + g_insert_percentage + g_erase_percentage +
-        g_update_percentage + g_upsert_percentage != 100) {
-        throw std::runtime_error("Operation mix percentages must sum to 100");
-    }
-
-    const size_t initial_capacity = 1UL << g_initial_capacity;
-    const size_t total_ops = initial_capacity * g_total_ops_percentage / 100;
-
-    // Create and size the table
-    Table tbl(initial_capacity);
-
-    // Pre-generate an operation mix based on our percentages.
-    std::array<Ops, 100> op_mix;
-    auto *op_mix_p = &op_mix[0];
-    for (size_t i = 0; i < g_read_percentage; ++i) {
-        *op_mix_p++ = READ;
-    }
-    for (size_t i = 0; i < g_insert_percentage; ++i) {
-        *op_mix_p++ = INSERT;
-    }
-    for (size_t i = 0; i < g_erase_percentage; ++i) {
-        *op_mix_p++ = ERASE;
-    }
-    for (size_t i = 0; i < g_update_percentage; ++i) {
-        *op_mix_p++ = UPDATE;
-    }
-    for (size_t i = 0; i < g_upsert_percentage; ++i) {
-        *op_mix_p++ = UPSERT;
-    }
-    std::shuffle(op_mix.begin(), op_mix.end(),
-                 std::mt19937(std::random_device()()));
-
-    // Pre-fill the table
-    const size_t prefill_elems = (initial_capacity * g_prefill_percentage / 100);
-    std::vector<std::thread> prefill_threads(g_threads);
-    for (size_t i = 0; i < g_threads; ++i) {
-        size_t thread_prefill = prefill_elems / g_threads;
-        if (i == g_threads - 1) {
-            thread_prefill += prefill_elems % g_threads;
+    try {
+        // Parse parameters and check them.
+        parse_flags(argc, argv, description, args, arg_vars, arg_descriptions,
+                    sizeof(args)/sizeof(const char*), nullptr, nullptr, nullptr, 0);
+        check_percentage(g_read_percentage, "reads");
+        check_percentage(g_insert_percentage, "inserts");
+        check_percentage(g_erase_percentage, "erases");
+        check_percentage(g_update_percentage, "updates");
+        check_percentage(g_upsert_percentage, "upserts");
+        check_percentage(g_prefill_percentage, "prefill");
+        if (g_read_percentage + g_insert_percentage + g_erase_percentage +
+            g_update_percentage + g_upsert_percentage != 100) {
+            throw std::runtime_error("Operation mix percentages must sum to 100\n");
         }
-        prefill_threads[i] = std::thread(
-            prefill_thread, i, std::ref(tbl), thread_prefill);
-    }
-    for (std::thread& t : prefill_threads) {
-        t.join();
-    }
 
-    // Run the operation mix, timed
-    std::vector<std::thread> mix_threads(g_threads);
-    auto start = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < g_threads; ++i) {
-        size_t thread_prefill = prefill_elems / g_threads;
-        size_t thread_ops = total_ops / g_threads;
-        if (i == g_threads - 1) {
-            thread_prefill += prefill_elems % g_threads;
-            thread_ops += total_ops % g_threads;
+        const size_t initial_capacity = 1UL << g_initial_capacity;
+        const size_t total_ops = initial_capacity * g_total_ops_percentage / 100;
+
+        // Create and size the table
+        Table tbl(initial_capacity);
+
+        // Pre-generate an operation mix based on our percentages.
+        std::array<Ops, 100> op_mix;
+        auto *op_mix_p = &op_mix[0];
+        for (size_t i = 0; i < g_read_percentage; ++i) {
+            *op_mix_p++ = READ;
         }
-        mix_threads[i] = std::thread(
-            mix_thread, i, std::ref(tbl), thread_ops, std::ref(op_mix),
-            thread_prefill);
+        for (size_t i = 0; i < g_insert_percentage; ++i) {
+            *op_mix_p++ = INSERT;
+        }
+        for (size_t i = 0; i < g_erase_percentage; ++i) {
+            *op_mix_p++ = ERASE;
+        }
+        for (size_t i = 0; i < g_update_percentage; ++i) {
+            *op_mix_p++ = UPDATE;
+        }
+        for (size_t i = 0; i < g_upsert_percentage; ++i) {
+            *op_mix_p++ = UPSERT;
+        }
+        std::shuffle(op_mix.begin(), op_mix.end(),
+                     std::mt19937(std::random_device()()));
+
+        // Pre-fill the table
+        const size_t prefill_elems = (initial_capacity * g_prefill_percentage / 100);
+        std::vector<std::thread> prefill_threads(g_threads);
+        for (size_t i = 0; i < g_threads; ++i) {
+            size_t thread_prefill = prefill_elems / g_threads;
+            if (i == g_threads - 1) {
+                thread_prefill += prefill_elems % g_threads;
+            }
+            prefill_threads[i] = std::thread(
+                prefill_thread, i, std::ref(tbl), thread_prefill);
+        }
+        for (std::thread& t : prefill_threads) {
+            t.join();
+        }
+
+        // Run the operation mix, timed
+        std::vector<std::thread> mix_threads(g_threads);
+        auto start = std::chrono::high_resolution_clock::now();
+        for (size_t i = 0; i < g_threads; ++i) {
+            size_t thread_prefill = prefill_elems / g_threads;
+            size_t thread_ops = total_ops / g_threads;
+            if (i == g_threads - 1) {
+                thread_prefill += prefill_elems % g_threads;
+                thread_ops += total_ops % g_threads;
+            }
+            mix_threads[i] = std::thread(
+                mix_thread, i, std::ref(tbl), thread_ops, std::ref(op_mix),
+                thread_prefill);
+        }
+        for (std::thread& t : mix_threads) {
+            t.join();
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        double seconds_elapsed = std::chrono::duration_cast<
+            std::chrono::duration<double> >(end - start).count();
+        std::cout << std::fixed;
+        std::cout << "total ops: " << total_ops << std::endl;
+        std::cout << "time elapsed (sec): " << seconds_elapsed << std::endl;
+        std::cout << "throughput (ops/sec): "
+                  << total_ops / seconds_elapsed << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << e.what();
+        std::exit(1);
     }
-    for (std::thread& t : mix_threads) {
-        t.join();
-    }
-    auto end = std::chrono::high_resolution_clock::now();
-    double seconds_elapsed = std::chrono::duration_cast<
-        std::chrono::duration<double> >(end - start).count();
-    std::cout << std::fixed;
-    std::cout << "total ops: " << total_ops << std::endl;
-    std::cout << "time elapsed (sec): " << seconds_elapsed << std::endl;
-    std::cout << "throughput (ops/sec): "
-              << total_ops / seconds_elapsed << std::endl;
 }
