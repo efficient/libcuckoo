@@ -14,6 +14,7 @@
 #include "../test_util.hh"
 
 #include "universal_gen.hh"
+#include "universal_table_wrapper.hh"
 
 /* Compile-time parameters -- key and value type */
 
@@ -90,48 +91,6 @@ const char* description = "A benchmark that can run an arbitrary mixture of "
     "table operations.\nThe sum of read, insert, erase, update, and upsert "
     "percentages must be 100.\nMap type is cuckoohash_map<" XSTR(KEY) ", " XSTR(VALUE) ">.";
 
-/* A wrapper for all operations being benchmarked that can be specialized for
- * different tables. This un-specialized template implementation lists out all
- * the methods necessary to implement. Each method is static and returns true on
- * successful action and false on failure. */
-template <typename T>
-class BenchmarkWrapper {
-    // bool read(T& tbl, const KEY& k)
-    // bool insert(const T& tbl, const KEY& k, const VALUE& v)
-    // bool erase(T& tbl, const KEY& k)
-    // bool update(T& tbl, const KEY& k, const VALUE& v)
-    // bool upsert(T& tbl, const KEY& k, Updater fn, const VALUE& v)
-};
-
-template <>
-class BenchmarkWrapper<cuckoohash_map<KEY, VALUE> > {
-public:
-    typedef cuckoohash_map<KEY, VALUE> tbl;
-    static bool read(const tbl& tbl, const KEY& k) {
-        static VALUE v;
-        return tbl.find(k, v);
-    }
-
-    static bool insert(tbl& tbl, const KEY& k, const VALUE& v) {
-        return tbl.insert(k, v);
-    }
-
-    static bool erase(tbl& tbl, const KEY& k) {
-        return tbl.erase(k);
-    }
-
-    static bool update(tbl& tbl, const KEY& k, const VALUE& v) {
-        return tbl.update(k, v);
-    }
-
-    template <typename Updater>
-    static bool upsert(tbl& tbl, const KEY& k, Updater fn, const VALUE& v) {
-        tbl.upsert(k, fn, v);
-        return true;
-    }
-};
-
-
 void check_percentage(size_t value, const char* name) {
     if (value > 100) {
         std::string msg("Percentage for `");
@@ -154,7 +113,7 @@ void prefill_thread(const thread_id_t thread_id,
                     T& tbl,
                     const seq_t prefill_elems) {
     for (seq_t i = 0; i < prefill_elems; ++i) {
-        ASSERT_TRUE(BenchmarkWrapper<T>::insert(
+        ASSERT_TRUE(TableWrapper<T>::insert(
                         tbl, Gen<KEY>::key(i, thread_id, g_threads),
                         Gen<VALUE>::value()));
     }
@@ -190,13 +149,13 @@ void mix_thread(const thread_id_t thread_id,
                 seq = x % num_ops;
                 ASSERT_EQ(
                     seq >= erase_seq && seq < insert_seq,
-                    BenchmarkWrapper<T>::read(
+                    TableWrapper<T>::read(
                         tbl, Gen<KEY>::key(seq, thread_id, g_threads)));
                 break;
             case INSERT:
                 // Insert sequence number `insert_seq`. This should always
                 // succeed and be inserting a new value.
-                ASSERT_TRUE(BenchmarkWrapper<T>::insert(
+                ASSERT_TRUE(TableWrapper<T>::insert(
                                 tbl, Gen<KEY>::key(insert_seq, thread_id, g_threads),
                                 Gen<VALUE>::value()));
                 ++insert_seq;
@@ -208,7 +167,7 @@ void mix_thread(const thread_id_t thread_id,
                 // same element if we have not inserted anything in a while, but
                 // a good mix probably shouldn't be doing that.
                 ASSERT_EQ(erase_seq < insert_seq,
-                          BenchmarkWrapper<T>::erase(
+                          TableWrapper<T>::erase(
                               tbl, Gen<KEY>::key(erase_seq, thread_id, g_threads)));
                 if (erase_seq < insert_seq) {
                     ++erase_seq;
@@ -219,7 +178,7 @@ void mix_thread(const thread_id_t thread_id,
                 seq = x % num_ops;
                 ASSERT_EQ(
                     seq >= erase_seq && seq < insert_seq,
-                    BenchmarkWrapper<T>::update(
+                    TableWrapper<T>::update(
                         tbl, Gen<KEY>::key(seq, thread_id, g_threads),
                         Gen<VALUE>::value()));
                 break;
@@ -229,13 +188,13 @@ void mix_thread(const thread_id_t thread_id,
                 // balance of inserts and updates across a changing set of
                 // numbers, regardless of the mix.
                 if ((x & 1) == 0 || insert_seq == 0) {
-                    ASSERT_TRUE(BenchmarkWrapper<T>::insert(
+                    ASSERT_TRUE(TableWrapper<T>::insert(
                                     tbl, Gen<KEY>::key(insert_seq, thread_id, g_threads),
                                     Gen<VALUE>::value()));
                     ++insert_seq;
                 } else {
                     ASSERT_TRUE(
-                        BenchmarkWrapper<T>::update(
+                        TableWrapper<T>::update(
                             tbl, Gen<KEY>::key(insert_seq - 1, thread_id, g_threads),
                             Gen<VALUE>::value()));
                 }

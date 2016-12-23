@@ -11,5 +11,8 @@ read_insert_throughput_out_SOURCES = read_insert_throughput.cc
 # Default settings for KEY and VALUE
 KEY ?= uint64_t
 VALUE ?= uint64_t
+# Add the universal benchmark to .PHONY, so we can re-compile it with different
+# types
+.PHONY: universal_benchmark.out
 universal_benchmark_out_SOURCES = universal_benchmark.cc
 universal_benchmark_out_CXXFLAGS = $(AM_CXXFLAGS) -DKEY="$(KEY)" -DVALUE="$(VALUE)"
