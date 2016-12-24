@@ -1,9 +1,9 @@
-#include "catch.hpp"
+#include <catch.hpp>
 
 #include <cmath>
 #include <stdexcept>
 
-#include "../../src/cuckoohash_map.hh"
+#include <libcuckoo/cuckoohash_map.hh>
 #include "unit_test_util.hh"
 
 TEST_CASE("default size", "[constructor]") {

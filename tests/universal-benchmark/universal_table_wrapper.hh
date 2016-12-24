@@ -26,7 +26,7 @@
 
 #ifdef USE_LIBCUCKOO
 
-#include "../../src/cuckoohash_map.hh"
+#include <libcuckoo/cuckoohash_map.hh>
 
 class Table {
 public:

@@ -11,8 +11,8 @@
 #include <thread>
 #include <utility>
 
-#include "../src/cuckoohash_map.hh"
-#include "../src/city_hasher.hh"
+#include <libcuckoo/cuckoohash_map.hh>
+#include <libcuckoo/city_hasher.hh>
 
 typedef uint32_t KeyType;
 typedef cuckoohash_map<KeyType, size_t, CityHasher<KeyType> > Table;

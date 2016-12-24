@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 2.8.7)
+project(libcuckoo LANGUAGES CXX)
+set (libcuckoo_VERSION_MAJOR 0)
+set (libcuckoo_VERSION_MINOR 1)
+
+# Add the libcuckoo interface target
+add_subdirectory(libcuckoo)
+
+# Build examples
+if(BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
+
+# Build tests -- this only builds tests that were specified
+add_subdirectory(tests)

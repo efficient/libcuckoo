@@ -11,7 +11,7 @@
 #include <thread>
 #include <vector>
 
-#include "../test_util.hh"
+#include <test_util.hh>
 #include "universal_gen.hh"
 #include "universal_table_wrapper.hh"
 

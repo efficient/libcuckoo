@@ -14,5 +14,5 @@ limitations under the License.
 
 ---------------------------
 
-CityHash (lib/city.h, lib/city.cc) is Copyright (c) Google, Inc. and
-has its own license, as detailed in the source files.
+The third-party libraries have their own licenses, as detailed in their source
+files.

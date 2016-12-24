@@ -2,10 +2,6 @@
 // operation for correctness, only making sure that everything completes without
 // crashing.
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -21,10 +17,10 @@
 #include <utility>
 #include <vector>
 
-#include "../../src/cuckoohash_config.hh"
-#include "../../src/cuckoohash_map.hh"
-#include "../test_util.hh"
-#include "../pcg/pcg_random.hpp"
+#include <libcuckoo/cuckoohash_config.hh>
+#include <libcuckoo/cuckoohash_map.hh>
+#include <test_util.hh>
+#include <pcg/pcg_random.hpp>
 
 typedef uint32_t KeyType;
 typedef std::string KeyType2;

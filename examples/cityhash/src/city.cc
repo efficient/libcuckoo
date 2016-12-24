@@ -60,6 +60,24 @@ static uint32 UNALIGNED_LOAD32(const char *p) {
 #define bswap_32(x) OSSwapInt32(x)
 #define bswap_64(x) OSSwapInt64(x)
 
+#elif defined(__sun) || defined(sun)
+
+#include <sys/byteorder.h>
+#define bswap_32(x) BSWAP_32(x)
+#define bswap_64(x) BSWAP_64(x)
+
+#elif defined(__FreeBSD__)
+
+#include <sys/endian.h>
+#define bswap_32(x) bswap32(x)
+#define bswap_64(x) bswap64(x)
+
+#elif defined(__OpenBSD__)
+
+#include <sys/types.h>
+#define bswap_32(x) swap32(x)
+#define bswap_64(x) swap64(x)
+
 #elif defined(__NetBSD__)
 
 #include <sys/types.h>
@@ -105,8 +123,8 @@ static const uint64 k1 = 0xb492b66fbe98f273ULL;
 static const uint64 k2 = 0x9ae16a3b2f90404fULL;
 
 // Magic numbers for 32-bit hashing.  Copied from Murmur3.
-static const uint32_t c1 = 0xcc9e2d51;
-static const uint32_t c2 = 0x1b873593;
+static const uint32 c1 = 0xcc9e2d51;
+static const uint32 c2 = 0x1b873593;
 
 // A 32-bit to 32-bit integer hash copied from Murmur3.
 static uint32 fmix(uint32 h)
@@ -152,7 +170,7 @@ static uint32 Hash32Len13to24(const char *s, size_t len) {
 static uint32 Hash32Len0to4(const char *s, size_t len) {
   uint32 b = 0;
   uint32 c = 9;
-  for (int i = 0; i < len; i++) {
+  for (size_t i = 0; i < len; i++) {
     signed char v = s[i];
     b = b * c1 + v;
     c ^= b;

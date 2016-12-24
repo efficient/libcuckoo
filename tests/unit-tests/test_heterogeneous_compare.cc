@@ -1,6 +1,6 @@
-#include "catch.hpp"
+#include <catch.hpp>
 
-#include "../../src/cuckoohash_map.hh"
+#include <libcuckoo/cuckoohash_map.hh>
 
 size_t int_constructions;
 size_t copy_constructions;

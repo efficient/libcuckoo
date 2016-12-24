@@ -2,8 +2,8 @@
 #include <string>
 #include <iostream>
 
-#include "../src/cuckoohash_map.hh"
-#include "../src/city_hasher.hh"
+#include <libcuckoo/cuckoohash_map.hh>
+#include <libcuckoo/city_hasher.hh>
 
 int main() {
     cuckoohash_map<int, std::string, CityHasher<int> >Table;

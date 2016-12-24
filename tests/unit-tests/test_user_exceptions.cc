@@ -1,8 +1,8 @@
-#include "catch.hpp"
+#include <catch.hpp>
 
 #include <stdexcept>
 
-#include "../../src/cuckoohash_map.hh"
+#include <libcuckoo/cuckoohash_map.hh>
 #include "unit_test_util.hh"
 
 void maybeThrow(bool throwException) {

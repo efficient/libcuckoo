@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include <catch.hpp>
 
 #include <algorithm>
 #include <stdexcept>
@@ -6,7 +6,7 @@
 #include <thread>
 #include <utility>
 
-#include "../../src/cuckoohash_map.hh"
+#include <libcuckoo/cuckoohash_map.hh>
 #include "unit_test_util.hh"
 
 TEST_CASE("bracket find empty table", "[bracket]") {

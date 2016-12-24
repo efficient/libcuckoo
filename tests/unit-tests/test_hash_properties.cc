@@ -1,6 +1,6 @@
-#include "catch.hpp"
+#include <catch.hpp>
 
-#include "../../src/cuckoohash_map.hh"
+#include <libcuckoo/cuckoohash_map.hh>
 #include "unit_test_util.hh"
 
 // Checks that the alt index function returns a different bucket, and can

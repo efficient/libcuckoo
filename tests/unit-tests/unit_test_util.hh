@@ -11,7 +11,7 @@
 #include <string>
 #include <utility>
 
-#include "../../src/cuckoohash_map.hh"
+#include <libcuckoo/cuckoohash_map.hh>
 
 // Returns a statically allocated value used to keep track of how many unfreed
 // bytes have been allocated. This value is shared across all threads.

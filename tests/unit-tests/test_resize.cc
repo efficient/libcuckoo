@@ -1,6 +1,6 @@
-#include "catch.hpp"
+#include <catch.hpp>
 
-#include "../../src/cuckoohash_map.hh"
+#include <libcuckoo/cuckoohash_map.hh>
 #include "unit_test_util.hh"
 
 TEST_CASE("rehash empty table", "[resize]") {

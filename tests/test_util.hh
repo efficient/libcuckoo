@@ -9,8 +9,9 @@
 #include <iostream>
 #include <mutex>
 #include <random>
-#include "../src/cuckoohash_map.hh"
-#include "pcg/pcg_random.hpp"
+
+#include <libcuckoo/cuckoohash_map.hh>
+#include <pcg/pcg_random.hpp>
 
 std::mutex print_lock;
 int main_return_value = EXIT_SUCCESS;

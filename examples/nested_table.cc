@@ -7,7 +7,7 @@
 #include <memory>
 #include <utility>
 
-#include "../src/cuckoohash_map.hh"
+#include <libcuckoo/cuckoohash_map.hh>
 
 typedef cuckoohash_map<std::string, std::string> InnerTable;
 typedef cuckoohash_map<std::string, std::unique_ptr<InnerTable>> OuterTable;

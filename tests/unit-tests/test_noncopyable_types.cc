@@ -1,9 +1,9 @@
-#include "catch.hpp"
+#include <catch.hpp>
 
 #include <string>
 #include <utility>
 
-#include "../../src/cuckoohash_map.hh"
+#include <libcuckoo/cuckoohash_map.hh>
 #include "unit_test_util.hh"
 
 typedef std::unique_ptr<int> uptr;
