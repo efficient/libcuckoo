@@ -21,3 +21,5 @@ target_link_libraries(unit_tests
 )
 
 add_debug_cxx_flags(unit_tests)
+
+add_test(NAME unit_tests COMMAND unit_tests)

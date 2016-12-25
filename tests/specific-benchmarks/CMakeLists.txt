@@ -20,3 +20,7 @@ target_link_libraries(read_insert_throughput
 )
 
 add_optimized_cxx_flags(insert_throughput read_throughput read_insert_throughput)
+
+add_test(NAME insert_throughput COMMAND insert_throughput --table-capacity 1)
+add_test(NAME read_throughput COMMAND read_throughput)
+add_test(NAME read_insert_throughput COMMAND read_insert_throughput --table-capacity 1)

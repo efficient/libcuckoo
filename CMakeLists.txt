@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 3.0.2)
 project(libcuckoo LANGUAGES CXX)
 set (libcuckoo_VERSION_MAJOR 0)
 set (libcuckoo_VERSION_MINOR 1)
@@ -12,4 +12,5 @@ if(BUILD_EXAMPLES)
 endif()
 
 # Build tests -- this only builds tests that were specified
+enable_testing()
 add_subdirectory(tests)

@@ -1,3 +1,14 @@
+add_executable(universal_benchmark
+    universal_benchmark.cc
+    universal_gen.hh
+    universal_table_wrapper.hh
+)
+
+target_link_libraries(universal_benchmark
+    PRIVATE test_util
+    PRIVATE libcuckoo
+)
+
 if(NOT DEFINED UNIVERSAL_KEY)
     set(UNIVERSAL_KEY uint64_t)
 endif()
@@ -10,16 +21,10 @@ if(NOT DEFINED UNIVERSAL_TABLE)
     set(UNIVERSAL_TABLE USE_LIBCUCKOO)
 endif()
 
-add_executable(universal_benchmark
-    universal_benchmark.cc
-    universal_gen.hh
-    universal_table_wrapper.hh
-)
-
-target_link_libraries(universal_benchmark
-    PRIVATE test_util
-    PRIVATE libcuckoo
-)
+if(UNIVERSAL_TABLE STREQUAL USE_TBB)
+    message(STATUS "Linking in tbb")
+    target_link_libraries(universal_benchmark PRIVATE tbb)
+endif()
 
 target_compile_options(universal_benchmark
     PRIVATE -DKEY=${UNIVERSAL_KEY}
