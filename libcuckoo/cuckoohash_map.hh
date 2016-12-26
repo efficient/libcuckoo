@@ -159,7 +159,7 @@ private:
         }
 
         inline void lock() {
-            while (lock_.test_and_set(std::memory_order_acquire));
+            while (lock_.test_and_set(std::memory_order_acq_rel));
         }
 
         inline void unlock() {
@@ -167,7 +167,7 @@ private:
         }
 
         inline bool try_lock() {
-            return !lock_.test_and_set(std::memory_order_acquire);
+            return !lock_.test_and_set(std::memory_order_acq_rel);
         }
 
     };
