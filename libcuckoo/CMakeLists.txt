@@ -13,6 +13,10 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(libcuckoo INTERFACE -std=gnu++11)
 endif()
 
+# Enable threading for all targets that link with libcuckoo
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(libcuckoo INTERFACE Threads::Threads)
 
 install(
 FILES

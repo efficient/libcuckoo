@@ -1763,9 +1763,13 @@ private:
         }
 
         // Creates a new hash table with hashpower new_hp and adds all
-        // the elements from the old buckets
+        // the elements from the old buckets.
         cuckoohash_map<Key, T, Hash, Pred, Alloc, slot_per_bucket> new_map(
-            hashsize(new_hp) * slot_per_bucket);
+            hashsize(new_hp) * slot_per_bucket,
+            0.0, /* minimum load factor */
+            NO_MAXIMUM_HASHPOWER
+            );
+
         parallel_exec(
             0, hashsize(hp), kNumCores(),
             [this, &new_map]

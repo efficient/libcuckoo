@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.1.0)
 project(libcuckoo LANGUAGES CXX)
 set (libcuckoo_VERSION_MAJOR 0)
 set (libcuckoo_VERSION_MINOR 1)

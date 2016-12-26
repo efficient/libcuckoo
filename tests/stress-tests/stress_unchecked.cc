@@ -77,6 +77,12 @@ public:
         }
         std::cout << "seed = " << g_seed << std::endl;
         gen_seed = g_seed;
+        // Set minimum load factor and maximum hashpower to unbounded, so weird
+        // operations don't throw exceptions.
+        table.minimum_load_factor(0.0);
+        table2.minimum_load_factor(0.0);
+        table.maximum_hashpower(NO_MAXIMUM_HASHPOWER);
+        table2.maximum_hashpower(NO_MAXIMUM_HASHPOWER);
     }
 
     cuckoohash_map<KType, ValType> table;

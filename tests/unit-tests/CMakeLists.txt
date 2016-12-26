@@ -16,7 +16,6 @@ add_executable(unit_tests
 
 target_link_libraries(unit_tests
     PRIVATE catch
-    PRIVATE test_util
     PRIVATE libcuckoo
 )
 
