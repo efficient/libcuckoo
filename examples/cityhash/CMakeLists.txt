@@ -1,13 +1,12 @@
 # Run configure to generate the build files in a special directory
-set(cityhash_build_dir ${CMAKE_BINARY_DIR}/cityhash-build)
-execute_process(COMMAND cmake -E make_directory ${cityhash_build_dir})
-execute_process(COMMAND cmake -E chdir ${cityhash_build_dir}
+execute_process(COMMAND cmake -E chdir ${CMAKE_CURRENT_BINARY_DIR}
                               ${CMAKE_CURRENT_SOURCE_DIR}/configure)
 
-# Add the current directory as an interface library to include
+# Add the current build directory as an interface library to include, since it
+# contains some necessary configuration files from running 'configure'.
 add_library(cityhash_config INTERFACE)
 target_include_directories(cityhash_config INTERFACE
-    $<BUILD_INTERFACE:${cityhash_build_dir}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
 
 # The src subdirectory contains the actual library definition
