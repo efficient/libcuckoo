@@ -25,7 +25,7 @@
 #endif
 
 #ifdef LIBCUCKOO
-#define TABLE libcuckoo
+#define TABLE "LIBCUCKOO"
 #define TABLE_TYPE "cuckoohash_map"
 #include <libcuckoo/cuckoohash_map.hh>
 
@@ -60,7 +60,7 @@ private:
 
 #else
 #ifdef TBB
-#define TABLE tbb
+#define TABLE "TBB"
 #define TABLE_TYPE "tbb::concurrent_hash_map"
 #include <tbb/concurrent_hash_map.h>
 

@@ -80,7 +80,7 @@ const char* arg_descriptions[] = {
 
 const char* description = "A benchmark that can run an arbitrary mixture of "
     "table operations.\nThe sum of read, insert, erase, update, and upsert "
-    "percentages must be 100.\nMap type is " XSTR(MAP_TYPE) "<" XSTR(KEY)
+    "percentages must be 100.\nMap type is " TABLE_TYPE "<" XSTR(KEY)
     ", " XSTR(VALUE) ">."
     ;
 
@@ -269,14 +269,14 @@ int main(int argc, char** argv) {
         double seconds_elapsed = std::chrono::duration_cast<
             std::chrono::duration<double> >(end_time - start_time).count();
 
-        // Print out command, preprocessor constants, and results in JSON format
-        std::stringstream command;
-        command << argv[0];
-        for (size_t i = 0; i < sizeof(args)/sizeof(args[0]); ++i) {
-            command << " " << args[i] << " " << *arg_vars[i];
+        // Print out args, preprocessor constants, and results in JSON format
+        std::stringstream argstr;
+        argstr << args[0] << " " << *arg_vars[0];
+        for (size_t i = 1; i < sizeof(args)/sizeof(args[0]); ++i) {
+            argstr << " " << args[i] << " " << *arg_vars[i];
         }
         const char* json_format = R"({
-    "command": "%s",
+    "args": "%s",
     "key": "%s",
     "value": "%s",
     "table": "%s",
@@ -304,8 +304,8 @@ int main(int argc, char** argv) {
     }
 }
 )";
-        printf(json_format, command.str().c_str(), XSTR(KEY), XSTR(VALUE),
-               XSTR(TABLE), total_ops, seconds_elapsed,
+        printf(json_format, argstr.str().c_str(), XSTR(KEY), XSTR(VALUE),
+               TABLE, total_ops, seconds_elapsed,
                total_ops / seconds_elapsed, end_rss - start_rss);
     } catch (const std::exception& e) {
         std::cerr << e.what();
