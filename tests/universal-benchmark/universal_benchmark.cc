@@ -249,7 +249,8 @@ int main(int argc, char** argv) {
 
         // Run the operation mix, timed
         std::vector<std::thread> mix_threads(g_threads);
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start_rss = max_rss();
+        auto start_time = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < g_threads; ++i) {
             size_t thread_prefill = prefill_elems / g_threads;
             size_t thread_ops = total_ops / g_threads;
@@ -264,9 +265,10 @@ int main(int argc, char** argv) {
         for (std::thread& t : mix_threads) {
             t.join();
         }
-        auto end = std::chrono::high_resolution_clock::now();
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto end_rss = max_rss();
         double seconds_elapsed = std::chrono::duration_cast<
-            std::chrono::duration<double> >(end - start).count();
+            std::chrono::duration<double> >(end_time - start_time).count();
 
         // Print out command, preprocessor constants, and results in JSON format
         std::stringstream command;
@@ -300,6 +302,13 @@ int main(int argc, char** argv) {
                       {"name", "Throughput"},
                       {"units", "count/seconds"},
                       {"value", total_ops / seconds_elapsed}
+                  }
+                 },
+                 {"max_rss_change",
+                  {
+                      {"name", "Change in Maximum RSS"},
+                      {"units", "bytes"},
+                      {"value", end_rss - start_rss}
                   }
                  }
              }

@@ -13,6 +13,8 @@
 #include <libcuckoo/cuckoohash_map.hh>
 #include <pcg/pcg_random.hpp>
 
+#include <config.h>
+
 std::mutex print_lock;
 int main_return_value = EXIT_SUCCESS;
 typedef std::lock_guard<std::mutex> mutex_guard;
@@ -240,5 +242,43 @@ public:
         counter.fetch_add(ops);
     }
 };
+
+// A function to get the maximum resident set size in bytes on different
+// machines.
+#ifdef HAVE_MACH_MACH_H
+#include <mach/mach.h>
+
+long max_rss() {
+    struct task_basic_info t_info;
+    mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+    if (KERN_SUCCESS != task_info(mach_task_self(),
+                                  TASK_BASIC_INFO, (task_info_t)&t_info,
+                                  &t_info_count)) {
+        return -1;
+    }
+    return t_info.resident_size;
+}
+
+#else
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+
+long max_rss() {
+    struct rusage usage;
+    if (getrusage(RUSAGE_SELF, &usage) == -1) {
+        return -1;
+    } else {
+        return usage.ru_maxrss * 1024;
+    }
+}
+
+#else
+
+long max_rss() {
+    return -1;
+}
+
+#endif
+#endif
 
 #endif // _TEST_UTIL_HH

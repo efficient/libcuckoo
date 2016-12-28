@@ -1,0 +1,2 @@
+#cmakedefine HAVE_SYS_RESOURCE_H 1
+#cmakedefine HAVE_MACH_MACH_H 1
