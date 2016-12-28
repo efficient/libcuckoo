@@ -51,6 +51,5 @@ if (BUILD_TESTS OR BUILD_SPECIFIC_BENCHMARKS)
 endif()
 
 if (BUILD_TESTS OR BUILD_UNIVERSAL_BENCHMARK)
-    add_subdirectory(json)
     add_subdirectory(universal-benchmark)
 endif()

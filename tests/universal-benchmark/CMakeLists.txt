@@ -7,7 +7,6 @@ add_executable(universal_benchmark
 target_link_libraries(universal_benchmark
     PRIVATE test_util
     PRIVATE libcuckoo
-    PRIVATE json
 )
 
 if(NOT DEFINED UNIVERSAL_KEY)

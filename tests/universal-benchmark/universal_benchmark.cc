@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <cstdio>
 #include <random>
 #include <sstream>
 #include <stdexcept>
@@ -15,8 +16,6 @@
 #include <test_util.hh>
 #include "universal_gen.hh"
 #include "universal_table_wrapper.hh"
-
-#include <json.hpp>
 
 /* Run-time parameters -- operation mix and table configuration */
 
@@ -276,46 +275,38 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < sizeof(args)/sizeof(args[0]); ++i) {
             command << " " << args[i] << " " << *arg_vars[i];
         }
-        nlohmann::json j = {
-            {"command", command.str()},
-            {"key", XSTR(KEY)},
-            {"value", XSTR(VALUE)},
-            {"table", XSTR(TABLE)},
-            {"output",
-             {
-                 {"total_ops",
-                  {
-                      {"name", "Total Operations"},
-                      {"units", "count"},
-                      {"value", total_ops}
-                  }
-                 },
-                 {"time_elapsed",
-                  {
-                      {"name", "Time Elapsed"},
-                      {"units", "seconds"},
-                      {"value", seconds_elapsed}
-                  }
-                 },
-                 {"throughput",
-                  {
-                      {"name", "Throughput"},
-                      {"units", "count/seconds"},
-                      {"value", total_ops / seconds_elapsed}
-                  }
-                 },
-                 {"max_rss_change",
-                  {
-                      {"name", "Change in Maximum RSS"},
-                      {"units", "bytes"},
-                      {"value", end_rss - start_rss}
-                  }
-                 }
-             }
-            }
-        };
-
-        std::cout << j.dump(4) << std::endl;
+        const char* json_format = R"({
+    "command": "%s",
+    "key": "%s",
+    "value": "%s",
+    "table": "%s",
+    "output": {
+        "total_ops": {
+            "name": "Total Operations",
+            "units": "count",
+            "value": %zu
+        },
+        "time_elapsed": {
+            "name": "Time Elapsed",
+            "units": "seconds",
+            "value": %.4f
+        },
+        "throughput": {
+            "name": "Throughput",
+            "units": "count/seconds",
+            "value": %.4f
+        },
+        "max_rss_change": {
+            "name": "Change in Maximum RSS",
+            "units": "bytes",
+            "value": %ld
+        }
+    }
+}
+)";
+        printf(json_format, command.str().c_str(), XSTR(KEY), XSTR(VALUE),
+               XSTR(TABLE), total_ops, seconds_elapsed,
+               total_ops / seconds_elapsed, end_rss - start_rss);
     } catch (const std::exception& e) {
         std::cerr << e.what();
         std::exit(1);
