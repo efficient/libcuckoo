@@ -24,13 +24,9 @@
 #error Must define VALUE symbol as valid value type
 #endif
 
-#ifndef TABLE
-#error "Must define TABLE symbol as valid table type"
-#endif
-
-#if TABLE == libcuckoo
-
-#define MAP_TYPE cuckoohash_map
+#ifdef LIBCUCKOO
+#define TABLE "libcuckoo"
+#define TABLE_TYPE "cuckoohash_map"
 #include <libcuckoo/cuckoohash_map.hh>
 
 class Table {
@@ -63,9 +59,9 @@ private:
 };
 
 #else
-
-#if TABLE == tbb
-#define MAP_TYPE tbb::concurrent_hash_map
+#ifdef TBB
+#define TABLE "tbb"
+#define TABLE_TYPE "tbb::concurrent_hash_map"
 #include <tbb/concurrent_hash_map.h>
 
 struct CustomHashCompare {
@@ -128,7 +124,7 @@ public:
 };
 
 #else
-#error libcuckoo and tbb are only supported values for TABLE
+#error Must define either LIBCUCKOO or TBB
 #endif
 #endif
 
