@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <random>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -267,14 +268,45 @@ int main(int argc, char** argv) {
         double seconds_elapsed = std::chrono::duration_cast<
             std::chrono::duration<double> >(end - start).count();
 
-        // Print out results in JSON format
-        nlohmann::json j;
-        j["total_ops"] = total_ops;
-        j["time_elapsed"] = seconds_elapsed;
-        j["throughput"] = total_ops / seconds_elapsed;
+        // Print out command, preprocessor constants, and results in JSON format
+        std::stringstream command;
+        command << argv[0];
+        for (size_t i = 0; i < sizeof(args)/sizeof(args[0]); ++i) {
+            command << " " << args[i] << " " << *arg_vars[i];
+        }
+        nlohmann::json j = {
+            {"command", command.str()},
+            {"key", XSTR(KEY)},
+            {"value", XSTR(VALUE)},
+            {"table", XSTR(TABLE)},
+            {"output",
+             {
+                 {"total_ops",
+                  {
+                      {"name", "Total Operations"},
+                      {"units", "count"},
+                      {"value", total_ops}
+                  }
+                 },
+                 {"time_elapsed",
+                  {
+                      {"name", "Time Elapsed"},
+                      {"units", "seconds"},
+                      {"value", seconds_elapsed}
+                  }
+                 },
+                 {"throughput",
+                  {
+                      {"name", "Throughput"},
+                      {"units", "count/seconds"},
+                      {"value", total_ops / seconds_elapsed}
+                  }
+                 }
+             }
+            }
+        };
 
-        std::cout << std::fixed << j.dump(4) << std::endl;
-
+        std::cout << j.dump(4) << std::endl;
     } catch (const std::exception& e) {
         std::cerr << e.what();
         std::exit(1);
