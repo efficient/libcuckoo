@@ -15,6 +15,8 @@
 #include "universal_gen.hh"
 #include "universal_table_wrapper.hh"
 
+#include <json.hpp>
+
 /* Run-time parameters -- operation mix and table configuration */
 
 // The following specify what percentage of operations should be of each type.
@@ -270,11 +272,15 @@ int main(int argc, char** argv) {
         auto end = std::chrono::high_resolution_clock::now();
         double seconds_elapsed = std::chrono::duration_cast<
             std::chrono::duration<double> >(end - start).count();
-        std::cout << std::fixed;
-        std::cout << "total ops: " << total_ops << std::endl;
-        std::cout << "time elapsed (sec): " << seconds_elapsed << std::endl;
-        std::cout << "throughput (ops/sec): "
-                  << total_ops / seconds_elapsed << std::endl;
+
+        // Print out results in JSON format
+        nlohmann::json j;
+        j["total_ops"] = total_ops;
+        j["time_elapsed"] = seconds_elapsed;
+        j["throughput"] = total_ops / seconds_elapsed;
+
+        std::cout << std::fixed << j.dump(4) << std::endl;
+
     } catch (const std::exception& e) {
         std::cerr << e.what();
         std::exit(1);
