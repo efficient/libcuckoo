@@ -80,15 +80,9 @@ const char* arg_descriptions[] = {
 
 const char* description = "A benchmark that can run an arbitrary mixture of "
     "table operations.\nThe sum of read, insert, erase, update, and upsert "
-    "percentages must be 100.\nMap type is "
-    #ifdef USE_LIBCUCKOO
-    "cuckoohash_map<"
-    #else
-    #ifdef USE_TBB
-    "tbb::concurrent_hash_map<"
-    #endif
-    #endif
-    XSTR(KEY) ", " XSTR(VALUE) ">.";
+    "percentages must be 100.\nMap type is " XSTR(MAP_TYPE) "<" XSTR(KEY)
+    ", " XSTR(VALUE) ">."
+    ;
 
 void check_percentage(size_t value, const char* name) {
     if (value > 100) {

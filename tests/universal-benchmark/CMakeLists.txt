@@ -19,18 +19,17 @@ if(NOT DEFINED UNIVERSAL_VALUE)
 endif()
 
 if(NOT DEFINED UNIVERSAL_TABLE)
-    set(UNIVERSAL_TABLE USE_LIBCUCKOO)
+    set(UNIVERSAL_TABLE libcuckoo)
 endif()
 
-if(UNIVERSAL_TABLE STREQUAL USE_TBB)
-    message(STATUS "Linking in tbb")
+if(UNIVERSAL_TABLE STREQUAL tbb)
     target_link_libraries(universal_benchmark PRIVATE tbb)
 endif()
 
 target_compile_options(universal_benchmark
     PRIVATE -DKEY=${UNIVERSAL_KEY}
     PRIVATE -DVALUE=${UNIVERSAL_VALUE}
-    PRIVATE -D${UNIVERSAL_TABLE}
+    PRIVATE -DTABLE=${UNIVERSAL_TABLE}
 )
 
 add_optimized_cxx_flags(universal_benchmark)
