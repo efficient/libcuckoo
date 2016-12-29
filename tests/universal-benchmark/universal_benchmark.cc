@@ -117,10 +117,6 @@ void genkeys(std::vector<uint64_t>& keys,
     for (uint64_t& num : keys) {
         num = rng();
     }
-    // static uint64_t counter = 0;
-    // for (uint64_t& num : keys) {
-    //     num = counter++;
-    // }
 }
 
 void prefill_thread(Table& tbl,

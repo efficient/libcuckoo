@@ -29,6 +29,6 @@ constexpr double DEFAULT_MINIMUM_LOAD_FACTOR = 0.05;
 constexpr size_t NO_MAXIMUM_HASHPOWER = 0;
 
 //! set LIBCUCKOO_DEBUG to 1 to enable debug output
-#define LIBCUCKOO_DEBUG 0
+#define LIBCUCKOO_DEBUG 1
 
 #endif // _CUCKOOHASH_CONFIG_HH
