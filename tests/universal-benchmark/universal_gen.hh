@@ -6,10 +6,8 @@
 #include <memory>
 #include <string>
 
-/* A specialized functor for generating unique keys and values from a sequence
- * number and thread id. Must define one for each type we want to use. */
-using seq_t = uint32_t;
-using thread_id_t = uint16_t;
+/* A specialized functor for generating unique keys and values for various
+ * types. Must define one for each type we want to use. */
 
 template <typename T>
 class Gen {
@@ -22,9 +20,8 @@ class Gen<uint64_t> {
 public:
     // Per-thread, the seq will be an incrementing number and the thread_id will
     // be constant. We assume thread_id < num_threads.
-    static uint64_t key(seq_t seq, thread_id_t thread_id,
-                        thread_id_t num_threads) {
-        return static_cast<uint64_t>(seq) * num_threads + thread_id;
+    static uint64_t key(uint64_t num) {
+        return num;
     }
 
     static uint64_t value() {
@@ -36,9 +33,8 @@ template <>
 class Gen<std::string> {
     static constexpr size_t STRING_SIZE = 100;
 public:
-    static std::string key(seq_t seq, thread_id_t thread_id,
-                           thread_id_t num_threads) {
-        return std::to_string(Gen<uint64_t>::key(seq, thread_id, num_threads));
+    static std::string key(uint64_t num) {
+        return std::to_string(Gen<uint64_t>::key(num));
     }
 
     static std::string value() {
@@ -52,9 +48,8 @@ using MediumBlob = std::bitset<8192>;
 template <>
 class Gen<MediumBlob> {
 public:
-    static MediumBlob key(seq_t seq, thread_id_t thread_id,
-                          thread_id_t num_threads) {
-        return MediumBlob(Gen<uint64_t>::key(seq, thread_id, num_threads));
+    static MediumBlob key(uint64_t num) {
+        return MediumBlob(Gen<uint64_t>::key(num));
     }
 
     static MediumBlob value() {
@@ -68,9 +63,8 @@ using BigBlob = std::bitset<81920>;
 template <>
 class Gen<BigBlob> {
 public:
-    static BigBlob key(seq_t seq, thread_id_t thread_id,
-                       thread_id_t num_threads) {
-        return BigBlob(Gen<uint64_t>::key(seq, thread_id, num_threads));
+    static BigBlob key(uint64_t num) {
+        return BigBlob(Gen<uint64_t>::key(num));
     }
 
     static BigBlob value() {
@@ -81,9 +75,8 @@ public:
 template <typename T>
 class Gen<std::shared_ptr<T> > {
 public:
-    static std::shared_ptr<T> key(seq_t seq, thread_id_t thread_id,
-                                  thread_id_t num_threads) {
-        return std::make_shared<T>(Gen<T>::key(seq, thread_id, num_threads));
+    static std::shared_ptr<T> key(uint64_t num) {
+        return std::make_shared<T>(Gen<T>::key(num));
     }
 
     static std::shared_ptr<T> value() {

@@ -14,6 +14,8 @@
 #include <vector>
 
 #include <test_util.hh>
+#include <pcg/pcg_random.hpp>
+
 #include "universal_gen.hh"
 #include "universal_table_wrapper.hh"
 
@@ -39,6 +41,10 @@ size_t g_total_ops_percentage = 90;
 // Number of threads to run with
 size_t g_threads = std::thread::hardware_concurrency();
 
+// Seed for random number generator. If left at the default (0), we'll generate
+// a random seed.
+size_t g_seed = 0;
+
 const char* args[] = {
     "--reads",
     "--inserts",
@@ -49,6 +55,7 @@ const char* args[] = {
     "--prefill",
     "--total-ops",
     "--num-threads",
+    "--seed",
 };
 
 size_t* arg_vars[] = {
@@ -61,6 +68,7 @@ size_t* arg_vars[] = {
     &g_prefill_percentage,
     &g_total_ops_percentage,
     &g_threads,
+    &g_seed,
 };
 
 const char* arg_descriptions[] = {
@@ -73,6 +81,7 @@ const char* arg_descriptions[] = {
     "Percentage of final size to pre-fill table",
     "Number of operations, as a percentage of the initial capacity. This can exceed 100",
     "Number of threads",
+    "Seed for random number generator",
 };
 
 #define XSTR(s) STR(s)
@@ -101,87 +110,93 @@ enum Ops {
     UPSERT,
 };
 
-void prefill_thread(const thread_id_t thread_id, Table& tbl,
-                    const seq_t prefill_elems) {
-    for (seq_t i = 0; i < prefill_elems; ++i) {
-        ASSERT_TRUE(
-            tbl.insert(Gen<KEY>::key(i, thread_id, g_threads),
-                       Gen<VALUE>::value()));
+void genkeys_thread(std::vector<uint64_t>& keys,
+                    const size_t gen_elems,
+                    const size_t base_seed,
+                    const size_t thread_id) {
+    keys.resize(gen_elems);
+    pcg64 rng(base_seed, thread_id);
+    for (uint64_t& num : keys) {
+        num = rng();
     }
 }
 
-void mix_thread(const thread_id_t thread_id, Table& tbl,
-                const seq_t num_ops,
-                const std::array<Ops, 100>& op_mix,
-                const seq_t prefill_elems) {
-    // Invariant: erase_seq <= insert_seq
-    seq_t erase_seq = 0;
-    seq_t insert_seq = prefill_elems;
-    // These variables can be overwritten in the loop iterations, they're
-    // declared outside so that we don't initialize new variables in the loop;
-    uint64_t x;
-    seq_t seq;
-    VALUE v;
+void prefill_thread(Table& tbl,
+                    const std::vector<uint64_t>& keys,
+                    const size_t prefill_elems) {
+    for (size_t i = 0; i < prefill_elems; ++i) {
+        ASSERT_TRUE(tbl.insert(Gen<KEY>::key(keys[i]),
+                               Gen<VALUE>::value()));
+    }
+}
 
-    // Shorthand for the key and value functions
-    auto key = [&thread_id] (seq_t s) {
-        return Gen<KEY>::key(s, thread_id, g_threads);
+void mix_thread(Table& tbl,
+                const size_t num_ops,
+                const std::array<Ops, 100>& op_mix,
+                const std::vector<uint64_t>& keys,
+                const size_t prefill_elems) {
+    // Invariant: erase_seq <= insert_seq
+    // Invariant: insert_seq < numkeys (enforced with bounds checking)
+    const size_t numkeys = keys.size();
+    size_t erase_seq = 0;
+    size_t insert_seq = prefill_elems;
+    // This rng is used to get random indices in the keys array. The actual
+    // numbers don't matter too much so we just seed it with the global seed.
+    pcg64_fast rng(g_seed);
+    // These variables are initialized out here so we don't create new variables
+    // in the switch statement.
+    size_t n;
+    VALUE v;
+    // A convenience function for getting the nth key
+    auto key = [&keys](size_t n) {
+        return keys.at(n);
     };
-    auto val = Gen<VALUE>::value;
+
+    // The upsert function is just the identity
+    auto upsert_fn = [](VALUE& v) { return; };
 
     // Run the operation mix for num_ops operations
     for (size_t i = 0; i < num_ops;) {
         for (size_t j = 0; j < 100 && i < num_ops; ++i, ++j) {
-            // A large mixed-bits number based on i and j, using constants from
-            // MurmurHash
-            x = (i * 0x5bd1e995) + (j * 0xc6a4a7935bd1e995);
             switch (op_mix[j]) {
             case READ:
-                // Read sequence number `x % num_ops`. If it's in the range
-                // [erase_seq, insert_seq), then it's in the table. Assuming `x`
-                // is large and `num_ops` is not related to `x` numerically,
-                // this should produce a decent mix of numbers across the range
-                // [0, `num_ops`], which should approximate the capacity of the
-                // table.
-                seq = x % num_ops;
+                // If `n` is between `erase_seq` and `insert_seq`, then it
+                // should be in the table.
+                n = rng(numkeys);
                 ASSERT_EQ(
-                    seq >= erase_seq && seq < insert_seq,
-                    tbl.read(key(seq), v));
+                    n >= erase_seq && n < insert_seq,
+                    tbl.read(key(n), v));
                 break;
             case INSERT:
                 // Insert sequence number `insert_seq`. This should always
                 // succeed and be inserting a new value.
-                ASSERT_TRUE(tbl.insert(key(insert_seq), val()));
-                ++insert_seq;
+                ASSERT_TRUE(tbl.insert(key(insert_seq++), Gen<VALUE>::value()));
                 break;
             case ERASE:
-                // Erase sequence number `erase_seq`. Should succeed if
-                // `erase_seq < insert_seq`. Since we only increment `erase_seq`
-                // if it is less than `insert_seq`, this will keep erasing the
-                // same element if we have not inserted anything in a while, but
-                // a good mix probably shouldn't be doing that.
-                ASSERT_EQ(erase_seq < insert_seq, tbl.erase(key(erase_seq)));
-                if (erase_seq < insert_seq) {
-                    ++erase_seq;
+                // If `erase_seq` == `insert_seq`, the table should be empty, so
+                // we pick a random index to unsuccessfully erase. Otherwise we
+                // erase `erase_seq`.
+                if (erase_seq == insert_seq) {
+                    ASSERT_TRUE(!tbl.erase(key(rng(numkeys))));
+                } else {
+                    ASSERT_TRUE(tbl.erase(key(erase_seq++)));
                 }
                 break;
             case UPDATE:
                 // Same as find, except we update to the same default value
-                seq = x % num_ops;
+                n = rng(numkeys);
                 ASSERT_EQ(
-                    seq >= erase_seq && seq < insert_seq,
-                    tbl.update(key(seq), val()));
+                    n >= erase_seq && n < insert_seq,
+                    tbl.update(key(n), Gen<VALUE>::value()));
                 break;
             case UPSERT:
-                // If insert_seq == 0 or x & 1 == 0, then do an insert,
-                // otherwise, update insert_seq - 1. This should obtain an even
-                // balance of inserts and updates across a changing set of
-                // numbers, regardless of the mix.
-                if ((x & 1) == 0 || insert_seq == 0) {
-                    ASSERT_TRUE(tbl.insert(key(insert_seq), val()));
+                // Pick a number from the full distribution, but cap it to the
+                // insert_seq, so we don't insert a number greater than
+                // insert_seq.
+                n = std::max(rng(numkeys), static_cast<uint64_t>(insert_seq));
+                tbl.upsert(key(n), upsert_fn, Gen<VALUE>::value());
+                if (n == insert_seq) {
                     ++insert_seq;
-                } else {
-                    ASSERT_TRUE(tbl.update(key(insert_seq - 1), val()));
                 }
             }
         }
@@ -203,6 +218,11 @@ int main(int argc, char** argv) {
             g_update_percentage + g_upsert_percentage != 100) {
             throw std::runtime_error("Operation mix percentages must sum to 100\n");
         }
+        if (g_seed == 0) {
+            g_seed = std::random_device()();
+        }
+
+        pcg32 base_rng(g_seed);
 
         const size_t initial_capacity = 1UL << g_initial_capacity;
         const size_t total_ops = initial_capacity * g_total_ops_percentage / 100;
@@ -228,21 +248,40 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < g_upsert_percentage; ++i) {
             *op_mix_p++ = UPSERT;
         }
-        std::shuffle(op_mix.begin(), op_mix.end(),
-                     std::mt19937(std::random_device()()));
+        std::shuffle(op_mix.begin(), op_mix.end(), base_rng);
+
+        // Pre-generate all the keys we'd want to insert. In case the insert +
+        // upsert percentage is too low, lower bound by the table capacity.
+        // Also, to prevent rounding errors with the percentages, add 1000 to
+        // the final number.
+        const size_t prefill_elems = (initial_capacity * g_prefill_percentage / 100);
+        const size_t max_insert_ops =
+            total_ops *
+            (g_insert_percentage + g_upsert_percentage) /
+            100;
+        const size_t insert_keys =
+            std::min(initial_capacity, max_insert_ops) +
+            prefill_elems +
+            1000;
+        std::vector<std::vector<uint64_t> > keys(g_threads);
+        std::vector<std::thread> genkeys_threads(g_threads);
+        for (size_t i = 0; i < g_threads; ++i) {
+            genkeys_threads[i] = std::thread(
+                genkeys_thread, std::ref(keys[i]),
+                insert_keys / g_threads, g_seed, i);
+        }
+        for (auto& t : genkeys_threads) {
+            t.join();
+        }
 
         // Pre-fill the table
-        const size_t prefill_elems = (initial_capacity * g_prefill_percentage / 100);
         std::vector<std::thread> prefill_threads(g_threads);
         for (size_t i = 0; i < g_threads; ++i) {
-            size_t thread_prefill = prefill_elems / g_threads;
-            if (i == g_threads - 1) {
-                thread_prefill += prefill_elems % g_threads;
-            }
             prefill_threads[i] = std::thread(
-                prefill_thread, i, std::ref(tbl), thread_prefill);
+                prefill_thread, std::ref(tbl), std::ref(keys[i]),
+                prefill_elems / g_threads);
         }
-        for (std::thread& t : prefill_threads) {
+        for (auto& t : prefill_threads) {
             t.join();
         }
 
@@ -251,17 +290,11 @@ int main(int argc, char** argv) {
         auto start_rss = max_rss();
         auto start_time = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < g_threads; ++i) {
-            size_t thread_prefill = prefill_elems / g_threads;
-            size_t thread_ops = total_ops / g_threads;
-            if (i == g_threads - 1) {
-                thread_prefill += prefill_elems % g_threads;
-                thread_ops += total_ops % g_threads;
-            }
             mix_threads[i] = std::thread(
-                mix_thread, i, std::ref(tbl), thread_ops, std::ref(op_mix),
-                thread_prefill);
+                mix_thread, std::ref(tbl), total_ops / g_threads,
+                std::ref(op_mix), std::ref(keys[i]), prefill_elems / g_threads);
         }
-        for (std::thread& t : mix_threads) {
+        for (auto& t : mix_threads) {
             t.join();
         }
         auto end_time = std::chrono::high_resolution_clock::now();
