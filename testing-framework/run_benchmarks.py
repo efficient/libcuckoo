@@ -51,7 +51,7 @@ def run_configuration(all_params, build_config, argspecs):
         with open(output_file, 'w') as f:
             logging.info('Running: %s' % ' '.join(command))
             logging.info('Piping output to: %s' % output_file)
-            subprocess.check_call(command, stdout=f, stderr=f)
+            subprocess.check_call(command, stdout=f)
     os.chdir(SCRIPT_DIR)
 
 if __name__ == '__main__':

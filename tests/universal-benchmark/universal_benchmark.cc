@@ -254,13 +254,14 @@ int main(int argc, char** argv) {
         // upsert percentage is too low, lower bound by the table capacity.
         // Also, to prevent rounding errors with the percentages, add 1000 to
         // the final number.
+        std::cerr << "Generating keys\n";
         const size_t prefill_elems = (initial_capacity * g_prefill_percentage / 100);
         const size_t max_insert_ops =
             total_ops *
             (g_insert_percentage + g_upsert_percentage) /
             100;
         const size_t insert_keys =
-            std::min(initial_capacity, max_insert_ops) +
+            std::max(initial_capacity, max_insert_ops) +
             prefill_elems +
             1000;
         std::vector<std::vector<uint64_t> > keys(g_threads);
@@ -274,7 +275,7 @@ int main(int argc, char** argv) {
             t.join();
         }
 
-        // Pre-fill the table
+        std::cerr << "Pre-filling table\n";
         std::vector<std::thread> prefill_threads(g_threads);
         for (size_t i = 0; i < g_threads; ++i) {
             prefill_threads[i] = std::thread(
@@ -286,6 +287,7 @@ int main(int argc, char** argv) {
         }
 
         // Run the operation mix, timed
+        std::cerr << "Running operations\n";
         std::vector<std::thread> mix_threads(g_threads);
         auto start_rss = max_rss();
         auto start_time = std::chrono::high_resolution_clock::now();
