@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
@@ -110,15 +111,16 @@ enum Ops {
     UPSERT,
 };
 
-void genkeys_thread(std::vector<uint64_t>& keys,
-                    const size_t gen_elems,
-                    const size_t base_seed,
-                    const size_t thread_id) {
-    keys.resize(gen_elems);
-    pcg64 rng(base_seed, thread_id);
+void genkeys(std::vector<uint64_t>& keys,
+             const size_t gen_elems,
+             pcg64_oneseq_once_insecure& rng) {
     for (uint64_t& num : keys) {
         num = rng();
     }
+    // static uint64_t counter = 0;
+    // for (uint64_t& num : keys) {
+    //     num = counter++;
+    // }
 }
 
 void prefill_thread(Table& tbl,
@@ -136,36 +138,42 @@ void mix_thread(Table& tbl,
                 const std::vector<uint64_t>& keys,
                 const size_t prefill_elems) {
     // Invariant: erase_seq <= insert_seq
-    // Invariant: insert_seq < numkeys (enforced with bounds checking)
+    // Invariant: insert_seq < numkeys
     const size_t numkeys = keys.size();
     size_t erase_seq = 0;
     size_t insert_seq = prefill_elems;
-    // This rng is used to get random indices in the keys array. The actual
-    // numbers don't matter too much so we just seed it with the global seed.
-    pcg64_fast rng(g_seed);
     // These variables are initialized out here so we don't create new variables
     // in the switch statement.
     size_t n;
     VALUE v;
     // A convenience function for getting the nth key
     auto key = [&keys](size_t n) {
-        return Gen<KEY>::key(keys.at(n));
+        return Gen<KEY>::key(keys[n]);
     };
-
     // The upsert function is just the identity
     auto upsert_fn = [](VALUE& v) { return; };
+    // Use an LCG over the keys array to iterate over the keys in a pseudorandom
+    // order, for find operations
+    size_t find_seq = 0;
+    ASSERT_TRUE(numkeys % 4 == 0 && numkeys > 4);
+    const size_t a = numkeys / 2 + 1;
+    const size_t c = numkeys / 4 - 1;
+    const size_t find_seq_mask = numkeys - 1;
+    auto find_seq_update = [&find_seq, &a, &c, &find_seq_mask, &numkeys]() {
+        find_seq = (a * find_seq + c) & find_seq_mask;
+    };
 
     // Run the operation mix for num_ops operations
     for (size_t i = 0; i < num_ops;) {
         for (size_t j = 0; j < 100 && i < num_ops; ++i, ++j) {
             switch (op_mix[j]) {
             case READ:
-                // If `n` is between `erase_seq` and `insert_seq`, then it
+                // If `find_seq` is between `erase_seq` and `insert_seq`, then it
                 // should be in the table.
-                n = rng(numkeys);
                 ASSERT_EQ(
-                    n >= erase_seq && n < insert_seq,
-                    tbl.read(key(n), v));
+                    find_seq >= erase_seq && find_seq < insert_seq,
+                    tbl.read(key(find_seq), v));
+                find_seq_update();
                 break;
             case INSERT:
                 // Insert sequence number `insert_seq`. This should always
@@ -177,23 +185,25 @@ void mix_thread(Table& tbl,
                 // we pick a random index to unsuccessfully erase. Otherwise we
                 // erase `erase_seq`.
                 if (erase_seq == insert_seq) {
-                    ASSERT_TRUE(!tbl.erase(key(rng(numkeys))));
+                    ASSERT_TRUE(!tbl.erase(key(find_seq)));
+                    find_seq_update();
                 } else {
                     ASSERT_TRUE(tbl.erase(key(erase_seq++)));
                 }
                 break;
             case UPDATE:
                 // Same as find, except we update to the same default value
-                n = rng(numkeys);
                 ASSERT_EQ(
-                    n >= erase_seq && n < insert_seq,
-                    tbl.update(key(n), Gen<VALUE>::value()));
+                    find_seq >= erase_seq && find_seq < insert_seq,
+                    tbl.update(key(find_seq), Gen<VALUE>::value()));
+                find_seq_update();
                 break;
             case UPSERT:
                 // Pick a number from the full distribution, but cap it to the
                 // insert_seq, so we don't insert a number greater than
                 // insert_seq.
-                n = std::max(rng(numkeys), static_cast<uint64_t>(insert_seq));
+                n = std::max(find_seq, static_cast<uint64_t>(insert_seq));
+                find_seq_update();
                 tbl.upsert(key(n), upsert_fn, Gen<VALUE>::value());
                 if (n == insert_seq) {
                     ++insert_seq;
@@ -222,7 +232,7 @@ int main(int argc, char** argv) {
             g_seed = std::random_device()();
         }
 
-        pcg32 base_rng(g_seed);
+        pcg64_oneseq_once_insecure base_rng(g_seed);
 
         const size_t initial_capacity = 1UL << g_initial_capacity;
         const size_t total_ops = initial_capacity * g_total_ops_percentage / 100;
@@ -252,27 +262,23 @@ int main(int argc, char** argv) {
 
         // Pre-generate all the keys we'd want to insert. In case the insert +
         // upsert percentage is too low, lower bound by the table capacity.
-        // Also, to prevent rounding errors with the percentages, add 1000 to
-        // the final number.
         std::cerr << "Generating keys\n";
-        const size_t prefill_elems = (initial_capacity * g_prefill_percentage / 100);
+        const size_t prefill_elems =
+            initial_capacity * g_prefill_percentage / 100;
         const size_t max_insert_ops =
             total_ops *
-            (g_insert_percentage + g_upsert_percentage) /
-            100;
+            (g_insert_percentage + g_upsert_percentage) / 100;
         const size_t insert_keys =
-            std::max(initial_capacity, max_insert_ops) +
-            prefill_elems +
-            1000;
+            std::max(initial_capacity, max_insert_ops) + prefill_elems;
+        // Round this quantity up to a power of 2, so that we can use an LCG to
+        // cycle over the array "randomly".
+        size_t insert_keys_per_thread = insert_keys / g_threads;
+        insert_keys_per_thread = 1UL << static_cast<size_t>(
+            ceil(log2(static_cast<double>(insert_keys_per_thread))));
         std::vector<std::vector<uint64_t> > keys(g_threads);
-        std::vector<std::thread> genkeys_threads(g_threads);
         for (size_t i = 0; i < g_threads; ++i) {
-            genkeys_threads[i] = std::thread(
-                genkeys_thread, std::ref(keys[i]),
-                insert_keys / g_threads, g_seed, i);
-        }
-        for (auto& t : genkeys_threads) {
-            t.join();
+            keys[i].resize(insert_keys_per_thread);
+            genkeys(keys[i], insert_keys_per_thread, base_rng);
         }
 
         std::cerr << "Pre-filling table\n";
