@@ -51,8 +51,14 @@ class BuildConfiguration(object):
 
     def build_dir(self):
         """Returns a build directory unique to the configuration"""
-        return 'build___%s___%s___%s' % (self.key, self.value, self.table)
+        # Colons cause problems for make, so types like std::string
+        # need a substitution before they can part of a pathname
+        key = self.key.replace("::", "--")
+        value = self.value.replace("::", "--")
+        return 'build___%s___%s___%s' % (key, value, self.table)
 
     def result_file(self, argspec):
+        key = self.key.replace("::", "--")
+        value = self.value.replace("::", "--")
         return 'results___%s___%s___%s___%s.json' % (
-            self.key, self.value, self.table, argspec)
+            key, value, self.table, argspec)
