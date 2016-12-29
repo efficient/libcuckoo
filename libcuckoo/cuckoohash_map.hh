@@ -465,9 +465,9 @@ public:
     //! value it finds in \p val. Must be copy assignable.
     template <typename K>
     bool find(const K& key, mapped_type& val) const {
-        const size_t hv = hashed_key(key);
+        const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two(hv);
-        const cuckoo_status st = cuckoo_find(key, val, hv, b.i[0], b.i[1]);
+        const cuckoo_status st = cuckoo_find(key, val, hv.partial, b.i[0], b.i[1]);
         return (st == ok);
     }
 
@@ -489,9 +489,9 @@ public:
     //! finds it in the table, and false otherwise.
     template <typename K>
     bool contains(const K& key) const {
-        const size_t hv = hashed_key(key);
+        const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two(hv);
-        const bool result = cuckoo_contains(key, hv, b.i[0], b.i[1]);
+        const bool result = cuckoo_contains(key, hv.partial, b.i[0], b.i[1]);
         return result;
     }
 
@@ -510,7 +510,8 @@ public:
      */
     template <typename K, typename... Args>
     bool insert(K&& key, Args&&... val) {
-        return cuckoo_insert_loop(hashed_key(key), std::forward<K>(key),
+        return cuckoo_insert_loop(hashed_key(key),
+                                  std::forward<K>(key),
                                   std::forward<Args>(val)...);
     }
 
@@ -519,9 +520,9 @@ public:
     //! it returns true.
     template <typename K>
     bool erase(const K& key) {
-        const size_t hv = hashed_key(key);
+        const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two(hv);
-        const cuckoo_status st = cuckoo_delete(key, hv, b.i[0], b.i[1]);
+        const cuckoo_status st = cuckoo_delete(key, hv.partial, b.i[0], b.i[1]);
         return (st == ok);
     }
 
@@ -529,9 +530,9 @@ public:
     //! not there, it returns false, otherwise it returns true.
     template <typename K, typename V>
     bool update(const K& key, V&& val) {
-        const size_t hv = hashed_key(key);
+        const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two(hv);
-        const cuckoo_status st = cuckoo_update(hv, b.i[0], b.i[1],
+        const cuckoo_status st = cuckoo_update(hv.partial, b.i[0], b.i[1],
                                                key, std::forward<V>(val));
         return (st == ok);
     }
@@ -544,9 +545,10 @@ public:
     typename std::enable_if<
         std::is_convertible<Updater, updater_type>::value,
         bool>::type update_fn(const K& key, Updater fn) {
-        const size_t hv = hashed_key(key);
+        const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two(hv);
-        const cuckoo_status st = cuckoo_update_fn(key, fn, hv, b.i[0], b.i[1]);
+        const cuckoo_status st = cuckoo_update_fn(key, fn, hv.partial,
+                                                  b.i[0], b.i[1]);
         return (st == ok);
     }
 
@@ -559,12 +561,12 @@ public:
     typename std::enable_if<
         std::is_convertible<Updater, updater_type>::value,
         void>::type upsert(K&& key, Updater fn, Args&&... val) {
-        const size_t hv = hashed_key(key);
+        const hash_value hv = hashed_key(key);
         cuckoo_status st;
         do {
             auto b = snapshot_and_lock_two(hv);
             size_t hp = get_hashpower();
-            st = cuckoo_update_fn(key, fn, hv, b.i[0], b.i[1]);
+            st = cuckoo_update_fn(key, fn, hv.partial, b.i[0], b.i[1]);
             if (st == ok) {
                 break;
             }
@@ -652,6 +654,38 @@ public:
     }
 
 private:
+    // hash_value contains a hash and partial for a given key. The partial key
+    // is used for partial-key cuckoohashing, and for finding the alternate
+    // bucket of that a key hashes to.
+    struct hash_value {
+        size_t hash;
+        partial_t partial;
+    };
+
+    template <typename K>
+    inline hash_value hashed_key(const K& key) const {
+        const size_t hash = hash_function()(key);
+        return { hash, partial_key(hash) };
+    }
+
+    template <typename K>
+    inline size_t hashed_key_only_hash(const K& key) const {
+        return hash_function()(key);
+    }
+
+    // The partial key must only depend on the hash value. It cannot change with
+    // the hashpower, because, in order for `cuckoo_fast_double` to work
+    // properly, the alt_index must only grow by one bit at the top each time we
+    // expand the table.
+    static inline partial_t partial_key(const size_t hash) {
+        const partial_t *hash_as_partial = static_cast<const partial_t*>(
+            static_cast<const void*>(&hash));
+        partial_t ret = *hash_as_partial++;
+        for (size_t i = 0; i < sizeof(size_t) / sizeof(partial_t) - 1; ++i) {
+            ret ^= *hash_as_partial++;
+        }
+        return ret;
+    }
 
     template <size_t N>
     struct BucketContainer {
@@ -817,12 +851,12 @@ private:
     // the bucket indices associated with the hash value and the current
     // hashpower.
     TwoBuckets
-    snapshot_and_lock_two(const size_t hv) const noexcept {
+    snapshot_and_lock_two(const hash_value& hv) const noexcept {
         while (true) {
             // Store the current hashpower we're using to compute the buckets
-	    const size_t hp = get_hashpower();
-            const size_t i1 = index_hash(hp, hv);
-            const size_t i2 = alt_index(hp, partial_key(hv), i1);
+            const size_t hp = get_hashpower();
+            const size_t i1 = index_hash(hp, hv.hash);
+            const size_t i2 = alt_index(hp, hv.partial, i1);
             try {
                 return lock_two(hp, i1, i2);
             } catch (hashpower_changed&) {
@@ -898,12 +932,6 @@ private:
         return hashsize(hp) - 1;
     }
 
-    // hashed_key hashes the given key.
-    template <typename K>
-    inline size_t hashed_key(const K& key) const {
-        return hash_function()(key);
-    }
-
     // index_hash returns the first possible bucket that the given hashed key
     // could be.
     static inline size_t index_hash(const size_t hp, const size_t hv) {
@@ -923,13 +951,6 @@ private:
         return (index ^ (nonzero_tag * 0xc6a4a7935bd1e995)) & hashmask(hp);
     }
 
-    // partial_key returns a partial_t representing the upper sizeof(partial_t)
-    // bytes of the hashed key. This is used for partial-key cuckoohashing, and
-    // for finding the alternate bucket of that a key hashes to.
-    static inline partial_t partial_key(const size_t hv) {
-        return hv >> ((sizeof(size_t) - sizeof(partial_t)) * CHAR_BIT);
-    }
-
     // A constexpr version of pow that we can use for static_asserts
     static constexpr size_t const_pow(size_t a, size_t b) {
         return (b == 0) ? 1 : a * const_pow(a, b - 1);
@@ -945,7 +966,7 @@ private:
     typedef struct {
         size_t bucket;
         size_t slot;
-        size_t hv;
+        hash_value hv;
     } CuckooRecord;
 
     typedef std::array<CuckooRecord, MAX_BFS_PATH_LEN> CuckooRecords;
@@ -1116,12 +1137,12 @@ private:
         for (int i = 1; i <= x.depth; ++i) {
             CuckooRecord& curr = cuckoo_path[i];
             const CuckooRecord& prev = cuckoo_path[i-1];
-            assert(prev.bucket == index_hash(hp, prev.hv) ||
-                   prev.bucket == alt_index(hp, partial_key(prev.hv),
-                                            index_hash(hp, prev.hv)));
+            assert(prev.bucket == index_hash(hp, prev.hv.hash) ||
+                   prev.bucket == alt_index(hp, prev.hv.partial,
+                                            index_hash(hp, prev.hv.hash)));
             // We get the bucket that this slot is on by computing the alternate
             // index of the previous bucket
-            curr.bucket = alt_index(hp, partial_key(prev.hv), prev.bucket);
+            curr.bucket = alt_index(hp, prev.hv.partial, prev.bucket);
             const OneBucket ob = lock_one(hp, curr.bucket);
             const Bucket& b = buckets_[curr.bucket];
             if (!b.occupied(curr.slot)) {
@@ -1191,8 +1212,8 @@ private:
             // We only need to check that the hash value is the same, because,
             // even if the keys are different and have the same hash value, then
             // the cuckoopath is still valid.
-            if (hashed_key(fb.key(fs)) != from.hv || tb.occupied(ts) ||
-                !fb.occupied(fs)) {
+            if (hashed_key_only_hash(fb.key(fs)) != from.hv.hash ||
+                tb.occupied(ts) || !fb.occupied(fs)) {
                 return false;
             }
 
@@ -1419,9 +1440,9 @@ private:
     // and released outside the function.
     template <typename K>
     cuckoo_status cuckoo_find(const K &key, mapped_type& val,
-                              const size_t hv, const size_t i1,
+                              const partial_t partial,
+                              const size_t i1,
                               const size_t i2) const {
-        const partial_t partial = partial_key(hv);
         if (try_read_from_bucket(partial, key, val, buckets_[i1])) {
             return ok;
         }
@@ -1435,9 +1456,8 @@ private:
     // it's in the table and false otherwise. It expects the locks to be taken
     // and released outside the function.
     template <typename K>
-    bool cuckoo_contains(const K& key, const size_t hv, const size_t i1,
-                         const size_t i2) const {
-        const partial_t partial = partial_key(hv);
+    bool cuckoo_contains(const K& key, const partial_t partial,
+                         const size_t i1, const size_t i2) const {
         if (check_in_bucket(partial, key, buckets_[i1])) {
             return true;
         }
@@ -1456,25 +1476,24 @@ private:
     // in the function. If the insert fails, the key and value won't be
     // move-constructed, so they can be retried.
     template <typename K, typename... Args>
-    cuckoo_status cuckoo_insert(const size_t hv, TwoBuckets b,
+    cuckoo_status cuckoo_insert(const hash_value hv, TwoBuckets b,
                                 K&& key, Args&&... val) {
         int res1, res2;
-        const partial_t partial = partial_key(hv);
         Bucket& b0 = buckets_[b.i[0]];
-        if (!try_find_insert_bucket(partial, key, b0, res1)) {
+        if (!try_find_insert_bucket(hv.partial, key, b0, res1)) {
             return failure_key_duplicated;
         }
         Bucket& b1 = buckets_[b.i[1]];
-        if (!try_find_insert_bucket(partial, key, b1, res2)) {
+        if (!try_find_insert_bucket(hv.partial, key, b1, res2)) {
             return failure_key_duplicated;
         }
         if (res1 != -1) {
-            add_to_bucket(partial, b0, res1, std::forward<K>(key),
+            add_to_bucket(hv.partial, b0, res1, std::forward<K>(key),
                           std::forward<Args>(val)...);
             return ok;
         }
         if (res2 != -1) {
-            add_to_bucket(partial, b1, res2, std::forward<K>(key),
+            add_to_bucket(hv.partial, b1, res2, std::forward<K>(key),
                           std::forward<Args>(val)...);
             return ok;
         }
@@ -1492,16 +1511,17 @@ private:
             assert(!locks_[lock_ind(b.i[0])].try_lock());
             assert(!locks_[lock_ind(b.i[1])].try_lock());
             assert(!buckets_[insert_bucket].occupied(insert_slot));
-            assert(insert_bucket == index_hash(get_hashpower(), hv) ||
-                   insert_bucket == alt_index(get_hashpower(), partial,
-                                              index_hash(get_hashpower(), hv)));
+            assert(insert_bucket == index_hash(get_hashpower(), hv.hash) ||
+                   insert_bucket == alt_index(
+                       get_hashpower(), hv.partial,
+                       index_hash(get_hashpower(), hv.hash)));
             // Since we unlocked the buckets during run_cuckoo, another insert
             // could have inserted the same key into either b.i[0] or b.i[1], so
             // we check for that before doing the insert.
-            if (cuckoo_contains(key, hv, b.i[0], b.i[1])) {
+            if (cuckoo_contains(key, hv.partial, b.i[0], b.i[1])) {
                 return failure_key_duplicated;
             }
-            add_to_bucket(partial, buckets_[insert_bucket], insert_slot,
+            add_to_bucket(hv.partial, buckets_[insert_bucket], insert_slot,
                           std::forward<K>(key), std::forward<Args>(val)...);
             return ok;
         }
@@ -1525,7 +1545,7 @@ private:
      * load factor of the table is below the threshold
      */
     template <typename K, typename... Args>
-    bool cuckoo_insert_loop(size_t hv, K&& key, Args&&... val) {
+    bool cuckoo_insert_loop(hash_value hv, K&& key, Args&&... val) {
         cuckoo_status st;
         do {
             auto b = snapshot_and_lock_two(hv);
@@ -1549,9 +1569,8 @@ private:
     // that key to empty if it finds it. It expects the locks to be taken and
     // released outside the function.
     template <class K>
-    cuckoo_status cuckoo_delete(const K &key, const size_t hv,
+    cuckoo_status cuckoo_delete(const K &key, const partial_t partial,
                                 const size_t i1, const size_t i2) {
-        const partial_t partial = partial_key(hv);
         if (try_del_from_bucket(partial, key, buckets_[i1])) {
             return ok;
         }
@@ -1565,9 +1584,8 @@ private:
     // if it finds it. It expects the locks to be taken and released outside the
     // function.
     template <typename K, typename V>
-    cuckoo_status cuckoo_update(const size_t hv, const size_t i1,
+    cuckoo_status cuckoo_update(const partial_t partial, const size_t i1,
                                 const size_t i2, const K &key, V&& val) {
-        const partial_t partial = partial_key(hv);
         if (try_update_bucket(partial, buckets_[i1], key,
                               std::forward<V>(val))) {
             return ok;
@@ -1585,9 +1603,8 @@ private:
     // outside the function.
     template <typename K, typename Updater>
     cuckoo_status cuckoo_update_fn(const K &key, Updater fn,
-                                   const size_t hv, const size_t i1,
+                                   const partial_t partial, const size_t i1,
                                    const size_t i2) {
-        const partial_t partial = partial_key(hv);
         if (try_update_bucket_fn(partial, key, fn, buckets_[i1])) {
             return ok;
         }
@@ -1650,13 +1667,13 @@ private:
                     if (!old_bucket.occupied(slot)) {
                         continue;
                     }
-                    const size_t hv = hashed_key(old_bucket.key(slot));
-                    const size_t old_ihash = index_hash(current_hp, hv);
+                    const hash_value hv = hashed_key(old_bucket.key(slot));
+                    const size_t old_ihash = index_hash(current_hp, hv.hash);
                     const size_t old_ahash = alt_index(
-                        current_hp, old_bucket.partial(slot), old_ihash);
-                    const size_t new_ihash = index_hash(new_hp, hv);
+                        current_hp, hv.partial, old_ihash);
+                    const size_t new_ihash = index_hash(new_hp, hv.hash);
                     const size_t new_ahash = alt_index(
-                        new_hp, old_bucket.partial(slot), new_ihash);
+                        new_hp, hv.partial, new_ihash);
                     if ((bucket_i == old_ihash && new_ihash == new_bucket_i) ||
                         (bucket_i == old_ahash && new_ahash == new_bucket_i)) {
                         // We're moving the key from the old bucket to the new
@@ -1713,7 +1730,8 @@ private:
         // it and the new bucket, letting other threads using the new map
         // gradually. We only unlock the locks being used by the old table,
         // because unlocking new locks would enable operations on the table
-        // before we want them.
+        // before we want them. We also re-evaluate the partial key stored at
+        // each slot, since it depends on the hashpower.
         const size_t locks_to_move = std::min(locks_t::size(),
                                               hashsize(current_hp));
         parallel_exec(0, locks_to_move, kNumCores(),

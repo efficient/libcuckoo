@@ -198,7 +198,7 @@ void mix_thread(Table& tbl,
                 // Pick a number from the full distribution, but cap it to the
                 // insert_seq, so we don't insert a number greater than
                 // insert_seq.
-                n = std::max(find_seq, static_cast<uint64_t>(insert_seq));
+                n = std::max(find_seq, insert_seq);
                 find_seq_update();
                 tbl.upsert(key(n), upsert_fn, Gen<VALUE>::value());
                 if (n == insert_seq) {

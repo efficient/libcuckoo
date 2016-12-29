@@ -135,17 +135,18 @@ TEST_CASE("heterogeneous compare", "[heterogeneous compare]") {
 
     SECTION("contains") {
         {
-            foo_map map;
+            foo_map map(0);
             map.rehash(2);
             map.insert(0, true);
             REQUIRE(map.contains(0));
+            // Shouldn't do comparison because of different partial key
             REQUIRE(!map.contains(4));
         }
         REQUIRE(int_constructions == 1);
         REQUIRE(copy_constructions == 0);
         REQUIRE(destructions == 1);
         REQUIRE(foo_comparisons == 0);
-        REQUIRE(int_comparisons == 2);
+        REQUIRE(int_comparisons == 1);
         REQUIRE(foo_hashes == 0);
         REQUIRE(int_hashes == 3);
     }
@@ -200,11 +201,12 @@ TEST_CASE("heterogeneous compare", "[heterogeneous compare]") {
 
     SECTION("upsert") {
         {
-            foo_map map;
+            foo_map map(0);
             map.rehash(2);
             auto neg = [](bool& val) { val = !val; };
             map.upsert(0, neg, true);
             map.upsert(0, neg, true);
+            // Shouldn't do comparison because of different partial key
             map.upsert(4, neg, false);
             REQUIRE(!map.find(0));
             REQUIRE(!map.find(4));
@@ -213,7 +215,7 @@ TEST_CASE("heterogeneous compare", "[heterogeneous compare]") {
         REQUIRE(copy_constructions == 0);
         REQUIRE(destructions == 2);
         REQUIRE(foo_comparisons == 0);
-        REQUIRE(int_comparisons == 6);
+        REQUIRE(int_comparisons == 3);
         REQUIRE(foo_hashes == 0);
         REQUIRE(int_hashes == 5);
     }

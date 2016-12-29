@@ -42,8 +42,8 @@ TEST_CASE("hash with larger hashpower only adds top bits",
           "[hash properties]") {
     std::string key = "abc";
     size_t hv = StringIntTable::hasher()(key);
-    auto partial = UnitTestInternalAccess::partial_key<StringIntTable>(hv);
     for (size_t hashpower = 1; hashpower < 30; ++hashpower) {
+        auto partial = UnitTestInternalAccess::partial_key<StringIntTable>(hv);
         size_t index_bucket1 = UnitTestInternalAccess::index_hash<
             StringIntTable>(hashpower, hv);
         size_t index_bucket2 = UnitTestInternalAccess::index_hash<

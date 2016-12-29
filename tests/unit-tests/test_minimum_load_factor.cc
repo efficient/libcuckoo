@@ -7,7 +7,7 @@
 
 class BadHashFunction {
 public:
-    int operator()(int) {
+    size_t operator()(int) {
         return 0;
     }
 };
