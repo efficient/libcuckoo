@@ -149,7 +149,7 @@ void mix_thread(Table& tbl,
     VALUE v;
     // A convenience function for getting the nth key
     auto key = [&keys](size_t n) {
-        return keys.at(n);
+        return Gen<KEY>::key(keys.at(n));
     };
 
     // The upsert function is just the identity

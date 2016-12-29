@@ -30,9 +30,12 @@ function(add_debug_cxx_flags)
     endforeach()
 endfunction()
 
-# Add pcg if we're doing stress tests or specific benchmarks
-if (BUILD_TESTS OR BUILD_STRESS_TESTS OR
-    BUILD_SPECIFIC_BENCHMARKS)
+# Add pcg if we're doing stress tests, specific benchmarks, or universal
+# benchmark
+if (BUILD_TESTS OR
+    BUILD_STRESS_TESTS OR
+    BUILD_SPECIFIC_BENCHMARKS OR
+    BUILD_UNIVERSAL_BENCHMARK)
     add_subdirectory(pcg)
 endif()
 

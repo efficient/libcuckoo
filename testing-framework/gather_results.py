@@ -23,9 +23,19 @@ def get_stat(all_params, data, argspec, key, value, outstat):
         'ys': [],
         'y_axis': ''
     }
-    argsline = all_params.args[argspec]
+    # We consider it a match if the configuration argspec is a subset of the
+    # datum's argspec. So we must build a set of flag-value pairs.
+    def build_argset(argsline):
+        components = argsline.split()
+        argset = set()
+        for i in range(0, len(components), 2):
+            argset.add((components[i], components[i + 1]))
+        return argset
+    argspec_set = build_argset(all_params.args[argspec])
     for datum in data:
-        if (datum['args'] == argsline and datum['key'] == key and
+        datum_argset = build_argset(datum['args'])
+        if (argspec_set.issubset(datum_argset) and
+            datum['key'] == key and
             datum['value'] == value):
             outstat_dict = datum['output'][outstat]
             ret['xs'].append(datum['table'])
