@@ -4,10 +4,10 @@ Note to users
 We decided to change the build system to CMake, and have created a new version
 of the table in the branch
 [future-master](https://github.com/efficient/libcuckoo/tree/future-master). This
-update also contains a number of small but important performance and correctness
-improvements. We recommend existing users switching to the new version, as
-future development will continue on this branch, and it will eventually replace
-the exsiting master branch. New users should start with the
+update also contains a number of small but important performance improvements,
+and better tests and benchmarks. We recommend existing users switching to the
+new version, as future development will continue on this branch, and it will
+eventually replace the exsiting master branch. New users should start with the
 [future-master](https://github.com/efficient/libcuckoo/tree/future-master)
 branch.
 
