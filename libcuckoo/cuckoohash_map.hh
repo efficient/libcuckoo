@@ -663,13 +663,13 @@ private:
     };
 
     template <typename K>
-    inline hash_value hashed_key(const K& key) const {
+    hash_value hashed_key(const K& key) const {
         const size_t hash = hash_function()(key);
         return { hash, partial_key(hash) };
     }
 
     template <typename K>
-    inline size_t hashed_key_only_hash(const K& key) const {
+    size_t hashed_key_only_hash(const K& key) const {
         return hash_function()(key);
     }
 
@@ -677,14 +677,18 @@ private:
     // the hashpower, because, in order for `cuckoo_fast_double` to work
     // properly, the alt_index must only grow by one bit at the top each time we
     // expand the table.
-    static inline partial_t partial_key(const size_t hash) {
-        const partial_t *hash_as_partial = static_cast<const partial_t*>(
-            static_cast<const void*>(&hash));
-        partial_t ret = *hash_as_partial++;
-        for (size_t i = 0; i < sizeof(size_t) / sizeof(partial_t) - 1; ++i) {
-            ret ^= *hash_as_partial++;
-        }
-        return ret;
+    static partial_t partial_key(const size_t hash) {
+        const uint64_t hash_64bit = hash;
+        const uint32_t hash_32bit = (
+            static_cast<uint32_t>(hash_64bit) ^
+            static_cast<uint32_t>(hash_64bit >> 32));
+        const uint16_t hash_16bit = (
+            static_cast<uint16_t>(hash_32bit) ^
+            static_cast<uint16_t>(hash_32bit >> 16));
+        const uint16_t hash_8bit = (
+            static_cast<uint8_t>(hash_16bit),
+            static_cast<uint8_t>(hash_16bit >> 8));
+        return hash_8bit;
     }
 
     template <size_t N>
