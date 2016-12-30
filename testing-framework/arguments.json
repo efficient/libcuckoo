@@ -1,5 +1,0 @@
-{
-    "pure_read": "--reads 100 --inserts 0 --erases 0 --updates 0 --upserts 0 --initial-capacity 25 --prefill 75 --total-ops 1000 --num-threads 4",
-    "pure_insert": "--reads 0 --inserts 100 --erases 0 --updates 0 --upserts 0 --initial-capacity 25 --prefill 0 --total-ops 90 --num-threads 4",
-    "insert_expansion": "--reads 0 --inserts 100 --erases 0 --updates 0 --upserts 0 --initial-capacity 4 --prefill 0 --total-ops 209715200 --num-threads 4"
-}
