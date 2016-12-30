@@ -3,7 +3,6 @@ var annotated_dup =
     [ "CityHasher", "class_city_hasher.html", "class_city_hasher" ],
     [ "CityHasher< std::string >", "class_city_hasher_3_01std_1_1string_01_4.html", "class_city_hasher_3_01std_1_1string_01_4" ],
     [ "cuckoohash_map", "classcuckoohash__map.html", "classcuckoohash__map" ],
-    [ "DefaultHasher", "class_default_hasher.html", "class_default_hasher" ],
     [ "lazy_array", "classlazy__array.html", "classlazy__array" ],
     [ "libcuckoo_load_factor_too_low", "classlibcuckoo__load__factor__too__low.html", "classlibcuckoo__load__factor__too__low" ],
     [ "libcuckoo_maximum_hashpower_exceeded", "classlibcuckoo__maximum__hashpower__exceeded.html", "classlibcuckoo__maximum__hashpower__exceeded" ]

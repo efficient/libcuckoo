@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['operator_20mapped_5ftype',['operator mapped_type',['../classcuckoohash__map_1_1reference.html#a12a50a4f72eaad151326a27b76d48a98',1,'cuckoohash_map::reference']]],
-  ['operator_3d',['operator=',['../classcuckoohash__map_1_1reference.html#a3efc9da6c30a356ca1f9af98b0a05ed9',1,'cuckoohash_map::reference::operator=(const mapped_type &amp;val)'],['../classcuckoohash__map_1_1reference.html#aaea02f86fc4c94ebd7ba0a4e1c4515b7',1,'cuckoohash_map::reference::operator=(const reference &amp;ref)']]],
-  ['operator_5b_5d',['operator[]',['../classcuckoohash__map.html#a5aafc82ed6a47c8a75bcd06115a4f740',1,'cuckoohash_map::operator[](const key_type &amp;key)'],['../classcuckoohash__map.html#a510775ddaef551151477152261433ca8',1,'cuckoohash_map::operator[](const key_type &amp;key) const ']]]
+  ['maximum_5fhashpower',['maximum_hashpower',['../classcuckoohash__map.html#af5e3e86f974c8b6e55761b2e3717f225',1,'cuckoohash_map::maximum_hashpower(size_t mhp) noexcept'],['../classcuckoohash__map.html#aec18a2a678a0232df436c6a550eefea4',1,'cuckoohash_map::maximum_hashpower() noexcept']]],
+  ['minimum_5fload_5ffactor',['minimum_load_factor',['../classcuckoohash__map.html#aeecfff17d1b8c0193fd64f184c0b3bd8',1,'cuckoohash_map::minimum_load_factor(const double mlf)'],['../classcuckoohash__map.html#a2afa9bbe56c88f77ba0497ffb84b5df8',1,'cuckoohash_map::minimum_load_factor() noexcept']]]
 ];

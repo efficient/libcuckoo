@@ -2,8 +2,9 @@ var cuckoohash__util_8hh =
 [
     [ "libcuckoo_load_factor_too_low", "classlibcuckoo__load__factor__too__low.html", "classlibcuckoo__load__factor__too__low" ],
     [ "libcuckoo_maximum_hashpower_exceeded", "classlibcuckoo__maximum__hashpower__exceeded.html", "classlibcuckoo__maximum__hashpower__exceeded" ],
-    [ "ENABLE_IF", "cuckoohash__util_8hh.html#ad3427f3b9ad8f7a6326b50d0d5c07de0", null ],
-    [ "LIBCUCKOO_DBG", "cuckoohash__util_8hh.html#ac18754e17b69d65ddd84f9e8fe1f520c", null ],
-    [ "create_array", "cuckoohash__util_8hh.html#acd630a2f8109a02bb8652c35bc4c9b76", null ],
-    [ "destroy_array", "cuckoohash__util_8hh.html#aa56ed277decbd035fba211f73f26cf2f", null ]
+    [ "ENABLE_IF", "cuckoohash__util_8hh.html#a6e518d08df5a55cc9dbbb6e74a2103bc", null ],
+    [ "LIBCUCKOO_ALIGNAS", "cuckoohash__util_8hh.html#a8c488b9631456c8d5c3b8e26d1b3a00e", null ],
+    [ "LIBCUCKOO_DBG", "cuckoohash__util_8hh.html#a391036efebd52993d833ee5e2b1d6244", null ],
+    [ "LIBCUCKOO_SQUELCH_PADDING_WARNING", "cuckoohash__util_8hh.html#a2509909e76908ee20da73adb5ae552af", null ],
+    [ "LIBCUCKOO_THREAD_LOCAL", "cuckoohash__util_8hh.html#a471ebb922d4aded0e92ba0fad585b63a", null ]
 ];

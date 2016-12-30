@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['value_5ftype',['value_type',['../classcuckoohash__map.html#acc92197a4aa4a06d94fecaebb463adfb',1,'cuckoohash_map']]]
+  ['mapped_5ftype',['mapped_type',['../classcuckoohash__map.html#a84358980ded175e7092a7570eded618d',1,'cuckoohash_map']]]
 ];
