@@ -1,11 +1,15 @@
-Note to existing users: the iterator implementation has changed significantly
-since we introduced the `locked_table` in [this
-commit](https://github.com/efficient/libcuckoo/commit/2bedb3d0c811cd8b3adb3e78e2d2a28c66ba1d1d).
-Please see the [`locked_table`
-documentation](http://efficient.github.io/libcuckoo/classcuckoohash__map_1_1locked__table.html)
-and [examples
-directory](https://github.com/efficient/libcuckoo/tree/master/examples) for
-information and examples of how to use iterators.
+Note to users
+=============
+
+We decided to change the build system to CMake, and have created a new version
+of the table in the branch
+[future-master](https://github.com/efficient/libcuckoo/tree/future-master). This
+update also contains a number of small but important performance and correctness
+improvements. We recommend existing users switching to the new version, as
+future development will continue on this branch, and it will eventually replace
+the exsiting master branch. New users should start with the
+[future-master](https://github.com/efficient/libcuckoo/tree/future-master)
+branch.
 
 libcuckoo
 =========
