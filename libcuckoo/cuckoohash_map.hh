@@ -154,7 +154,9 @@ private:
     class LIBCUCKOO_ALIGNAS(64) spinlock {
         std::atomic_flag lock_;
     public:
-        spinlock() {
+        size_t elems_in_buckets;
+
+        spinlock() : elems_in_buckets(0) {
             lock_.clear();
         }
 
@@ -320,18 +322,6 @@ private:
         hashpower_.store(val, std::memory_order_release);
     }
 
-    // get_counterid returns the counterid for the current thread.
-    static inline int get_counterid() {
-        // counterid stores the per-thread counter index of each thread. Each
-        // counter value corresponds to a core on the machine.
-        static LIBCUCKOO_THREAD_LOCAL int counterid = -1;
-
-        if (counterid < 0) {
-            counterid = rand() % kNumCores();
-        }
-        return counterid;
-    }
-
     // reserve_calc takes in a parameter specifying a certain number of slots
     // for a table and returns the smallest hashpower that will hold n elements.
     static size_t reserve_calc(const size_t n) {
@@ -371,8 +361,6 @@ public:
         set_hashpower(hp);
         buckets_.resize(hashsize(hp));
         locks_.allocate(std::min(locks_t::size(), hashsize(hp)));
-        num_inserts_.resize(kNumCores(), 0);
-        num_deletes_.resize(kNumCores(), 0);
     }
 
     ~cuckoohash_map() {
@@ -396,6 +384,30 @@ public:
     //! empty returns true if the table is empty.
     bool empty() const noexcept {
         return size() == 0;
+    }
+
+    size_t num_found_in_more_occupied_bucket() const noexcept {
+        size_t count = 0;
+        for (size_t i = 0; i < locks_.allocated_size(); ++i) {
+            count += locks_[i].num_found_in_more_occupied_bucket;
+        }
+        return count;
+    }
+
+    size_t num_found_in_first_bucket() const noexcept {
+        size_t count = 0;
+        for (size_t i = 0; i < locks_.allocated_size(); ++i) {
+            count += locks_[i].num_found_in_first_bucket;
+        }
+        return count;
+    }
+
+    size_t num_found() const noexcept {
+        size_t count = 0;
+        for (size_t i = 0; i < locks_.allocated_size(); ++i) {
+            count += locks_[i].num_found;
+        }
+        return count;
     }
 
     //! hashpower returns the hashpower of the table, which is
@@ -1338,12 +1350,12 @@ private:
     // for use afterwards.
     template <typename K, typename... Args>
     void add_to_bucket(const partial_t partial, Bucket& b,
-                       const size_t slot, K&& key, Args&&... val) {
+                       const size_t bucket_ind, const size_t slot,
+                       K&& key, Args&&... val) {
         assert(!b.occupied(slot));
         b.partial(slot) = partial;
         b.setKV(slot, std::forward<K>(key), std::forward<Args>(val)...);
-        num_inserts_[get_counterid()].num.fetch_add(
-            1, std::memory_order_relaxed);
+        ++locks_[lock_ind(bucket_ind)].elems_in_buckets;
     }
 
     // try_find_insert_bucket will search the bucket and store the index of an
@@ -1378,8 +1390,8 @@ private:
     // try_del_from_bucket will search the bucket for the given key, and set the
     // slot of the key to empty if it finds it.
     template <typename K>
-    bool try_del_from_bucket(const partial_t partial,
-                             const K &key, Bucket& b) {
+    bool try_del_from_bucket(const partial_t partial, const K &key,
+                             Bucket& b, const size_t bucket_ind) {
         for (size_t i = 0; i < slot_per_bucket; ++i) {
             if (!b.occupied(i)) {
                 continue;
@@ -1389,8 +1401,7 @@ private:
             }
             if (key_eq()(b.key(i), key)) {
                 b.eraseKV(i);
-                num_deletes_[get_counterid()].num.fetch_add(
-                    1, std::memory_order_relaxed);
+                --locks_[lock_ind(bucket_ind)].elems_in_buckets;
                 return true;
             }
         }
@@ -1492,12 +1503,14 @@ private:
             return failure_key_duplicated;
         }
         if (res1 != -1) {
-            add_to_bucket(hv.partial, b0, res1, std::forward<K>(key),
+            add_to_bucket(hv.partial, b0, b.i[0], res1,
+                          std::forward<K>(key),
                           std::forward<Args>(val)...);
             return ok;
         }
         if (res2 != -1) {
-            add_to_bucket(hv.partial, b1, res2, std::forward<K>(key),
+            add_to_bucket(hv.partial, b1, b.i[1], res2,
+                          std::forward<K>(key),
                           std::forward<Args>(val)...);
             return ok;
         }
@@ -1525,8 +1538,9 @@ private:
             if (cuckoo_contains(key, hv.partial, b.i[0], b.i[1])) {
                 return failure_key_duplicated;
             }
-            add_to_bucket(hv.partial, buckets_[insert_bucket], insert_slot,
-                          std::forward<K>(key), std::forward<Args>(val)...);
+            add_to_bucket(hv.partial, buckets_[insert_bucket], insert_bucket,
+                          insert_slot, std::forward<K>(key),
+                          std::forward<Args>(val)...);
             return ok;
         }
         assert(st == failure);
@@ -1575,10 +1589,10 @@ private:
     template <class K>
     cuckoo_status cuckoo_delete(const K &key, const partial_t partial,
                                 const size_t i1, const size_t i2) {
-        if (try_del_from_bucket(partial, key, buckets_[i1])) {
+        if (try_del_from_bucket(partial, key, buckets_[i1], i1)) {
             return ok;
         }
-        if (try_del_from_bucket(partial, key, buckets_[i2])) {
+        if (try_del_from_bucket(partial, key, buckets_[i2], i2)) {
             return ok;
         }
         return failure_key_not_found;
@@ -1625,22 +1639,19 @@ private:
         for (Bucket& b : buckets_) {
             b.clear();
         }
-        for (size_t i = 0; i < num_inserts_.size(); ++i) {
-            num_inserts_[i].num.store(0);
-            num_deletes_[i].num.store(0);
+        for (size_t i = 0; i < locks_.allocated_size(); ++i) {
+            locks_[i].elems_in_buckets = 0;
         }
         return ok;
     }
 
     // cuckoo_size returns the number of elements in the given table.
     size_t cuckoo_size() const noexcept {
-        size_t inserts = 0;
-        size_t deletes = 0;
-        for (size_t i = 0; i < num_inserts_.size(); ++i) {
-            inserts += num_inserts_[i].num.load();
-            deletes += num_deletes_[i].num.load();
+        size_t size = 0;
+        for (size_t i = 0; i < locks_.allocated_size(); ++i) {
+            size += locks_[i].elems_in_buckets;
         }
-        return inserts-deletes;
+        return size;
     }
 
     // cuckoo_loadfactor returns the load factor of the given table.
@@ -1684,6 +1695,10 @@ private:
                         // one
                         Bucket::move_to_bucket(
                             old_bucket, slot, new_bucket, new_bucket_slot++);
+                        // Also update the lock counts, in case we're moving to
+                        // a different lock.
+                        --locks_[lock_ind(bucket_i)].elems_in_buckets;
+                        ++locks_[lock_ind(new_bucket_i)].elems_in_buckets;
                     } else {
                         // Check that we don't want to move the new key
                         assert(
@@ -2155,11 +2170,6 @@ private:
 
     // a lock to synchronize expansions
     expansion_lock_t expansion_lock_;
-
-    // per-core counters for the number of inserts and deletes
-    std::vector<
-        cacheint, typename allocator_type::template rebind<cacheint>::other>
-    num_inserts_, num_deletes_;
 
     // stores the minimum load factor allowed for automatic expansions. Whenever
     // an automatic expansion is triggered (during an insertion where cuckoo
