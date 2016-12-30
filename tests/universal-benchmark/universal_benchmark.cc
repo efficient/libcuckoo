@@ -233,9 +233,6 @@ int main(int argc, char** argv) {
         const size_t initial_capacity = 1UL << g_initial_capacity;
         const size_t total_ops = initial_capacity * g_total_ops_percentage / 100;
 
-        // Create and size the table
-        Table tbl(initial_capacity);
-
         // Pre-generate an operation mix based on our percentages.
         std::array<Ops, 100> op_mix;
         auto *op_mix_p = &op_mix[0];
@@ -277,6 +274,11 @@ int main(int argc, char** argv) {
             genkeys(keys[i], insert_keys_per_thread, base_rng);
         }
 
+        auto start_rss = max_rss();
+
+        // Create and size the table
+        Table tbl(initial_capacity);
+
         std::cerr << "Pre-filling table\n";
         std::vector<std::thread> prefill_threads(g_threads);
         for (size_t i = 0; i < g_threads; ++i) {
@@ -291,7 +293,6 @@ int main(int argc, char** argv) {
         // Run the operation mix, timed
         std::cerr << "Running operations\n";
         std::vector<std::thread> mix_threads(g_threads);
-        auto start_rss = max_rss();
         auto start_time = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < g_threads; ++i) {
             mix_threads[i] = std::thread(
