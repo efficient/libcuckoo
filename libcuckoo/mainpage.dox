@@ -8,7 +8,7 @@
  *  important differences.
  *
  *  Internally, the hash table is partitioned into an array of
- *  buckets, each of which contains \ref SLOT_PER_BUCKET slots to
+ *  buckets, each of which contains \c SLOT_PER_BUCKET slots to
  *  store items.
  *
  *  Each bucket has a lock to ensure multiple threads don't modify the

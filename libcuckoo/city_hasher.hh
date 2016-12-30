@@ -1,3 +1,5 @@
+/** \file */
+
 #ifndef _CITY_HASHER_HH
 #define _CITY_HASHER_HH
 
@@ -10,6 +12,7 @@
 template <class Key>
 class CityHasher {
 public:
+    //! The function call operator for our hash function
     size_t operator()(const Key& k) const {
         if (sizeof(size_t) < 8) {
             return CityHash32((const char*) &k, sizeof(k));
@@ -26,6 +29,7 @@ public:
 template <>
 class CityHasher<std::string> {
 public:
+    //! The function call operator for our hash function
     size_t operator()(const std::string& k) const {
         if (sizeof(size_t) < 8) {
             return CityHash32(k.c_str(), k.size());

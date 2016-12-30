@@ -124,11 +124,12 @@ public:
         friend class cuckoohash_map<Key, T, Hash, Pred, Alloc, slot_per_bucket>;
     };
 
+    //! Const version of \ref reference
     typedef const mapped_type const_reference;
 
+private:
     typedef uint8_t partial_t;
 
-private:
     // Constants used internally
 
     // true if the key is small and simple, which means using partial keys for
@@ -341,6 +342,8 @@ public:
      * table allows for automatic expansion.
      * @param mhp the maximum hashpower that the table can take on (pass in 0
      * for no limit)
+     * @param hf hash function instance to use
+     * @param eql equality function instance to use
      * @throw std::invalid_argument if the given minimum load factor is invalid,
      * or if the initial space exceeds the maximum hashpower
      */
@@ -384,30 +387,6 @@ public:
     //! empty returns true if the table is empty.
     bool empty() const noexcept {
         return size() == 0;
-    }
-
-    size_t num_found_in_more_occupied_bucket() const noexcept {
-        size_t count = 0;
-        for (size_t i = 0; i < locks_.allocated_size(); ++i) {
-            count += locks_[i].num_found_in_more_occupied_bucket;
-        }
-        return count;
-    }
-
-    size_t num_found_in_first_bucket() const noexcept {
-        size_t count = 0;
-        for (size_t i = 0; i < locks_.allocated_size(); ++i) {
-            count += locks_[i].num_found_in_first_bucket;
-        }
-        return count;
-    }
-
-    size_t num_found() const noexcept {
-        size_t count = 0;
-        for (size_t i = 0; i < locks_.allocated_size(); ++i) {
-            count += locks_[i].num_found;
-        }
-        return count;
     }
 
     //! hashpower returns the hashpower of the table, which is
@@ -1713,6 +1692,30 @@ private:
         }
     }
 
+    // Executes the function over the given range split over num_threads threads
+    template <class F>
+    static void parallel_exec(size_t start, size_t end,
+                              size_t num_threads, F func) {
+        size_t work_per_thread = (end - start) / num_threads;
+        std::vector<std::thread> threads(num_threads);
+        std::vector<std::exception_ptr> eptrs(num_threads, nullptr);
+        for (size_t i = 0; i < num_threads - 1; ++i) {
+            threads[i] = std::thread(func, start, start + work_per_thread,
+                                     std::ref(eptrs[i]));
+            start += work_per_thread;
+        }
+        threads[num_threads - 1] = std::thread(
+            func, start, end, std::ref(eptrs[num_threads - 1]));
+        for (std::thread& t : threads) {
+            t.join();
+        }
+        for (std::exception_ptr& eptr : eptrs) {
+            if (eptr) {
+                std::rethrow_exception(eptr);
+            }
+        }
+    }
+
     // cuckoo_fast_double will double the size of the table by taking advantage
     // of the properties of index_hash and alt_index. If the key's move
     // constructor is not noexcept, we use cuckoo_expand_simple, since that
@@ -1867,11 +1870,13 @@ public:
               has_table_lock_(new bool(true)) {}
 
     public:
+        //! Move constructor for a locked table
         locked_table(locked_table&& lt)
             : unlocker_(std::move(lt.unlocker_)),
               buckets_(std::move(lt.buckets_)),
               has_table_lock_(std::move(lt.has_table_lock_)) {}
 
+        //! Move assignment for a locked table
         locked_table& operator=(locked_table&& lt) {
             release();
             unlocker_ = std::move(lt.unlocker_);
@@ -2085,7 +2090,9 @@ public:
         };
 
     public:
+        //! A iterator that provides read-only access to the table
         typedef templated_iterator<true> const_iterator;
+        //! A iterator that provides read-write access to the table
         typedef templated_iterator<false> iterator;
 
         //! begin returns an iterator to the beginning of the table
