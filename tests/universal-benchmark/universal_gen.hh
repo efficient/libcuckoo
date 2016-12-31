@@ -18,8 +18,6 @@ class Gen {
 template <>
 class Gen<uint64_t> {
 public:
-    // Per-thread, the seq will be an incrementing number and the thread_id will
-    // be constant. We assume thread_id < num_threads.
     static uint64_t key(uint64_t num) {
         return num;
     }

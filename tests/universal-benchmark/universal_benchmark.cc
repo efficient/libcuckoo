@@ -144,7 +144,7 @@ void mix_thread(Table& tbl,
     VALUE v;
     // A convenience function for getting the nth key
     auto key = [&keys](size_t n) {
-        return Gen<KEY>::key(keys[n]);
+        return Gen<KEY>::key(keys.at(n));
     };
     // The upsert function is just the identity
     auto upsert_fn = [](VALUE& v) { return; };
@@ -204,6 +204,7 @@ void mix_thread(Table& tbl,
                 if (n == insert_seq) {
                     ++insert_seq;
                 }
+                break;
             }
         }
     }
@@ -260,7 +261,8 @@ int main(int argc, char** argv) {
             initial_capacity * g_prefill_percentage / 100;
         const size_t max_insert_ops =
             total_ops *
-            (g_insert_percentage + g_upsert_percentage) / 100;
+            (g_insert_percentage + g_upsert_percentage) / 100 +
+            g_threads;
         const size_t insert_keys =
             std::max(initial_capacity, max_insert_ops) + prefill_elems;
         // Round this quantity up to a power of 2, so that we can use an LCG to
