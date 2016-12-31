@@ -1181,9 +1181,7 @@ private:
         while (depth > 0) {
             CuckooRecord& from = cuckoo_path[depth-1];
             CuckooRecord& to   = cuckoo_path[depth];
-            Bucket& fb = buckets_[from.bucket];
             const size_t fs = from.slot;
-            Bucket& tb = buckets_[to.bucket];
             const size_t ts = to.slot;
             TwoBuckets twob;
             OneBucket extrab;
@@ -1198,6 +1196,9 @@ private:
             } else {
                 twob = lock_two(hp, from.bucket, to.bucket);
             }
+
+            Bucket& fb = buckets_[from.bucket];
+            Bucket& tb = buckets_[to.bucket];
 
             // We plan to kick out fs, but let's check if it is still there;
             // there's a small chance we've gotten scooped by a later cuckoo. If
