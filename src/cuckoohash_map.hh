@@ -31,6 +31,46 @@
 #include "lazy_array.hh"
 #include "default_hasher.hh"
 
+#include <set>
+// This enum is to extend cuckoo_status to support rich information.
+enum class cuckoo_status_ext
+{
+	// The following 4 are corresponding to cuckoo_todo type result of Deleter
+	updated_only, // cuckoo_todo.to_get==false,cuckoo_todo.to_delete==false
+	got_deleted,// cuckoo_todo.to_get==true,cuckoo_todo.to_delete==true
+	got_only, // cuckoo_todo.to_get==true,cuckoo_todo.to_delete==false
+	deleted_only,// cuckoo_todo.to_get==false,cuckoo_todo.to_delete==true
+
+	inserted, // insert happened.
+	not_found, // when a find failed.
+
+	// All the following status are for failure status
+	failure,
+	failure_key_not_found,
+	failure_key_duplicated,
+	failure_table_full,
+	failure_under_expansion
+};
+
+
+// Whether a status is a normal successful status
+bool successful(cuckoo_status_ext status)
+{
+	std::set<cuckoo_status_ext> user_status = { cuckoo_status_ext::updated_only,cuckoo_status_ext::got_only,
+		cuckoo_status_ext::got_deleted,cuckoo_status_ext::deleted_only,cuckoo_status_ext::inserted };
+
+	return user_status.find(status) != user_status.end();
+}
+
+//This todo is the next step for a deleter, which will be defined later
+// to_get will always been checked at first, and then to_delete.
+// But, to_get and to_delete can happen together.
+struct cuckoo_todo
+{
+	bool to_get = false;  // To get the current value of the key. The value may be just updated.
+	bool to_delete = false; //To delete the current key-value pair.
+};
+
 //! cuckoohash_map is the hash table class.
 template < class Key,
            class T,
@@ -2154,6 +2194,406 @@ private:
 
     // The equality function
     key_equal eq_fn;
+    
+    public:
+
+	// Checker is an Updater with a bool as return value
+	//! For any update operations, the callable passed in must be convertible to
+	//! the following type
+	typedef std::function<bool(mapped_type&)> checker_type;
+
+	// Deleter is an Updater with possible delete operation.
+	// Technically, Deleter is an Updater with a returned cuckoo_todo .
+	//! For any delete possible operations, the callable passed in must be convertible to
+	//! the following type
+	typedef std::function<cuckoo_todo(mapped_type&)> deleter_type;
+
+	template <typename Deleter>
+	cuckoo_status_ext call_deleter(mapped_type &val, Deleter fn, Bucket& b, size_t slot)
+	{
+		cuckoo_todo operation = fn(b.val(slot));
+		if (operation.to_get) {
+			val = b.val(slot);
+		}
+		if (operation.to_delete) {
+			b.eraseKV(slot);
+		}
+		if (operation.to_get) {
+			if (operation.to_delete)
+				return cuckoo_status_ext::got_deleted;
+			else
+				return cuckoo_status_ext::got_only;
+		}
+		else {
+			if (operation.to_delete)
+				return cuckoo_status_ext::deleted_only;
+			else
+				return cuckoo_status_ext::updated_only;
+		}
+	}
+
+	//=================deleter=====================================================
+
+	// try_deleter_bucket will search the bucket for the given key
+	//   if Deleter returns cuckoo_todo.to_get, 
+	//		store the updated value
+	//   if Deleter returns cuckoo_todo.to_delete, 
+	//		delete the current key-value pair
+	template <typename K, typename Deleter>
+	cuckoo_status_ext try_deleter_bucket(const partial_t partial, const K &key,
+		mapped_type &val, Deleter fn, Bucket& b) {
+		// Silence a warning from MSVC about partial being unused if is_simple.
+		(void)partial;
+		for (size_t i = 0; i < slot_per_bucket; ++i) {
+			if (!b.occupied(i)) {
+				continue;
+			}
+			if (!is_simple && partial != b.partial(i)) {
+				continue;
+			}
+			if (key_eq()(b.key(i), key)) {
+				return call_deleter(val, fn, b, i);
+			}
+		}
+		return cuckoo_status_ext::not_found;
+	}
+
+	// cuckoo_deleter searches the table for the given key 
+	// It expects the locks to be taken and released outside the function.
+	template <typename K, typename Deleter>
+	cuckoo_status_ext cuckoo_deleter(const K &key, mapped_type& val, Deleter fn,
+		const size_t hv, const size_t i1,
+		const size_t i2) {
+		const partial_t partial = partial_key(hv);
+
+		cuckoo_status_ext status;
+		status = try_deleter_bucket(partial, key, val, fn, buckets_[i1]);
+		if (successful(status)) {
+			return status;
+		}
+		status = try_deleter_bucket(partial, key, val, fn, buckets_[i2]);
+		if (successful(status)) {
+			return status;
+		}
+		return cuckoo_status_ext::failure_key_not_found;
+	}
+
+	//! deleter searches through the table for \p key, and can do anything to the found value.
+	// After possible update, Deleter can decide get and/or delete for the next step 
+	template <typename K, typename Deleter>
+	typename std::enable_if<
+		std::is_convertible<Deleter, deleter_type>::value,
+		cuckoo_status_ext>::type deleter(const K& key, mapped_type& val, Deleter fn) {
+		size_t hv = hashed_key(key);
+		auto b = snapshot_and_lock_two(hv);
+		const cuckoo_status_ext st = cuckoo_deleter(key, val, fn, hv, b.i[0], b.i[1]);
+		return st;
+	}
+
+	//! find_fn searches through the table for \p key, and stores the associated
+	//! value it finds (if approved by Checker) in \p val. must be copy assignable.
+	// If the found value also been approved by Checker, it returns true, else it returns false.
+	// find_fn is a wrapper of deleter().
+	template <typename K, typename Checker>
+	typename std::enable_if<
+		std::is_convertible<Checker, checker_type>::value,
+		bool>::type find_fn(const K& key, mapped_type& val, Checker fn) {
+		auto status = deleter(key, val, [fn](mapped_type& val) {
+			bool found = fn(val);
+			struct cuckoo_todo todo;
+			todo.to_delete = false;
+			todo.to_get = found;
+			return todo;
+		});
+		return (status == cuckoo_status_ext::got_only);
+	}
+
+	//! erase_fn checks the value associated with \p key with the function \p
+	//! fn. \p fn will be passed one argument of type \p mapped_type& and can
+	//! modify the argument as desired, returning a bool value. If it returns true,
+	// the Key-Value should be erased.
+	// erase_fn is a wrapper of deleter().
+	template <typename K, typename Checker>
+	typename std::enable_if<
+		std::is_convertible<Checker, checker_type>::value,
+		bool>::type  erase_fn(const K& key, Checker fn) {
+		mapped_type val;
+		auto status = deleter(key, val, [fn](mapped_type& val) {
+			bool to_delete = fn(val);
+			struct cuckoo_todo todo;
+			todo.to_delete = to_delete;
+			todo.to_get = false;
+			return todo;
+		});
+		return (status == cuckoo_status_ext::deleted_only);
+	}
+
+	//! update_fn changes the value associated with \p key with the function \p
+	//! fn. \p fn will be passed one argument of type \p mapped_type& and can
+	//! modify the argument as desired, returning nothing. If \p key is not
+	//! there, it returns false, otherwise it returns true.
+	// The difference between this and the official update_fn is 
+	//       that the updated value is returned in the parameter val.
+	template <typename K, typename Updater>
+	typename std::enable_if<
+		std::is_convertible<Updater, updater_type>::value,
+		bool>::type update_fn(const K& key, Updater fn, mapped_type &val) {
+		auto status = deleter(key, val, [fn](mapped_type& val) {
+			fn(val);
+			struct cuckoo_todo todo;
+			todo.to_delete = false;
+			todo.to_get = true;
+			return todo;
+		});
+		return (status == cuckoo_status_ext::got_only);
+	}
+
+	//=================deleter_or_insert=====================================================
+
+	// This is the core function for all deleter_or_insert operation combinantions.
+	// If found, deleter may delete/update/get the value or do nothing. 
+	//    If cuckoo_todo.to_get, the original value or updated value (if any) will be retured in parameter return_val.
+	//	  If cuckoo_todo.to_delete, the key-value pair will be deleted.	
+	// If not found, insert instead and return the inserted value in parameter return_val.
+	// This function was derived from insert();
+	// Return value-- cuckoo_status_ext
+
+	template <typename K, typename Deleter, typename... Args>
+	typename std::enable_if<
+		std::is_convertible<Deleter, deleter_type>::value,
+		cuckoo_status_ext>::type
+		deleter_or_insert(K& key, Deleter fn, mapped_type& return_val, Args&&... val) {
+		return cuckoo_deleter_or_insert_loop(hashed_key(key), fn, return_val, std::forward<K>(key),
+			std::forward<Args>(val)...);
+	}
+
+	// find_or_insert will find a value or insert a new value.
+	// This is a wrapper of deleter_or_insert
+	// Except exceptions, the original or inserted value will be returned.
+	// No update/delete is allowed.
+	template <typename K, typename... Args>
+	mapped_type find_or_insert(K& key, cuckoo_status_ext& status, Args&&... newval) {
+		mapped_type return_val;
+		status = deleter_or_insert(key, [](mapped_type & m) {
+			struct cuckoo_todo todo;
+			todo.to_delete = false;
+			todo.to_get = true;
+			return todo;
+		},
+			return_val, std::forward<Args>(newval)...);
+		return return_val;
+	}
+
+	// find_or_insert will find a value or insert a new value.
+	// This is a wrapper of deleter_or_insert
+	// Except exceptions, the original or inserted value will be returned.
+	// No update/delete is allowed.
+	template <typename K, typename Checker, typename... Args>
+	typename std::enable_if<
+		std::is_convertible<Checker, checker_type>::value,
+	mapped_type> find_or_insert(K& key, Checker fn, cuckoo_status_ext& status, Args&&... newval) {
+		mapped_type return_val;
+		status = deleter_or_insert(key, [fn](mapped_type & val) {
+			bool found = fn(val);
+			struct cuckoo_todo todo;
+			todo.to_delete = false;
+			todo.to_get = found;
+			return todo;
+		},
+			return_val, std::forward<Args>(newval)...);
+		return return_val;
+	}
+
+	// update_or_insert will update a value or insert a new value.
+	// This is a wrapper of deleter_or_insert
+	// Except exceptions, the updated or inserted value will be returned.
+	// No delete is allowed.
+	template <typename Updater, typename K, typename... Args>
+	typename std::enable_if<
+		std::is_convertible<Updater, updater_type>::value,
+		mapped_type>::type update_or_insert(K&& key, Updater fn, cuckoo_status_ext& status, Args&&... val) {
+		mapped_type return_val;
+		status = deleter_or_insert(key, [&fn](mapped_type & m) {
+			fn(m);
+			struct cuckoo_todo todo;
+			todo.to_delete = false;
+			todo.to_get = true;
+			return todo;
+		}, return_val, std::forward<Args>(val)...);
+		return return_val;
+	}
+
+	// delete_or_insert will delete a value or insert a new value.
+	// This is a wrapper of deleter_or_insert
+	// The inserted value (if any) will be retured.
+	// Update is also allowed.
+	template <typename K, typename Deleter, typename... Args>
+	typename std::enable_if<
+		std::is_convertible<Deleter, deleter_type>::value,
+		mapped_type>::type
+		delete_or_insert(K& key, Deleter fn, cuckoo_status_ext& status, Args&&... val) {
+		mapped_type return_val;
+		status = deleter_or_insert(key, fn, return_val, std::forward<Args>(val)...);
+		return return_val;
+	}
+
+	/**
+	* We run cuckoo_deleter_or_insert in a loop until it succeeds in deleter or insert operation combination.
+	*
+	* @param key the key to insert
+	* @param val the value to insert
+	* @param hv the hash value of the key
+	* @throw libcuckoo_load_factor_too_low if expansion is necessary, but the
+	* load factor of the table is below the threshold
+	*/
+	//This function is derived from cuckoo_insert_loop();
+	template <typename K, typename Deleter, typename... Args>
+	typename std::enable_if<
+		std::is_convertible<Deleter, deleter_type>::value,
+		cuckoo_status_ext>::type cuckoo_deleter_or_insert_loop(size_t hv, Deleter fn, mapped_type& return_val, K&& key, Args&&... val) {
+		cuckoo_status_ext st;
+		do {
+			auto b = snapshot_and_lock_two(hv);
+			size_t hp = get_hashpower();
+			st = cuckoo_deleter_or_insert(hv, std::move(b), std::forward<K>(key), fn, return_val,
+				std::forward<Args>(val)...);
+
+			if (st == cuckoo_status_ext::failure_table_full) {
+				if (cuckoo_loadfactor(hp) < minimum_load_factor()) {
+					throw libcuckoo_load_factor_too_low(minimum_load_factor());
+				}
+				// Expand the table and try again
+				cuckoo_fast_double(hp);
+			}
+		} while (!successful(st));
+		return st;
+	}
+
+	// cuckoo_deleter_or_insert, if key-value pair doesn't exist, tries to insert 
+	// the given key-value pair into an empty slot in either of the buckets, 
+	// performing cuckoo hashing if necessary.
+	// It expects the locks to be taken outside the function, but they are released
+	// here, since different scenarios require different handling of the locks.
+	// Before inserting, it checks that the key isn't already in the table.
+	// If the key exists, the deleter will process. Or insert will happen.
+	// cuckoo hashing presents multiple concurrency issues, which are explained
+	// in the function. If the insert fails, the key and value won't be
+	// move-constructed, so they can be retried.
+	// This function is derived from cuckoo_insert().
+
+	template <typename K, typename Deleter, typename... Args>
+	typename std::enable_if<
+		std::is_convertible<Deleter, deleter_type>::value,
+		cuckoo_status_ext>::type cuckoo_deleter_or_insert(const size_t hv, TwoBuckets b,
+			K&& key, Deleter fn, mapped_type& return_val, Args&&... val) {
+		int res1, res2;
+		const partial_t partial = partial_key(hv);
+		Bucket& b0 = buckets_[b.i[0]];
+		cuckoo_status_ext status0 = try_deleter_or_insert_bucket(partial, key, fn, return_val, b0, res1);
+		if (successful(status0)) return status0;
+
+		Bucket& b1 = buckets_[b.i[1]];
+		cuckoo_status_ext status1 = try_deleter_or_insert_bucket(partial, key, fn, return_val, b1, res2);
+		if (successful(status1)) return status1;
+
+		if (res1 != -1) {
+			return_val = add_to_bucket_ext(partial, b0, res1, std::forward<K>(key),
+				std::forward<Args>(val)...);
+			return cuckoo_status_ext::inserted;
+		}
+		if (res2 != -1) {
+			return_val = add_to_bucket_ext(partial, b1, res2, std::forward<K>(key),
+				std::forward<Args>(val)...);
+			return cuckoo_status_ext::inserted;
+		}
+
+		// we are unlucky, so let's perform cuckoo hashing
+		size_t insert_bucket = 0;
+		size_t insert_slot = 0;
+		cuckoo_status st = run_cuckoo(b, insert_bucket, insert_slot);
+		if (st == failure_under_expansion) {
+			// The run_cuckoo operation operated on an old version of the table,
+			// so we have to try again. We signal to the calling insert method
+			// to try again by returning failure_under_expansion.
+			return cuckoo_status_ext::failure_under_expansion;// failure_under_expansion;
+		}
+		else if (st == ok) {
+			assert(!locks_[lock_ind(b.i[0])].try_lock());
+			assert(!locks_[lock_ind(b.i[1])].try_lock());
+			assert(!buckets_[insert_bucket].occupied(insert_slot));
+			assert(insert_bucket == index_hash(get_hashpower(), hv) ||
+				insert_bucket == alt_index(get_hashpower(), partial,
+					index_hash(get_hashpower(), hv)));
+			// Since we unlocked the buckets during run_cuckoo, another insert
+			// could have inserted the same key into either b.i[0] or b.i[1], so
+			// we check for that before doing the insert.
+			if (cuckoo_contains(key, hv, b.i[0], b.i[1])) {
+				return cuckoo_status_ext::failure_key_duplicated;
+			}
+
+			return_val = add_to_bucket_ext(partial, buckets_[insert_bucket], insert_slot,
+				std::forward<K>(key), std::forward<Args>(val)...);
+			return cuckoo_status_ext::inserted;// ok;
+		}
+		assert(st == failure);
+		LIBCUCKOO_DBG("hash table is full (hashpower = %zu, hash_items = %zu,"
+			"load factor = %.2f), need to increase hashpower\n",
+			get_hashpower(), cuckoo_size(),
+			cuckoo_loadfactor(get_hashpower()));
+		return cuckoo_status_ext::failure_table_full;
+	}
+
+	// try_deleter_or_insert_bucket will search the entire bucket 
+	// This function is derived from try_insert_bucket();
+	template <typename K, typename Deleter>
+	typename std::enable_if<
+		std::is_convertible<Deleter, deleter_type>::value,
+		cuckoo_status_ext>::type try_deleter_or_insert_bucket(const partial_t partial, K &key, Deleter fn, mapped_type& val,
+			Bucket& b, int& slot) {
+		// Silence a warning from MSVC about partial being unused if is_simple.
+		(void)partial;
+		slot = -1;
+		bool found_empty = false;
+
+		for (int i = 0; i < static_cast<int>(slot_per_bucket); ++i) {
+			if (b.occupied(i)) {
+				if (!is_simple && partial != b.partial(i)) {
+					continue;
+				}
+				if (key_eq()(b.key(i), key)) {
+					return call_deleter(val, fn, b, i);
+				}
+			}
+			else {
+				if (!found_empty) {
+					found_empty = true;
+					slot = i;
+				}
+			}
+		}
+		return cuckoo_status_ext::not_found;// ok;// true;
+	}
+
+	// add_to_bucket_ext will insert the given key-value pair into the slot. The key
+	// and value will be move-constructed into the table, so they are not valid
+	// for use afterwards.
+	// This function is derived from add_to_bucket.
+	// The ONLY difference is that the inserted value is returned.
+
+	template <typename K, typename... Args>
+	mapped_type add_to_bucket_ext(const partial_t partial, Bucket& b,
+		const size_t slot, K&& key, Args&&... val) {
+		assert(!b.occupied(slot));
+		b.partial(slot) = partial;
+
+		b.setKV(slot, std::forward<K>(key), std::forward<Args>(val)...);
+		mapped_type return_val = (mapped_type)(b.val(slot));
+
+		num_inserts_[get_counterid()].num.fetch_add(
+			1, std::memory_order_relaxed);
+
+		return return_val;
+	}
 };
 
 #endif // _CUCKOOHASH_MAP_HH
