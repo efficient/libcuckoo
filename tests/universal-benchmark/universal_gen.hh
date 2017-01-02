@@ -32,7 +32,9 @@ class Gen<std::string> {
     static constexpr size_t STRING_SIZE = 100;
 public:
     static std::string key(uint64_t num) {
-        return std::to_string(Gen<uint64_t>::key(num));
+        return std::string(
+            static_cast<const char*>(static_cast<const void*>(&num)),
+            sizeof(num));
     }
 
     static std::string value() {
