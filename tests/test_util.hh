@@ -3,6 +3,7 @@
 
 // Utilities for running stress tests and benchmarks
 #include <array>
+#include <atomic>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
