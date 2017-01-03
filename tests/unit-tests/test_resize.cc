@@ -53,16 +53,19 @@ TEST_CASE("reserve calc", "[resize]") {
 
 }
 
-static size_t no_double_free_test_num_deletes = 0;
-TEST_CASE("Resizing no double free", "[resize]") {
-    struct my_type {
-        int x;
-        ~my_type() {
-            ++no_double_free_test_num_deletes;
-        }
-    };
+struct my_type {
+    int x;
+    ~my_type() {
+        ++num_deletes;
+    }
+    static size_t num_deletes;
+};
 
+size_t my_type::num_deletes = 0;
+
+TEST_CASE("Resizing number of frees", "[resize]") {
     my_type val{0};
+    size_t num_deletes_after_resize;
     {
         // Should allocate 2 buckets of 4 slots
         cuckoohash_map<int, my_type, std::hash<int>, std::equal_to<int>,
@@ -70,6 +73,10 @@ TEST_CASE("Resizing no double free", "[resize]") {
         for (int i = 0; i < 9; ++i) {
             map.insert(i, val);
         }
+        // If any of the items are moved during resize, their destructor will be
+        // called.
+        REQUIRE(my_type::num_deletes <= 8);
+        num_deletes_after_resize = my_type::num_deletes;
     }
-    REQUIRE(no_double_free_test_num_deletes == 9);
+    REQUIRE(my_type::num_deletes == num_deletes_after_resize + 9);
 }
