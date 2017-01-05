@@ -6,7 +6,7 @@
 #include "unit_test_util.hh"
 
 TEST_CASE("caps any expansion", "[maximum hash power]") {
-    IntIntTable tbl(1, DEFAULT_MINIMUM_LOAD_FACTOR, 1);
+    IntIntTable tbl(1, LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR, 1);
     for (size_t i = 0; i < 2 * tbl.slot_per_bucket; ++i) {
         tbl.insert(i, i);
     }
@@ -25,7 +25,7 @@ TEST_CASE("no maximum hash power", "[maximum hash power]") {
     // power, but if we explicitly unset it, we should be able to expand beyond
     // the limit that we had previously set.
 
-    IntIntTable tbl(1, DEFAULT_MINIMUM_LOAD_FACTOR, 1);
+    IntIntTable tbl(1, LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR, 1);
     REQUIRE_THROWS_AS(tbl.rehash(2), libcuckoo_maximum_hashpower_exceeded);
 
     tbl.maximum_hashpower(2);
@@ -33,7 +33,7 @@ TEST_CASE("no maximum hash power", "[maximum hash power]") {
     REQUIRE(tbl.hashpower() == 2);
     REQUIRE_THROWS_AS(tbl.rehash(3), libcuckoo_maximum_hashpower_exceeded);
 
-    tbl.maximum_hashpower(NO_MAXIMUM_HASHPOWER);
+    tbl.maximum_hashpower(LIBCUCKOO_NO_MAXIMUM_HASHPOWER);
     tbl.rehash(10);
     REQUIRE(tbl.hashpower() == 10);
 }

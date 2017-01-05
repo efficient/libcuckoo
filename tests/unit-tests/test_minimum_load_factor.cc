@@ -32,7 +32,7 @@ TEST_CASE("invalid minimum load factor", "[minimum load factor]") {
     REQUIRE_THROWS_AS(IntIntTable(5, 1.01), std::invalid_argument);
 
     IntIntTable t;
-    REQUIRE(t.minimum_load_factor() == DEFAULT_MINIMUM_LOAD_FACTOR);
+    REQUIRE(t.minimum_load_factor() == LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR);
     REQUIRE_THROWS_AS(t.minimum_load_factor(-0.01), std::invalid_argument);
     REQUIRE_THROWS_AS(t.minimum_load_factor(1.01), std::invalid_argument);
 }

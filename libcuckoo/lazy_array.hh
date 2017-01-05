@@ -17,7 +17,7 @@
 template <uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS,
           class T, class Alloc = std::allocator<T>
           >
-class lazy_array {
+class libcuckoo_lazy_array {
     static_assert(SEGMENT_BITS + OFFSET_BITS <= sizeof(size_t)*8,
                   "The number of segment and offset bits cannot exceed "
                   " the number of bits in a size_t");
@@ -28,7 +28,7 @@ private:
     // operator can still add segments
     mutable std::array<T*, NUM_SEGMENTS> segments_;
 
-    void move_other_array(lazy_array&& arr) {
+    void move_other_array(libcuckoo_lazy_array&& arr) {
         clear();
         std::copy(arr.segments_.begin(), arr.segments_.end(),
                   segments_.begin());
@@ -77,24 +77,24 @@ private:
     }
 
 public:
-    lazy_array(): segments_{{nullptr}} {}
+    libcuckoo_lazy_array(): segments_{{nullptr}} {}
 
     // No copying
-    lazy_array(const lazy_array&) = delete;
-    lazy_array& operator=(const lazy_array&) = delete;
+    libcuckoo_lazy_array(const libcuckoo_lazy_array&) = delete;
+    libcuckoo_lazy_array& operator=(const libcuckoo_lazy_array&) = delete;
 
     //! Move constructor for a lazy array
-    lazy_array(lazy_array&& arr) : segments_{{nullptr}} {
+    libcuckoo_lazy_array(libcuckoo_lazy_array&& arr) : segments_{{nullptr}} {
         move_other_array(std::move(arr));
     }
 
     //! Move assignment for a lazy array
-    lazy_array& operator=(lazy_array&& arr) {
+    libcuckoo_lazy_array& operator=(libcuckoo_lazy_array&& arr) {
         move_other_vector(std::move(arr));
         return *this;
     }
 
-    ~lazy_array() {
+    ~libcuckoo_lazy_array() {
         clear();
     }
 

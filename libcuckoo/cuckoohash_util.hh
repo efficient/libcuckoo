@@ -59,13 +59,12 @@
 #endif
 
 //! For enabling certain methods based on a condition. Here's an example.
-//! ENABLE_IF(static inline, sizeof(int) == 4, int) method() {
+//! LIBCUCKOO_ENABLE_IF(sizeof(int) == 4, int) method() {
 //!     ...
 //! }
-#define ENABLE_IF(preamble, condition, return_type)                     \
-    template <class Bogus=void*>                                        \
-    preamble typename std::enable_if<sizeof(Bogus) &&                   \
-        condition, return_type>::type
+#define LIBCUCKOO_ENABLE_IF(condition, return_type)                       \
+    template <class Bogus = void*>                                        \
+    typename std::enable_if<sizeof(Bogus) && condition, return_type>::type
 
 /**
  * Thrown when an automatic expansion is triggered, but the load factor of the

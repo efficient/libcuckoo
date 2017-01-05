@@ -37,7 +37,7 @@ template < class Key,
            class Hash = std::hash<Key>,
            class Pred = std::equal_to<Key>,
            class Alloc = std::allocator<std::pair<const Key, T>>,
-           size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET
+           size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET
            >
 class cuckoohash_map {
 public:
@@ -285,11 +285,12 @@ private:
     buckets_t;
 
     // The type of the locks container
-    static_assert(LOCK_ARRAY_GRANULARITY >= 0 && LOCK_ARRAY_GRANULARITY <= 16,
-                  "LOCK_ARRAY_GRANULARITY constant must be between 0 and 16,"
-                  " inclusive");
-    typedef lazy_array<
-        16 - LOCK_ARRAY_GRANULARITY, LOCK_ARRAY_GRANULARITY,
+    static_assert(LIBCUCKOO_LOCK_ARRAY_GRANULARITY >= 0 &&
+                  LIBCUCKOO_LOCK_ARRAY_GRANULARITY <= 16,
+                  "LIBCUCKOO_LOCK_ARRAY_GRANULARITY constant must be between "
+                  "0 and 16, inclusive");
+    typedef libcuckoo_lazy_array<
+        16 - LIBCUCKOO_LOCK_ARRAY_GRANULARITY, LIBCUCKOO_LOCK_ARRAY_GRANULARITY,
         spinlock,
         typename allocator_type::template rebind<spinlock>::other> locks_t;
 
@@ -348,9 +349,9 @@ public:
      * @throw std::invalid_argument if the given minimum load factor is invalid,
      * or if the initial space exceeds the maximum hashpower
      */
-    cuckoohash_map(size_t n = DEFAULT_SIZE,
-                   double mlf = DEFAULT_MINIMUM_LOAD_FACTOR,
-                   size_t mhp = NO_MAXIMUM_HASHPOWER,
+    cuckoohash_map(size_t n = LIBCUCKOO_DEFAULT_SIZE,
+                   double mlf = LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR,
+                   size_t mhp = LIBCUCKOO_NO_MAXIMUM_HASHPOWER,
                    const hasher& hf = hasher(),
                    const key_equal& eql = key_equal(),
                    const allocator_type& alloc = allocator_type())
@@ -358,7 +359,7 @@ public:
         minimum_load_factor(mlf);
         maximum_hashpower(mhp);
         const size_t hp = reserve_calc(n);
-        if (mhp != NO_MAXIMUM_HASHPOWER && hp > mhp) {
+        if (mhp != LIBCUCKOO_NO_MAXIMUM_HASHPOWER && hp > mhp) {
             throw std::invalid_argument(
                 "hashpower for initial size " + std::to_string(hp) +
                 " is greater than the maximum hashpower");
@@ -1737,7 +1738,7 @@ private:
         }
         const size_t new_hp = current_hp + 1;
         const size_t mhp = maximum_hashpower();
-        if (mhp != NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
+        if (mhp != LIBCUCKOO_NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
             throw libcuckoo_maximum_hashpower_exceeded(new_hp);
         }
 
@@ -1798,7 +1799,7 @@ private:
     cuckoo_status cuckoo_expand_simple(size_t new_hp,
                                        bool is_expansion) {
         const size_t mhp = maximum_hashpower();
-        if (mhp != NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
+        if (mhp != LIBCUCKOO_NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
             throw libcuckoo_maximum_hashpower_exceeded(new_hp);
         }
         const auto unlocker = snapshot_and_lock_all();
@@ -1816,7 +1817,7 @@ private:
         cuckoohash_map<Key, T, Hash, Pred, Alloc, slot_per_bucket> new_map(
             hashsize(new_hp) * slot_per_bucket,
             0.0, /* minimum load factor */
-            NO_MAXIMUM_HASHPOWER,
+            LIBCUCKOO_NO_MAXIMUM_HASHPOWER,
             hash_function(),
             key_eq(),
             get_allocator());
@@ -1972,7 +1973,7 @@ public:
             //! Returns a mutable reference to the current key-value pair
             //! pointed to by the iterator. Behavior is undefined if the
             //! iterator is at the end.
-            ENABLE_IF(, !IS_CONST, value_type&) operator*() {
+            LIBCUCKOO_ENABLE_IF(!IS_CONST, value_type&) operator*() {
                 check_iterator();
                 return buckets_.get()[static_cast<size_t>(index_)].
                     kvpair(static_cast<size_t>(slot_));
@@ -1989,7 +1990,7 @@ public:
             //! Returns a mutable pointer to the current key-value pair pointed
             //! to by the iterator. Behavior is undefined if the iterator is at
             //! the end.
-            ENABLE_IF(, !IS_CONST, value_type*) operator->() {
+            LIBCUCKOO_ENABLE_IF(!IS_CONST, value_type*) operator->() {
                 check_iterator();
                 return &buckets_.get()[index_].kvpair(slot_);
             }
