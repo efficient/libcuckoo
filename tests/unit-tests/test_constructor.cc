@@ -64,3 +64,27 @@ TEST_CASE("custom equality", "[constructor]") {
         REQUIRE(map.key_eq()(i, i+1) == false);
     }
 }
+
+template <typename T>
+class StatefulAllocator : public std::allocator<T> {
+public:
+    StatefulAllocator() : state(0) {}
+    int state;
+};
+
+TEST_CASE("custom allocator", "[constructor]") {
+    typedef std::pair<const int, int> value_type;
+    cuckoohash_map<int, int, std::hash<int>, std::equal_to<int>,
+                   StatefulAllocator<value_type> > tbl;
+    REQUIRE(tbl.get_allocator().state == 0);
+
+    StatefulAllocator<value_type> alloc;
+    alloc.state = 10;
+
+    cuckoohash_map<int, int, std::hash<int>, std::equal_to<int>,
+                   StatefulAllocator<value_type> > tbl2(
+                       DEFAULT_SIZE, DEFAULT_MINIMUM_LOAD_FACTOR,
+                       NO_MAXIMUM_HASHPOWER, std::hash<int>(),
+                       std::equal_to<int>(), alloc);
+    REQUIRE(tbl2.get_allocator().state == 10);
+}
