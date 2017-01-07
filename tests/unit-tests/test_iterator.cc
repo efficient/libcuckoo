@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <type_traits>
 #include <utility>
 
 #include <libcuckoo/cuckoohash_map.hh>
@@ -60,14 +61,20 @@ TEST_CASE("iterator release", "[iterator]") {
     }
 
     SECTION("release through destructor") {
-        auto lt = table.lock_table();
-        auto it = lt.begin();
-        lt.IntIntTable::locked_table::~locked_table();
+        typename std::aligned_storage<sizeof(IntIntTable::locked_table),
+                                      alignof(IntIntTable::locked_table)>::type
+            lt_storage;
+        new(&lt_storage) IntIntTable::locked_table(
+            std::move(table.lock_table()));
+        IntIntTable::locked_table& lt_ref =
+            *reinterpret_cast<IntIntTable::locked_table*>(&lt_storage);
+        auto it = lt_ref.begin();
+        lt_ref.IntIntTable::locked_table::~locked_table();
         AssertIteratorIsReleased(it);
-        AssertLockedTableIsReleased(lt);
-        lt.release();
+        AssertLockedTableIsReleased(lt_ref);
+        lt_ref.release();
         AssertIteratorIsReleased(it);
-        AssertLockedTableIsReleased(lt);
+        AssertLockedTableIsReleased(lt_ref);
     }
 
     SECTION("released iterator equality") {
