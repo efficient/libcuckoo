@@ -1270,11 +1270,11 @@ private:
         return done ? ok : failure;
     }
 
-    // try_read_from_bucket will search the bucket for the given key and store
-    // the associated value if it finds it.
+    // try_read_from_bucket will search the bucket for the given key and return
+    // the index of the slot if found, or -1 if not found.
     template <typename K>
-    bool try_read_from_bucket(const partial_t partial, const K &key,
-                              mapped_type &val, const Bucket& b) const {
+    int try_read_from_bucket(const Bucket& b, const partial_t partial,
+                              const K &key) const {
         // Silence a warning from MSVC about partial being unused if is_simple.
         (void)partial;
         for (size_t i = 0; i < slot_per_bucket; ++i) {
@@ -1285,11 +1285,10 @@ private:
                 continue;
             }
             if (key_eq()(b.key(i), key)) {
-                val = b.val(i);
-                return true;
+                return i;
             }
         }
-        return false;
+        return -1;
     }
 
     // check_in_bucket will search the bucket for the given key and return true
@@ -1424,12 +1423,17 @@ private:
     template <typename K>
     cuckoo_status cuckoo_find(const K &key, mapped_type& val,
                               const partial_t partial,
-                              const size_t i1,
-                              const size_t i2) const {
-        if (try_read_from_bucket(partial, key, val, buckets_[i1])) {
+                              const size_t i1, const size_t i2) const {
+        const Bucket& b1 = buckets_[i1];
+        int slot = try_read_from_bucket(b1, partial, key);
+        if (slot != -1) {
+            val = b1.val(slot);
             return ok;
         }
-        if (try_read_from_bucket(partial, key, val, buckets_[i2])) {
+        const Bucket& b2 = buckets_[i2];
+        slot = try_read_from_bucket(b2, partial, key);
+        if (slot != -1) {
+            val = b2.val(slot);
             return ok;
         }
         return failure_key_not_found;
