@@ -3,7 +3,14 @@
 #include <catch.hpp>
 
 #include <libcuckoo/cuckoohash_map.hh>
+#include <libcuckoo/cuckoohash_config.hh>
 #include "unit_test_util.hh"
+
+
+TEST_CASE("minimum load factor initialized to default", "[minimum load factor]") {
+    IntIntTable tbl;
+    REQUIRE(tbl.minimum_load_factor() == LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR);
+}
 
 class BadHashFunction {
 public:
@@ -28,11 +35,7 @@ TEST_CASE("caps automatic expansion", "[minimum load fator]") {
 }
 
 TEST_CASE("invalid minimum load factor", "[minimum load factor]") {
-    REQUIRE_THROWS_AS(IntIntTable(5, -0.01), std::invalid_argument);
-    REQUIRE_THROWS_AS(IntIntTable(5, 1.01), std::invalid_argument);
-
-    IntIntTable t;
-    REQUIRE(t.minimum_load_factor() == LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR);
-    REQUIRE_THROWS_AS(t.minimum_load_factor(-0.01), std::invalid_argument);
-    REQUIRE_THROWS_AS(t.minimum_load_factor(1.01), std::invalid_argument);
+    IntIntTable tbl;
+    REQUIRE_THROWS_AS(tbl.minimum_load_factor(-0.01), std::invalid_argument);
+    REQUIRE_THROWS_AS(tbl.minimum_load_factor(1.01), std::invalid_argument);
 }

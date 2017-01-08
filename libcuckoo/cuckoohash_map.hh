@@ -319,32 +319,20 @@ public:
      * Creates a new cuckohash_map instance
      *
      * @param n the number of elements to reserve space for initially
-     * @param mlf the minimum load factor required that the
-     * table allows for automatic expansion.
-     * @param mhp the maximum hashpower that the table can take on (pass in 0
-     * for no limit)
      * @param hf hash function instance to use
      * @param eql equality function instance to use
-     * @throw std::invalid_argument if the given minimum load factor is invalid,
-     * or if the initial space exceeds the maximum hashpower
+     * @param alloc allocator instance to use
      */
     cuckoohash_map(size_t n = LIBCUCKOO_DEFAULT_SIZE,
-                   double mlf = LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR,
-                   size_t mhp = LIBCUCKOO_NO_MAXIMUM_HASHPOWER,
                    const hasher& hf = hasher(),
                    const key_equal& eql = key_equal(),
                    const allocator_type& alloc = allocator_type())
         : hashpower_(reserve_calc(n)), buckets_(hashsize(hashpower())),
           locks_(std::min(locks_t::size(), hashsize(hashpower()))),
-          expansion_lock_(), minimum_load_factor_(mlf), maximum_hashpower_(mhp),
-          hash_fn(hf), eq_fn(eql), pair_allocator_(alloc) {
-        if (maximum_hashpower() != LIBCUCKOO_NO_MAXIMUM_HASHPOWER &&
-            hashpower() > maximum_hashpower()) {
-            throw std::invalid_argument(
-                "hashpower for initial size " + std::to_string(hashpower()) +
-                " is greater than the maximum hashpower");
-        }
-    }
+          expansion_lock_(),
+          minimum_load_factor_(LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR),
+          maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER),
+          hash_fn(hf), eq_fn(eql), pair_allocator_(alloc) {}
 
     ~cuckoohash_map() noexcept(std::is_nothrow_destructible<Bucket>::value) {
         cuckoo_clear();
@@ -1808,8 +1796,6 @@ private:
         // the elements from the old buckets.
         cuckoohash_map<Key, T, Hash, Pred, Alloc, slot_per_bucket> new_map(
             hashsize(new_hp) * slot_per_bucket,
-            0.0, /* minimum load factor */
-            LIBCUCKOO_NO_MAXIMUM_HASHPOWER,
             hash_function(),
             key_eq(),
             get_allocator());

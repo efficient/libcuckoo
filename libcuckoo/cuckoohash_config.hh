@@ -26,7 +26,8 @@ constexpr double LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR = 0.05;
 
 //! An alias for the value that sets no limit on the maximum hashpower. If this
 //! value is set as the maximum hashpower limit, there will be no limit. Since 0
-//! is the only hashpower that can never occur, it should stay at 0.
+//! is the only hashpower that can never occur, it should stay at 0. This is
+//! also the default initial value for the maximum hashpower in a table.
 constexpr size_t LIBCUCKOO_NO_MAXIMUM_HASHPOWER = 0;
 
 //! set LIBCUCKOO_DEBUG to 1 to enable debug output
