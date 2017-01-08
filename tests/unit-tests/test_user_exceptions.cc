@@ -239,17 +239,17 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
         exceptionTable tbl;
         REQUIRE(tbl.rehash(1));
         // Fill up the entire table
-        for (size_t i = 0; i < exceptionTable::slot_per_bucket * 2; ++i) {
+        for (size_t i = 0; i < exceptionTable::slot_per_bucket() * 2; ++i) {
             tbl.insert(i * 2, 0);
         }
         // Only throw on move, which should be triggered when we do a resize.
         moveThrow = true;
         REQUIRE_THROWS_AS(
-            tbl.insert((exceptionTable::slot_per_bucket * 2) * 2, 0),
+            tbl.insert((exceptionTable::slot_per_bucket() * 2) * 2, 0),
             std::runtime_error);
         moveThrow = false;
-        REQUIRE(tbl.insert((exceptionTable::slot_per_bucket * 2) * 2, 0));
-        checkIterTable(tbl, exceptionTable::slot_per_bucket * 2 + 1);
+        REQUIRE(tbl.insert((exceptionTable::slot_per_bucket() * 2) * 2, 0));
+        checkIterTable(tbl, exceptionTable::slot_per_bucket() * 2 + 1);
     }
 
     // "insert cuckoohash" -- broken?

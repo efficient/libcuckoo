@@ -14,15 +14,15 @@ TEST_CASE("maximum hashpower initialized to default", "[maximum hash power]") {
 TEST_CASE("caps any expansion", "[maximum hash power]") {
     IntIntTable tbl(1);
     tbl.maximum_hashpower(1);
-    for (size_t i = 0; i < 2 * tbl.slot_per_bucket; ++i) {
+    for (size_t i = 0; i < 2 * tbl.slot_per_bucket(); ++i) {
         tbl.insert(i, i);
     }
 
     REQUIRE(tbl.hashpower() == 1);
-    REQUIRE_THROWS_AS(tbl.insert(2*tbl.slot_per_bucket, 0),
+    REQUIRE_THROWS_AS(tbl.insert(2 * tbl.slot_per_bucket(), 0),
                       libcuckoo_maximum_hashpower_exceeded);
     REQUIRE_THROWS_AS(tbl.rehash(2), libcuckoo_maximum_hashpower_exceeded);
-    REQUIRE_THROWS_AS(tbl.reserve(4*tbl.slot_per_bucket),
+    REQUIRE_THROWS_AS(tbl.reserve(4 * tbl.slot_per_bucket()),
                       libcuckoo_maximum_hashpower_exceeded);
 }
 

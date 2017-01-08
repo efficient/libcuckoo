@@ -9,7 +9,7 @@ int main() {
     cuckoohash_map<int, std::string, CityHasher<int> >Table;
 
     for (int i = 0; i < 100; i++) {
-        Table[i] = "hello"+std::to_string(i);
+        Table.insert(i, "hello");
     }
 
     for (int i = 0; i < 101; i++) {

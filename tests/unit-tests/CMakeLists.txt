@@ -1,5 +1,4 @@
 add_executable(unit_tests
-    test_bracket_operator.cc
     test_constructor.cc
     test_hash_properties.cc
     test_heterogeneous_compare.cc

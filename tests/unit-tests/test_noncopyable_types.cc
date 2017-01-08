@@ -22,7 +22,7 @@ struct uptr_eq {
 typedef cuckoohash_map<uptr, uptr, uptr_hash, uptr_eq> uptr_tbl;
 
 const size_t TBL_INIT = 1;
-const size_t TBL_SIZE = TBL_INIT * uptr_tbl::slot_per_bucket * 2;
+const size_t TBL_SIZE = TBL_INIT * uptr_tbl::slot_per_bucket() * 2;
 
 void check_key_eq(uptr_tbl& tbl, int key, int expected_val) {
     REQUIRE(tbl.contains(uptr(new int(key))));

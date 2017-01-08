@@ -87,8 +87,10 @@ TEST_CASE("heterogeneous compare", "[heterogeneous compare]") {
             map.insert(Foo(0), true);
         }
         REQUIRE(int_constructions == 1);
-        REQUIRE(copy_constructions == 1);
-        REQUIRE(destructions == 2);
+        REQUIRE(copy_constructions == 2);
+        // One destruction of passed-in and moved argument, one of immediately
+        // constructed and moved argument, and one after the table is destroyed.
+        REQUIRE(destructions == 3);
         REQUIRE(foo_comparisons == 0);
         REQUIRE(int_comparisons == 0);
         REQUIRE(foo_hashes == 1);

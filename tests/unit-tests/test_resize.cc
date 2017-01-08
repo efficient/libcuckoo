@@ -27,7 +27,7 @@ TEST_CASE("reserve empty table", "[resize]") {
 }
 
 TEST_CASE("reserve calc", "[resize]") {
-    const size_t slot_per_bucket = IntIntTable::slot_per_bucket;
+    const size_t slot_per_bucket = IntIntTable::slot_per_bucket();
     REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(0) == 1);
     REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
                 1 * slot_per_bucket) == 1);
