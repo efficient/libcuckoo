@@ -77,24 +77,30 @@ private:
     }
 
 public:
-    libcuckoo_lazy_array(): segments_{{nullptr}} {}
+    libcuckoo_lazy_array() noexcept : segments_{{nullptr}} {}
+    libcuckoo_lazy_array(size_t target): segments_{{nullptr}} {
+        allocate(target);
+    }
 
-    // No copying
+    //! No copying
     libcuckoo_lazy_array(const libcuckoo_lazy_array&) = delete;
     libcuckoo_lazy_array& operator=(const libcuckoo_lazy_array&) = delete;
 
     //! Move constructor for a lazy array
-    libcuckoo_lazy_array(libcuckoo_lazy_array&& arr) : segments_{{nullptr}} {
+    libcuckoo_lazy_array(libcuckoo_lazy_array&& arr)
+        noexcept(std::is_nothrow_destructible<T>::value)
+        : segments_{{nullptr}} {
         move_other_array(std::move(arr));
     }
 
     //! Move assignment for a lazy array
-    libcuckoo_lazy_array& operator=(libcuckoo_lazy_array&& arr) {
+    libcuckoo_lazy_array& operator=(libcuckoo_lazy_array&& arr)
+        noexcept(std::is_nothrow_destructible<T>::value) {
         move_other_vector(std::move(arr));
         return *this;
     }
 
-    ~libcuckoo_lazy_array() {
+    ~libcuckoo_lazy_array() noexcept(std::is_nothrow_destructible<T>::value) {
         clear();
     }
 
