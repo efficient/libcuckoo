@@ -29,19 +29,9 @@ TEST_CASE("empty table iteration", "[iterator]") {
     }
 }
 
-template <class Iterator>
-void AssertIteratorIsReleased(Iterator& it) {
-    REQUIRE_THROWS_AS(*it, std::runtime_error);
-    REQUIRE_THROWS_AS((void) it->first, std::runtime_error);
-
-    REQUIRE_THROWS_AS(it++, std::runtime_error);
-    REQUIRE_THROWS_AS(++it, std::runtime_error);
-    REQUIRE_THROWS_AS(it--, std::runtime_error);
-    REQUIRE_THROWS_AS(--it, std::runtime_error);
-}
-
 template <class LockedTable>
 void AssertLockedTableIsReleased(LockedTable& lt) {
+    REQUIRE(!lt.is_active());
     REQUIRE_THROWS_AS(lt.begin(), std::runtime_error);
     REQUIRE_THROWS_AS(lt.end(), std::runtime_error);
     REQUIRE_THROWS_AS(lt.cbegin(), std::runtime_error);
@@ -56,7 +46,6 @@ TEST_CASE("iterator release", "[iterator]") {
         auto lt = table.lock_table();
         auto it = lt.begin();
         lt.release();
-        AssertIteratorIsReleased(it);
         AssertLockedTableIsReleased(lt);
     }
 
@@ -70,20 +59,9 @@ TEST_CASE("iterator release", "[iterator]") {
             *reinterpret_cast<IntIntTable::locked_table*>(&lt_storage);
         auto it = lt_ref.begin();
         lt_ref.IntIntTable::locked_table::~locked_table();
-        AssertIteratorIsReleased(it);
         AssertLockedTableIsReleased(lt_ref);
         lt_ref.release();
-        AssertIteratorIsReleased(it);
         AssertLockedTableIsReleased(lt_ref);
-    }
-
-    SECTION("released iterator equality") {
-        auto lt = table.lock_table();
-        auto it1 = lt.begin();
-        auto it2 = lt.begin();
-        REQUIRE(it1 == it2);
-        lt.release();
-        REQUIRE(it1 != it2);
     }
 
     SECTION("iterators compare after table is moved") {

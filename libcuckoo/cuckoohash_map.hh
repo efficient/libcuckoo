@@ -876,21 +876,26 @@ private:
         // If nullptr, do nothing
         locks_t* locks_;
     public:
+        AllUnlocker(): locks_(nullptr) {}
         AllUnlocker(locks_t* locks): locks_(locks) {}
 
         AllUnlocker(const AllUnlocker&) = delete;
         AllUnlocker(AllUnlocker&& au) : locks_(au.locks_) {
-            au.locks_ = nullptr;
+            au.deactivate();
         }
 
         AllUnlocker& operator=(const AllUnlocker&) = delete;
         AllUnlocker& operator=(AllUnlocker&& au) {
             locks_ = au.locks_;
-            au.locks_ = nullptr;
+            au.deactivate();
         }
 
         void deactivate() {
             locks_ = nullptr;
+        }
+
+        bool is_active() const {
+            return locks_ != nullptr;
         }
 
         void release() {
@@ -1867,9 +1872,6 @@ public:
         AllUnlocker unlocker_;
         // A reference to the buckets owned by the table
         std::reference_wrapper<buckets_t> buckets_;
-        // A boolean shared to all iterators, indicating whether the
-        // locked_table has ownership of the hashtable or not.
-        std::shared_ptr<bool> has_table_lock_;
 
         // The constructor locks the entire table, retrying until
         // snapshot_and_lock_all succeeds. We keep this constructor private (but
@@ -1878,38 +1880,34 @@ public:
         locked_table(cuckoohash_map<Key, T, Hash, Pred, Alloc,
                      SLOT_PER_BUCKET>& hm)
             : unlocker_(std::move(hm.snapshot_and_lock_all())),
-              buckets_(hm.buckets_),
-              has_table_lock_(new bool(true)) {}
+              buckets_(hm.buckets_) {}
 
     public:
         //! Move constructor for a locked table
         locked_table(locked_table&& lt)
             : unlocker_(std::move(lt.unlocker_)),
-              buckets_(std::move(lt.buckets_)),
-              has_table_lock_(std::move(lt.has_table_lock_)) {}
+              buckets_(std::move(lt.buckets_)) {}
 
         //! Move assignment for a locked table
         locked_table& operator=(locked_table&& lt) {
             release();
             unlocker_ = std::move(lt.unlocker_);
             buckets_ = std::move(lt.buckets_);
-            has_table_lock_ = std::move(lt.has_table_lock_);
             return *this;
         }
 
         //! Returns true if the locked table still has ownership of the
         //! hashtable, false otherwise.
-        bool has_table_lock() const noexcept {
-            return has_table_lock_ && *has_table_lock_;
+        bool is_active() const noexcept {
+            return unlocker_.is_active();
         }
 
         //! release unlocks the table, thereby freeing it up for other
         //! operations, but also invalidating all iterators and future
         //! operations with this table. It is idempotent.
         void release() noexcept {
-            if (has_table_lock()) {
+            if (is_active()) {
                 unlocker_.release();
-                *has_table_lock_ = false;
             }
         }
 
@@ -1918,9 +1916,9 @@ public:
         }
 
     private:
-        //! A templated iterator whose implementation works for both const and
-        //! non_const iterators. It is an STL-style BidirectionalIterator that
-        //! can be used to iterate over a locked table.
+        // A templated iterator whose implementation works for both const and
+        // non_const iterators. It is an STL-style BidirectionalIterator that
+        // can be used to iterate over a locked table.
         template <bool IS_CONST>
         class templated_iterator :
             public std::iterator<std::bidirectional_iterator_tag, value_type> {
@@ -1933,10 +1931,6 @@ public:
             // over.
             std::reference_wrapper<maybe_const_buckets_t> buckets_;
 
-            // The shared boolean indicating whether the iterator points to a
-            // still-locked table or not. It should never be nullptr.
-            std::shared_ptr<bool> has_table_lock_;
-
             // The bucket index of the item being pointed to. For implementation
             // convenience, we let it take on negative values.
             intmax_t index_;
@@ -1946,13 +1940,11 @@ public:
 
         public:
             //! Return true if the iterators are from the same locked table and
-            //! location, false otherwise. This will return false if either of
-            //! the iterators has lost ownership of its table.
+            //! location, false otherwise.
             template <bool OTHER_CONST>
             bool operator==(const templated_iterator<OTHER_CONST>&
                             it) const noexcept {
-                return (*has_table_lock_ && *it.has_table_lock_
-                        && &buckets_.get() == &it.buckets_.get()
+                return (&buckets_.get() == &it.buckets_.get()
                         && index_ == it.index_ && slot_ == it.slot_);
             }
 
@@ -1966,7 +1958,6 @@ public:
             //! Return the key-value pair pointed to by the iterator. Behavior
             //! is undefined if the iterator is at the end.
             const value_type& operator*() const {
-                check_iterator();
                 return buckets_.get()[index_].kvpair(slot_);
             }
 
@@ -1974,7 +1965,6 @@ public:
             //! pointed to by the iterator. Behavior is undefined if the
             //! iterator is at the end.
             LIBCUCKOO_ENABLE_IF(!IS_CONST, value_type&) operator*() {
-                check_iterator();
                 return buckets_.get()[static_cast<size_t>(index_)].
                     kvpair(static_cast<size_t>(slot_));
             }
@@ -1983,7 +1973,6 @@ public:
             //! the iterator. Behavior is undefined if the iterator is at the
             //! end.
             const value_type* operator->() const {
-                check_iterator();
                 return &buckets_.get()[index_].kvpair(slot_);
             }
 
@@ -1991,7 +1980,6 @@ public:
             //! to by the iterator. Behavior is undefined if the iterator is at
             //! the end.
             LIBCUCKOO_ENABLE_IF(!IS_CONST, value_type*) operator->() {
-                check_iterator();
                 return &buckets_.get()[index_].kvpair(slot_);
             }
 
@@ -2002,7 +1990,6 @@ public:
             templated_iterator& operator++() {
                 // Move forward until we get to a slot that is occupied, or we
                 // get to the end
-                check_iterator();
                 for (; static_cast<size_t>(index_) < buckets_.get().size();
                      ++index_) {
                     while (static_cast<size_t>(++slot_) < SLOT_PER_BUCKET) {
@@ -2033,7 +2020,6 @@ public:
             templated_iterator& operator--() {
                 // Move backward until we get to the beginning. If we try to
                 // move before that, we stop.
-                check_iterator();
                 for (; index_ >= 0; --index_) {
                     while (--slot_ >= 0) {
                         if (buckets_.get()[static_cast<size_t>(index_)]
@@ -2076,29 +2062,20 @@ public:
             // iterators from scratch. If the given index_-slot_ pair is at the
             // end of the table, or that spot is occupied, stay. Otherwise, step
             // forward to the next data item, or to the end of the table.
-            templated_iterator(
-                maybe_const_buckets_t& buckets,
-                std::shared_ptr<bool> has_table_lock, size_t index, size_t slot)
-                : buckets_(buckets), has_table_lock_(has_table_lock),
+            templated_iterator(maybe_const_buckets_t& buckets, size_t index,
+                               size_t slot)
+                : buckets_(buckets),
                   index_(static_cast<intmax_t>(index)),
                   slot_(static_cast<intmax_t>(slot)) {
                 if (std::make_pair(index_, slot_) != end_pos(buckets) &&
-                    !buckets[static_cast<size_t>(index_)]
-                    .occupied(static_cast<size_t>(slot_))) {
+                    !buckets[static_cast<size_t>(index_)].occupied(
+                        static_cast<size_t>(slot_))) {
                     operator++();
                 }
             }
 
-            // Throws an exception if the iterator has been invalidated because
-            // the locked_table lost ownership of the table info.
-            void check_iterator() const {
-                if (!(*has_table_lock_)) {
-                    throw std::runtime_error("Iterator has been invalidated");
-                }
-            }
-
-            friend class cuckoohash_map<Key, T, Hash, Pred,
-                                        Alloc, SLOT_PER_BUCKET>;
+            friend class cuckoohash_map<Key, T, Hash, Pred, Alloc,
+                                        SLOT_PER_BUCKET>;
         };
 
     public:
@@ -2110,13 +2087,13 @@ public:
         //! begin returns an iterator to the beginning of the table
         iterator begin() {
             check_table();
-            return iterator(buckets_.get(), has_table_lock_, 0, 0);
+            return iterator(buckets_.get(), 0, 0);
         }
 
         //! begin returns a const_iterator to the beginning of the table
         const_iterator begin() const {
             check_table();
-            return const_iterator(buckets_.get(), has_table_lock_, 0, 0);
+            return const_iterator(buckets_.get(), 0, 0);
         }
 
         //! cbegin returns a const_iterator to the beginning of the table
@@ -2128,7 +2105,7 @@ public:
         iterator end() {
             check_table();
             const auto end_pos = const_iterator::end_pos(buckets_.get());
-            return iterator(buckets_.get(), has_table_lock_,
+            return iterator(buckets_.get(),
                             static_cast<size_t>(end_pos.first),
                             static_cast<size_t>(end_pos.second));
         }
@@ -2137,7 +2114,7 @@ public:
         const_iterator end() const {
             check_table();
             const auto end_pos = const_iterator::end_pos(buckets_.get());
-            return const_iterator(buckets_.get(), has_table_lock_,
+            return const_iterator(buckets_.get(),
                                   static_cast<size_t>(end_pos.first),
                                   static_cast<size_t>(end_pos.second));
         }
@@ -2151,9 +2128,8 @@ public:
         // Throws an exception if the locked_table has been invalidated because
         // it lost ownership of the table info.
         void check_table() const {
-            if (!has_table_lock()) {
-                throw std::runtime_error(
-                    "locked_table lost ownership of table");
+            if (!is_active()) {
+                throw std::runtime_error("locked_table lost ownership of table");
             }
         }
 
