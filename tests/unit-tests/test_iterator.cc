@@ -42,14 +42,14 @@ TEST_CASE("iterator release", "[iterator]") {
     IntIntTable table;
     table.insert(10, 10);
 
-    SECTION("explicit release") {
+    SECTION("explicit unlock") {
         auto lt = table.lock_table();
         auto it = lt.begin();
-        lt.release();
+        lt.unlock();
         AssertLockedTableIsReleased(lt);
     }
 
-    SECTION("release through destructor") {
+    SECTION("unlock through destructor") {
         typename std::aligned_storage<sizeof(IntIntTable::locked_table),
                                       alignof(IntIntTable::locked_table)>::type
             lt_storage;
@@ -60,7 +60,7 @@ TEST_CASE("iterator release", "[iterator]") {
         auto it = lt_ref.begin();
         lt_ref.IntIntTable::locked_table::~locked_table();
         AssertLockedTableIsReleased(lt_ref);
-        lt_ref.release();
+        lt_ref.unlock();
         AssertLockedTableIsReleased(lt_ref);
     }
 
@@ -71,7 +71,7 @@ TEST_CASE("iterator release", "[iterator]") {
         REQUIRE(it1 == it2);
         auto lt2(std::move(lt1));
         REQUIRE(it1 == it2);
-        lt2.release();
+        lt2.unlock();
     }
 }
 
@@ -171,7 +171,7 @@ TEST_CASE("lock table blocks inserts", "[iterator]") {
         });
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     REQUIRE(table.size() == 0);
-    lt.release();
+    lt.unlock();
     thread.join();
 
     REQUIRE(table.size() == 10);
