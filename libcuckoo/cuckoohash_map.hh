@@ -91,17 +91,7 @@ public:
      * Destroys the table. The destructors of all elements stored in the table
      * are destroyed, and then the table storage is deallocated.
      */
-    ~cuckoohash_map() noexcept(
-        std::is_nothrow_destructible<decltype(hashpower_)>::value &&
-        std::is_nothrow_destructible<decltype(buckets_)>::value &&
-        std::is_nothrow_destructible<decltype(locks_)>::value &&
-        std::is_nothrow_destructible<decltype(expansion_lock_)>::value &&
-        std::is_nothrow_destructible<decltype(minimum_load_factor_)>::value &&
-        std::is_nothrow_destructible<decltype(maximum_hashpower_)>::value &&
-        std::is_nothrow_destructible<decltype(hash_fn_)>::value &&
-        std::is_nothrow_destructible<decltype(eq_fn_)>::value &&
-        std::is_nothrow_destructible<decltype(allocator_)>::value
-        ) {
+    ~cuckoohash_map() {
         cuckoo_clear();
     }
 
