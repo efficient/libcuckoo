@@ -51,6 +51,7 @@ class cuckoohash_map {
 public:
     /** @name Type Declarations */
     /**@{*/
+
     using key_type = Key;
     using mapped_type = T;
     using value_type = std::pair<const Key, T>;
@@ -63,6 +64,7 @@ public:
     using const_reference = const value_type&;
     using pointer = typename std::allocator_traits<allocator_type>::pointer;
     using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer;
+
     /**@}*/
 
     /** @name Constructors and Destructors */
@@ -1893,15 +1895,15 @@ private:
 
 public:
     /**
-     * A locked_table is an ownership wrapper around a @ref cuckoohash_map table
-     * instance. When given a table instance, it takes all the locks on the
-     * table, blocking all outside operations on the table. Because the
-     * locked_table has unique ownership of the table, it can provide a set of
-     * operations on the table that aren't possible in a concurrent context.
-     * Currently, this includes the ability to construct STL-compatible
-     * iterators on the table. When the locked_table is destroyed (or the @ref
-     * release method is called), it will release all locks on the table. This
-     * will invalidate all existing iterators.
+     * An ownership wrapper around a @ref cuckoohash_map table instance. When
+     * given a table instance, it takes all the locks on the table, blocking all
+     * outside operations on the table. Because the locked_table has unique
+     * ownership of the table, it can provide a set of operations on the table
+     * that aren't possible in a concurrent context. Currently, this includes
+     * the ability to construct STL-compatible iterators on the table. When the
+     * locked_table is destroyed (or the @ref release method is called), it will
+     * release all locks on the table. This will invalidate all existing
+     * iterators.
      */
     class locked_table {
     public:
@@ -1942,204 +1944,228 @@ public:
             unlocker_.unlock();
         }
 
-    private:
-        // The constructor locks the entire table, retrying until
-        // snapshot_and_lock_all succeeds. We keep this constructor private (but
-        // expose it to the cuckoohash_map class), since we don't want users
-        // calling it.
-        locked_table(cuckoohash_map& hm) noexcept
-            : unlocker_(std::move(hm.snapshot_and_lock_all())),
-              buckets_(hm.buckets_) {}
-
-        // A manager for all the locks we took on the table.
-        AllBuckets unlocker_;
-        // A reference to the buckets owned by the table
-        std::reference_wrapper<buckets_t> buckets_;
-
-        //! A templated iterator whose implementation works for both const and
-        //! non_const iterators. It is an STL-style BidirectionalIterator that
-        //! can be used to iterate over a locked table.
-        template <bool IS_CONST>
-        class templated_iterator :
-            public std::iterator<std::bidirectional_iterator_tag, value_type> {
-
-            typedef typename std::conditional<
-                IS_CONST, const buckets_t, buckets_t>::type
-            maybe_const_buckets_t;
-
-            // The buckets locked and owned by the locked table being iterated
-            // over.
-            std::reference_wrapper<maybe_const_buckets_t> buckets_;
-
-            // The bucket index of the item being pointed to. For implementation
-            // convenience, we let it take on negative values.
-            intmax_t index_;
-            // The slot in the bucket of the item being pointed to. For
-            // implementation convenience, we let it take on negative values.
-            intmax_t slot_;
-
+        /**
+         * A constant iterator over a @ref locked_table, which allows read-only
+         * access to the elements of the table. It fulfills the
+         * BidirectionalIterator concept.
+         */
+        class const_iterator {
         public:
-            //! Return true if the iterators are from the same locked table and
-            //! location, false otherwise.
-            template <bool OTHER_CONST>
-            bool operator==(const templated_iterator<OTHER_CONST>& it) const {
-                return (&buckets_.get() == &it.buckets_.get()
-                        && index_ == it.index_ && slot_ == it.slot_);
+            using difference_type = cuckoohash_map::difference_type;
+            using value_type = cuckoohash_map::value_type;
+            using pointer = cuckoohash_map::const_pointer;
+            using reference = cuckoohash_map::const_reference;
+            using iterator_category = std::bidirectional_iterator_tag;
+
+            // Return true if the iterators are from the same locked table and
+            // location, false otherwise.
+            bool operator==(const const_iterator& it) const {
+                return (std::addressof(buckets_.get()) ==
+                        std::addressof(it.buckets_.get())) &&
+                    index_ == it.index_ && slot_ == it.slot_;
             }
 
-            //! Equivalent to !operator==(it)
-            template <bool OTHER_CONST>
-            bool operator!=(const templated_iterator<OTHER_CONST>& it) const {
+            bool operator!=(const const_iterator& it) const {
                 return !(operator==(it));
             }
 
-            //! Return the key-value pair pointed to by the iterator. Behavior
-            //! is undefined if the iterator is at the end.
-            const value_type& operator*() const {
+            reference operator*() const {
                 return buckets_.get()[index_].kvpair(slot_);
             }
 
-            //! Returns a mutable reference to the current key-value pair
-            //! pointed to by the iterator. Behavior is undefined if the
-            //! iterator is at the end.
-            LIBCUCKOO_ENABLE_IF(!IS_CONST, value_type&) operator*() {
-                return buckets_.get()[static_cast<size_type>(index_)].
-                    kvpair(static_cast<size_type>(slot_));
-            }
-
-            //! Return a pointer to the immutable key-value pair pointed to by
-            //! the iterator. Behavior is undefined if the iterator is at the
-            //! end.
-            const value_type* operator->() const {
+            pointer operator->() const {
                 return &buckets_.get()[index_].kvpair(slot_);
             }
 
-            //! Returns a mutable pointer to the current key-value pair pointed
-            //! to by the iterator. Behavior is undefined if the iterator is at
-            //! the end.
-            LIBCUCKOO_ENABLE_IF(!IS_CONST, value_type*) operator->() {
-                return &buckets_.get()[index_].kvpair(slot_);
-            }
-
-
-            //! Advance the iterator to the next item in the table, or to the
-            //! end of the table. Returns the iterator at its new position.
-            //! Behavior is undefined if the iterator is at the end.
-            templated_iterator& operator++() {
+            // Advance the iterator to the next item in the table, or to the end
+            // of the table. Returns the iterator at its new position.
+            const_iterator& operator++() {
                 // Move forward until we get to a slot that is occupied, or we
                 // get to the end
-                for (; static_cast<size_type>(index_) < buckets_.get().size();
-                     ++index_) {
-                    while (static_cast<size_type>(++slot_) < slot_per_bucket()) {
-                        if (buckets_.get()[static_cast<size_type>(index_)].
-                            occupied(static_cast<size_type>(slot_))) {
+                ++slot_;
+                for (; index_ < buckets_.get().size(); ++index_) {
+                    for (; slot_ < slot_per_bucket(); ++slot_) {
+                        if (buckets_.get()[index_].occupied(slot_)) {
                             return *this;
                         }
                     }
-                    slot_ = -1;
+                    slot_ = 0;
                 }
-                // We're at the end, so set index_ and slot_ to the end position
-                std::tie(index_, slot_) = end_pos(buckets_.get());
+                assert(std::make_pair(index_, slot_) == end_pos(buckets_.get()));
                 return *this;
             }
 
-            //! Advance the iterator to the next item in the table, or to the
-            //! end of the table. Returns the iterator at its old position.
-            //! Behavior is undefined if the iterator is at the end.
-            templated_iterator operator++(int) {
-                templated_iterator old(*this);
+            // Advance the iterator to the next item in the table, or to the end
+            // of the table. Returns the iterator at its old position.
+            const_iterator operator++(int) {
+                const_iterator old(*this);
                 ++(*this);
                 return old;
             }
 
-            //! Move the iterator back to the previous item in the table.
-            //! Returns the iterator at its new position. Behavior is undefined
-            //! if the iterator is at the beginning.
-            templated_iterator& operator--() {
-                // Move backward until we get to the beginning. If we try to
-                // move before that, we stop.
-                for (; index_ >= 0; --index_) {
-                    while (--slot_ >= 0) {
-                        if (buckets_.get()[static_cast<size_type>(index_)]
-                            .occupied(static_cast<size_type>(slot_))) {
-                            return *this;
-                        }
-                    }
-                    slot_ = slot_per_bucket();
+            // Move the iterator back to the previous item in the table. Returns
+            // the iterator at its new position.
+            const_iterator& operator--() {
+                // Move backward until we get to the beginning. Behavior is
+                // undefined if we are iterating at the first element, so we can
+                // assume we'll reach an element. This means we'll never reach
+                // index_ == 0 and slot_ == 0.
+                if (slot_ == 0) {
+                    --index_;
+                    slot_ = slot_per_bucket() - 1;
+                } else {
+                    --slot_;
                 }
-                // Either we iterated before begin(), which means we're in
-                // undefined territory, or we iterated from the end of the table
-                // back, which means the table is empty. Either way, setting the
-                // index_ and slot_ to end_pos() is okay.
-                std::tie(index_, slot_) = end_pos(buckets_.get());
+                while (!buckets_.get()[index_].occupied(slot_)) {
+                    if (slot_ == 0) {
+                        --index_;
+                        slot_ = slot_per_bucket() - 1;
+                    } else {
+                        --slot_;
+                    }
+                }
                 return *this;
             }
 
             //! Move the iterator back to the previous item in the table.
             //! Returns the iterator at its old position. Behavior is undefined
             //! if the iterator is at the beginning.
-            templated_iterator operator--(int) {
-                templated_iterator old(*this);
+            const_iterator operator--(int) {
+                const_iterator old(*this);
                 --(*this);
                 return old;
             }
 
-        private:
-            static const std::pair<intmax_t, intmax_t> end_pos(
-                const buckets_t& buckets) {
-                // When index_ == buckets.size() and slot_ == 0, we're at the
-                // end of the table. When index_ and slot_ point to the data
-                // with the lowest bucket and slot, we're at the beginning of
-                // the table. If there is nothing in the table, index_ ==
-                // buckets.size() and slot_ == 0 also means we're at the
-                // beginning of the table (so begin() == end()).
-                return {buckets.size(), 0};
+        protected:
+            // The buckets locked and owned by the locked table being iterated
+            // over. For the purpose of allowing the mutable iterator to derive
+            // from this. The buckets are never modified with the const_iterator
+            // though.
+            std::reference_wrapper<buckets_t> buckets_;
+
+            // The bucket index of the item being pointed to. For implementation
+            // convenience, we let it take on negative values.
+            size_type index_;
+
+            // The slot in the bucket of the item being pointed to. For
+            // implementation convenience, we let it take on negative values.
+            size_type slot_;
+
+            // Returns the position signifying the end of the table
+            static std::pair<size_type, size_type>
+            end_pos(const buckets_t& buckets) {
+                return std::make_pair(buckets.size(), 0);
             }
 
             // The private constructor is used by locked_table to create
             // iterators from scratch. If the given index_-slot_ pair is at the
-            // end of the table, or that spot is occupied, stay. Otherwise, step
-            // forward to the next data item, or to the end of the table.
-            templated_iterator(maybe_const_buckets_t& buckets, size_type index,
-                               size_type slot)
-                noexcept
-                : buckets_(buckets),
-                  index_(static_cast<intmax_t>(index)),
-                  slot_(static_cast<intmax_t>(slot)) {
+            // end of the table, or the given spot is occupied, stay. Otherwise,
+            // step forward to the next data item, or to the end of the table.
+            const_iterator(buckets_t& buckets, size_type index,
+                           size_type slot) noexcept
+                : buckets_(buckets), index_(index), slot_(slot) {
                 if (std::make_pair(index_, slot_) != end_pos(buckets) &&
-                    !buckets[static_cast<size_type>(index_)].occupied(
-                        static_cast<size_type>(slot_))) {
+                    !buckets[index_].occupied(slot_)) {
                     operator++();
                 }
             }
 
-            friend class cuckoohash_map;
+            friend class locked_table;
         };
 
-    public:
-        //! A iterator that provides read-only access to the table
-        typedef templated_iterator<true> const_iterator;
-        //! A iterator that provides read-write access to the table
-        typedef templated_iterator<false> iterator;
+        /**
+         * An iterator over a @ref locked_table, which allows read-write access
+         * to elements of the table. It fulfills the BidirectionalIterator
+         * concept.
+         */
+        class iterator : public const_iterator {
+        public:
+            using difference_type = cuckoohash_map::difference_type;
+            using value_type = cuckoohash_map::value_type;
+            using pointer = cuckoohash_map::pointer;
+            using reference = cuckoohash_map::reference;
+            using iterator_category = std::bidirectional_iterator_tag;
 
-        //! begin returns an iterator to the beginning of the table
+            bool operator==(const iterator& it) const {
+                return const_iterator::operator==(it);
+            }
+
+            bool operator!=(const iterator& it) const {
+                return const_iterator::operator!=(it);
+            }
+
+            using const_iterator::operator*;
+            reference operator*() {
+                return const_iterator::buckets_.get()[
+                    const_iterator::index_].kvpair(const_iterator::slot_);
+            }
+
+            using const_iterator::operator->;
+            pointer operator->() {
+                return &const_iterator::buckets_.get()[
+                    const_iterator::index_].kvpair(const_iterator::slot_);
+            }
+
+            iterator& operator++() {
+                const_iterator::operator++();
+                return *this;
+            }
+
+            iterator operator++(int) {
+                iterator old(*this);
+                const_iterator::operator++();
+                return old;
+            }
+
+            iterator& operator--() {
+                const_iterator::operator--();
+                return *this;
+            }
+
+            iterator operator--(int) {
+                iterator old(*this);
+                const_iterator::operator--();
+                return old;
+            }
+
+        private:
+            iterator(buckets_t& buckets, size_type index, size_type slot) noexcept
+                : const_iterator(buckets, index, slot) {}
+
+            friend class locked_table;
+        };
+
+        /**@{*/
+        /**
+         * Returns an iterator to the beginning of the table. If the table is
+         * empty, it will point past the end of the table.
+         *
+         * @return an iterator to the beginning of the table
+         */
+
         iterator begin() {
             check_table();
             return iterator(buckets_.get(), 0, 0);
         }
 
-        //! begin returns a const_iterator to the beginning of the table
         const_iterator begin() const {
             check_table();
             return const_iterator(buckets_.get(), 0, 0);
         }
 
-        //! cbegin returns a const_iterator to the beginning of the table
         const_iterator cbegin() const {
             return begin();
         }
 
-        //! end returns an iterator to the end of the table
+        /**@}*/
+
+        /**@{*/
+        /**
+         * Returns an iterator past the end of the table.
+         *
+         * @return an iterator past the end of the table
+         */
+
         iterator end() {
             check_table();
             const auto end_pos = const_iterator::end_pos(buckets_.get());
@@ -2148,7 +2174,6 @@ public:
                             static_cast<size_type>(end_pos.second));
         }
 
-        //! end returns a const_iterator to the end of the table
         const_iterator end() const {
             check_table();
             const auto end_pos = const_iterator::end_pos(buckets_.get());
@@ -2157,12 +2182,20 @@ public:
                                   static_cast<size_type>(end_pos.second));
         }
 
-        //! cend returns a const_iterator to the end of the table
         const_iterator cend() const {
             return end();
         }
 
+        /**@}*/
+
     private:
+        // The constructor locks the entire table. We keep this constructor
+        // private (but expose it to the cuckoohash_map class), since we don't
+        // want users calling it.
+        locked_table(cuckoohash_map& hm) noexcept
+            : unlocker_(std::move(hm.snapshot_and_lock_all())),
+              buckets_(hm.buckets_) {}
+
         // Throws an exception if the locked_table has been invalidated because
         // it lost ownership of the table info.
         void check_table() const {
@@ -2170,6 +2203,11 @@ public:
                 throw std::runtime_error("locked_table lost ownership of table");
             }
         }
+
+        // A manager for all the locks we took on the table.
+        AllBuckets unlocker_;
+        // A reference to the buckets owned by the table
+        std::reference_wrapper<buckets_t> buckets_;
 
         friend class cuckoohash_map;
     };

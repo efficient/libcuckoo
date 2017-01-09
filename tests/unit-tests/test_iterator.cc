@@ -16,8 +16,6 @@ TEST_CASE("empty table iteration", "[iterator]") {
     IntIntTable table;
     {
         auto lt = table.lock_table();
-        auto it = lt.begin();
-
         REQUIRE(lt.begin() == lt.begin());
         REQUIRE(lt.begin() == lt.end());
 
@@ -175,4 +173,18 @@ TEST_CASE("lock table blocks inserts", "[iterator]") {
     thread.join();
 
     REQUIRE(table.size() == 10);
+}
+
+TEST_CASE("Cast iterator to const iterator", "[iterator]") {
+    IntIntTable table;
+    for (int i = 0; i < 10; ++i) {
+        table.insert(i, i);
+    }
+    auto lt = table.lock_table();
+    for (IntIntTable::locked_table::iterator it = lt.begin(); it != lt.end(); ++it) {
+        REQUIRE(it->first == it->second);
+        it->second++;
+        IntIntTable::locked_table::const_iterator const_it = it;
+        REQUIRE(it->first + 1 == it->second);
+    }
 }
