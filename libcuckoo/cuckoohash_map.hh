@@ -1967,22 +1967,19 @@ public:
         locked_table& operator=(const locked_table&) = delete;
 
         locked_table(locked_table&& lt) noexcept
-            : unlocker_(std::move(lt.unlocker_)),
-            buckets_(std::move(lt.buckets_)) {}
+            : map_(std::move(lt.map_)),
+              unlocker_(std::move(lt.unlocker_))
+            {}
 
         locked_table& operator=(locked_table&& lt) noexcept {
             unlock();
+            map_ = std::move(lt.map_);
             unlocker_ = std::move(lt.unlocker_);
-            buckets_ = std::move(lt.buckets_);
             return *this;
         }
 
-        ~locked_table() noexcept {
-            unlock();
-        }
-
         /**
-         * Returns whether the locked table has ownership of the hashtable
+         * Returns whether the locked table has ownership of the table
          *
          * @return true if it still has ownership, false otherwise
          */
@@ -1991,9 +1988,9 @@ public:
         }
 
         /**
-         * Unlocks the table, thereby freeing it up for other operations, but
-         * also invalidating all iterators and future operations with this
-         * table. It is idempotent.
+         * Unlocks the table, thereby freeing the locks on the table, but also
+         * invalidating all iterators and table operations with this object. It
+         * is idempotent.
          */
         void unlock() {
             unlocker_.unlock();
@@ -2092,10 +2089,10 @@ public:
             }
 
         protected:
-            // The buckets locked and owned by the locked table being iterated
-            // over. For the purpose of allowing the mutable iterator to derive
-            // from this. The buckets are never modified with the const_iterator
-            // though.
+            // The buckets owned by the locked table being iterated over. Even
+            // though const_iterator cannot modify the buckets, we don't mark
+            // them const so that the mutable iterator can derive from this
+            // class.
             std::reference_wrapper<buckets_t> buckets_;
 
             // The bucket index of the item being pointed to. For implementation
@@ -2199,13 +2196,11 @@ public:
          */
 
         iterator begin() {
-            check_table();
-            return iterator(buckets_.get(), 0, 0);
+            return iterator(map_.get().buckets_, 0, 0);
         }
 
         const_iterator begin() const {
-            check_table();
-            return const_iterator(buckets_.get(), 0, 0);
+            return const_iterator(map_.get().buckets_, 0, 0);
         }
 
         const_iterator cbegin() const {
@@ -2222,17 +2217,15 @@ public:
          */
 
         iterator end() {
-            check_table();
-            const auto end_pos = const_iterator::end_pos(buckets_.get());
-            return iterator(buckets_.get(),
+            const auto end_pos = const_iterator::end_pos(map_.get().buckets_);
+            return iterator(map_.get().buckets_,
                             static_cast<size_type>(end_pos.first),
                             static_cast<size_type>(end_pos.second));
         }
 
         const_iterator end() const {
-            check_table();
-            const auto end_pos = const_iterator::end_pos(buckets_.get());
-            return const_iterator(buckets_.get(),
+            const auto end_pos = const_iterator::end_pos(map_.get().buckets_);
+            return const_iterator(map_.get().buckets_,
                                   static_cast<size_type>(end_pos.first),
                                   static_cast<size_type>(end_pos.second));
         }
@@ -2247,22 +2240,15 @@ public:
         // The constructor locks the entire table. We keep this constructor
         // private (but expose it to the cuckoohash_map class), since we don't
         // want users calling it.
-        locked_table(cuckoohash_map& hm) noexcept
-            : unlocker_(std::move(hm.snapshot_and_lock_all<locking_active>())),
-              buckets_(hm.buckets_) {}
+        locked_table(cuckoohash_map& map) noexcept
+            : map_(map), unlocker_(
+                map_.get().template snapshot_and_lock_all<locking_active>())
+            {}
 
-        // Throws an exception if the locked_table has been invalidated because
-        // it lost ownership of the table info.
-        void check_table() const {
-            if (!is_active()) {
-                throw std::runtime_error("locked_table lost ownership of table");
-            }
-        }
-
+        // A reference to the map owned by the table
+        std::reference_wrapper<cuckoohash_map> map_;
         // A manager for all the locks we took on the table.
         AllBuckets<locking_active> unlocker_;
-        // A reference to the buckets owned by the table
-        std::reference_wrapper<buckets_t> buckets_;
 
         friend class cuckoohash_map;
     };

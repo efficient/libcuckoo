@@ -27,15 +27,6 @@ TEST_CASE("empty table iteration", "[iterator]") {
     }
 }
 
-template <class LockedTable>
-void AssertLockedTableIsReleased(LockedTable& lt) {
-    REQUIRE(!lt.is_active());
-    REQUIRE_THROWS_AS(lt.begin(), std::runtime_error);
-    REQUIRE_THROWS_AS(lt.end(), std::runtime_error);
-    REQUIRE_THROWS_AS(lt.cbegin(), std::runtime_error);
-    REQUIRE_THROWS_AS(lt.cend(), std::runtime_error);
-}
-
 TEST_CASE("iterator release", "[iterator]") {
     IntIntTable table;
     table.insert(10, 10);
@@ -44,7 +35,7 @@ TEST_CASE("iterator release", "[iterator]") {
         auto lt = table.lock_table();
         auto it = lt.begin();
         lt.unlock();
-        AssertLockedTableIsReleased(lt);
+        REQUIRE(!lt.is_active());
     }
 
     SECTION("unlock through destructor") {
@@ -57,9 +48,9 @@ TEST_CASE("iterator release", "[iterator]") {
             *reinterpret_cast<IntIntTable::locked_table*>(&lt_storage);
         auto it = lt_ref.begin();
         lt_ref.IntIntTable::locked_table::~locked_table();
-        AssertLockedTableIsReleased(lt_ref);
+        REQUIRE(!lt_ref.is_active());
         lt_ref.unlock();
-        AssertLockedTableIsReleased(lt_ref);
+        REQUIRE(!lt_ref.is_active());
     }
 
     SECTION("iterators compare after table is moved") {
