@@ -1,7 +1,7 @@
 /** \file */
 
-#ifndef _LAZY_ARRAY_HH
-#define _LAZY_ARRAY_HH
+#ifndef _LIBCUCKOO_LAZY_ARRAY_HH
+#define _LIBCUCKOO_LAZY_ARRAY_HH
 
 #include <algorithm>
 #include <cassert>
@@ -168,4 +168,4 @@ public:
     }
 };
 
-#endif // _LAZY_ARRAY_HH
+#endif // _LIBCUCKOO_LAZY_ARRAY_HH

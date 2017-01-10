@@ -29,7 +29,7 @@
 
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
-#include "lazy_array.hh"
+#include "libcuckoo_lazy_array.hh"
 
 /**
  * A concurrent hash table
