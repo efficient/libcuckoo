@@ -105,13 +105,13 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a382fc73444568dce5fa2c2f2dd627b52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:affebbbff7504a265821e0cf94e66b5c6"><td class="memItemLeft" align="right" valign="top">virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__load__factor__too__low.html#affebbbff7504a265821e0cf94e66b5c6">what</a> () const noexcept override</td></tr>
 <tr class="separator:affebbbff7504a265821e0cf94e66b5c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6733a03a958354bb8bb3c2b8a86b3d96"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__load__factor__too__low.html#a6733a03a958354bb8bb3c2b8a86b3d96">load_factor</a> ()</td></tr>
-<tr class="separator:a6733a03a958354bb8bb3c2b8a86b3d96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76cd9fd141fd5caaa4d1a052a1af68df"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__load__factor__too__low.html#a76cd9fd141fd5caaa4d1a052a1af68df">load_factor</a> () const</td></tr>
+<tr class="separator:a76cd9fd141fd5caaa4d1a052a1af68df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Thrown when an automatic expansion is triggered, but the load factor of the table is below a minimum threshold, which can be set by the <a class="el" href="classcuckoohash__map.html#aeecfff17d1b8c0193fd64f184c0b3bd8">cuckoohash_map::minimum_load_factor</a> method. This can happen if the hash function does not properly distribute keys, or for certain adversarial workloads. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00077">77</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00076">76</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a382fc73444568dce5fa2c2f2dd627b52"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a382fc73444568dce5fa2c2f2dd627b52">&#9670;&nbsp;</a></span>libcuckoo_load_factor_too_low()</h2>
@@ -144,13 +144,13 @@ Public Member Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00084">84</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00083">83</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a6733a03a958354bb8bb3c2b8a86b3d96"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6733a03a958354bb8bb3c2b8a86b3d96">&#9670;&nbsp;</a></span>load_factor()</h2>
+<a id="a76cd9fd141fd5caaa4d1a052a1af68df"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76cd9fd141fd5caaa4d1a052a1af68df">&#9670;&nbsp;</a></span>load_factor()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -162,7 +162,7 @@ Public Member Functions</h2></td></tr>
           <td class="memname">double libcuckoo_load_factor_too_low::load_factor </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td></td>
+          <td> const</td>
         </tr>
       </table>
   </td>
@@ -173,7 +173,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>the load factor of the table when the exception was thrown </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00098">98</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00097">97</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
 
 </div>
 </div>
@@ -201,7 +201,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>a descriptive error message </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00090">90</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00089">89</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
 
 </div>
 </div>
@@ -214,7 +214,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a></li>
-    <li class="footer">Generated on Fri Dec 30 2016 12:55:13 for libcuckoo by
+    <li class="footer">Generated on Tue Jan 10 2017 10:17:29 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

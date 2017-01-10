@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['reference',['reference',['../classcuckoohash__map_1_1reference.html',1,'cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::reference'],['../classcuckoohash__map_1_1reference.html#aadc8c74717f83fd301372904fa988ad6',1,'cuckoohash_map::reference::reference()']]],
-  ['rehash',['rehash',['../classcuckoohash__map.html#a6168d1dc8dcfd191e3479995dc7f1a6c',1,'cuckoohash_map']]],
-  ['release',['release',['../classcuckoohash__map_1_1locked__table.html#a075879a71a3b9c0d4559dd80e72bae12',1,'cuckoohash_map::locked_table']]],
-  ['reserve',['reserve',['../classcuckoohash__map.html#ad0a3dae71b07168305e4dff1b6bc17dd',1,'cuckoohash_map']]]
+  ['size',['size',['../classcuckoohash__map.html#a31b5b0f54ba4a4104103c23bc9c9e2eb',1,'cuckoohash_map::size()'],['../classlibcuckoo__lazy__array.html#a55593d0e8979ec4d9cb51a19be04b55a',1,'libcuckoo_lazy_array::size()']]],
+  ['slot_5fper_5fbucket',['slot_per_bucket',['../classcuckoohash__map.html#ac3b07003caef9f1fe6b461fdbce0b11d',1,'cuckoohash_map']]]
 ];

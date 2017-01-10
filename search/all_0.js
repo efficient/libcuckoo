@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['allocate',['allocate',['../classlazy__array.html#adac8cfde8031b085063bf067eb0990b8',1,'lazy_array']]],
-  ['allocated_5fsize',['allocated_size',['../classlazy__array.html#a032b371701724bd54ed0917d402b6ade',1,'lazy_array']]],
-  ['allocator_5ftype',['allocator_type',['../classcuckoohash__map.html#a0347edca7eb24e46f7ee7685d0ba8540',1,'cuckoohash_map']]]
+  ['allocate',['allocate',['../classlibcuckoo__lazy__array.html#a410fb053aa78ff81ac77b4f46b888243',1,'libcuckoo_lazy_array']]],
+  ['allocated_5fsize',['allocated_size',['../classlibcuckoo__lazy__array.html#acf03ee7d575d1178b9ce1d6d34cf5374',1,'libcuckoo_lazy_array']]]
 ];
