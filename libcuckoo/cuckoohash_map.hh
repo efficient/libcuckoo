@@ -99,7 +99,7 @@ public:
 
     /**@}*/
 
-    /** @name Table details
+    /** @name Table Details
      *
      * Methods for getting information about the table. Methods that query
      * changing properties of the table are not synchronized with concurrent
@@ -272,7 +272,7 @@ public:
 
     /**@}*/
 
-    /** @name Table operations
+    /** @name Table Operations
      *
      * These are operations that affect the data in the table. They are safe to
      * call concurrently with each other.
@@ -334,17 +334,16 @@ public:
     bool contains(const K& key) const {
         const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two<locking_active>(hv);
-        const bool result = cuckoo_contains(key, hv.partial,
-                                            b.first(), b.second());
-        return result;
+        return cuckoo_contains(key, hv.partial, b.first(), b.second());
     }
 
     /**
      * Inserts the given key-value pair into the table. The key will be
-     * immediately constructed. If the insertion succeeds, the key will be moved
-     * into the table and the value constructed from the @p val parameters. If
-     * the insertion fails, the key will be destroyed, and the @p val parameters
-     * will remain valid. If there is no room left in the table, it will be
+     * immediately constructed as @c key_type(std::forward<K>(key)). If the
+     * insertion succeeds, this constructed key will be moved into the table and
+     * the value constructed from the @p val parameters. If the insertion fails,
+     * the constructed key will be destroyed, and the @p val parameters will
+     * remain valid. If there is no room left in the table, it will be
      * automatically expanded, which may throw exceptions.
      *
      * @tparam K type of the key
@@ -381,9 +380,7 @@ public:
     bool erase(const K& key) {
         const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two<locking_active>(hv);
-        const cuckoo_status st = cuckoo_delete(key, hv.partial,
-                                               b.first(), b.second());
-        return (st == ok);
+        return cuckoo_delete(key, hv.partial, b.first(), b.second()) == ok;
     }
 
     /**
@@ -469,11 +466,7 @@ public:
      * @return true if the table changed size, false otherwise
      */
     bool rehash(size_type n) {
-        const size_type hp = hashpower();
-        if (n == hp) {
-            return false;
-        }
-        return cuckoo_expand_simple<locking_active>(n, n > hp) == ok;
+        return cuckoo_rehash<locking_active>(n);
     }
 
     /**
@@ -486,12 +479,7 @@ public:
      * @return true if the size of the table changed, false otherwise
      */
     bool reserve(size_type n) {
-        const size_type hp = hashpower();
-        const size_type new_hp = reserve_calc(n);
-        if (new_hp == hp) {
-            return false;
-        }
-        return cuckoo_expand_simple<locking_active>(new_hp, new_hp > hp) == ok;
+        return cuckoo_reserve<locking_active>(n);
     }
 
     /**
@@ -1752,20 +1740,21 @@ private:
     template <typename K>
     cuckoo_status cuckoo_delete(const K &key, const partial_t partial,
                                 const size_type i1, const size_type i2) {
-        if (try_del_from_bucket(partial, key, buckets_[i1], i1)) {
+        if (try_del_from_bucket(partial, key, i1)) {
             return ok;
         }
-        if (try_del_from_bucket(partial, key, buckets_[i2], i2)) {
+        if (try_del_from_bucket(partial, key, i2)) {
             return ok;
         }
         return failure_key_not_found;
     }
 
-    // try_del_from_bucket will search the bucket for the given key, and set the
-    // slot of the key to empty if it finds it.
+    // try_del_from_bucket will search the bucket for the given key, and erase
+    // the slot containing the key, if it finds it.
     template <typename K>
     bool try_del_from_bucket(const partial_t partial, const K &key,
-                             Bucket& b, const size_type bucket_ind) {
+                             const size_type bucket_ind) {
+        Bucket& b = buckets_[bucket_ind];
         for (size_type i = 0; i < slot_per_bucket(); ++i) {
             if (!b.occupied(i)) {
                 continue;
@@ -1774,12 +1763,18 @@ private:
                 continue;
             }
             if (key_eq()(b.key(i), key)) {
-                b.eraseKV(i);
-                --locks_[lock_ind(bucket_ind)].elem_counter();
+                del_from_bucket(b, bucket_ind, i);
                 return true;
             }
         }
         return false;
+    }
+
+    void del_from_bucket(Bucket& b,
+                         const size_type bucket_ind,
+                         const size_type slot) {
+        b.eraseKV(slot);
+        --locks_[lock_ind(bucket_ind)].elem_counter();
     }
 
     // Update functions
@@ -1877,6 +1872,27 @@ private:
         return ok;
     }
 
+    // Rehashing functions
+
+    template <typename LOCK_T>
+    bool cuckoo_rehash(size_type n) {
+        const size_type hp = hashpower();
+        if (n == hp) {
+            return false;
+        }
+        return cuckoo_expand_simple<LOCK_T>(n, n > hp) == ok;
+    }
+
+    template <typename LOCK_T>
+    bool cuckoo_reserve(size_type n) {
+        const size_type hp = hashpower();
+        const size_type new_hp = reserve_calc(n);
+        if (new_hp == hp) {
+            return false;
+        }
+        return cuckoo_expand_simple<LOCK_T>(new_hp, new_hp > hp) == ok;
+    }
+
     // Miscellaneous functions
 
     // number of locks in the locks array
@@ -1954,47 +1970,29 @@ public:
      * given a table instance, it takes all the locks on the table, blocking all
      * outside operations on the table. Because the locked_table has unique
      * ownership of the table, it can provide a set of operations on the table
-     * that aren't possible in a concurrent context. Currently, this includes
-     * the ability to construct STL-compatible iterators on the table. When the
-     * locked_table is destroyed (or the @ref release method is called), it will
-     * release all locks on the table. This will invalidate all existing
-     * iterators.
+     * that aren't possible in a concurrent context.
+     *
+     * The locked_table interface is very similar to the STL unordered_map
+     * interface, and for functions whose signatures correspond to unordered_map
+     * methods, the behavior should be mostly the same.
      */
     class locked_table {
     public:
-        locked_table() = delete;
-        locked_table(const locked_table&) = delete;
-        locked_table& operator=(const locked_table&) = delete;
+        /** @name Type Declarations */
+        /**@{*/
 
-        locked_table(locked_table&& lt) noexcept
-            : map_(std::move(lt.map_)),
-              unlocker_(std::move(lt.unlocker_))
-            {}
-
-        locked_table& operator=(locked_table&& lt) noexcept {
-            unlock();
-            map_ = std::move(lt.map_);
-            unlocker_ = std::move(lt.unlocker_);
-            return *this;
-        }
-
-        /**
-         * Returns whether the locked table has ownership of the table
-         *
-         * @return true if it still has ownership, false otherwise
-         */
-        bool is_active() const {
-            return unlocker_.is_active();
-        }
-
-        /**
-         * Unlocks the table, thereby freeing the locks on the table, but also
-         * invalidating all iterators and table operations with this object. It
-         * is idempotent.
-         */
-        void unlock() {
-            unlocker_.unlock();
-        }
+        using key_type = cuckoohash_map::key_type;
+        using mapped_type = cuckoohash_map::mapped_type;
+        using value_type = cuckoohash_map::value_type;
+        using size_type = cuckoohash_map::size_type;
+        using difference_type = cuckoohash_map::difference_type;
+        using hasher = cuckoohash_map::hasher;
+        using key_equal = cuckoohash_map::key_equal;
+        using allocator_type = cuckoohash_map::allocator_type;
+        using reference = cuckoohash_map::reference;
+        using const_reference = cuckoohash_map::const_reference;
+        using pointer = cuckoohash_map::pointer;
+        using const_pointer = cuckoohash_map::const_pointer;
 
         /**
          * A constant iterator over a @ref locked_table, which allows read-only
@@ -2187,6 +2185,114 @@ public:
             friend class locked_table;
         };
 
+        /**@}*/
+
+        /** @name Constructors, Destructors, and Assignment */
+        /**@{*/
+
+        locked_table() = delete;
+        locked_table(const locked_table&) = delete;
+        locked_table& operator=(const locked_table&) = delete;
+
+        locked_table(locked_table&& lt) noexcept
+            : map_(std::move(lt.map_)),
+              unlocker_(std::move(lt.unlocker_))
+            {}
+
+        locked_table& operator=(locked_table&& lt) noexcept {
+            unlock();
+            map_ = std::move(lt.map_);
+            unlocker_ = std::move(lt.unlocker_);
+            return *this;
+        }
+
+        /**
+         * Unlocks the table, thereby freeing the locks on the table, but also
+         * invalidating all iterators and table operations with this object. It
+         * is idempotent.
+         */
+        void unlock() {
+            unlocker_.unlock();
+        }
+
+        /**@}*/
+
+        /** @name Table Details
+         *
+         * Methods for getting information about the table. Many are identical
+         * to their @ref cuckoohash_map counterparts. Only new functions or
+         * those with different behavior are documented.
+         *
+         */
+        /**@{*/
+
+        /**
+         * Returns whether the locked table has ownership of the table
+         *
+         * @return true if it still has ownership, false otherwise
+         */
+        bool is_active() const {
+            return unlocker_.is_active();
+        }
+
+        static constexpr size_type slot_per_bucket() {
+            return cuckoohash_map::slot_per_bucket();
+        }
+
+        hasher hash_function() const {
+            return map_.get().hash_function();
+        }
+
+        key_equal key_eq() const {
+            return map_.get().key_eq();
+        }
+
+        allocator_type get_allocator() const {
+            return map_.get().get_allocator();
+        }
+
+        size_type hashpower() const {
+            return map_.get().hashpower();
+        }
+
+        size_type bucket_count() const {
+            return map_.get().hashpower();
+        }
+
+        bool empty() const {
+            return map_.get().empty();
+        }
+
+        size_type size() const {
+            return map_.get().size();
+        }
+
+        size_type capacity() const {
+            return map_.get().capacity();
+        }
+
+        double load_factor() const {
+            return map_.get().load_factor();
+        }
+
+        void minimum_load_factor(const double mlf) {
+            map_.get().minimum_load_factor(mlf);
+        }
+
+        double minimum_load_factor() {
+            return map_.get().minimum_load_factor();
+        }
+
+        void maximum_hashpower(size_type mhp) {
+            map_.get().maximum_hashpower(mhp);
+        }
+
+        size_type maximum_hashpower() {
+            return map_.get().maximum_hashpower();
+        }
+
+        /**@}*/
+
         /**@{*/
         /**
          * Returns an iterator to the beginning of the table. If the table is
@@ -2208,6 +2314,9 @@ public:
         }
 
         /**@}*/
+
+        /** @name Iterators */
+        /**@{*/
 
         /**@{*/
         /**
@@ -2232,6 +2341,204 @@ public:
 
         const_iterator cend() const {
             return end();
+        }
+
+        /**@}*/
+
+        /**@}*/
+
+        /** @name Modifiers */
+        /**@{*/
+
+        void clear() {
+            map_.get().cuckoo_clear();
+        }
+
+        /**
+         * This behaves like the @c unordered_map::try_emplace method, but with
+         * the same argument lifetime properties as @ref cuckoohash_map::insert.
+         * It will always invalidate all iterators, due to the possibilities of
+         * cuckoo hashing and expansion.
+         */
+        template <typename K, typename... Args>
+        std::pair<iterator, bool> insert(K&& key, Args&&... val) {
+            K k(std::forward<K>(key));
+            hash_value hv = map_.get().hashed_key(k);
+            auto b = map_.get().template snapshot_and_lock_two<locking_inactive>(hv);
+            table_position pos = map_.get().cuckoo_insert_loop(hv, b, k);
+            if (pos.status == ok) {
+                map_.get().add_to_bucket(
+                    pos.index, pos.slot, hv.partial, k,
+                    std::forward<Args>(val)...);
+            } else {
+                assert(pos.status == failure_key_duplicated);
+            }
+            return std::make_pair(
+                iterator(map_.get().buckets_, pos.index, pos.slot),
+                pos.status == ok);
+        }
+
+        iterator erase(const_iterator pos) {
+            map_.get().del_from_bucket(map_.get().buckets_, pos.index_,
+                                       pos.slot_);
+        }
+
+        template <typename K>
+        size_type erase(const K& key) {
+            const hash_value hv = map_.get().hashed_key(key);
+            const auto b = map_.get().
+                template snapshot_and_lock_two<locking_inactive>(hv);
+            return map_.get().cuckoo_delete(
+                key, hv.partial, b.first(), b.second()) == ok ? 1 : 0;
+        }
+
+        /**@}*/
+
+        /** @name Lookup */
+        /**@{*/
+
+        template <typename K>
+        iterator find(const K& key) {
+            const hash_value hv = map_.get().hashed_key(key);
+            const auto b = map_.get().
+                template snapshot_and_lock_two<locking_active>(hv);
+            const table_position pos = map_.get().cuckoo_find(
+                key, hv.partial, b.first(), b.second());
+            if (pos.status == ok) {
+                return iterator(map_.get().buckets_, pos.index, pos.slot);
+            } else {
+                return end();
+            }
+        }
+
+        template <typename K>
+        const_iterator find(const K& key) const {
+            const hash_value hv = map_.get().hashed_key(key);
+            const auto b = map_.get().
+                template snapshot_and_lock_two<locking_active>(hv);
+            const table_position pos = map_.get().cuckoo_find(
+                key, hv.partial, b.first(), b.second());
+            if (pos.status == ok) {
+                return const_iterator(map_.get().buckets_, pos.index, pos.slot);
+            } else {
+                return end();
+            }
+        }
+
+        template <typename K>
+        mapped_type& at(const K& key) {
+            auto it = find(key);
+            if (it == end()) {
+                throw std::out_of_range("key not found in table");
+            } else {
+                return it->second;
+            }
+        }
+
+        template <typename K>
+        const mapped_type& at(const K& key) const {
+            auto it = find(key);
+            if (it == end()) {
+                throw std::out_of_range("key not found in table");
+            } else {
+                return it->second;
+            }
+        }
+
+        /**
+         * This function has the same lifetime properties as @ref
+         * cuckoohash_map::insert, except that the value is default-constructed,
+         * with no parameters, if it is not already in the table.
+         */
+        template <typename K>
+        T& operator[](K&& key) {
+            auto result = insert(std::forward<K>(key));
+            return result.first->second;
+        }
+
+        template <typename K>
+        size_type count(const K& key) const {
+            const hash_value hv = map_.get().hashed_key(key);
+            const auto b = map_.get().
+                template snapshot_and_lock_two<locking_inactive>(hv);
+            return map_.get().cuckoo_contains(
+                key, hv.partial, b.first(), b.second()) ? 1 : 0;
+        }
+
+        template <typename K>
+        std::pair<iterator, iterator> equal_range(const K& key) {
+            auto it = find(key);
+            if (it == end()) {
+                return std::make_pair(it, it);
+            } else {
+                auto start_it = it++;
+                return std::make_pair(start_it, it);
+            }
+        }
+
+        template <typename K>
+        std::pair<const_iterator, const_iterator> equal_range(const K& key) const {
+            auto it = find(key);
+            if (it == end()) {
+                return std::make_pair(it, it);
+            } else {
+                auto start_it = it++;
+                return std::make_pair(start_it, it);
+            }
+        }
+
+        /**@}*/
+
+        /** @name Re-sizing */
+        /**@{*/
+
+        /**
+         * This has the same behavior as @ref cuckoohash_map::rehash, except
+         * that we don't return anything.
+         */
+        void rehash(size_type n) {
+            map_.get().template cuckoo_rehash<locking_inactive>(n);
+        }
+
+        /**
+         * This has the same behavior as @ref cuckoohash_map::reserve, except
+         * that we don't return anything.
+         */
+        void reserve(size_type n) {
+            map_.get().template cuckoo_reserve<locking_inactive>(n);
+        }
+
+        /**@}*/
+
+        /** @name Comparison  */
+        /**@{*/
+
+        bool operator==(const locked_table& lt) const {
+            if (size() != lt.size()) {
+                return false;
+            }
+            for (const auto& elem : lt) {
+                auto it = find(elem.first);
+                if (it == end() || it->first != elem.first ||
+                    it->second != elem.second) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        bool operator!=(const locked_table& lt) const {
+            if (size() != lt.size()) {
+                return true;
+            }
+            for (const auto& elem : lt) {
+                auto it = find(elem.first);
+                if (it == end() || it->first != elem.first ||
+                    it->second != elem.second) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /**@}*/
