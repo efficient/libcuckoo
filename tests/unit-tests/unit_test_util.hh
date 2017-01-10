@@ -119,11 +119,45 @@ using StringIntTable = cuckoohash_map<
     std::allocator<std::pair<const std::string, int>>,
     4>;
 
-// Returns the number of slots the table has to store key-value pairs.
-template <class CuckoohashMap>
-size_t table_capacity(const CuckoohashMap& table) {
-    return CuckoohashMap::slot_per_bucket * (1U << table.hashpower());
+namespace std {
+    template <typename T>
+    struct hash<unique_ptr<T> > {
+        size_t operator()(const unique_ptr<T>& ptr) const {
+            return std::hash<T>()(*ptr);
+        }
+
+        size_t operator()(const T* ptr) const {
+            return std::hash<T>()(*ptr);
+        }
+    };
+
+    template <typename T>
+    struct equal_to<unique_ptr<T> > {
+        bool operator()(const unique_ptr<T>& ptr1,
+                        const unique_ptr<T>& ptr2) const {
+            return *ptr1 == *ptr2;
+        }
+
+        bool operator()(const T* ptr1,
+                        const unique_ptr<T>& ptr2) const {
+            return *ptr1 == *ptr2;
+        }
+
+        bool operator()(const unique_ptr<T>& ptr1,
+                        const T* ptr2) const {
+            return *ptr1 == *ptr2;
+        }
+    };
 }
+
+template <typename T>
+using UniquePtrTable = cuckoohash_map<
+    std::unique_ptr<T>,
+    std::unique_ptr<T>,
+    std::hash<std::unique_ptr<T> >,
+    std::equal_to<std::unique_ptr<T> >,
+    std::allocator<std::pair<const std::unique_ptr<T>, std::unique_ptr<T> > >,
+    4>;
 
 // Some unit tests need access into certain private data members of the table.
 // This class is a friend of the table, so it can access those.

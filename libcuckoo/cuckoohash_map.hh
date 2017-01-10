@@ -600,7 +600,9 @@ private:
             return !lock_.test_and_set(std::memory_order_acq_rel);
         }
 
-        bool try_lock(locking_inactive) {}
+        bool try_lock(locking_inactive) {
+            return true;
+        }
 
         size_type& elem_counter() {
             return elem_counter_;
@@ -1246,8 +1248,8 @@ private:
                     insert_bucket = cuckoo_path[0].bucket;
                     insert_slot = cuckoo_path[0].slot;
                     assert(insert_bucket == b.first() || insert_bucket == b.second());
-                    assert(!locks_[lock_ind(b.first())].try_lock());
-                    assert(!locks_[lock_ind(b.second())].try_lock());
+                    assert(!locks_[lock_ind(b.first())].try_lock(LOCK_T()));
+                    assert(!locks_[lock_ind(b.second())].try_lock(LOCK_T()));
                     assert(!buckets_[insert_bucket].occupied(insert_slot));
                     done = true;
                     break;
@@ -2001,17 +2003,18 @@ public:
          */
         class const_iterator {
         public:
-            using difference_type = cuckoohash_map::difference_type;
-            using value_type = cuckoohash_map::value_type;
-            using pointer = cuckoohash_map::const_pointer;
-            using reference = cuckoohash_map::const_reference;
+            using difference_type = locked_table::difference_type;
+            using value_type = locked_table::value_type;
+            using pointer = locked_table::const_pointer;
+            using reference = locked_table::const_reference;
             using iterator_category = std::bidirectional_iterator_tag;
+
+            const_iterator() {}
 
             // Return true if the iterators are from the same locked table and
             // location, false otherwise.
             bool operator==(const const_iterator& it) const {
-                return (std::addressof(buckets_.get()) ==
-                        std::addressof(it.buckets_.get())) &&
+                return buckets_ == it.buckets_ &&
                     index_ == it.index_ && slot_ == it.slot_;
             }
 
@@ -2020,11 +2023,11 @@ public:
             }
 
             reference operator*() const {
-                return buckets_.get()[index_].kvpair(slot_);
+                return (*buckets_)[index_].kvpair(slot_);
             }
 
             pointer operator->() const {
-                return &buckets_.get()[index_].kvpair(slot_);
+                return &(*buckets_)[index_].kvpair(slot_);
             }
 
             // Advance the iterator to the next item in the table, or to the end
@@ -2033,15 +2036,15 @@ public:
                 // Move forward until we get to a slot that is occupied, or we
                 // get to the end
                 ++slot_;
-                for (; index_ < buckets_.get().size(); ++index_) {
+                for (; index_ < buckets_->size(); ++index_) {
                     for (; slot_ < slot_per_bucket(); ++slot_) {
-                        if (buckets_.get()[index_].occupied(slot_)) {
+                        if ((*buckets_)[index_].occupied(slot_)) {
                             return *this;
                         }
                     }
                     slot_ = 0;
                 }
-                assert(std::make_pair(index_, slot_) == end_pos(buckets_.get()));
+                assert(std::make_pair(index_, slot_) == end_pos(*buckets_));
                 return *this;
             }
 
@@ -2066,7 +2069,7 @@ public:
                 } else {
                     --slot_;
                 }
-                while (!buckets_.get()[index_].occupied(slot_)) {
+                while (!(*buckets_)[index_].occupied(slot_)) {
                     if (slot_ == 0) {
                         --index_;
                         slot_ = slot_per_bucket() - 1;
@@ -2090,8 +2093,9 @@ public:
             // The buckets owned by the locked table being iterated over. Even
             // though const_iterator cannot modify the buckets, we don't mark
             // them const so that the mutable iterator can derive from this
-            // class.
-            std::reference_wrapper<buckets_t> buckets_;
+            // class. Also, since iterators should be default constructible,
+            // copyable, and movable, we have to make this a raw pointer type.
+            buckets_t* buckets_;
 
             // The bucket index of the item being pointed to. For implementation
             // convenience, we let it take on negative values.
@@ -2113,9 +2117,9 @@ public:
             // step forward to the next data item, or to the end of the table.
             const_iterator(buckets_t& buckets, size_type index,
                            size_type slot) noexcept
-                : buckets_(buckets), index_(index), slot_(slot) {
-                if (std::make_pair(index_, slot_) != end_pos(buckets) &&
-                    !buckets[index_].occupied(slot_)) {
+                : buckets_(std::addressof(buckets)), index_(index), slot_(slot) {
+                if (std::make_pair(index_, slot_) != end_pos(*buckets_) &&
+                    !(*buckets_)[index_].occupied(slot_)) {
                     operator++();
                 }
             }
@@ -2136,6 +2140,8 @@ public:
             using reference = cuckoohash_map::reference;
             using iterator_category = std::bidirectional_iterator_tag;
 
+            iterator() {}
+
             bool operator==(const iterator& it) const {
                 return const_iterator::operator==(it);
             }
@@ -2146,13 +2152,13 @@ public:
 
             using const_iterator::operator*;
             reference operator*() {
-                return const_iterator::buckets_.get()[
+                return (*const_iterator::buckets_)[
                     const_iterator::index_].kvpair(const_iterator::slot_);
             }
 
             using const_iterator::operator->;
             pointer operator->() {
-                return &const_iterator::buckets_.get()[
+                return &(*const_iterator::buckets_)[
                     const_iterator::index_].kvpair(const_iterator::slot_);
             }
 
@@ -2256,7 +2262,7 @@ public:
         }
 
         size_type bucket_count() const {
-            return map_.get().hashpower();
+            return map_.get().bucket_count();
         }
 
         bool empty() const {
@@ -2379,8 +2385,17 @@ public:
         }
 
         iterator erase(const_iterator pos) {
-            map_.get().del_from_bucket(map_.get().buckets_, pos.index_,
+            map_.get().del_from_bucket(map_.get().buckets_[pos.index_],
+                                       pos.index_,
                                        pos.slot_);
+            return iterator(map_.get().buckets_, pos.index_, pos.slot_);
+        }
+
+        iterator erase(iterator pos) {
+            map_.get().del_from_bucket(map_.get().buckets_[pos.index_],
+                                       pos.index_,
+                                       pos.slot_);
+            return iterator(map_.get().buckets_, pos.index_, pos.slot_);
         }
 
         template <typename K>
@@ -2401,7 +2416,7 @@ public:
         iterator find(const K& key) {
             const hash_value hv = map_.get().hashed_key(key);
             const auto b = map_.get().
-                template snapshot_and_lock_two<locking_active>(hv);
+                template snapshot_and_lock_two<locking_inactive>(hv);
             const table_position pos = map_.get().cuckoo_find(
                 key, hv.partial, b.first(), b.second());
             if (pos.status == ok) {
@@ -2415,7 +2430,7 @@ public:
         const_iterator find(const K& key) const {
             const hash_value hv = map_.get().hashed_key(key);
             const auto b = map_.get().
-                template snapshot_and_lock_two<locking_active>(hv);
+                template snapshot_and_lock_two<locking_inactive>(hv);
             const table_position pos = map_.get().cuckoo_find(
                 key, hv.partial, b.first(), b.second());
             if (pos.status == ok) {

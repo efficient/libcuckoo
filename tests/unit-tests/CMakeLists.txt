@@ -9,6 +9,7 @@ add_executable(unit_tests
     test_resize.cc
     test_runner.cc
     test_user_exceptions.cc
+    test_locked_table.cc
     unit_test_util.cc
     unit_test_util.hh
 )

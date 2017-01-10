@@ -6,41 +6,29 @@
 #include <libcuckoo/cuckoohash_map.hh>
 #include "unit_test_util.hh"
 
-typedef std::unique_ptr<int> uptr;
-struct uptr_hash {
-    size_t operator()(const uptr& ptr) const {
-        return (*ptr) * 0xc6a4a7935bd1e995;
-    }
-};
-
-struct uptr_eq {
-    bool operator()(const uptr& ptr1, const uptr& ptr2) const {
-        return *ptr1 == *ptr2;
-    }
-};
-
-typedef cuckoohash_map<uptr, uptr, uptr_hash, uptr_eq> uptr_tbl;
+using Tbl = UniquePtrTable<int>;
+using Uptr = std::unique_ptr<int>;
 
 const size_t TBL_INIT = 1;
-const size_t TBL_SIZE = TBL_INIT * uptr_tbl::slot_per_bucket() * 2;
+const size_t TBL_SIZE = TBL_INIT * Tbl::slot_per_bucket() * 2;
 
-void check_key_eq(uptr_tbl& tbl, int key, int expected_val) {
-    REQUIRE(tbl.contains(uptr(new int(key))));
-    tbl.update_fn(uptr(new int(key)), [expected_val](const uptr& ptr) {
+void check_key_eq(Tbl& tbl, int key, int expected_val) {
+    REQUIRE(tbl.contains(Uptr(new int(key))));
+    tbl.update_fn(Uptr(new int(key)), [expected_val](const Uptr& ptr) {
             REQUIRE(*ptr == expected_val);
         });
 }
 
 TEST_CASE("noncopyable insert and update", "[noncopyable]") {
-    uptr_tbl tbl(TBL_INIT);
+    Tbl tbl(TBL_INIT);
     for (size_t i = 0; i < TBL_SIZE; ++i) {
-        tbl.insert(uptr(new int(i)), uptr(new int(i)));
+        REQUIRE(tbl.insert(Uptr(new int(i)), Uptr(new int(i))));
     }
     for (size_t i = 0; i < TBL_SIZE; ++i) {
         check_key_eq(tbl, i, i);
     }
     for (size_t i = 0; i < TBL_SIZE; ++i) {
-        tbl.update(uptr(new int(i)), uptr(new int(i+1)));
+        tbl.update(Uptr(new int(i)), Uptr(new int(i+1)));
     }
     for (size_t i = 0; i < TBL_SIZE; ++i) {
         check_key_eq(tbl, i, i+1);
@@ -48,18 +36,18 @@ TEST_CASE("noncopyable insert and update", "[noncopyable]") {
 }
 
 TEST_CASE("noncopyable upsert", "[noncopyable]") {
-    uptr_tbl tbl(TBL_INIT);
-    auto increment = [](uptr& ptr) {
+    Tbl tbl(TBL_INIT);
+    auto increment = [](Uptr& ptr) {
         *ptr += 1;
     };
     for (size_t i = 0; i < TBL_SIZE; ++i) {
-        tbl.upsert(uptr(new int(i)), increment, uptr(new int(i)));
+        tbl.upsert(Uptr(new int(i)), increment, Uptr(new int(i)));
     }
     for (size_t i = 0; i < TBL_SIZE; ++i) {
         check_key_eq(tbl, i, i);
     }
     for (size_t i = 0; i < TBL_SIZE; ++i) {
-        tbl.upsert(uptr(new int(i)), increment, uptr(new int(i)));
+        tbl.upsert(Uptr(new int(i)), increment, Uptr(new int(i)));
     }
     for (size_t i = 0; i < TBL_SIZE; ++i) {
         check_key_eq(tbl, i, i+1);
@@ -67,9 +55,9 @@ TEST_CASE("noncopyable upsert", "[noncopyable]") {
 }
 
 TEST_CASE("noncopyable iteration", "[noncopyable]") {
-    uptr_tbl tbl(TBL_INIT);
+    Tbl tbl(TBL_INIT);
     for (size_t i = 0; i < TBL_SIZE; ++i) {
-        tbl.insert(uptr(new int(i)), uptr(new int(i)));
+        tbl.insert(Uptr(new int(i)), Uptr(new int(i)));
     }
     {
         auto locked_tbl = tbl.lock_table();
@@ -106,5 +94,28 @@ TEST_CASE("nested table", "[noncopyable]") {
                     REQUIRE(t->find(c) == k);
                 }
             });
+    }
+}
+
+TEST_CASE("noncopyable insert lifetime") {
+    Tbl tbl;
+
+    // Successful insert
+    SECTION("Successful insert") {
+        Uptr key(new int(20));
+        Uptr value(new int(20));
+        REQUIRE(tbl.insert(std::move(key), std::move(value)));
+        REQUIRE(!static_cast<bool>(key));
+        REQUIRE(!static_cast<bool>(value));
+    }
+
+    // Unsuccessful insert
+    SECTION("Unsuccessful insert") {
+        tbl.insert(new int(20), new int(20));
+        Uptr key(new int(20));
+        Uptr value(new int(30));
+        REQUIRE_FALSE(tbl.insert(std::move(key), std::move(value)));
+        REQUIRE(!static_cast<bool>(key));
+        REQUIRE(static_cast<bool>(value));
     }
 }

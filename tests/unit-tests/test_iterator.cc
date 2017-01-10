@@ -11,6 +11,44 @@
 #include <libcuckoo/cuckoohash_map.hh>
 #include "unit_test_util.hh"
 
+TEST_CASE("iterator types", "[iterator]") {
+    using Ltbl = IntIntTable::locked_table;
+    using It = Ltbl::iterator;
+    using ConstIt = Ltbl::const_iterator;
+
+    const bool it_difference_type = std::is_same<Ltbl::difference_type,
+                                                 It::difference_type>::value;
+    const bool it_value_type = std::is_same<Ltbl::value_type,
+                                            It::value_type>::value;
+    const bool it_pointer = std::is_same<Ltbl::pointer, It::pointer>::value;
+    const bool it_reference = std::is_same<Ltbl::reference,
+                                           It::reference>::value;
+    const bool it_iterator_category = std::is_same<std::bidirectional_iterator_tag,
+                                                   It::iterator_category>::value;
+
+    const bool const_it_difference_type = std::is_same<
+        Ltbl::difference_type, ConstIt::difference_type>::value;
+    const bool const_it_value_type = std::is_same<Ltbl::value_type,
+                                                  ConstIt::value_type>::value;
+    const bool const_it_reference = std::is_same<Ltbl::const_reference,
+                                                 ConstIt::reference>::value;
+    const bool const_it_pointer = std::is_same<Ltbl::const_pointer,
+                                               ConstIt::pointer>::value;
+    const bool const_it_iterator_category = std::is_same<
+        std::bidirectional_iterator_tag, ConstIt::iterator_category>::value;
+
+    REQUIRE(it_difference_type);
+    REQUIRE(it_value_type);
+    REQUIRE(it_pointer);
+    REQUIRE(it_reference);
+    REQUIRE(it_iterator_category);
+
+    REQUIRE(const_it_difference_type);
+    REQUIRE(const_it_value_type);
+    REQUIRE(const_it_pointer);
+    REQUIRE(const_it_reference);
+    REQUIRE(const_it_iterator_category);
+}
 
 TEST_CASE("empty table iteration", "[iterator]") {
     IntIntTable table;
@@ -24,43 +62,6 @@ TEST_CASE("empty table iteration", "[iterator]") {
 
         REQUIRE(lt.cbegin() == lt.begin());
         REQUIRE(lt.cend() == lt.end());
-    }
-}
-
-TEST_CASE("iterator release", "[iterator]") {
-    IntIntTable table;
-    table.insert(10, 10);
-
-    SECTION("explicit unlock") {
-        auto lt = table.lock_table();
-        auto it = lt.begin();
-        lt.unlock();
-        REQUIRE(!lt.is_active());
-    }
-
-    SECTION("unlock through destructor") {
-        typename std::aligned_storage<sizeof(IntIntTable::locked_table),
-                                      alignof(IntIntTable::locked_table)>::type
-            lt_storage;
-        new(&lt_storage) IntIntTable::locked_table(
-            std::move(table.lock_table()));
-        IntIntTable::locked_table& lt_ref =
-            *reinterpret_cast<IntIntTable::locked_table*>(&lt_storage);
-        auto it = lt_ref.begin();
-        lt_ref.IntIntTable::locked_table::~locked_table();
-        REQUIRE(!lt_ref.is_active());
-        lt_ref.unlock();
-        REQUIRE(!lt_ref.is_active());
-    }
-
-    SECTION("iterators compare after table is moved") {
-        auto lt1 = table.lock_table();
-        auto it1 = lt1.begin();
-        auto it2 = lt1.begin();
-        REQUIRE(it1 == it2);
-        auto lt2(std::move(lt1));
-        REQUIRE(it1 == it2);
-        lt2.unlock();
     }
 }
 
