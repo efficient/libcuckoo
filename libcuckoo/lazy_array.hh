@@ -78,6 +78,8 @@ private:
 
 public:
     libcuckoo_lazy_array() noexcept : segments_{{nullptr}} {}
+
+    //! Constructs a lazy array allocated to fit at least @p target elements
     libcuckoo_lazy_array(size_t target): segments_{{nullptr}} {
         allocate(target);
     }

@@ -64,6 +64,19 @@ public:
     using const_reference = const value_type&;
     using pointer = typename std::allocator_traits<allocator_type>::pointer;
     using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer;
+    class locked_table;
+
+    /**@}*/
+
+    /** @name Table Parameters */
+    /**@{*/
+
+    /**
+     * The number of slots per hash bucket
+     */
+    static constexpr size_type slot_per_bucket() {
+        return SLOT_PER_BUCKET;
+    }
 
     /**@}*/
 
@@ -108,15 +121,6 @@ public:
      *
      */
     /**@{*/
-
-    /**
-     * Returns the number of slots per hash bucket
-     *
-     * @return the number of slots per bucket
-     */
-    static constexpr size_type slot_per_bucket() {
-        return SLOT_PER_BUCKET;
-    }
 
     /**
      * Returns the function that hashes the keys
@@ -281,10 +285,10 @@ public:
     /**@{*/
 
     /** Searches the table for @p key, and stores the associated value it finds
-     * in @p val. If @ref mapped_type is not @c CopyAssignable, then this
+     * in @p val. If @c mapped_type is not @c CopyAssignable, then this
      * function cannot be used.
      *
-     * @tparam K type of the key. This can be any type comparable with @ref key_type
+     * @tparam K type of the key. This can be any type comparable with @c key_type
      * @param[in] key the key to search for
      * @param[out] val the value to copy the result to
      * @return true if the key was found and value copied, false otherwise
@@ -384,7 +388,7 @@ public:
     }
 
     /**
-     * Changes the value associated with @p key to @p val. @ref mapped_type must
+     * Changes the value associated with @p key to @p val. @c T must
      * be @c CopyAssignable.
      *
      * @tparam K type of the key
@@ -488,6 +492,16 @@ public:
     void clear() {
         auto unlocker = snapshot_and_lock_all<locking_active>();
         cuckoo_clear();
+    }
+
+    /**
+     * Construct a @ref locked_table object that owns all the locks in the
+     * table.
+     *
+     * @return a \ref locked_table instance
+     */
+    locked_table lock_table() {
+        return locked_table(*this);
     }
 
     /**@}*/
@@ -2193,6 +2207,15 @@ public:
 
         /**@}*/
 
+        /** @name Table Parameters */
+        /**@{*/
+
+        static constexpr size_type slot_per_bucket() {
+            return cuckoohash_map::slot_per_bucket();
+        }
+
+        /**@}*/
+
         /** @name Constructors, Destructors, and Assignment */
         /**@{*/
 
@@ -2239,10 +2262,6 @@ public:
          */
         bool is_active() const {
             return unlocker_.is_active();
-        }
-
-        static constexpr size_type slot_per_bucket() {
-            return cuckoohash_map::slot_per_bucket();
         }
 
         hasher hash_function() const {
@@ -2574,13 +2593,6 @@ public:
 
         friend class cuckoohash_map;
     };
-
-    //! lock_table construct a @ref locked_table object that owns all the locks
-    //! in the table. This can be used to iterate through the table.
-    locked_table lock_table() {
-        return locked_table(*this);
-    }
-
 };
 
 #endif // _CUCKOOHASH_MAP_HH
