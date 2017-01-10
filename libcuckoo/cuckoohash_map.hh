@@ -2553,8 +2553,7 @@ public:
             }
             for (const auto& elem : lt) {
                 auto it = find(elem.first);
-                if (it == end() || it->first != elem.first ||
-                    it->second != elem.second) {
+                if (it == end() || it->second != elem.second) {
                     return false;
                 }
             }
@@ -2567,8 +2566,7 @@ public:
             }
             for (const auto& elem : lt) {
                 auto it = find(elem.first);
-                if (it == end() || it->first != elem.first ||
-                    it->second != elem.second) {
+                if (it == end() || it->second != elem.second) {
                     return true;
                 }
             }
