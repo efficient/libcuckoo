@@ -292,10 +292,15 @@ public:
     template <typename K>
     bool find(const K& key, mapped_type& val) const {
         const hash_value hv = hashed_key(key);
-        const auto b = snapshot_and_lock_two(hv);
-        const cuckoo_status st = cuckoo_find(key, val, hv.partial,
-                                             b.first(), b.second());
-        return (st == ok);
+        const TwoBuckets b = snapshot_and_lock_two(hv);
+        const table_position pos = cuckoo_find(
+            key, hv.partial, b.first(), b.second());
+        if (pos.status == ok) {
+            val = buckets_[pos.index].val(pos.slot);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /** Searches the table for @p key, and returns the associated value it
@@ -308,10 +313,12 @@ public:
      */
     template <typename K>
     mapped_type find(const K& key) const {
-        mapped_type val;
-        const bool done = find(key, val);
-        if (done) {
-            return val;
+        const hash_value hv = hashed_key(key);
+        const TwoBuckets b = snapshot_and_lock_two(hv);
+        const table_position pos = cuckoo_find(
+            key, hv.partial, b.first(), b.second());
+        if (pos.status == ok) {
+            return buckets_[pos.index].val(pos.slot);
         } else {
             throw std::out_of_range("key not found in table");
         }
@@ -349,7 +356,17 @@ public:
     template <typename K, typename... Args>
     bool insert(K&& key, Args&&... val) {
         K k(std::forward<K>(key));
-        return cuckoo_insert_loop(hashed_key(k), k, std::forward<Args>(val)...);
+        hash_value hv = hashed_key(k);
+        TwoBuckets b = snapshot_and_lock_two(hv);
+        table_position pos = cuckoo_insert_loop(hv, b, k);
+        if (pos.status == ok) {
+            add_to_bucket(pos.index, pos.slot, hv.partial, k,
+                          std::forward<Args>(val)...);
+            return true;
+        } else {
+            assert(pos.status == failure_key_duplicated);
+            return false;
+        }
     }
 
     /**
@@ -423,30 +440,23 @@ public:
     void upsert(K&& key, Updater fn, Args&&... val) {
         K k(std::forward<K>(key));
         const hash_value hv = hashed_key(k);
-        cuckoo_status st;
+        table_position pos;
         do {
             auto b = snapshot_and_lock_two(hv);
-            size_type hp = hashpower();
-            st = cuckoo_update_fn(k, fn, hv.partial, b.first(), b.second());
-            if (st == ok) {
-                break;
-            }
-
-            // We run an insert, since the update failed. Since we already have
-            // the locks, we don't run cuckoo_insert_loop immediately, to avoid
-            // releasing and re-grabbing the locks. Recall that the locks will
-            // be released at the end of this call to cuckoo_insert.
-            st = cuckoo_insert(hv, std::move(b), k, std::forward<Args>(val)...);
-            if (st == failure_table_full) {
-                cuckoo_fast_double(hp);
-                // Retry until the insert doesn't fail due to expansion.
-                if (cuckoo_insert_loop(hv, k, std::forward<Args>(val)...)) {
-                    break;
+            pos.status = cuckoo_update_fn(k, fn, hv.partial,
+                                          b.first(), b.second());
+            if (pos.status != ok) {
+                // We run an insert, since the update failed.
+                pos = cuckoo_insert_loop(hv, b, k);
+                assert(pos.status == ok || pos.status == failure_key_duplicated);
+                if (pos.status == ok) {
+                    add_to_bucket(pos.index, pos.slot, hv.partial, k,
+                                  std::forward<Args>(val)...);
                 }
-                // The only valid reason for failure is a duplicate key. In this
-                // case, we retry the entire upsert operation.
+                // The only other valid reason for failure is a duplicate key.
+                // In this case, we retry the entire upsert operation.
             }
-        } while (st != ok);
+        } while (pos.status != ok);
     }
 
     /**
@@ -929,28 +939,32 @@ private:
         failure_under_expansion,
     };
 
+
+    // A composite type for functions that need to return a table position, and
+    // a status code.
+    struct table_position {
+        size_type index;
+        size_type slot;
+        cuckoo_status status;
+    };
+
     // Searching types and functions
 
-    // cuckoo_find searches the table for the given key and value, storing the
-    // value in the val if it finds the key. It expects the locks to be taken
-    // and released outside the function.
+    // cuckoo_find searches the table for the given key, returning the position
+    // of the element found, or a failure status code if the key wasn't found.
+    // It expects the locks to be taken and released outside the function.
     template <typename K>
-    cuckoo_status cuckoo_find(const K &key, mapped_type& val,
-                              const partial_t partial,
-                              const size_type i1, const size_type i2) const {
-        const Bucket& b1 = buckets_[i1];
-        int slot = try_read_from_bucket(b1, partial, key);
+    table_position cuckoo_find(const K &key, const partial_t partial,
+                               const size_type i1, const size_type i2) const {
+        int slot = try_read_from_bucket(buckets_[i1], partial, key);
         if (slot != -1) {
-            val = b1.val(slot);
-            return ok;
+            return table_position{i1, static_cast<size_type>(slot), ok};
         }
-        const Bucket& b2 = buckets_[i2];
-        slot = try_read_from_bucket(b2, partial, key);
+        slot = try_read_from_bucket(buckets_[i2], partial, key);
         if (slot != -1) {
-            val = b2.val(slot);
-            return ok;
+            return table_position{i2, static_cast<size_type>(slot), ok};
         }
-        return failure_key_not_found;
+        return table_position{0, 0, failure_key_not_found};
     }
 
     // cuckoo_contains searches the table for the given key, returning true if
@@ -1013,68 +1027,83 @@ private:
     // Insertion types and function
 
     /**
-     * We run cuckoo_insert in a loop until it succeeds in insert and upsert, so
+     * Runs cuckoo_insert in a loop until it succeeds in insert and upsert, so
      * we pulled out the loop to avoid duplicating logic.
      *
-     * @param key the key to insert
-     * @param val the value to insert
      * @param hv the hash value of the key
-     * @return true if the insert succeeded, false if there was a duplicate key
+     * @param b bucket locks
+     * @param key the key to insert
+     * @return table_position of the location to insert the new element, or the
+     * site of the duplicate element with a status code if there was a duplicate.
+     * In either case, the locks will still be held after the function ends.
      * @throw libcuckoo_load_factor_too_low if expansion is necessary, but the
      * load factor of the table is below the threshold
      */
-    template <typename K, typename... Args>
-    bool cuckoo_insert_loop(hash_value hv, K& key, Args&&... val) {
-        cuckoo_status st;
-        do {
-            auto b = snapshot_and_lock_two(hv);
+    template <typename K>
+    table_position cuckoo_insert_loop(hash_value hv, TwoBuckets& b, K& key) {
+        table_position pos;
+        while (true) {
+            assert(b.is_active());
             const size_type hp = hashpower();
-            st = cuckoo_insert(hv, std::move(b), key, std::forward<Args>(val)...);
-            if (st == failure_key_duplicated) {
-                return false;
-            } else if (st == failure_table_full) {
+            pos = cuckoo_insert(hv, b, key);
+            switch (pos.status) {
+            case ok:
+            case failure_key_duplicated:
+                return pos;
+            case failure_table_full:
                 if (load_factor() < minimum_load_factor()) {
                     throw libcuckoo_load_factor_too_low(minimum_load_factor());
                 }
-                // Expand the table and try again
+                // Expand the table and try again, re-grabbing the locks
                 cuckoo_fast_double(hp);
+            case failure_under_expansion:
+                b = snapshot_and_lock_two(hv);
+                break;
+            default:
+                assert(false);
             }
-        } while (st != ok);
-        return true;
+        }
     }
 
-    // cuckoo_insert tries to insert the given key-value pair into an empty slot
-    // in either of the buckets, performing cuckoo hashing if necessary. It
-    // expects the locks to be taken outside the function, but they are released
-    // here, since different scenarios require different handling of the locks.
-    // Before inserting, it checks that the key isn't already in the table.
-    // cuckoo hashing presents multiple concurrency issues, which are explained
-    // in the function. If the insert fails, the key and value won't be
-    // move-constructed, so they can be retried.
-    template <typename K, typename... Args>
-    cuckoo_status cuckoo_insert(const hash_value hv, TwoBuckets b,
-                                K& key, Args&&... val) {
+    // cuckoo_insert tries to find an empty slot in either of the buckets to
+    // insert the given key into, performing cuckoo hashing if necessary. It
+    // expects the locks to be taken outside the function. Before inserting, it
+    // checks that the key isn't already in the table. cuckoo hashing presents
+    // multiple concurrency issues, which are explained in the function. The
+    // following return states are possible:
+    //
+    // ok -- Found an empty slot, locks will be held on both buckets after the
+    // function ends, and the position of the empty slot is returned
+    //
+    // failure_key_duplicated -- Found a duplicate key, locks will be held, and
+    // the position of the duplicate key will be returned
+    //
+    // failure_under_expansion -- Failed due to a concurrent expansion
+    // operation. Locks are released. No meaningful position is returned.
+    //
+    // failure_table_full -- Failed to find an empty slot for the table. Locks
+    // are released. No meaningful position is returned.
+    template <typename K>
+    table_position cuckoo_insert(const hash_value hv, TwoBuckets& b, K& key) {
         int res1, res2;
         Bucket& b1 = buckets_[b.first()];
         if (!try_find_insert_bucket(b1, res1, hv.partial, key)) {
-            return failure_key_duplicated;
+            return table_position{b.first(), static_cast<size_type>(res1),
+                    failure_key_duplicated};
         }
         Bucket& b2 = buckets_[b.second()];
         if (!try_find_insert_bucket(b2, res2, hv.partial, key)) {
-            return failure_key_duplicated;
+            return table_position{b.second(), static_cast<size_type>(res2),
+                    failure_key_duplicated};
         }
         if (res1 != -1) {
-            add_to_bucket(b1, b.first(), res1, hv.partial, key,
-                          std::forward<Args>(val)...);
-            return ok;
+            return table_position{b.first(), static_cast<size_type>(res1), ok};
         }
         if (res2 != -1) {
-            add_to_bucket(b2, b.second(), res2, hv.partial, key,
-                          std::forward<Args>(val)...);
-            return ok;
+            return table_position{b.second(), static_cast<size_type>(res2), ok};
         }
 
-        // we are unlucky, so let's perform cuckoo hashing.
+        // We are unlucky, so let's perform cuckoo hashing.
         size_type insert_bucket = 0;
         size_type insert_slot = 0;
         cuckoo_status st = run_cuckoo(b, insert_bucket, insert_slot);
@@ -1082,7 +1111,7 @@ private:
             // The run_cuckoo operation operated on an old version of the table,
             // so we have to try again. We signal to the calling insert method
             // to try again by returning failure_under_expansion.
-            return failure_under_expansion;
+            return table_position{0, 0, failure_under_expansion};
         } else if (st == ok) {
             assert(!locks_[lock_ind(b.first())].try_lock());
             assert(!locks_[lock_ind(b.second())].try_lock());
@@ -1094,56 +1123,56 @@ private:
             // Since we unlocked the buckets during run_cuckoo, another insert
             // could have inserted the same key into either b.first() or
             // b.second(), so we check for that before doing the insert.
-            if (cuckoo_contains(key, hv.partial, b.first(), b.second())) {
-                return failure_key_duplicated;
+            table_position pos = cuckoo_find(
+                key, hv.partial, b.first(), b.second());
+            if (pos.status == ok) {
+                pos.status = failure_key_duplicated;
+                return pos;
             }
-            add_to_bucket(buckets_[insert_bucket], insert_bucket, insert_slot,
-                          hv.partial, key, std::forward<Args>(val)...);
-            return ok;
+            return table_position{insert_bucket, insert_slot, ok};
         }
         assert(st == failure);
         LIBCUCKOO_DBG("hash table is full (hashpower = %zu, hash_items = %zu,"
                       "load factor = %.2f), need to increase hashpower\n",
                       hashpower(), size(), load_factor());
-        return failure_table_full;
+        return table_position{0, 0, failure_table_full};
     }
 
     // add_to_bucket will insert the given key-value pair into the slot. The key
     // and value will be move-constructed into the table, so they are not valid
     // for use afterwards.
     template <typename K, typename... Args>
-    void add_to_bucket(Bucket& b, const size_type bucket_ind, const size_type slot,
+    void add_to_bucket(const size_type bucket_ind, const size_type slot,
                        const partial_t partial, K& key, Args&&... val) {
+        Bucket& b = buckets_[bucket_ind];
         assert(!b.occupied(slot));
         b.setKV(allocator_, slot, partial,
                 key, std::forward<Args>(val)...);
         ++locks_[lock_ind(bucket_ind)].elem_counter();
     }
 
-    // try_find_insert_bucket will search the bucket and store the index of an
-    // empty slot if it finds one, or -1 if it doesn't. Regardless, it will
-    // search the entire bucket and return false if it finds the key already in
-    // the table (duplicate key error) and true otherwise.
+    // try_find_insert_bucket will search the bucket for the given key, and for
+    // an empty slot. If the key is found, we store the slot of the key in
+    // `slot` and return false. If we find an empty slot, we store its position
+    // in `slot` and return true. If no duplicate key is found and no empty slot
+    // is found, we store -1 in `slot` and return true.
     template <typename K>
     bool try_find_insert_bucket(const Bucket& b, int& slot,
                                 const partial_t partial, const K &key) const {
         // Silence a warning from MSVC about partial being unused if is_simple.
         (void)partial;
         slot = -1;
-        bool found_empty = false;
-        for (int i = 0; i < static_cast<int>(slot_per_bucket()); ++i) {
+        for (size_type i = 0; i < slot_per_bucket(); ++i) {
             if (b.occupied(i)) {
                 if (!is_simple && partial != b.partial(i)) {
                     continue;
                 }
                 if (key_eq()(b.key(i), key)) {
+                    slot = i;
                     return false;
                 }
             } else {
-                if (!found_empty) {
-                    found_empty = true;
-                    slot = i;
-                }
+                slot = i;
             }
         }
         return true;
@@ -1171,8 +1200,8 @@ private:
     // stored in insert_bucket and insert_slot. In order to perform the search
     // and the swaps, it has to release the locks, which can lead to certain
     // concurrency issues, the details of which are explained in the function.
-    // If run_cuckoo returns ok (success), then the bucket container will be
-    // active, otherwise it will not.
+    // If run_cuckoo returns ok (success), then `b` will be active, otherwise it
+    // will not.
     cuckoo_status run_cuckoo(TwoBuckets& b, size_type &insert_bucket,
                              size_type &insert_slot) {
         // We must unlock the buckets here, so that cuckoopath_search and
@@ -1193,7 +1222,6 @@ private:
         // case, the cuckoopath functions will have thrown a hashpower_changed
         // exception, which we catch and handle here.
         size_type hp = hashpower();
-        assert(b.is_active());
         b.unlock();
         CuckooRecords cuckoo_path;
         bool done = false;
