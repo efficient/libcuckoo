@@ -28,8 +28,6 @@ target_compile_options(universal_benchmark
     PRIVATE -D${UNIVERSAL_TABLE}
 )
 
-add_optimized_cxx_flags(universal_benchmark)
-
 add_test(NAME pure_read
          COMMAND universal_benchmark --reads 100 --prefill 90 --total-ops 500 --initial-capacity 23)
 add_test(NAME pure_insert

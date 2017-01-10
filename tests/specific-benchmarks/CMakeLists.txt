@@ -18,5 +18,3 @@ target_link_libraries(read_insert_throughput
     PRIVATE pcg
     PRIVATE libcuckoo
 )
-
-add_optimized_cxx_flags(insert_throughput read_throughput read_insert_throughput)

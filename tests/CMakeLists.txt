@@ -10,26 +10,6 @@ target_include_directories(test_util INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
 
-# Adds optimized flags to a list of executables
-function(add_optimized_cxx_flags)
-    foreach(target ${ARGN})
-        if((CMAKE_CXX_COMPILER_ID MATCHES "Clang") OR
-            ((CMAKE_CXX_COMPILER_ID MATCHES "GNU")))
-            target_compile_options(${target} PUBLIC -O3 -DNDEBUG)
-        endif()
-    endforeach()
-endfunction()
-
-# Adds debug flags to a list of executables
-function(add_debug_cxx_flags)
-    foreach(target ${ARGN})
-        if((CMAKE_CXX_COMPILER_ID MATCHES "Clang") OR
-            ((CMAKE_CXX_COMPILER_ID MATCHES "GNU")))
-            target_compile_options(${target} PUBLIC -O0 -g)
-        endif()
-    endforeach()
-endfunction()
-
 # Add pcg if we're doing stress tests, specific benchmarks, or universal
 # benchmark
 if (BUILD_TESTS OR

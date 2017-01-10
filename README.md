@@ -45,6 +45,8 @@ repository it builds.
 - `-DCMAKE_INSTALL_PREFIX` will set the location where the libcuckoo
   header files are installed
 
+- `-DCMAKE_BUILD_TYPE` will enable different types of build flags for different purposes
+
 - `-DBUILD_EXAMPLES=1` will tell `CMake` to build the `examples` directory
 
 - `-DBUILD_TESTS=1` will build all tests in the `tests` directory

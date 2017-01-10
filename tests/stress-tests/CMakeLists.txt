@@ -12,7 +12,5 @@ target_link_libraries(stress_unchecked
     PRIVATE libcuckoo
 )
 
-add_optimized_cxx_flags(stress_checked stress_unchecked)
-
 add_test(NAME stress_checked COMMAND stress_checked)
 add_test(NAME stress_unchecked COMMAND stress_unchecked)
