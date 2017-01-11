@@ -275,7 +275,7 @@ int main(int argc, char** argv) {
         // Pre-generate all the numeric indices and values we'd want to insert.
         // In case the insert + upsert percentage is too low, lower bound by the
         // table capacity.
-        std::cerr << "Generating indices and values\n";
+        std::cerr << "Generating keys and values\n";
         const size_t prefill_elems =
             initial_capacity * g_prefill_percentage / 100;
         // We won't be running through `op_mix` more than ceil(total_ops / 100),
@@ -293,18 +293,18 @@ int main(int argc, char** argv) {
             ceil(log2((insert_keys + g_threads - 1) / g_threads)));
         // Can't do this in parallel, because the random number generator is
         // single-threaded.
-        std::vector<std::vector<uint64_t> > nums;
+        std::vector<std::vector<uint64_t> > nums(g_threads);
         for (size_t i = 0; i < g_threads; ++i) {
-            nums.emplace_back(insert_keys_per_thread);
+            nums[i].resize(insert_keys_per_thread);
             gen_nums(nums[i], base_rng);
         }
-        std::vector<std::thread> gen_kv_threads;
-        std::vector<std::vector<KEY> > keys;
-        std::vector<std::vector<VALUE> > values;
+        std::vector<std::thread> gen_kv_threads(g_threads);
+        std::vector<std::vector<KEY> > keys(g_threads);
+        std::vector<std::vector<VALUE> > values(g_threads);
         for (size_t i = 0; i < g_threads; ++i) {
-            keys.emplace_back(insert_keys_per_thread);
-            values.emplace_back(insert_keys_per_thread);
-            gen_kv_threads.emplace_back(
+            keys[i].resize(insert_keys_per_thread);
+            values[i].resize(insert_keys_per_thread);
+            gen_kv_threads[i] = std::thread(
                 gen_keys_and_values, std::ref(nums[i]), std::ref(keys[i]),
                 std::ref(values[i]));
         }
@@ -318,10 +318,10 @@ int main(int argc, char** argv) {
         Table tbl(initial_capacity);
 
         std::cerr << "Pre-filling table\n";
-        std::vector<std::thread> prefill_threads;
+        std::vector<std::thread> prefill_threads(g_threads);
         const size_t prefill_elems_per_thread = prefill_elems / g_threads;
         for (size_t i = 0; i < g_threads; ++i) {
-            prefill_threads.emplace_back(
+            prefill_threads[i] = std::thread(
                 prefill, std::ref(tbl), std::ref(keys[i]), std::ref(values[i]),
                 prefill_elems_per_thread);
         }
