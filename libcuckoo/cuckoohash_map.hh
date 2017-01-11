@@ -1478,7 +1478,7 @@ private:
     private:
         // The maximum size of the BFS queue. Note that unless it's less than
         // slot_per_bucket()^MAX_BFS_PATH_LEN, it won't really mean anything.
-        static constexpr size_type MAX_CUCKOO_COUNT = 512;
+        static constexpr size_type MAX_CUCKOO_COUNT = 256;
         static_assert((MAX_CUCKOO_COUNT & (MAX_CUCKOO_COUNT - 1)) == 0,
                       "MAX_CUCKOO_COUNT should be a power of 2");
         // A circular array of b_slots
