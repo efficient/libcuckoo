@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -111,28 +112,38 @@ enum Ops {
     UPSERT,
 };
 
-void genkeys(std::vector<uint64_t>& keys,
-             const size_t gen_elems,
-             pcg64_oneseq_once_insecure& rng) {
-    for (uint64_t& num : keys) {
+void gen_nums(std::vector<uint64_t>& nums,
+              pcg64_oneseq_once_insecure& rng) {
+    for (uint64_t& num : nums) {
         num = rng();
     }
 }
 
-void prefill_thread(Table& tbl,
-                    const std::vector<uint64_t>& keys,
-                    const size_t prefill_elems) {
-    for (size_t i = 0; i < prefill_elems; ++i) {
-        ASSERT_TRUE(tbl.insert(Gen<KEY>::key(keys[i]),
-                               Gen<VALUE>::value()));
+void gen_keys_and_values(std::vector<uint64_t>& nums,
+                         std::vector<KEY>& keys,
+                         std::vector<VALUE>& values) {
+    const size_t n = nums.size();
+    for (size_t i = 0; i < n; ++i) {
+        keys[i] = Gen<KEY>::key(nums[i]);
+        values[i] = Gen<VALUE>::value();
     }
 }
 
-void mix_thread(Table& tbl,
-                const size_t num_ops,
-                const std::array<Ops, 100>& op_mix,
-                const std::vector<uint64_t>& keys,
-                const size_t prefill_elems) {
+void prefill(Table& tbl,
+             const std::vector<KEY>& keys,
+             const std::vector<VALUE>& values,
+             const size_t prefill_elems) {
+    for (size_t i = 0; i < prefill_elems; ++i) {
+        ASSERT_TRUE(tbl.insert(keys[i], values[i]));
+    }
+}
+
+void mix(Table& tbl,
+         const size_t num_ops,
+         const std::array<Ops, 100>& op_mix,
+         const std::vector<KEY>& keys,
+         const std::vector<VALUE>& values,
+         const size_t prefill_elems) {
     // Invariant: erase_seq <= insert_seq
     // Invariant: insert_seq < numkeys
     const size_t numkeys = keys.size();
@@ -142,16 +153,22 @@ void mix_thread(Table& tbl,
     // in the switch statement.
     size_t n;
     VALUE v;
-    // A convenience function for getting the nth key
+    // Convenience functions for getting the nth key and value
     auto key = [&keys](size_t n) {
-        return Gen<KEY>::key(keys.at(n));
+        assert(n < keys.size());
+        return keys[n];
+    };
+    auto val = [&values](size_t n) {
+        assert(n < values.size());
+        return values[n];
     };
     // The upsert function is just the identity
     auto upsert_fn = [](VALUE& v) { return; };
     // Use an LCG over the keys array to iterate over the keys in a pseudorandom
     // order, for find operations
+    assert(1UL << static_cast<size_t>(floor(log2(numkeys))) == numkeys);
+    assert(numkeys > 4);
     size_t find_seq = 0;
-    ASSERT_TRUE(numkeys % 4 == 0 && numkeys > 4);
     const size_t a = numkeys / 2 + 1;
     const size_t c = numkeys / 4 - 1;
     const size_t find_seq_mask = numkeys - 1;
@@ -174,7 +191,8 @@ void mix_thread(Table& tbl,
             case INSERT:
                 // Insert sequence number `insert_seq`. This should always
                 // succeed and be inserting a new value.
-                ASSERT_TRUE(tbl.insert(key(insert_seq++), Gen<VALUE>::value()));
+                ASSERT_TRUE(tbl.insert(key(insert_seq), val(insert_seq)));
+                ++insert_seq;
                 break;
             case ERASE:
                 // If `erase_seq` == `insert_seq`, the table should be empty, so
@@ -191,7 +209,7 @@ void mix_thread(Table& tbl,
                 // Same as find, except we update to the same default value
                 ASSERT_EQ(
                     find_seq >= erase_seq && find_seq < insert_seq,
-                    tbl.update(key(find_seq), Gen<VALUE>::value()));
+                    tbl.update(key(find_seq), val(find_seq)));
                 find_seq_update();
                 break;
             case UPSERT:
@@ -200,7 +218,7 @@ void mix_thread(Table& tbl,
                 // insert_seq.
                 n = std::max(find_seq, insert_seq);
                 find_seq_update();
-                tbl.upsert(key(n), upsert_fn, Gen<VALUE>::value());
+                tbl.upsert(key(n), upsert_fn, val(n));
                 if (n == insert_seq) {
                     ++insert_seq;
                 }
@@ -254,26 +272,44 @@ int main(int argc, char** argv) {
         }
         std::shuffle(op_mix.begin(), op_mix.end(), base_rng);
 
-        // Pre-generate all the keys we'd want to insert. In case the insert +
-        // upsert percentage is too low, lower bound by the table capacity.
-        std::cerr << "Generating keys\n";
+        // Pre-generate all the numeric indices and values we'd want to insert.
+        // In case the insert + upsert percentage is too low, lower bound by the
+        // table capacity.
+        std::cerr << "Generating indices and values\n";
         const size_t prefill_elems =
             initial_capacity * g_prefill_percentage / 100;
+        // We won't be running through `op_mix` more than ceil(total_ops / 100),
+        // so calculate that ceiling and multiply by the number of inserts and
+        // upserts to get an upper bound on how many elements we'll be
+        // inserting.
         const size_t max_insert_ops =
-            total_ops *
-            (g_insert_percentage + g_upsert_percentage) / 100 +
-            g_threads;
+            (total_ops + 99) / 100 *
+            (g_insert_percentage + g_erase_percentage);
         const size_t insert_keys =
             std::max(initial_capacity, max_insert_ops) + prefill_elems;
         // Round this quantity up to a power of 2, so that we can use an LCG to
         // cycle over the array "randomly".
-        size_t insert_keys_per_thread = insert_keys / g_threads;
-        insert_keys_per_thread = 1UL << static_cast<size_t>(
-            ceil(log2(static_cast<double>(insert_keys_per_thread))));
-        std::vector<std::vector<uint64_t> > keys(g_threads);
+        const size_t insert_keys_per_thread = 1UL << static_cast<size_t>(
+            ceil(log2((insert_keys + g_threads - 1) / g_threads)));
+        // Can't do this in parallel, because the random number generator is
+        // single-threaded.
+        std::vector<std::vector<uint64_t> > nums;
         for (size_t i = 0; i < g_threads; ++i) {
-            keys[i].resize(insert_keys_per_thread);
-            genkeys(keys[i], insert_keys_per_thread, base_rng);
+            nums.emplace_back(insert_keys_per_thread);
+            gen_nums(nums[i], base_rng);
+        }
+        std::vector<std::thread> gen_kv_threads;
+        std::vector<std::vector<KEY> > keys;
+        std::vector<std::vector<VALUE> > values;
+        for (size_t i = 0; i < g_threads; ++i) {
+            keys.emplace_back(insert_keys_per_thread);
+            values.emplace_back(insert_keys_per_thread);
+            gen_kv_threads.emplace_back(
+                gen_keys_and_values, std::ref(nums[i]), std::ref(keys[i]),
+                std::ref(values[i]));
+        }
+        for (auto& t : gen_kv_threads) {
+            t.join();
         }
 
         auto start_rss = max_rss();
@@ -282,11 +318,12 @@ int main(int argc, char** argv) {
         Table tbl(initial_capacity);
 
         std::cerr << "Pre-filling table\n";
-        std::vector<std::thread> prefill_threads(g_threads);
+        std::vector<std::thread> prefill_threads;
+        const size_t prefill_elems_per_thread = prefill_elems / g_threads;
         for (size_t i = 0; i < g_threads; ++i) {
-            prefill_threads[i] = std::thread(
-                prefill_thread, std::ref(tbl), std::ref(keys[i]),
-                prefill_elems / g_threads);
+            prefill_threads.emplace_back(
+                prefill, std::ref(tbl), std::ref(keys[i]), std::ref(values[i]),
+                prefill_elems_per_thread);
         }
         for (auto& t : prefill_threads) {
             t.join();
@@ -295,11 +332,12 @@ int main(int argc, char** argv) {
         // Run the operation mix, timed
         std::cerr << "Running operations\n";
         std::vector<std::thread> mix_threads(g_threads);
+        const size_t num_ops_per_thread = total_ops / g_threads;
         auto start_time = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < g_threads; ++i) {
             mix_threads[i] = std::thread(
-                mix_thread, std::ref(tbl), total_ops / g_threads,
-                std::ref(op_mix), std::ref(keys[i]), prefill_elems / g_threads);
+                mix, std::ref(tbl), num_ops_per_thread, std::ref(op_mix),
+                std::ref(keys[i]), std::ref(values[i]), prefill_elems_per_thread);
         }
         for (auto& t : mix_threads) {
             t.join();
