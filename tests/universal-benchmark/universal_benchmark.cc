@@ -120,29 +120,30 @@ void gen_nums(std::vector<uint64_t>& nums,
 }
 
 void gen_keys_and_values(std::vector<uint64_t>& nums,
-                         std::vector<KEY>& keys,
-                         std::vector<VALUE>& values) {
+                         std::vector<Gen<KEY>::storage_type>& keys,
+                         std::vector<Gen<VALUE>::storage_type>& values) {
     const size_t n = nums.size();
     for (size_t i = 0; i < n; ++i) {
-        keys[i] = Gen<KEY>::key(nums[i]);
-        values[i] = Gen<VALUE>::value();
+        keys[i] = Gen<KEY>::storage_key(nums[i]);
+        values[i] = Gen<VALUE>::storage_value();
     }
 }
 
 void prefill(Table& tbl,
-             const std::vector<KEY>& keys,
-             const std::vector<VALUE>& values,
+             const std::vector<Gen<KEY>::storage_type>& keys,
+             const std::vector<Gen<VALUE>::storage_type>& values,
              const size_t prefill_elems) {
     for (size_t i = 0; i < prefill_elems; ++i) {
-        ASSERT_TRUE(tbl.insert(keys[i], values[i]));
+        ASSERT_TRUE(tbl.insert(Gen<KEY>::get(keys[i]),
+                               Gen<VALUE>::get(values[i])));
     }
 }
 
 void mix(Table& tbl,
          const size_t num_ops,
          const std::array<Ops, 100>& op_mix,
-         const std::vector<KEY>& keys,
-         const std::vector<VALUE>& values,
+         const std::vector<Gen<KEY>::storage_type>& keys,
+         const std::vector<Gen<VALUE>::storage_type>& values,
          const size_t prefill_elems) {
     // Invariant: erase_seq <= insert_seq
     // Invariant: insert_seq < numkeys
@@ -156,11 +157,11 @@ void mix(Table& tbl,
     // Convenience functions for getting the nth key and value
     auto key = [&keys](size_t n) {
         assert(n < keys.size());
-        return keys[n];
+        return Gen<KEY>::get(keys[n]);
     };
     auto val = [&values](size_t n) {
         assert(n < values.size());
-        return values[n];
+        return Gen<VALUE>::get(values[n]);
     };
     // The upsert function is just the identity
     auto upsert_fn = [](VALUE& v) { return; };
@@ -299,8 +300,8 @@ int main(int argc, char** argv) {
             gen_nums(nums[i], base_rng);
         }
         std::vector<std::thread> gen_kv_threads(g_threads);
-        std::vector<std::vector<KEY> > keys(g_threads);
-        std::vector<std::vector<VALUE> > values(g_threads);
+        std::vector<std::vector<Gen<KEY>::storage_type> > keys(g_threads);
+        std::vector<std::vector<Gen<VALUE>::storage_type> > values(g_threads);
         for (size_t i = 0; i < g_threads; ++i) {
             keys[i].resize(insert_keys_per_thread);
             values[i].resize(insert_keys_per_thread);
