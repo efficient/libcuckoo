@@ -156,7 +156,7 @@ operator<<(std::basic_ostream<CharT,Traits>& out, pcg128_t value)
     constexpr auto BASE = pcg128_t(10ULL);
     do {
         auto div = value / BASE;
-        auto mod = uint32_t(value - (div * BASE));
+        auto mod = static_cast<uint32_t>(value - (div * BASE));
         *(--pos) = '0' + mod;
         value = div;
     } while(value != pcg128_t(0ULL));
