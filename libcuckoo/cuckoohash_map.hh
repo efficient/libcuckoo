@@ -1074,11 +1074,8 @@ private:
             case failure_key_duplicated:
                 return pos;
             case failure_table_full:
-                if (load_factor() < minimum_load_factor()) {
-                    throw libcuckoo_load_factor_too_low(minimum_load_factor());
-                }
                 // Expand the table and try again, re-grabbing the locks
-                cuckoo_fast_double<LOCK_T>(hp);
+                cuckoo_fast_double<LOCK_T, automatic_resize>(hp);
             case failure_under_expansion:
                 b = snapshot_and_lock_two<LOCK_T>(hv);
                 break;
@@ -1548,25 +1545,19 @@ private:
     // of the properties of index_hash and alt_index. If the key's move
     // constructor is not noexcept, we use cuckoo_expand_simple, since that
     // provides a strong exception guarantee.
-    template <typename LOCK_T>
+    template <typename LOCK_T, typename AUTO_RESIZE>
     cuckoo_status cuckoo_fast_double(size_type current_hp) {
         if (!std::is_nothrow_move_constructible<storage_value_type>::value) {
             LIBCUCKOO_DBG("%s", "cannot run cuckoo_fast_double because kv-pair "
                           "is not nothrow move constructible");
-            return cuckoo_expand_simple<LOCK_T>(current_hp + 1, true);
+            return cuckoo_expand_simple<LOCK_T, AUTO_RESIZE>(current_hp + 1);
         }
         const size_type new_hp = current_hp + 1;
-        const size_type mhp = maximum_hashpower();
-        if (mhp != LIBCUCKOO_NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
-            throw libcuckoo_maximum_hashpower_exceeded(new_hp);
-        }
-
         std::lock_guard<expansion_lock_t> l(expansion_lock_);
-        if (hashpower() != current_hp) {
-            // Most likely another expansion ran before this one could grab the
-            // locks
-            LIBCUCKOO_DBG("%s", "another expansion is on-going\n");
-            return failure_under_expansion;
+        cuckoo_status st = check_resize_validity(current_hp, new_hp,
+                                                 AUTO_RESIZE());
+        if (st != ok) {
+            return st;
         }
 
         locks_.allocate(std::min(locks_t::size(), hashsize(new_hp)));
@@ -1661,31 +1652,46 @@ private:
         }
     }
 
-    // cuckoo_expand_simple will resize the table to at least the given
-    // new_hashpower. If is_expansion is true, new_hashpower must be greater
-    // than the current size of the table. If it's false, then new_hashpower
-    // must be less. When we're shrinking the table, if the current table
-    // contains more elements than can be held by new_hashpower, the resulting
-    // hashpower will be greater than new_hashpower. It needs to take all the
-    // bucket locks, since no other operations can change the table during
-    // expansion. Throws libcuckoo_maximum_hashpower_exceeded if we're expanding
-    // beyond the maximum hashpower, and we have an actual limit.
-    template <typename LOCK_T>
-    cuckoo_status cuckoo_expand_simple(size_type new_hp, bool is_expansion) {
+    // Checks whether the resize is okay to proceed. Returns a status code, or
+    // throws an exception, depending on the error type.
+    using automatic_resize = std::integral_constant<bool, true>;
+    using manual_resize = std::integral_constant<bool, false>;
+
+    template <typename AUTO_RESIZE>
+    cuckoo_status check_resize_validity(const size_type orig_hp,
+                                        const size_type new_hp,
+                                        const AUTO_RESIZE&) {
         const size_type mhp = maximum_hashpower();
         if (mhp != LIBCUCKOO_NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
             throw libcuckoo_maximum_hashpower_exceeded(new_hp);
         }
-        const auto unlocker = snapshot_and_lock_all<LOCK_T>();
-        const size_type hp = hashpower();
-        if ((is_expansion && new_hp <= hp) ||
-            (!is_expansion && new_hp >= hp)) {
+        if (AUTO_RESIZE::value && load_factor() < minimum_load_factor()) {
+            throw libcuckoo_load_factor_too_low(minimum_load_factor());
+        }
+        if (hashpower() != orig_hp) {
             // Most likely another expansion ran before this one could grab the
             // locks
             LIBCUCKOO_DBG("%s", "another expansion is on-going\n");
             return failure_under_expansion;
         }
+        return ok;
+    }
 
+    // cuckoo_expand_simple will resize the table to at least the given
+    // new_hashpower. When we're shrinking the table, if the current table
+    // contains more elements than can be held by new_hashpower, the resulting
+    // hashpower will be greater than new_hashpower. It needs to take all the
+    // bucket locks, since no other operations can change the table during
+    // expansion. Throws libcuckoo_maximum_hashpower_exceeded if we're expanding
+    // beyond the maximum hashpower, and we have an actual limit.
+    template <typename LOCK_T, typename AUTO_RESIZE>
+    cuckoo_status cuckoo_expand_simple(size_type new_hp) {
+        const auto unlocker = snapshot_and_lock_all<LOCK_T>();
+        const size_type hp = hashpower();
+        cuckoo_status st = check_resize_validity(hp, new_hp, AUTO_RESIZE());
+        if (st != ok) {
+            return st;
+        }
         // Creates a new hash table with hashpower new_hp and adds all
         // the elements from the old buckets.
         cuckoohash_map new_map(
@@ -1896,7 +1902,7 @@ private:
         if (n == hp) {
             return false;
         }
-        return cuckoo_expand_simple<LOCK_T>(n, n > hp) == ok;
+        return cuckoo_expand_simple<LOCK_T, manual_resize>(n) == ok;
     }
 
     template <typename LOCK_T>
@@ -1906,7 +1912,7 @@ private:
         if (new_hp == hp) {
             return false;
         }
-        return cuckoo_expand_simple<LOCK_T>(new_hp, new_hp > hp) == ok;
+        return cuckoo_expand_simple<LOCK_T, manual_resize>(new_hp) == ok;
     }
 
     // Miscellaneous functions
