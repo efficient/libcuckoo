@@ -1554,8 +1554,7 @@ private:
         }
         const size_type new_hp = current_hp + 1;
         std::lock_guard<expansion_lock_t> l(expansion_lock_);
-        cuckoo_status st = check_resize_validity(current_hp, new_hp,
-                                                 AUTO_RESIZE());
+        cuckoo_status st = check_resize_validity<AUTO_RESIZE>(current_hp, new_hp);
         if (st != ok) {
             return st;
         }
@@ -1659,8 +1658,7 @@ private:
 
     template <typename AUTO_RESIZE>
     cuckoo_status check_resize_validity(const size_type orig_hp,
-                                        const size_type new_hp,
-                                        const AUTO_RESIZE&) {
+                                        const size_type new_hp) {
         const size_type mhp = maximum_hashpower();
         if (mhp != LIBCUCKOO_NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
             throw libcuckoo_maximum_hashpower_exceeded(new_hp);
@@ -1688,7 +1686,7 @@ private:
     cuckoo_status cuckoo_expand_simple(size_type new_hp) {
         const auto unlocker = snapshot_and_lock_all<LOCK_T>();
         const size_type hp = hashpower();
-        cuckoo_status st = check_resize_validity(hp, new_hp, AUTO_RESIZE());
+        cuckoo_status st = check_resize_validity<AUTO_RESIZE>(hp, new_hp);
         if (st != ok) {
             return st;
         }
