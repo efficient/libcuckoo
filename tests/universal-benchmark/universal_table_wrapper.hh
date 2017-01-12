@@ -33,25 +33,29 @@ class Table {
 public:
     Table(size_t n) : tbl(n) {}
 
-    bool read(KEY&& k, VALUE& v) const {
-        return tbl.find(std::forward<KEY>(k), v);
+    template <typename K, typename V>
+    bool read(const K& k, V& v) const {
+        return tbl.find(k, v);
     }
 
-    bool insert(KEY&& k, VALUE&& v) {
-        return tbl.insert(std::forward<KEY>(k), std::forward<VALUE>(v));
+    template <typename K, typename V>
+    bool insert(const K& k, const V& v) {
+        return tbl.insert(k, v);
     }
 
-    bool erase(KEY&& k) {
-        return tbl.erase(std::forward<KEY>(k));
+    template <typename K>
+    bool erase(const K& k) {
+        return tbl.erase(k);
     }
 
-    bool update(KEY&& k, VALUE&& v) {
-        return tbl.update(std::forward<KEY>(k), std::forward<VALUE>(v));
+    template <typename K, typename V>
+    bool update(const K& k, const V& v) {
+        return tbl.update(k, v);
     }
 
-    template <typename Updater>
-    void upsert(KEY&& k, Updater fn, VALUE&& v) {
-        tbl.upsert(std::forward<KEY>(k), fn, std::forward<VALUE>(v));
+    template <typename K, typename Updater, typename V>
+    void upsert(const K& k, Updater fn, const V& v) {
+        tbl.upsert(k, fn, v);
     }
 
 private:
