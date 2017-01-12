@@ -38,7 +38,7 @@ size_t g_initial_capacity = 25;
 size_t g_prefill_percentage = 0;
 // Total number of operations we are running, specified as a percentage of the
 // initial capacity. This can exceed 100.
-size_t g_total_ops_percentage = 90;
+size_t g_total_ops_percentage = 80;
 
 // Number of threads to run with
 size_t g_threads = std::thread::hardware_concurrency();
