@@ -30,13 +30,10 @@
 #error Must define VALUE symbol as valid value type
 #endif
 
-std::atomic<size_t>
-universal_benchmark_max_bytes_allocated = ATOMIC_VAR_INIT(0);
-
+#ifdef TRACKING_ALLOCATOR
 std::atomic<size_t>
 universal_benchmark_current_bytes_allocated = ATOMIC_VAR_INIT(0);
 
-#ifdef TRACKING_ALLOCATOR
 template <typename T>
 class Allocator : public std::allocator<T> {
 private:
@@ -74,12 +71,6 @@ public:
     pointer allocate(size_type n, const_void_pointer hint = nullptr) {
         universal_benchmark_current_bytes_allocated.fetch_add(
             n * sizeof(value_type), std::memory_order_acq_rel);
-        universal_benchmark_max_bytes_allocated.store(
-            std::max(universal_benchmark_max_bytes_allocated.load(
-                         std::memory_order_acquire),
-                     universal_benchmark_current_bytes_allocated.load(
-                         std::memory_order_acquire)),
-            std::memory_order_release);
         return traits::allocate(allocator_, n, hint);
     }
 
@@ -113,9 +104,55 @@ public:
 private:
     typename traits::allocator_type allocator_;
 };
+
+class Sampler {
+public:
+    Sampler(size_t num_ops) :
+        total_samples(num_ops / sampling_period),
+        current_iter(0),
+        samples(total_samples) {}
+
+    void iter() {
+        if ((current_iter & sampling_period_mask) == 0) {
+            samples[current_iter >> sampling_period_power] =
+                universal_benchmark_current_bytes_allocated.load(
+                    std::memory_order_acquire);
+        }
+        ++current_iter;
+    }
+
+    void store(std::vector<size_t>& v) const {
+        v = samples;
+    }
+
+private:
+    // We sample every 2^17 iterations (which is around 100K). Keeping the
+    // sampling period a power of 2 makes it easy to check whether we need to
+    // add a sample.
+    static constexpr size_t sampling_period_power = 17;
+    static constexpr size_t sampling_period = 1UL << 17;
+    static constexpr size_t sampling_period_mask = sampling_period - 1;
+    const size_t total_samples;
+    size_t current_iter;
+    std::vector<size_t> samples;
+};
+
 #else
 template <typename T>
 using Allocator = std::allocator<T>;
+
+class Sampler {
+public:
+    Sampler(size_t) {}
+    void iter() {}
+    void store(std::vector<size_t>& v) const {
+        v = samples;
+    }
+
+private:
+    std::vector<size_t> samples;
+};
+
 #endif
 
 #ifdef LIBCUCKOO

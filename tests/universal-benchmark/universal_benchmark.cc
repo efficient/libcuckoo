@@ -142,7 +142,9 @@ void mix(Table& tbl,
          const size_t num_ops,
          const std::array<Ops, 100>& op_mix,
          const std::vector<Gen<KEY>::storage_type>& keys,
-         const size_t prefill_elems) {
+         const size_t prefill_elems,
+         std::vector<size_t>& samples) {
+    Sampler sampler(num_ops);
     Gen<VALUE>::storage_type local_value = Gen<VALUE>::storage_value();
     // Invariant: erase_seq <= insert_seq
     // Invariant: insert_seq < numkeys
@@ -171,10 +173,10 @@ void mix(Table& tbl,
     auto find_seq_update = [&find_seq, &a, &c, &find_seq_mask, &numkeys]() {
         find_seq = (a * find_seq + c) & find_seq_mask;
     };
-
     // Run the operation mix for num_ops operations
     for (size_t i = 0; i < num_ops;) {
         for (size_t j = 0; j < 100 && i < num_ops; ++i, ++j) {
+            sampler.iter();
             switch (op_mix[j]) {
             case READ:
                 // If `find_seq` is between `erase_seq` and `insert_seq`, then it
@@ -223,6 +225,7 @@ void mix(Table& tbl,
             }
         }
     }
+    sampler.store(samples);
 }
 
 int main(int argc, char** argv) {
@@ -323,12 +326,14 @@ int main(int argc, char** argv) {
         // Run the operation mix, timed
         std::cerr << "Running operations\n";
         std::vector<std::thread> mix_threads(g_threads);
+        std::vector<std::vector<size_t> > samples(g_threads);
         const size_t num_ops_per_thread = total_ops / g_threads;
         auto start_time = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < g_threads; ++i) {
             mix_threads[i] = std::thread(
                 mix, std::ref(tbl), num_ops_per_thread, std::ref(op_mix),
-                std::ref(keys[i]), prefill_elems_per_thread);
+                std::ref(keys[i]), prefill_elems_per_thread,
+                std::ref(samples[i]));
         }
         for (auto& t : mix_threads) {
             t.join();
@@ -336,13 +341,30 @@ int main(int argc, char** argv) {
         auto end_time = std::chrono::high_resolution_clock::now();
         double seconds_elapsed = std::chrono::duration_cast<
             std::chrono::duration<double> >(end_time - start_time).count();
-
         // Print out args, preprocessor constants, and results in JSON format
         std::stringstream argstr;
         argstr << args[0] << " " << *arg_vars[0];
         for (size_t i = 1; i < sizeof(args)/sizeof(args[0]); ++i) {
             argstr << " " << args[i] << " " << *arg_vars[i];
         }
+        // Average together the allocator samples from each thread. If
+        // TRACKING_ALLOCATOR is turned off, the samples should all be empty,
+        // and this list should end up empty.
+        std::stringstream samplestr;
+        samplestr << "[";
+        const size_t total_samples = samples[0].size();
+        for (size_t i = 0; i < total_samples; ++i) {
+            size_t total = 0;
+            for (size_t j = 0; j < g_threads; ++j) {
+                total += samples.at(j).at(i);
+            }
+            size_t avg = total / g_threads;
+            samplestr << avg;
+            if (i < total_samples - 1) {
+                samplestr << ",";
+            }
+        }
+        samplestr << "]";
         const char* json_format = R"({
     "args": "%s",
     "key": "%s",
@@ -365,26 +387,19 @@ int main(int argc, char** argv) {
             "name": "Throughput",
             "units": "count/seconds",
             "value": %.4f
-        })"
-#ifdef TRACKING_ALLOCATOR
-            R"(,
-        "max_memory_allocated": {
-            "name": "Maximum Memory Allocated",
-            "units": "bytes",
-            "value": %ld
-        })"
-#endif
-            R"(
+        },
+        "memory_samples": {
+            "name": "Memory Samples",
+            "units": "[bytes]",
+            "value": %s
+        }
     }
 }
 )";
         printf(json_format, argstr.str().c_str(), XSTR(KEY), Gen<KEY>::key_size,
                XSTR(VALUE), Gen<VALUE>::value_size, TABLE, total_ops,
-               seconds_elapsed, total_ops / seconds_elapsed
-#ifdef TRACKING_ALLOCATOR
-               ,universal_benchmark_max_bytes_allocated.load()
-#endif
-            );
+               seconds_elapsed, total_ops / seconds_elapsed,
+               samplestr.str().c_str());
     } catch (const std::exception& e) {
         std::cerr << e.what();
         std::exit(1);
