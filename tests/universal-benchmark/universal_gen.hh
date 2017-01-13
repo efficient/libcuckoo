@@ -7,7 +7,8 @@
 #include <string>
 
 /* A specialized functor for generating unique keys and values for various
- * types. Must define one for each type we want to use. */
+ * types. Must define one for each type we want to use. These keys and values
+ * are meant to be copied into the table (not moved). */
 
 template <typename T>
 class Gen {
@@ -15,6 +16,8 @@ class Gen {
     // static storage_type storage_key(uint64_t num)
     // static storage_type storage_value()
     // static T get(storage_type&)
+    // static constexpr size_t key_size
+    // static constexpr size_t value_size
 };
 
 template <>
@@ -33,6 +36,9 @@ public:
     static uint64_t get(const storage_type& st) {
         return st;
     }
+
+    static constexpr size_t key_size = sizeof(uint64_t);
+    static constexpr size_t value_size = sizeof(uint64_t);
 };
 
 template <>
@@ -54,6 +60,9 @@ public:
     static std::string get(const storage_type& st) {
         return st;
     }
+
+    static constexpr size_t key_size = sizeof(uint64_t);
+    static constexpr size_t value_size = 100;
 };
 
 // Should be 256B. Bitset is nice since it already has std::hash specialized.
@@ -75,6 +84,9 @@ public:
     static MediumBlob get(const storage_type& st) {
         return st;
     }
+
+    static constexpr size_t key_size = sizeof(MediumBlob);
+    static constexpr size_t value_size = sizeof(MediumBlob);
 };
 
 // Should be 512B
@@ -96,6 +108,9 @@ public:
     static BigBlob get(const storage_type& st) {
         return st;
     }
+
+    static constexpr size_t key_size = sizeof(BigBlob);
+    static constexpr size_t value_size = sizeof(BigBlob);
 };
 
 template <typename T>
@@ -114,6 +129,9 @@ public:
     static T* get(const storage_type& st) {
         return st.get();
     }
+
+    static constexpr size_t key_size = Gen<T>::key_size;
+    static constexpr size_t value_size = Gen<T>::value_size;
 };
 
 #endif // _UNIVERSAL_GEN_HH

@@ -354,7 +354,9 @@ int main(int argc, char** argv) {
         const char* json_format = R"({
     "args": "%s",
     "key": "%s",
+    "key_size": "%zu",
     "value": "%s",
+    "value_size", "%zu",
     "table": "%s",
     "output": {
         "total_ops": {
@@ -384,9 +386,9 @@ int main(int argc, char** argv) {
     }
 }
 )";
-        printf(json_format, argstr.str().c_str(), XSTR(KEY), XSTR(VALUE),
-               TABLE, total_ops, seconds_elapsed,
-               total_ops / seconds_elapsed
+        printf(json_format, argstr.str().c_str(), XSTR(KEY), Gen<KEY>::key_size,
+               XSTR(VALUE), Gen<VALUE>::value_size, TABLE, total_ops,
+               seconds_elapsed, total_ops / seconds_elapsed
 #ifdef TRACKING_ALLOCATOR
                ,universal_benchmark_max_bytes_allocated.load()
 #endif
