@@ -313,8 +313,6 @@ int main(int argc, char** argv) {
             t.join();
         }
 
-        auto start_rss = max_rss();
-
         // Create and size the table
         Table tbl(initial_capacity);
 
@@ -344,7 +342,6 @@ int main(int argc, char** argv) {
             t.join();
         }
         auto end_time = std::chrono::high_resolution_clock::now();
-        auto end_rss = max_rss();
         double seconds_elapsed = std::chrono::duration_cast<
             std::chrono::duration<double> >(end_time - start_time).count();
 
@@ -374,18 +371,26 @@ int main(int argc, char** argv) {
             "name": "Throughput",
             "units": "count/seconds",
             "value": %.4f
-        },
-        "max_rss_change": {
-            "name": "Change in Maximum RSS",
+        })"
+#ifdef TRACKING_ALLOCATOR
+            R"(,
+        "max_memory_allocated": {
+            "name": "Maximum Memory Allocated",
             "units": "bytes",
             "value": %ld
-        }
+        })"
+#endif
+            R"(
     }
 }
 )";
         printf(json_format, argstr.str().c_str(), XSTR(KEY), XSTR(VALUE),
                TABLE, total_ops, seconds_elapsed,
-               total_ops / seconds_elapsed, end_rss - start_rss);
+               total_ops / seconds_elapsed
+#ifdef TRACKING_ALLOCATOR
+               ,universal_benchmark_max_bytes_allocated.load()
+#endif
+            );
     } catch (const std::exception& e) {
         std::cerr << e.what();
         std::exit(1);
