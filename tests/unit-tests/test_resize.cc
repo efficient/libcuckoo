@@ -1,3 +1,5 @@
+#include <array>
+
 #include <catch.hpp>
 
 #include <libcuckoo/cuckoohash_map.hh>
@@ -80,4 +82,44 @@ TEST_CASE("Resizing number of frees", "[resize]") {
         num_deletes_after_resize = my_type::num_deletes;
     }
     REQUIRE(my_type::num_deletes == num_deletes_after_resize + 9);
+}
+
+// Taken from https://github.com/facebook/folly/blob/master/folly/docs/Traits.md
+class NonRelocatableType {
+public:
+    std::array<char, 1024> buffer;
+    char *pointerToBuffer;
+    NonRelocatableType() : pointerToBuffer(buffer.data()) {}
+    NonRelocatableType(char c) : pointerToBuffer(buffer.data()) {
+        buffer.fill(c);
+    }
+
+    NonRelocatableType(const NonRelocatableType& x) noexcept
+        : buffer(x.buffer), pointerToBuffer(buffer.data()) {}
+
+    NonRelocatableType& operator=(const NonRelocatableType& x) {
+        buffer = x.buffer;
+        return *this;
+    }
+};
+
+TEST_CASE("Resize on non-relocatable type", "[resize]") {
+    cuckoohash_map<int, NonRelocatableType, std::hash<int>, std::equal_to<int>,
+                   std::allocator<std::pair<const int, NonRelocatableType> >, 1> map(0);
+    REQUIRE(map.hashpower() == 1);
+    // Make it resize a few times to ensure the vector capacity has to actually
+    // change when we resize the buckets
+    const size_t num_elems = 16;
+    for (int i = 0; i < num_elems; ++i) {
+        map.insert(i, 'a');
+    }
+    // Make sure each pointer actually points to its buffer
+    NonRelocatableType value;
+    std::array<char, 1024> ref;
+    ref.fill('a');
+    auto lt = map.lock_table();
+    for (const auto& kvpair : lt) {
+        REQUIRE(ref == kvpair.second.buffer);
+        REQUIRE(kvpair.second.pointerToBuffer == kvpair.second.buffer.data());
+    }
 }

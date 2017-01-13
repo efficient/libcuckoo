@@ -878,7 +878,6 @@ private:
         Bucket& operator=(const Bucket&) = delete;
         Bucket& operator=(Bucket&&) = delete;
 
-
         partial_t partial(size_type ind) const {
             return partials_[ind];
         }
