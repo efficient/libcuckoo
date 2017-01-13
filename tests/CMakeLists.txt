@@ -1,9 +1,3 @@
-include(CheckIncludeFileCXX)
-CHECK_INCLUDE_FILE_CXX(sys/resource.h HAVE_SYS_RESOURCE_H)
-CHECK_INCLUDE_FILE_CXX(mach/mach.h HAVE_MACH_MACH_H)
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-
 add_library(test_util INTERFACE)
 target_include_directories(test_util INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

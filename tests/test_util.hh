@@ -14,8 +14,6 @@
 #include <libcuckoo/cuckoohash_map.hh>
 #include <pcg/pcg_random.hpp>
 
-#include <config.h>
-
 std::mutex print_lock;
 int main_return_value = EXIT_SUCCESS;
 typedef std::lock_guard<std::mutex> mutex_guard;
