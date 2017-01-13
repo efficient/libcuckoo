@@ -25,7 +25,7 @@ TEST_CASE("given size", "[constructor]") {
 }
 
 TEST_CASE("frees even with exceptions", "[constructor]") {
-    typedef IntIntTableWithAlloc< TrackingAllocator<int, 0>> no_space_table;
+    typedef IntIntTableWithAlloc<TrackingAllocator<int, 0> > no_space_table;
     // Should throw when allocating the TableInfo struct
     REQUIRE_THROWS_AS(no_space_table(1), std::bad_alloc);
     REQUIRE(get_unfreed_bytes() == 0);

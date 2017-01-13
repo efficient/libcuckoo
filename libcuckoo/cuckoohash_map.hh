@@ -60,10 +60,15 @@ public:
     using hasher = Hash;
     using key_equal = Pred;
     using allocator_type = Alloc;
+
+private:
+    using allocator_traits_ = std::allocator_traits<allocator_type>;
+
+public:
     using reference = value_type&;
     using const_reference = const value_type&;
-    using pointer = typename std::allocator_traits<allocator_type>::pointer;
-    using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer;
+    using pointer = typename allocator_traits_::pointer;
+    using const_pointer = typename allocator_traits_::const_pointer;
     class locked_table;
 
     /**@}*/
@@ -635,8 +640,7 @@ private:
     using locks_t = libcuckoo_lazy_array<
         16 - LIBCUCKOO_LOCK_ARRAY_GRANULARITY, LIBCUCKOO_LOCK_ARRAY_GRANULARITY,
         spinlock,
-        typename std::allocator_traits<allocator_type>
-        ::template rebind_alloc<spinlock>
+        typename allocator_traits_::template rebind_alloc<spinlock>
         >;
 
     // The type of the expansion lock
@@ -862,23 +866,36 @@ private:
     // the key, to enable modifying bucket memory.
     class Bucket {
     public:
+        Bucket() {}
+        // The destructor does nothing to the key-value pairs, since we'd need
+        // an allocator to properly destroy the elements.
+        ~Bucket() {}
+
+        // No move or copy constructors, since we'd need an
+        // instance of the allocator to do any constructions or destructions
+        Bucket(const Bucket&) = delete;
+        Bucket(Bucket&&) = delete;
+        Bucket& operator=(const Bucket&) = delete;
+        Bucket& operator=(Bucket&&) = delete;
+
+
         partial_t partial(size_type ind) const {
             return partials_[ind];
         }
 
         const value_type& kvpair(size_type ind) const {
             return *static_cast<const value_type*>(
-                static_cast<const void*>(&kvpairs_[ind]));
+                static_cast<const void*>(std::addressof(kvpairs_[ind])));
         }
 
         value_type& kvpair(size_type ind) {
             return *static_cast<value_type*>(
-                static_cast<void*>(&kvpairs_[ind]));
+                static_cast<void*>(std::addressof(kvpairs_[ind])));
         }
 
         storage_value_type& storage_kvpair(size_type ind) {
             return *static_cast<storage_value_type*>(
-                static_cast<void*>(&kvpairs_[ind]));
+                static_cast<void*>(std::addressof(kvpairs_[ind])));
         }
 
         bool occupied(size_type ind) const {
@@ -898,40 +915,50 @@ private:
         }
 
         template <typename K, typename... Args>
-        void setKV(allocator_type& alloc, size_type ind, partial_t p,
+        void setKV(allocator_type& allocator, size_type ind, partial_t p,
                    K& k, Args&&... args) {
             partials_[ind] = p;
             occupied_[ind] = true;
-            alloc.construct(
-                &storage_kvpair(ind),
-                std::piecewise_construct,
+            allocator_traits_::construct(
+                allocator, &storage_kvpair(ind), std::piecewise_construct,
                 std::forward_as_tuple(std::move(k)),
                 std::forward_as_tuple(std::forward<Args>(args)...));
         }
 
-        void eraseKV(size_type ind) {
+        void eraseKV(allocator_type& allocator, size_type ind) {
             occupied_[ind] = false;
-            (&kvpair(ind))->~value_type();
+            allocator_traits_::destroy(
+                allocator, std::addressof(storage_kvpair(ind)));
         }
 
-        void clear() {
+        void clear(allocator_type& allocator) {
             for (size_type i = 0; i < slot_per_bucket(); ++i) {
                 if (occupied(i)) {
-                    eraseKV(i);
+                    eraseKV(allocator, i);
                 }
             }
         }
 
         // Moves the item in b1[slot1] into b2[slot2] without copying
-        static void move_to_bucket(allocator_type& alloc,
+        static void move_to_bucket(allocator_type& allocator,
                                    Bucket& b1, size_type slot1,
                                    Bucket& b2, size_type slot2) {
             assert(b1.occupied(slot1));
             assert(!b2.occupied(slot2));
             storage_value_type& tomove = b1.storage_kvpair(slot1);
-            b2.setKV(alloc, slot2, b1.partial(slot1),
+            b2.setKV(allocator, slot2, b1.partial(slot1),
                      tomove.first, std::move(tomove.second));
-            b1.eraseKV(slot1);
+            b1.eraseKV(allocator, slot1);
+        }
+
+        // Moves the contents of b1 to b2
+        static void move_bucket(allocator_type& allocator, Bucket& b1,
+                                Bucket& b2) {
+            for (size_type i = 0; i < slot_per_bucket(); ++i) {
+                if (b1.occupied(i)) {
+                    move_to_bucket(allocator, b1, i, b2, i);
+                }
+            }
         }
 
     private:
@@ -945,10 +972,7 @@ private:
 
     // The type of the buckets container
     using buckets_t = std::vector<
-        Bucket,
-        typename std::allocator_traits<allocator_type>
-        ::template rebind_alloc<Bucket>
-        >;
+        Bucket, typename allocator_traits_::template rebind_alloc<Bucket> >;
 
     // Status codes for internal functions
 
@@ -1561,7 +1585,16 @@ private:
 
         locks_.allocate(std::min(locks_t::size(), hashsize(new_hp)));
         auto unlocker = snapshot_and_lock_all<LOCK_T>();
-        buckets_.resize(buckets_.size() * 2);
+        // We can't just resize, since the Bucket is non-copyable and
+        // non-movable. Instead, we allocate a new array of buckets, and move
+        // the contents of each bucket manually.
+        {
+            buckets_t new_buckets(buckets_.size() * 2);
+            for (size_type i = 0; i < buckets_.size(); ++i) {
+                Bucket::move_bucket(allocator_, buckets_[i], new_buckets[i]);
+            }
+            buckets_.swap(new_buckets);
+        }
         set_hashpower(new_hp);
 
         // We gradually unlock the new table, by processing each of the buckets
@@ -1793,7 +1826,7 @@ private:
     void del_from_bucket(Bucket& b,
                          const size_type bucket_ind,
                          const size_type slot) {
-        b.eraseKV(slot);
+        b.eraseKV(allocator_, slot);
         --locks_[lock_ind(bucket_ind)].elem_counter();
     }
 
@@ -1884,7 +1917,7 @@ private:
     // necessary.
     cuckoo_status cuckoo_clear() {
         for (Bucket& b : buckets_) {
-            b.clear();
+            b.clear(allocator_);
         }
         for (size_type i = 0; i < locks_.allocated_size(); ++i) {
             locks_[i].elem_counter() = 0;

@@ -27,6 +27,8 @@ private:
     // The segments array itself is mutable, so that the const subscript
     // operator can still add segments
     mutable std::array<T*, NUM_SEGMENTS> segments_;
+    Alloc allocator_;
+    using traits_ = std::allocator_traits<Alloc>;
 
     void move_other_array(libcuckoo_lazy_array&& arr) {
         clear();
@@ -47,20 +49,19 @@ private:
     // Allocates an array of the given size and value-initializes each element
     // with the 0-argument constructor
     T* create_array(const size_t size) {
-        Alloc allocator;
-        T* arr = allocator.allocate(size);
+        T* arr = traits_::allocate(allocator_, size);
         // Initialize all the elements, safely deallocating and destroying
         // everything in case of error.
         size_t i;
         try {
             for (i = 0; i < size; ++i) {
-                allocator.construct(&arr[i]);
+                traits_::construct(allocator_, &arr[i]);
             }
         } catch (...) {
             for (size_t j = 0; j < i; ++j) {
-                allocator.destroy(&arr[j]);
+                traits_::destroy(allocator_, &arr[i]);
             }
-            allocator.deallocate(arr, size);
+            traits_::deallocate(allocator_, arr, size);
             throw;
         }
         return arr;
@@ -69,11 +70,10 @@ private:
     // Destroys every element of an array of the given size and then deallocates
     // the memory.
     void destroy_array(T* arr, const size_t size) {
-        Alloc allocator;
         for (size_t i = 0; i < size; ++i) {
-            allocator.destroy(&arr[i]);
+            traits_::destroy(allocator_, &arr[i]);
         }
-        allocator.deallocate(arr, size);
+        traits_::deallocate(allocator_, arr, size);
     }
 
 public:
