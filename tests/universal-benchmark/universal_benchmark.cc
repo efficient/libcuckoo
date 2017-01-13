@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
+#include <iostream>
 #include <random>
 #include <sstream>
 #include <stdexcept>
@@ -119,23 +120,21 @@ void gen_nums(std::vector<uint64_t>& nums,
     }
 }
 
-void gen_keys_and_values(std::vector<uint64_t>& nums,
-                         std::vector<Gen<KEY>::storage_type>& keys,
-                         std::vector<Gen<VALUE>::storage_type>& values) {
+void gen_keys(std::vector<uint64_t>& nums,
+              std::vector<Gen<KEY>::storage_type>& keys) {
     const size_t n = nums.size();
     for (size_t i = 0; i < n; ++i) {
         keys[i] = Gen<KEY>::storage_key(nums[i]);
-        values[i] = Gen<VALUE>::storage_value();
     }
 }
 
 void prefill(Table& tbl,
              const std::vector<Gen<KEY>::storage_type>& keys,
-             const std::vector<Gen<VALUE>::storage_type>& values,
              const size_t prefill_elems) {
+    Gen<VALUE>::storage_type local_value = Gen<VALUE>::storage_value();
     for (size_t i = 0; i < prefill_elems; ++i) {
         ASSERT_TRUE(tbl.insert(Gen<KEY>::get(keys[i]),
-                               Gen<VALUE>::get(values[i])));
+                               Gen<VALUE>::get(local_value)));
     }
 }
 
@@ -143,8 +142,8 @@ void mix(Table& tbl,
          const size_t num_ops,
          const std::array<Ops, 100>& op_mix,
          const std::vector<Gen<KEY>::storage_type>& keys,
-         const std::vector<Gen<VALUE>::storage_type>& values,
          const size_t prefill_elems) {
+    Gen<VALUE>::storage_type local_value = Gen<VALUE>::storage_value();
     // Invariant: erase_seq <= insert_seq
     // Invariant: insert_seq < numkeys
     const size_t numkeys = keys.size();
@@ -158,10 +157,6 @@ void mix(Table& tbl,
     auto key = [&keys](size_t n) {
         assert(n < keys.size());
         return Gen<KEY>::get(keys[n]);
-    };
-    auto val = [&values](size_t n) {
-        assert(n < values.size());
-        return Gen<VALUE>::get(values[n]);
     };
     // The upsert function is just the identity
     auto upsert_fn = [](VALUE& v) { return; };
@@ -192,7 +187,8 @@ void mix(Table& tbl,
             case INSERT:
                 // Insert sequence number `insert_seq`. This should always
                 // succeed and be inserting a new value.
-                ASSERT_TRUE(tbl.insert(key(insert_seq), val(insert_seq)));
+                ASSERT_TRUE(tbl.insert(key(insert_seq),
+                                       Gen<VALUE>::get(local_value)));
                 ++insert_seq;
                 break;
             case ERASE:
@@ -210,7 +206,7 @@ void mix(Table& tbl,
                 // Same as find, except we update to the same default value
                 ASSERT_EQ(
                     find_seq >= erase_seq && find_seq < insert_seq,
-                    tbl.update(key(find_seq), val(find_seq)));
+                    tbl.update(key(find_seq), Gen<VALUE>::get(local_value)));
                 find_seq_update();
                 break;
             case UPSERT:
@@ -219,7 +215,7 @@ void mix(Table& tbl,
                 // insert_seq.
                 n = std::max(find_seq, insert_seq);
                 find_seq_update();
-                tbl.upsert(key(n), upsert_fn, val(n));
+                tbl.upsert(key(n), upsert_fn, Gen<VALUE>::get(local_value));
                 if (n == insert_seq) {
                     ++insert_seq;
                 }
@@ -273,10 +269,9 @@ int main(int argc, char** argv) {
         }
         std::shuffle(op_mix.begin(), op_mix.end(), base_rng);
 
-        // Pre-generate all the numeric indices and values we'd want to insert.
-        // In case the insert + upsert percentage is too low, lower bound by the
-        // table capacity.
-        std::cerr << "Generating keys and values\n";
+        // Pre-generate all the keys we'd want to insert. In case the insert +
+        // upsert percentage is too low, lower bound by the table capacity.
+        std::cerr << "Generating keys\n";
         const size_t prefill_elems =
             initial_capacity * g_prefill_percentage / 100;
         // We won't be running through `op_mix` more than ceil(total_ops / 100),
@@ -299,17 +294,14 @@ int main(int argc, char** argv) {
             nums[i].resize(insert_keys_per_thread);
             gen_nums(nums[i], base_rng);
         }
-        std::vector<std::thread> gen_kv_threads(g_threads);
+        std::vector<std::thread> gen_key_threads(g_threads);
         std::vector<std::vector<Gen<KEY>::storage_type> > keys(g_threads);
-        std::vector<std::vector<Gen<VALUE>::storage_type> > values(g_threads);
         for (size_t i = 0; i < g_threads; ++i) {
             keys[i].resize(insert_keys_per_thread);
-            values[i].resize(insert_keys_per_thread);
-            gen_kv_threads[i] = std::thread(
-                gen_keys_and_values, std::ref(nums[i]), std::ref(keys[i]),
-                std::ref(values[i]));
+            gen_key_threads[i] = std::thread(
+                gen_keys, std::ref(nums[i]), std::ref(keys[i]));
         }
-        for (auto& t : gen_kv_threads) {
+        for (auto& t : gen_key_threads) {
             t.join();
         }
 
@@ -321,7 +313,7 @@ int main(int argc, char** argv) {
         const size_t prefill_elems_per_thread = prefill_elems / g_threads;
         for (size_t i = 0; i < g_threads; ++i) {
             prefill_threads[i] = std::thread(
-                prefill, std::ref(tbl), std::ref(keys[i]), std::ref(values[i]),
+                prefill, std::ref(tbl), std::ref(keys[i]),
                 prefill_elems_per_thread);
         }
         for (auto& t : prefill_threads) {
@@ -336,7 +328,7 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < g_threads; ++i) {
             mix_threads[i] = std::thread(
                 mix, std::ref(tbl), num_ops_per_thread, std::ref(op_mix),
-                std::ref(keys[i]), std::ref(values[i]), prefill_elems_per_thread);
+                std::ref(keys[i]), prefill_elems_per_thread);
         }
         for (auto& t : mix_threads) {
             t.join();
