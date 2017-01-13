@@ -29,13 +29,13 @@ target_compile_options(universal_benchmark
 )
 
 add_test(NAME pure_read
-         COMMAND universal_benchmark --reads 100 --prefill 90 --total-ops 500 --initial-capacity 23)
+         COMMAND universal_benchmark --reads 100 --prefill 75 --total-ops 500 --initial-capacity 23)
 add_test(NAME pure_insert
-         COMMAND universal_benchmark --inserts 100 --total-ops 90 --initial-capacity 23)
+         COMMAND universal_benchmark --inserts 100 --total-ops 75 --initial-capacity 23)
 add_test(NAME pure_erase
-         COMMAND universal_benchmark --erases 100 --prefill 90 --total-ops 90 --initial-capacity 23)
+         COMMAND universal_benchmark --erases 100 --prefill 75 --total-ops 75 --initial-capacity 23)
 add_test(NAME pure_update
-         COMMAND universal_benchmark --updates 100 --prefill 90 --total-ops 500 --initial-capacity 23)
+         COMMAND universal_benchmark --updates 100 --prefill 75 --total-ops 500 --initial-capacity 23)
 add_test(NAME pure_upsert
          COMMAND universal_benchmark --upserts 100 --prefill 25 --total-ops 200 --initial-capacity 23)
 
