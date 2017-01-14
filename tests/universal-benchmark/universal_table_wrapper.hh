@@ -34,10 +34,10 @@
 std::atomic<size_t>
 universal_benchmark_current_bytes_allocated = ATOMIC_VAR_INIT(0);
 
-template <typename T>
-class Allocator : public std::allocator<T> {
+template <template <typename> class WrappedAlloc, typename T>
+class Allocator {
 private:
-    using traits = std::allocator_traits<std::allocator<T> >;
+    using traits = std::allocator_traits<WrappedAlloc<T> >;
 
 public:
     using value_type = typename traits::value_type;
@@ -52,13 +52,14 @@ public:
 
     template <typename U>
     struct rebind {
-        using other = Allocator<U>;
+        using other = Allocator<WrappedAlloc, U>;
     };
 
     Allocator() {}
 
     template<typename U>
-    Allocator(const Allocator<U>&) {}
+    Allocator(const Allocator<WrappedAlloc, U>& alloc) :
+        allocator_(alloc.allocator_) {}
 
     pointer address(reference x) const {
         return std::addressof(x);
@@ -101,7 +102,6 @@ public:
         return false;
     }
 
-private:
     typename traits::allocator_type allocator_;
 };
 
@@ -138,8 +138,8 @@ private:
 };
 
 #else
-template <typename T>
-using Allocator = std::allocator<T>;
+template <template <typename> class WrappedAlloc, typename T>
+using Allocator = WrappedAlloc<T>;
 
 class Sampler {
 public:
@@ -191,7 +191,8 @@ public:
 
 private:
     cuckoohash_map<KEY, VALUE, std::hash<KEY>, std::equal_to<KEY>,
-                   Allocator<std::pair<const KEY, VALUE> > > tbl;
+                   Allocator<std::allocator,
+                             std::pair<const KEY, VALUE> > > tbl;
 };
 
 #else
