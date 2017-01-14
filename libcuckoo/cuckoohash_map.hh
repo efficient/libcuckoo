@@ -8,21 +8,15 @@
 #include <atomic>
 #include <bitset>
 #include <cassert>
-#include <chrono>
-#include <climits>
-#include <cmath>
 #include <cstdint>
 #include <cstdlib>
-#include <cstring>
 #include <functional>
 #include <iterator>
 #include <limits>
-#include <list>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <thread>
-#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -1671,7 +1665,7 @@ private:
         // each slot, since it depends on the hashpower.
         const size_type locks_to_move = std::min(
             locks_.size(), hashsize(current_hp));
-        parallel_exec(0, locks_to_move, kNumCores(),
+        parallel_exec(0, locks_to_move,
                       [this, current_hp, new_hp]
                       (size_type start, size_type end, std::exception_ptr& eptr) {
                           try {
@@ -1680,7 +1674,7 @@ private:
                               eptr = std::current_exception();
                           }
                       });
-        parallel_exec(locks_to_move, locks_.size(), kNumCores(),
+        parallel_exec(locks_to_move, locks_.size(),
                       [this](size_type i, size_type end, std::exception_ptr&) {
                           for (; i < end; ++i) {
                               locks_[i].unlock(LOCK_T());
@@ -1826,18 +1820,21 @@ private:
 
     // Executes the function over the given range split over num_threads threads
     template <typename F>
-    static void parallel_exec(size_type start, size_type end,
-                              size_type num_threads, F func) {
+    static void parallel_exec(size_type start, size_type end, F func) {
+        static const size_type num_threads = (
+            std::thread::hardware_concurrency() == 0 ?
+            1 : std::thread::hardware_concurrency());
         size_type work_per_thread = (end - start) / num_threads;
-        std::vector<std::thread> threads(num_threads);
-        std::vector<std::exception_ptr> eptrs(num_threads, nullptr);
+        std::vector<std::thread, typename allocator_traits_::
+        template rebind_alloc<std::thread> > threads(num_threads);
+        std::vector<std::exception_ptr, typename allocator_traits_::
+        template rebind_alloc<std::exception_ptr>> eptrs(num_threads, nullptr);
         for (size_type i = 0; i < num_threads - 1; ++i) {
             threads[i] = std::thread(func, start, start + work_per_thread,
                                      std::ref(eptrs[i]));
             start += work_per_thread;
         }
-        threads[num_threads - 1] = std::thread(
-            func, start, end, std::ref(eptrs[num_threads - 1]));
+        threads.back() = std::thread(func, start, end, std::ref(eptrs.back()));
         for (std::thread& t : threads) {
             t.join();
         }
@@ -2014,12 +2011,6 @@ private:
     // number of locks in the locks array
     static constexpr size_type kNumLocks() {
         return static_cast<size_type>(1) << 16;
-    }
-
-    // number of cores on the machine
-    static size_type kNumCores() {
-        static size_type cores = std::thread::hardware_concurrency();
-        return cores;
     }
 
     void set_hashpower(size_type val) {
