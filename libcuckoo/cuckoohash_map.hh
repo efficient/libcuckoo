@@ -100,12 +100,15 @@ public:
                    const hasher& hf = hasher(),
                    const key_equal& eql = key_equal(),
                    const allocator_type& alloc = allocator_type())
-        : hashpower_(reserve_calc(n)), buckets_(hashsize(hashpower())),
-          locks_(std::min(locks_t::size(), hashsize(hashpower()))),
+        : hashpower_(reserve_calc(n)),
+          hash_fn_(hf),
+          eq_fn_(eql),
+          allocator_(alloc),
+          buckets_(hashsize(hashpower()), alloc),
+          locks_(hashsize(hashpower()), alloc),
           expansion_lock_(),
           minimum_load_factor_(LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR),
-          maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER),
-          hash_fn_(hf), eq_fn_(eql), allocator_(alloc) {}
+          maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER) {}
 
     /**
      * Destroys the table. The destructors of all elements stored in the table
@@ -179,7 +182,7 @@ public:
      * @return true if the table is empty, false otherwise
      */
     bool empty() const {
-        for (size_type i = 0; i < locks_.allocated_size(); ++i) {
+        for (size_type i = 0; i < locks_.size(); ++i) {
             if (locks_[i].elem_counter() > 0) {
                 return false;
             }
@@ -194,7 +197,7 @@ public:
      */
     size_type size() const {
         size_type s = 0;
-        for (size_type i = 0; i < locks_.allocated_size(); ++i) {
+        for (size_type i = 0; i < locks_.size(); ++i) {
             s += locks_[i].elem_counter();
         }
         return s;
@@ -727,7 +730,7 @@ private:
     private:
         struct AllUnlocker {
             void operator()(locks_t* p) const {
-                for (size_type i = 0; i < p->allocated_size(); ++i) {
+                for (size_type i = 0; i < p->size(); ++i) {
                     (*p)[i].unlock(LOCK_T());
                 }
             }
@@ -842,7 +845,7 @@ private:
     // no other threads should be accessing the buckets.
     template <typename LOCK_T>
     AllBuckets<LOCK_T> snapshot_and_lock_all() const {
-        for (size_type i = 0; i < locks_.allocated_size(); ++i) {
+        for (size_type i = 0; i < locks_.size(); ++i) {
             locks_[i].lock(LOCK_T());
         }
         return AllBuckets<LOCK_T>(&locks_);
@@ -866,10 +869,10 @@ private:
     // the key, to enable modifying bucket memory.
     class Bucket {
     public:
-        Bucket() {}
+        Bucket() noexcept {}
         // The destructor does nothing to the key-value pairs, since we'd need
         // an allocator to properly destroy the elements.
-        ~Bucket() {}
+        ~Bucket() noexcept {}
 
         // No move or copy constructors, since we'd need an
         // instance of the allocator to do any constructions or destructions
@@ -969,9 +972,70 @@ private:
                    slot_per_bucket()> kvpairs_;
     };
 
+    class BucketContainer {
+        using traits_ = typename allocator_traits_::
+            template rebind_traits<Bucket>;
+    public:
+        BucketContainer(size_type n, typename traits_::allocator_type alloc)
+            : buckets_(traits_::allocate(allocator_, n)),
+              allocator_(alloc), size_(n) {
+            // The Bucket default constructor is nothrow, so we don't have to
+            // worry about dealing with exceptions when constructing all the
+            // elements.
+            static_assert(
+                std::is_nothrow_constructible<Bucket>::value,
+                "BucketContainer requires Bucket to be nothrow constructible");
+            for (size_type i = 0; i < size_; ++i) {
+                traits_::construct(allocator_, &buckets_[i]);
+            }
+        }
+
+        BucketContainer(const BucketContainer&) = delete;
+        BucketContainer(BucketContainer&&) = delete;
+        BucketContainer& operator=(const BucketContainer&) = delete;
+        BucketContainer& operator=(BucketContainer&&) = delete;
+
+        ~BucketContainer() noexcept {
+            static_assert(
+                std::is_nothrow_destructible<Bucket>::value,
+                "BucketContainer requires Bucket to be nothrow destructible");
+            for (size_type i = 0; i < size_; ++i) {
+                traits_::destroy(allocator_, &buckets_[i]);
+            }
+            traits_::deallocate(allocator_, buckets_, size());
+        }
+
+        size_type size() const {
+            return size_;
+        }
+
+        void swap(BucketContainer& other) noexcept {
+            std::swap(buckets_, other.buckets_);
+            // If propagate_container_on_swap is false, we do nothing if the
+            // allocators are equal. If they're not equal, behavior is
+            // undefined, so we can still do nothing.
+            if (traits_::propagate_on_container_swap::value) {
+                std::swap(allocator_, other.allocator_);
+            }
+            std::swap(size_, other.size_);
+        }
+
+        Bucket& operator[](size_type i) {
+            return buckets_[i];
+        }
+
+        const Bucket& operator[](size_type i) const {
+            return buckets_[i];
+        }
+
+    private:
+        typename traits_::pointer buckets_;
+        typename allocator_traits_::template rebind_alloc<Bucket> allocator_;
+        size_type size_;
+    };
+
     // The type of the buckets container
-    using buckets_t = std::vector<
-        Bucket, typename allocator_traits_::template rebind_alloc<Bucket> >;
+    using buckets_t = BucketContainer;
 
     // Status codes for internal functions
 
@@ -1582,13 +1646,13 @@ private:
             return st;
         }
 
-        locks_.allocate(std::min(locks_t::size(), hashsize(new_hp)));
+        locks_.resize(hashsize(new_hp));
         auto unlocker = snapshot_and_lock_all<LOCK_T>();
         // We can't just resize, since the Bucket is non-copyable and
         // non-movable. Instead, we allocate a new array of buckets, and move
         // the contents of each bucket manually.
         {
-            buckets_t new_buckets(buckets_.size() * 2);
+            buckets_t new_buckets(buckets_.size() * 2, get_allocator());
             for (size_type i = 0; i < buckets_.size(); ++i) {
                 Bucket::move_bucket(allocator_, buckets_[i], new_buckets[i]);
             }
@@ -1605,8 +1669,8 @@ private:
         // because unlocking new locks would enable operations on the table
         // before we want them. We also re-evaluate the partial key stored at
         // each slot, since it depends on the hashpower.
-        const size_type locks_to_move = std::min(locks_t::size(),
-                                              hashsize(current_hp));
+        const size_type locks_to_move = std::min(
+            locks_.size(), hashsize(current_hp));
         parallel_exec(0, locks_to_move, kNumCores(),
                       [this, current_hp, new_hp]
                       (size_type start, size_type end, std::exception_ptr& eptr) {
@@ -1616,7 +1680,7 @@ private:
                               eptr = std::current_exception();
                           }
                       });
-        parallel_exec(locks_to_move, locks_.allocated_size(), kNumCores(),
+        parallel_exec(locks_to_move, locks_.size(), kNumCores(),
                       [this](size_type i, size_type end, std::exception_ptr&) {
                           for (; i < end; ++i) {
                               locks_[i].unlock(LOCK_T());
@@ -1634,7 +1698,7 @@ private:
         for (; start_lock_ind < end_lock_ind; ++start_lock_ind) {
             for (size_type bucket_i = start_lock_ind;
                  bucket_i < hashsize(current_hp);
-                 bucket_i += locks_t::size()) {
+                 bucket_i += locks_t::max_size()) {
                 // By doubling the table size, the index_hash and alt_index of
                 // each key got one bit added to the top, at position
                 // current_hp, which means anything we have to move will either
@@ -1755,7 +1819,7 @@ private:
         // reading from the buckets array. Then the old buckets array will be
         // deleted when new_map is deleted. All the locks should be released by
         // the unlocker as well.
-        std::swap(buckets_, new_map.buckets_);
+        buckets_.swap(new_map.buckets_);
         set_hashpower(new_map.hashpower_);
         return ok;
     }
@@ -1915,10 +1979,10 @@ private:
     // elements it removes from the table. It assumes the locks are taken as
     // necessary.
     cuckoo_status cuckoo_clear() {
-        for (Bucket& b : buckets_) {
-            b.clear(allocator_);
+        for (size_type i = 0; i < buckets_.size(); ++i) {
+            buckets_[i].clear(allocator_);
         }
-        for (size_type i = 0; i < locks_.allocated_size(); ++i) {
+        for (size_type i = 0; i < locks_.size(); ++i) {
             locks_[i].elem_counter() = 0;
         }
         return ok;
@@ -1983,6 +2047,15 @@ private:
     // atomic
     std::atomic<size_type> hashpower_;
 
+    // The hash function
+    hasher hash_fn_;
+
+    // The equality function
+    key_equal eq_fn_;
+
+    // The allocator
+    allocator_type allocator_;
+
     // vector of buckets. The size or memory location of the buckets cannot be
     // changed unless al the locks are taken on the table. Thus, it is only safe
     // to access the buckets_ vector when you have at least one lock held.
@@ -2006,15 +2079,6 @@ private:
     // stores the maximum hashpower allowed for any expansions. If set to
     // NO_MAXIMUM_HASHPOWER, this limit will be disregarded.
     std::atomic<size_type> maximum_hashpower_;
-
-    // The hash function
-    hasher hash_fn_;
-
-    // The equality function
-    key_equal eq_fn_;
-
-    // The allocator
-    allocator_type allocator_;
 
 public:
     /**

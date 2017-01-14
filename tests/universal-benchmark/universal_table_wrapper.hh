@@ -57,7 +57,7 @@ public:
 
     Allocator() {}
 
-    template<typename U>
+    template <typename U>
     Allocator(const Allocator<WrappedAlloc, U>& alloc) :
         allocator_(alloc.allocator_) {}
 

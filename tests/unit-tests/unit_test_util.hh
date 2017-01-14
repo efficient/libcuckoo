@@ -26,15 +26,18 @@ template <class T, int64_t BOUND = -1>
 class TrackingAllocator {
 private:
     using traits_ = std::allocator_traits<std::allocator<T> >;
-    std::allocator<T> allocator_;
-
 public:
     using value_type = T;
-
     template <typename U>
     struct rebind {
         using other = TrackingAllocator<U, BOUND>;
     };
+
+    TrackingAllocator() {}
+
+    template <typename U>
+    TrackingAllocator(const TrackingAllocator<U, BOUND>& alloc)
+        : allocator_(alloc.allocator_) {}
 
     typename traits_::pointer
     allocate(typename traits_::size_type n,
@@ -52,6 +55,8 @@ public:
         get_unfreed_bytes() -= (sizeof(T) * n);
         traits_::deallocate(allocator_, p, n);
     }
+
+    std::allocator<T> allocator_;
 };
 
 using IntIntTable = cuckoohash_map<
