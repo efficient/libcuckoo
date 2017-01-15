@@ -73,27 +73,9 @@ TEST_CASE("locked_table move", "[locked_table]") {
 TEST_CASE("locked_table unlock", "[locked_table]") {
     IntIntTable tbl;
     tbl.insert(10, 10);
-
-    SECTION("explicit unlock") {
-        auto lt = tbl.lock_table();
-        lt.unlock();
-        REQUIRE(!lt.is_active());
-    }
-
-    SECTION("unlock through destructor") {
-        typename std::aligned_storage<sizeof(IntIntTable::locked_table),
-                                      alignof(IntIntTable::locked_table)>::type
-            lt_storage;
-        new(&lt_storage) IntIntTable::locked_table(
-            std::move(tbl.lock_table()));
-        IntIntTable::locked_table& lt_ref =
-            *reinterpret_cast<IntIntTable::locked_table*>(&lt_storage);
-        auto it = lt_ref.begin();
-        lt_ref.IntIntTable::locked_table::~locked_table();
-        REQUIRE(!lt_ref.is_active());
-        lt_ref.unlock();
-        REQUIRE(!lt_ref.is_active());
-    }
+    auto lt = tbl.lock_table();
+    lt.unlock();
+    REQUIRE(!lt.is_active());
 }
 
 TEST_CASE("locked_table info", "[locked_table]") {
