@@ -14,7 +14,7 @@ const size_t TBL_SIZE = TBL_INIT * Tbl::slot_per_bucket() * 2;
 
 void check_key_eq(Tbl& tbl, int key, int expected_val) {
     REQUIRE(tbl.contains(Uptr(new int(key))));
-    tbl.update_fn(Uptr(new int(key)), [expected_val](const Uptr& ptr) {
+    tbl.find_fn(Uptr(new int(key)), [expected_val](const Uptr& ptr) {
             REQUIRE(*ptr == expected_val);
         });
 }
@@ -118,4 +118,20 @@ TEST_CASE("noncopyable insert lifetime") {
         REQUIRE(!static_cast<bool>(key));
         REQUIRE(static_cast<bool>(value));
     }
+}
+
+TEST_CASE("noncopyable erase_fn") {
+    Tbl tbl;
+    tbl.insert(new int(10), new int(10));
+    auto decrement_and_erase = [](Uptr& p) {
+        --(*p);
+        return *p == 0;
+    };
+    Uptr k(new int(10));
+    for (int i = 0; i < 9; ++i) {
+        tbl.erase_fn(k, decrement_and_erase);
+        REQUIRE(tbl.contains(k));
+    }
+    tbl.erase_fn(k, decrement_and_erase);
+    REQUIRE_FALSE(tbl.contains(k));
 }
