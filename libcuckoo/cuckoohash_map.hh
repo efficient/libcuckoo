@@ -286,31 +286,133 @@ public:
      */
     /**@{*/
 
-    /** Searches the table for @p key, and stores the associated value it finds
-     * in @p val. If @c mapped_type is not @c CopyAssignable, then this
-     * function cannot be used.
+    /**
+     * Searches the table for @p key, and invokes @p fn on the value. @p fn is
+     * not allowed to modify the contents of the value if found.
      *
      * @tparam K type of the key. This can be any type comparable with @c key_type
-     * @param[in] key the key to search for
-     * @param[out] val the value to copy the result to
-     * @return true if the key was found and value copied, false otherwise
+     * @tparam F type of the functor. It should implement the method
+     * <tt>void operator()(const mapped_type&)</tt>.
+     * @param key the key to search for
+     * @param fn the functor to invoke if the element is found
+     * @return true if the key was found and functor invoked, false otherwise
      */
-    template <typename K>
-    bool find(const K& key, mapped_type& val) const {
+    template <typename K, typename F>
+    bool find_fn(const K& key, F fn) const {
         const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two<locking_active>(hv);
         const table_position pos = cuckoo_find(
             key, hv.partial, b.first(), b.second());
         if (pos.status == ok) {
-            val = buckets_[pos.index].val(pos.slot);
+            fn(buckets_[pos.index].val(pos.slot));
             return true;
         } else {
             return false;
         }
     }
 
+    /**
+     * Searches the table for @p key, and invokes @p fn on the value. @p fn is
+     * allow to modify the contents of the value if found.
+     *
+     * @tparam K type of the key. This can be any type comparable with @c key_type
+     * @tparam F type of the functor. It should implement the method
+     * <tt>void operator()(mapped_type&)</tt>.
+     * @param key the key to search for
+     * @param fn the functor to invoke if the element is found
+     * @return true if the key was found and functor invoked, false otherwise
+     */
+    template <typename K, typename F>
+    bool update_fn(const K& key, F fn) {
+        const hash_value hv = hashed_key(key);
+        const auto b = snapshot_and_lock_two<locking_active>(hv);
+        const table_position pos = cuckoo_find(
+            key, hv.partial, b.first(), b.second());
+        if (pos.status == ok) {
+            fn(buckets_[pos.index].val(pos.slot));
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Searches for @p key in the table. If the key is not there, it is inserted
+     * with @p val. If the key is there, then @p fn is called on the value. The
+     * key will be immediately constructed as @c key_type(std::forward<K>(key)).
+     * If the insertion succeeds, this constructed key will be moved into the
+     * table and the value constructed from the @p val parameters. If the
+     * insertion fails, the constructed key will be destroyed, and the @p val
+     * parameters will remain valid. If there is no room left in the table, it
+     * will be automatically expanded. Expansion may throw exceptions.
+     *
+     * @tparam K type of the key
+     * @tparam F type of the functor. It should implement the method
+     * <tt>void operator()(mapped_type&)</tt>.
+     * @tparam Args list of types for the value constructor arguments
+     * @param key the key to insert into the table
+     * @param fn the functor to invoke if the element is found
+     * @param val a list of constructor arguments with which to create the value
+     * @return true if a new key was inserted, false if the key was already in
+     * the table
+     */
+    template <typename K, typename F, typename... Args>
+    bool upsert(K&& key, F fn, Args&&... val) {
+        K k(std::forward<K>(key));
+        hash_value hv = hashed_key(k);
+        auto b = snapshot_and_lock_two<locking_active>(hv);
+        table_position pos = cuckoo_insert_loop(hv, b, k);
+        if (pos.status == ok) {
+            add_to_bucket(pos.index, pos.slot, hv.partial, k,
+                          std::forward<Args>(val)...);
+        } else {
+            fn(buckets_[pos.index].val(pos.slot));
+        }
+        return pos.status == ok;
+    }
+
+    /**
+     * Searches for @p key in the table, and invokes @p fn on the value if the
+     * key is found. The functor can mutate the value, and should return @c true
+     * in order to erase the element, and @c false otherwise.
+     *
+     * @tparam K type of the key
+     * @tparam F type of the functor. It should implement the method
+     * <tt>bool operator()(mapped_type&)</tt>.
+     * @param key the key to possibly erase from the table
+     * @param fn the functor to invoke if the element is found
+     * @return true if @p key was found and @p fn invoked, false otherwise
+     */
+    template <typename K, typename F>
+    bool erase_fn(const K& key, F fn) {
+        const hash_value hv = hashed_key(key);
+        const auto b = snapshot_and_lock_two<locking_active>(hv);
+        const table_position pos = cuckoo_find(
+            key, hv.partial, b.first(), b.second());
+        if (pos.status == ok) {
+            if (fn(buckets_[pos.index].val(pos.slot))) {
+                del_from_bucket(buckets_[pos.index], pos.index, pos.slot);
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Copies the value associated with @p key into @p val. Equivalent to
+     * calling @ref find_fn with a functor that copies the value into @p val. @c
+     * mapped_type must be @c CopyAssignable.
+     */
+    template <typename K>
+    bool find(const K& key, mapped_type& val) const {
+        return find_fn(key, [&val](const mapped_type& v) mutable {
+                val = v;
+            });
+    }
+
     /** Searches the table for @p key, and returns the associated value it
-     * finds.
+     * finds. @c mapped_type must be @c CopyConstructible.
      *
      * @tparam K type of the key
      * @param key the key to search for
@@ -330,136 +432,43 @@ public:
         }
     }
 
-    /** Returns whether or not @p key is in the table.
-     *
-     * @tparam K type of the key
-     * @param key the key to search for
-     * @return true if the key was found, false otherwise
+    /** Returns whether or not @p key is in the table. Equivalent to @ref
+     * find_fn with a functor that does nothing.
      */
     template <typename K>
     bool contains(const K& key) const {
-        const hash_value hv = hashed_key(key);
-        const auto b = snapshot_and_lock_two<locking_active>(hv);
-        return cuckoo_contains(key, hv.partial, b.first(), b.second());
+        return find_fn(key, [](const mapped_type&) {});
     }
 
     /**
-     * Inserts the given key-value pair into the table. The key will be
-     * immediately constructed as @c key_type(std::forward<K>(key)). If the
-     * insertion succeeds, this constructed key will be moved into the table and
-     * the value constructed from the @p val parameters. If the insertion fails,
-     * the constructed key will be destroyed, and the @p val parameters will
-     * remain valid. If there is no room left in the table, it will be
-     * automatically expanded, which may throw exceptions.
-     *
-     * @tparam K type of the key
-     * @tparam Args list of types for the value constructor arguments
-     * @param key the key to insert into the table
-     * @param val a list of constructor arguments with which to create the value
-     * @return true if the insertion succeeded, false if there was a duplicate
-     */
-    template <typename K, typename... Args>
-    bool insert(K&& key, Args&&... val) {
-        K k(std::forward<K>(key));
-        hash_value hv = hashed_key(k);
-        auto b = snapshot_and_lock_two<locking_active>(hv);
-        table_position pos = cuckoo_insert_loop(hv, b, k);
-        if (pos.status == ok) {
-            add_to_bucket(pos.index, pos.slot, hv.partial, k,
-                          std::forward<Args>(val)...);
-            return true;
-        } else {
-            assert(pos.status == failure_key_duplicated);
-            return false;
-        }
-    }
-
-    /**
-     * Erases @p key and its associated value from the table, calling their
-     * destructors.
-     *
-     * @tparam K type of the key
-     * @param key the key to erase from the table
-     * @return true if the key was erased, false otherwise
-     */
-    template <typename K>
-    bool erase(const K& key) {
-        const hash_value hv = hashed_key(key);
-        const auto b = snapshot_and_lock_two<locking_active>(hv);
-        return cuckoo_delete(key, hv.partial, b.first(), b.second()) == ok;
-    }
-
-    /**
-     * Changes the value associated with @p key to @p val. @c T must
-     * be @c CopyAssignable.
-     *
-     * @tparam K type of the key
-     * @tparam V type of the value
-     * @param key the key whose value we're updating
-     * @param val the new value
-     * @return true if the key was updated, false otherwise
+     * Updates the value associated with @p key to @p val. Equivalent to calling
+     * @ref update_fn with a functor that copies @p val into the associated
+     * value. @c mapped_type must be @c MoveAssignable or @c CopyAssignable.
      */
     template <typename K, typename V>
     bool update(const K& key, V&& val) {
-        const hash_value hv = hashed_key(key);
-        const auto b = snapshot_and_lock_two<locking_active>(hv);
-        const cuckoo_status st = cuckoo_update(hv.partial, b.first(), b.second(),
-                                               key, std::forward<V>(val));
-        return (st == ok);
+        return update_fn(key, [&val](mapped_type& v) {
+                v = std::forward<V>(val);
+            });
     }
 
     /**
-     * Changes the value associated with @p key using the provided updater
-     * function.
-     *
-     * @tparam K type of the key
-     * @tparam Updater type of updater functor
-     * @param key the key whose value we're updating
-     * @param fn the updater functor
-     * @return true if the key was updated, false otherwise
+     * Inserts the key-value pair into the table. Equivalent to calling @ref
+     * upsert with a functor that does nothing.
      */
-    template <typename K, typename Updater>
-    bool update_fn(const K& key, Updater fn) {
-        const hash_value hv = hashed_key(key);
-        const auto b = snapshot_and_lock_two<locking_active>(hv);
-        const cuckoo_status st = cuckoo_update_fn(key, fn, hv.partial,
-                                                  b.first(), b.second());
-        return (st == ok);
+    template <typename K, typename... Args>
+    bool insert(K&& key, Args&&... val) {
+        return upsert(std::forward<K>(key), [](mapped_type&) {},
+                      std::forward<Args>(val)...);
     }
 
     /**
-     * A combination of @ref update_fn and @ref insert, it first tries updating
-     * the value associated with @p key using @p fn. If @p key is not in the
-     * table, then it runs an insert with @p key and @p val.
-     *
-     * @tparam K type of the key
-     * @tparam Updater type of updater functor
-     * @tparam Args list of types for the value constructor arguments
-     * @param key the key whose value we're updating
-     * @param fn the updater functor
-     * @param val constructor arguments to pass to value constructor if we do an insert
+     * Erases the key from the table. Equivalent to calling @ref erase_fn with a
+     * functor that just returns true.
      */
-    template <typename K, typename Updater, typename... Args>
-    void upsert(K&& key, Updater fn, Args&&... val) {
-        K k(std::forward<K>(key));
-        const hash_value hv = hashed_key(k);
-        table_position pos;
-        do {
-            auto b = snapshot_and_lock_two<locking_active>(hv);
-            pos.status = cuckoo_update_fn(k, fn, hv.partial,
-                                          b.first(), b.second());
-            if (pos.status != ok) {
-                // We run an insert, since the update failed.
-                pos = cuckoo_insert_loop(hv, b, k);
-                assert(pos.status == ok || pos.status == failure_key_duplicated);
-                if (pos.status == ok) {
-                    add_to_bucket(pos.index, pos.slot, hv.partial, k,
-                                  std::forward<Args>(val)...);
-                }
-                // The only other valid reason for failure is a duplicate key.
-                // In this case, we retry the entire upsert operation.
-            }
-        } while (pos.status != ok);
+    template <typename K>
+    bool erase(const K& key) {
+        return erase_fn(key, [](mapped_type&) { return true; });
     }
 
     /**
@@ -847,7 +856,7 @@ private:
 
     // lock_ind converts an index into buckets to an index into locks.
     static inline size_type lock_ind(const size_type bucket_ind) {
-        return bucket_ind & (kNumLocks() - 1);
+        return bucket_ind & (locks_t::max_size() - 1);
     }
 
     // Data storage types and functions
@@ -1070,21 +1079,6 @@ private:
         return table_position{0, 0, failure_key_not_found};
     }
 
-    // cuckoo_contains searches the table for the given key, returning true if
-    // it's in the table and false otherwise. It expects the locks to be taken
-    // and released outside the function.
-    template <typename K>
-    bool cuckoo_contains(const K& key, const partial_t partial,
-                         const size_type i1, const size_type i2) const {
-        if (check_in_bucket(buckets_[i1], partial, key)) {
-            return true;
-        }
-        if (check_in_bucket(buckets_[i2], partial, key)) {
-            return true;
-        }
-        return false;
-    }
-
     // try_read_from_bucket will search the bucket for the given key and return
     // the index of the slot if found, or -1 if not found.
     template <typename K>
@@ -1093,38 +1087,13 @@ private:
         // Silence a warning from MSVC about partial being unused if is_simple.
         (void)partial;
         for (size_type i = 0; i < slot_per_bucket(); ++i) {
-            if (!b.occupied(i)) {
+            if (!b.occupied(i) || (!is_simple && partial != b.partial(i))) {
                 continue;
-            }
-            if (!is_simple && partial != b.partial(i)) {
-                continue;
-            }
-            if (key_eq()(b.key(i), key)) {
+            } else if (key_eq()(b.key(i), key)) {
                 return i;
             }
         }
         return -1;
-    }
-
-    // check_in_bucket will search the bucket for the given key and return true
-    // if the key is in the bucket, and false if it isn't.
-    template <typename K>
-    bool check_in_bucket(const Bucket& b, const partial_t partial,
-                         const K &key) const {
-        // Silence a warning from MSVC about partial being unused if is_simple.
-        (void)partial;
-        for (size_type i = 0; i < slot_per_bucket(); ++i) {
-            if (!b.occupied(i)) {
-                continue;
-            }
-            if (!is_simple && partial != b.partial(i)) {
-                continue;
-            }
-            if (key_eq()(b.key(i), key)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     // Insertion types and function
@@ -1789,7 +1758,7 @@ private:
             get_allocator());
 
         parallel_exec(
-            0, hashsize(hp), kNumCores(),
+            0, hashsize(hp),
             [this, &new_map]
             (size_type i, size_type end, std::exception_ptr& eptr) {
                 try {
@@ -1847,134 +1816,16 @@ private:
 
     // Deletion functions
 
-    // cuckoo_delete searches the table for the given key and sets the slot with
-    // that key to empty if it finds it. It expects the locks to be taken and
-    // released outside the function.
-    template <typename K>
-    cuckoo_status cuckoo_delete(const K &key, const partial_t partial,
-                                const size_type i1, const size_type i2) {
-        if (try_del_from_bucket(partial, key, i1)) {
-            return ok;
-        }
-        if (try_del_from_bucket(partial, key, i2)) {
-            return ok;
-        }
-        return failure_key_not_found;
-    }
-
-    // try_del_from_bucket will search the bucket for the given key, and erase
-    // the slot containing the key, if it finds it.
-    template <typename K>
-    bool try_del_from_bucket(const partial_t partial, const K &key,
-                             const size_type bucket_ind) {
-        Bucket& b = buckets_[bucket_ind];
-        for (size_type i = 0; i < slot_per_bucket(); ++i) {
-            if (!b.occupied(i)) {
-                continue;
-            }
-            if (!is_simple && b.partial(i) != partial) {
-                continue;
-            }
-            if (key_eq()(b.key(i), key)) {
-                del_from_bucket(b, bucket_ind, i);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void del_from_bucket(Bucket& b,
-                         const size_type bucket_ind,
+    // Removes an item from a bucket, decrementing the associated counter as
+    // well.
+    void del_from_bucket(Bucket& b, const size_type bucket_ind,
                          const size_type slot) {
         b.eraseKV(allocator_, slot);
         --locks_[lock_ind(bucket_ind)].elem_counter();
     }
 
-    // Update functions
-
-    // cuckoo_update searches the table for the given key and updates its value
-    // if it finds it. It expects the locks to be taken and released outside the
-    // function.
-    template <typename K, typename V>
-    cuckoo_status cuckoo_update(const partial_t partial, const size_type i1,
-                                const size_type i2, const K &key, V&& val) {
-        if (try_update_bucket(partial, buckets_[i1], key,
-                              std::forward<V>(val))) {
-            return ok;
-        }
-        if (try_update_bucket(partial, buckets_[i2], key,
-                              std::forward<V>(val))) {
-            return ok;
-        }
-        return failure_key_not_found;
-    }
-
-    // try_update_bucket will search the bucket for the given key and change its
-    // associated value if it finds it.
-    template <typename K, typename V>
-    bool try_update_bucket(const partial_t partial, Bucket& b,
-                           const K &key, V&& val) {
-        for (size_type i = 0; i < slot_per_bucket(); ++i) {
-            if (!b.occupied(i)) {
-                continue;
-            }
-            if (!is_simple && b.partial(i) != partial) {
-                continue;
-            }
-            if (key_eq()(b.key(i), key)) {
-                b.val(i) = std::forward<V>(val);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Update_fn functions
-
-    // cuckoo_update_fn searches the table for the given key and runs the given
-    // function on its value if it finds it, assigning the result of the
-    // function to the value. It expects the locks to be taken and released
-    // outside the function.
-    template <typename K, typename Updater>
-    cuckoo_status cuckoo_update_fn(const K &key, Updater fn,
-                                   const partial_t partial, const size_type i1,
-                                   const size_type i2) {
-        if (try_update_bucket_fn(partial, key, fn, buckets_[i1])) {
-            return ok;
-        }
-        if (try_update_bucket_fn(partial, key, fn, buckets_[i2])) {
-            return ok;
-        }
-        return failure_key_not_found;
-    }
-
-    // try_update_bucket_fn will search the bucket for the given key and change
-    // its associated value with the given function if it finds it.
-    template <typename K, typename Updater>
-    bool try_update_bucket_fn(const partial_t partial, const K &key,
-                              Updater fn, Bucket& b) {
-        // Silence a warning from MSVC about partial being unused if is_simple.
-        (void)partial;
-        for (size_type i = 0; i < slot_per_bucket(); ++i) {
-            if (!b.occupied(i)) {
-                continue;
-            }
-            if (!is_simple && b.partial(i) != partial) {
-                continue;
-            }
-            if (key_eq()(b.key(i), key)) {
-                fn(b.val(i));
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Clearing functions
-
-    // cuckoo_clear empties the table, calling the destructors of all the
-    // elements it removes from the table. It assumes the locks are taken as
-    // necessary.
+    // Empties the table, calling the destructors of all the elements it removes
+    // from the table. It assumes the locks are taken as necessary.
     cuckoo_status cuckoo_clear() {
         for (size_type i = 0; i < buckets_.size(); ++i) {
             buckets_[i].clear(allocator_);
@@ -2007,11 +1858,6 @@ private:
     }
 
     // Miscellaneous functions
-
-    // number of locks in the locks array
-    static constexpr size_type kNumLocks() {
-        return static_cast<size_type>(1) << 16;
-    }
 
     void set_hashpower(size_type val) {
         hashpower_.store(val, std::memory_order_release);
@@ -2239,11 +2085,8 @@ public:
          */
         class iterator : public const_iterator {
         public:
-            using difference_type = cuckoohash_map::difference_type;
-            using value_type = cuckoohash_map::value_type;
             using pointer = cuckoohash_map::pointer;
             using reference = cuckoohash_map::reference;
-            using iterator_category = std::bidirectional_iterator_tag;
 
             iterator() {}
 
@@ -2513,8 +2356,15 @@ public:
             const hash_value hv = map_.get().hashed_key(key);
             const auto b = map_.get().
                 template snapshot_and_lock_two<locking_inactive>(hv);
-            return map_.get().cuckoo_delete(
-                key, hv.partial, b.first(), b.second()) == ok ? 1 : 0;
+            const table_position pos = map_.get().cuckoo_find(
+                key, hv.partial, b.first(), b.second());
+            if (pos.status == ok) {
+                map_.get().del_from_bucket(map_.get().buckets_[pos.index],
+                                           pos.index, pos.slot);
+                return 1;
+            } else {
+                return 0;
+            }
         }
 
         /**@}*/
@@ -2586,8 +2436,8 @@ public:
             const hash_value hv = map_.get().hashed_key(key);
             const auto b = map_.get().
                 template snapshot_and_lock_two<locking_inactive>(hv);
-            return map_.get().cuckoo_contains(
-                key, hv.partial, b.first(), b.second()) ? 1 : 0;
+            return map_.get().cuckoo_find(
+                key, hv.partial, b.first(), b.second()).status == ok ? 1 : 0;
         }
 
         template <typename K>
