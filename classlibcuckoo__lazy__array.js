@@ -1,15 +1,19 @@
 var classlibcuckoo__lazy__array =
 [
-    [ "libcuckoo_lazy_array", "classlibcuckoo__lazy__array.html#a122a1ccfab29bb2712152c157d8373ab", null ],
-    [ "libcuckoo_lazy_array", "classlibcuckoo__lazy__array.html#a31af235d092318429189a9164aa159af", null ],
+    [ "allocator_type", "classlibcuckoo__lazy__array.html#a33e6f7411f39ebf7d02e7152f00508e8", null ],
+    [ "const_reference", "classlibcuckoo__lazy__array.html#a5b47552c3065c96bc9ae946331c547e4", null ],
+    [ "reference", "classlibcuckoo__lazy__array.html#ac6ddc07cb6594ee32c93e44d6eca66f0", null ],
+    [ "size_type", "classlibcuckoo__lazy__array.html#a2fbac4702fccabc13559128997d7d157", null ],
+    [ "value_type", "classlibcuckoo__lazy__array.html#a94c60fa2d30157bf321edb88922ef2b6", null ],
+    [ "libcuckoo_lazy_array", "classlibcuckoo__lazy__array.html#a7fc97ab670024eba5618a27c42a520b0", null ],
+    [ "libcuckoo_lazy_array", "classlibcuckoo__lazy__array.html#a514a83692c488fab984e1d2b9f6e40c8", null ],
     [ "libcuckoo_lazy_array", "classlibcuckoo__lazy__array.html#a98f2f1270e831f1dcd5e34f0607558c2", null ],
-    [ "libcuckoo_lazy_array", "classlibcuckoo__lazy__array.html#a671818c02a16d7f2d3612410e04a85ca", null ],
+    [ "libcuckoo_lazy_array", "classlibcuckoo__lazy__array.html#aea1c70b1830b2c1267ace24a30014a52", null ],
     [ "~libcuckoo_lazy_array", "classlibcuckoo__lazy__array.html#a5783905e62fcce0df397fd96a8bef6f7", null ],
-    [ "allocate", "classlibcuckoo__lazy__array.html#a410fb053aa78ff81ac77b4f46b888243", null ],
-    [ "allocated_size", "classlibcuckoo__lazy__array.html#acf03ee7d575d1178b9ce1d6d34cf5374", null ],
     [ "clear", "classlibcuckoo__lazy__array.html#a33a484137b78743e7d99e5786b081207", null ],
     [ "operator=", "classlibcuckoo__lazy__array.html#a73fc76bed4be61780b117ce7d9b31fd8", null ],
-    [ "operator=", "classlibcuckoo__lazy__array.html#a6e843a8a18f6656d62b7e5e79cf8b135", null ],
-    [ "operator[]", "classlibcuckoo__lazy__array.html#a51aa8954fc748155f4f4da5bacd31e74", null ],
-    [ "operator[]", "classlibcuckoo__lazy__array.html#a1ad937e6b2957355c7a3c9805af3dc05", null ]
+    [ "operator[]", "classlibcuckoo__lazy__array.html#a2c6168bd5d6505285bd7cb0590896f8f", null ],
+    [ "operator[]", "classlibcuckoo__lazy__array.html#a5228a9251908c48847ea51bfa595e617", null ],
+    [ "resize", "classlibcuckoo__lazy__array.html#a787b18951a8c548603e2458335d8c1c5", null ],
+    [ "size", "classlibcuckoo__lazy__array.html#a5fea31a2d9451f88dfec66a73388ec69", null ]
 ];

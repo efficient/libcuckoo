@@ -303,7 +303,7 @@ class cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::locked
 <p>An ownership wrapper around a <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a> table instance. When given a table instance, it takes all the locks on the table, blocking all outside operations on the table. Because the <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> has unique ownership of the table, it can provide a set of operations on the table that aren't possible in a concurrent context.</p>
 <p>The <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> interface is very similar to the STL unordered_map interface, and for functions whose signatures correspond to unordered_map methods, the behavior should be mostly the same. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01995">1995</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l01932">1932</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a384dcbc1133ca15a7c77b24f490681ff"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a384dcbc1133ca15a7c77b24f490681ff">&#9670;&nbsp;</a></span>begin()</h2>
@@ -332,7 +332,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns an iterator to the beginning of the table. If the table is empty, it will point past the end of the table.</p>
 <dl class="section return"><dt>Returns</dt><dd>an iterator to the beginning of the table </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02329">2329</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02263">2263</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -363,7 +363,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns an iterator past the end of the table.</p>
 <dl class="section return"><dt>Returns</dt><dd>an iterator past the end of the table </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02353">2353</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02287">2287</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -406,7 +406,7 @@ template&lt;typename K , typename... Args&gt; </div>
 </div><div class="memdoc">
 <p>This behaves like the <code>unordered_map::try_emplace</code> method, but with the same argument lifetime properties as <a class="el" href="classcuckoohash__map.html#a264768587f551549e96076bd6451de29">cuckoohash_map::insert</a>. It will always invalidate all iterators, due to the possibilities of cuckoo hashing and expansion. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02389">2389</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02323">2323</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -437,7 +437,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns whether the locked table has ownership of the table</p>
 <dl class="section return"><dt>Returns</dt><dd>true if it still has ownership, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02263">2263</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02197">2197</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -470,7 +470,7 @@ template&lt;typename K &gt; </div>
 </div><div class="memdoc">
 <p>This function has the same lifetime properties as <a class="el" href="classcuckoohash__map.html#a264768587f551549e96076bd6451de29">cuckoohash_map::insert</a>, except that the value is default-constructed, with no parameters, if it is not already in the table. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02488">2488</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02429">2429</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -501,7 +501,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </div><div class="memdoc">
 <p>This has the same behavior as <a class="el" href="classcuckoohash__map.html#ab928c30cb3f7f9bf841001692f8fa3ee">cuckoohash_map::rehash</a>, except that we don't return anything. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02533">2533</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02474">2474</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -532,7 +532,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </div><div class="memdoc">
 <p>This has the same behavior as <a class="el" href="classcuckoohash__map.html#a5184a76e555ac08126db7cb47f299db0">cuckoohash_map::reserve</a>, except that we don't return anything. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02541">2541</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02482">2482</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -562,7 +562,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </div><div class="memdoc">
 <p>Unlocks the table, thereby freeing the locks on the table, but also invalidating all iterators and table operations with this object. It is idempotent. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02243">2243</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02177">2177</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -575,7 +575,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a></li><li class="navelem"><a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a></li>
-    <li class="footer">Generated on Tue Jan 10 2017 10:17:29 for libcuckoo by
+    <li class="footer">Generated on Tue Feb 7 2017 19:36:00 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

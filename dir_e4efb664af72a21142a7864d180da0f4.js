@@ -12,7 +12,7 @@ var dir_e4efb664af72a21142a7864d180da0f4 =
       [ "iterator", "classcuckoohash__map_1_1locked__table_1_1iterator.html", "classcuckoohash__map_1_1locked__table_1_1iterator" ]
     ] ],
     [ "cuckoohash_util.hh", "cuckoohash__util_8hh.html", "cuckoohash__util_8hh" ],
-    [ "lazy_array.hh", "lazy__array_8hh.html", [
+    [ "libcuckoo_lazy_array.hh", "libcuckoo__lazy__array_8hh.html", [
       [ "libcuckoo_lazy_array", "classlibcuckoo__lazy__array.html", "classlibcuckoo__lazy__array" ]
     ] ]
 ];

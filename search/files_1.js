@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['lazy_5farray_2ehh',['lazy_array.hh',['../lazy__array_8hh.html',1,'']]]
+  ['libcuckoo_5flazy_5farray_2ehh',['libcuckoo_lazy_array.hh',['../libcuckoo__lazy__array_8hh.html',1,'']]]
 ];

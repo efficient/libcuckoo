@@ -11,6 +11,6 @@ var hierarchy =
       [ "libcuckoo_maximum_hashpower_exceeded", "classlibcuckoo__maximum__hashpower__exceeded.html", null ]
     ] ],
     [ "libcuckoo_lazy_array< OFFSET_BITS, SEGMENT_BITS, T, Alloc >", "classlibcuckoo__lazy__array.html", null ],
-    [ "libcuckoo_lazy_array< 16 - LIBCUCKOO_LOCK_ARRAY_GRANULARITY, LIBCUCKOO_LOCK_ARRAY_GRANULARITY, spinlock, typename std::allocator_traits< allocator_type > ::template rebind_alloc< spinlock > >", "classlibcuckoo__lazy__array.html", null ],
+    [ "libcuckoo_lazy_array< 16 - LIBCUCKOO_LOCK_ARRAY_GRANULARITY, LIBCUCKOO_LOCK_ARRAY_GRANULARITY, spinlock, typename allocator_traits_::template rebind_alloc< spinlock > >", "classlibcuckoo__lazy__array.html", null ],
     [ "cuckoohash_map< Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET >::locked_table", "classcuckoohash__map_1_1locked__table.html", null ]
 ];

@@ -83,16 +83,6 @@ $(document).ready(function(){initNavTree('functions_func.html','');});
 <div class="contents">
 &#160;
 
-<h3><a id="index_a"></a>- a -</h3><ul>
-<li>allocate()
-: <a class="el" href="classlibcuckoo__lazy__array.html#a410fb053aa78ff81ac77b4f46b888243">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
-</li>
-<li>allocated_size()
-: <a class="el" href="classlibcuckoo__lazy__array.html#acf03ee7d575d1178b9ce1d6d34cf5374">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
-</li>
-</ul>
-
-
 <h3><a id="index_b"></a>- b -</h3><ul>
 <li>begin()
 : <a class="el" href="classcuckoohash__map_1_1locked__table.html#a384dcbc1133ca15a7c77b24f490681ff">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::locked_table</a>
@@ -130,12 +120,18 @@ $(document).ready(function(){initNavTree('functions_func.html','');});
 <li>erase()
 : <a class="el" href="classcuckoohash__map.html#a6e38f36159dbe074548a49cf9afbfc62">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
 </li>
+<li>erase_fn()
+: <a class="el" href="classcuckoohash__map.html#a7c454c5fcdf11a59a576c0602be1a6b4">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
+</li>
 </ul>
 
 
 <h3><a id="index_f"></a>- f -</h3><ul>
 <li>find()
 : <a class="el" href="classcuckoohash__map.html#a4bae1efd1f5baa71c73d5fffd620bcab">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
+</li>
+<li>find_fn()
+: <a class="el" href="classcuckoohash__map.html#ade540fdd50c635f4911b9d60f206e74e">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
 </li>
 </ul>
 
@@ -178,7 +174,7 @@ $(document).ready(function(){initNavTree('functions_func.html','');});
 
 <h3><a id="index_l"></a>- l -</h3><ul>
 <li>libcuckoo_lazy_array()
-: <a class="el" href="classlibcuckoo__lazy__array.html#a31af235d092318429189a9164aa159af">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
+: <a class="el" href="classlibcuckoo__lazy__array.html#a7fc97ab670024eba5618a27c42a520b0">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
 </li>
 <li>libcuckoo_load_factor_too_low()
 : <a class="el" href="classlibcuckoo__load__factor__too__low.html#a382fc73444568dce5fa2c2f2dd627b52">libcuckoo_load_factor_too_low</a>
@@ -197,6 +193,9 @@ $(document).ready(function(){initNavTree('functions_func.html','');});
 
 
 <h3><a id="index_m"></a>- m -</h3><ul>
+<li>max_size()
+: <a class="el" href="classlibcuckoo__lazy__array.html#aee533ea923ac315139ebb2d39c122cf7">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
+</li>
 <li>maximum_hashpower()
 : <a class="el" href="classcuckoohash__map.html#aa578dccc88d150a8a636c02018d629f4">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
 </li>
@@ -214,12 +213,9 @@ $(document).ready(function(){initNavTree('functions_func.html','');});
 <li>operator--()
 : <a class="el" href="classcuckoohash__map_1_1locked__table_1_1const__iterator.html#ac1052a691fcf1d86f4bf886db3df6f59">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::locked_table::const_iterator</a>
 </li>
-<li>operator=()
-: <a class="el" href="classlibcuckoo__lazy__array.html#a6e843a8a18f6656d62b7e5e79cf8b135">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
-</li>
 <li>operator[]()
 : <a class="el" href="classcuckoohash__map_1_1locked__table.html#a082559f7c128579a3376c04b8c5ad987">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::locked_table</a>
-, <a class="el" href="classlibcuckoo__lazy__array.html#a51aa8954fc748155f4f4da5bacd31e74">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
+, <a class="el" href="classlibcuckoo__lazy__array.html#a2c6168bd5d6505285bd7cb0590896f8f">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
 </li>
 </ul>
 
@@ -233,13 +229,16 @@ $(document).ready(function(){initNavTree('functions_func.html','');});
 : <a class="el" href="classcuckoohash__map_1_1locked__table.html#a432751591915f75ff2b2fa6ca1a1be89">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::locked_table</a>
 , <a class="el" href="classcuckoohash__map.html#a5184a76e555ac08126db7cb47f299db0">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
 </li>
+<li>resize()
+: <a class="el" href="classlibcuckoo__lazy__array.html#a787b18951a8c548603e2458335d8c1c5">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
+</li>
 </ul>
 
 
 <h3><a id="index_s"></a>- s -</h3><ul>
 <li>size()
 : <a class="el" href="classcuckoohash__map.html#a31b5b0f54ba4a4104103c23bc9c9e2eb">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
-, <a class="el" href="classlibcuckoo__lazy__array.html#a55593d0e8979ec4d9cb51a19be04b55a">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
+, <a class="el" href="classlibcuckoo__lazy__array.html#a5fea31a2d9451f88dfec66a73388ec69">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
 </li>
 <li>slot_per_bucket()
 : <a class="el" href="classcuckoohash__map.html#ac3b07003caef9f1fe6b461fdbce0b11d">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
@@ -255,10 +254,10 @@ $(document).ready(function(){initNavTree('functions_func.html','');});
 : <a class="el" href="classcuckoohash__map.html#aefa3fc2a7b5a1c21c3832d24e6bc6dc0">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
 </li>
 <li>update_fn()
-: <a class="el" href="classcuckoohash__map.html#a5e139939db8d07a4d2fbd24fb3b1db3d">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
+: <a class="el" href="classcuckoohash__map.html#a674616d77377e248f5dea8cffdce27ea">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
 </li>
 <li>upsert()
-: <a class="el" href="classcuckoohash__map.html#ab267789a49e581cf5a4339ebebb24759">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
+: <a class="el" href="classcuckoohash__map.html#a9c0a81208d5484ca657458116586a274">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
 </li>
 </ul>
 
@@ -275,13 +274,16 @@ $(document).ready(function(){initNavTree('functions_func.html','');});
 <li>~cuckoohash_map()
 : <a class="el" href="classcuckoohash__map.html#a04dfcb36f7e63347cd1e66cec6f8de92">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a>
 </li>
+<li>~libcuckoo_lazy_array()
+: <a class="el" href="classlibcuckoo__lazy__array.html#a5783905e62fcce0df397fd96a8bef6f7">libcuckoo_lazy_array&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;</a>
+</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Jan 10 2017 10:17:29 for libcuckoo by
+    <li class="footer">Generated on Tue Feb 7 2017 19:36:00 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

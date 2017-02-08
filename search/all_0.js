@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['allocate',['allocate',['../classlibcuckoo__lazy__array.html#a410fb053aa78ff81ac77b4f46b888243',1,'libcuckoo_lazy_array']]],
-  ['allocated_5fsize',['allocated_size',['../classlibcuckoo__lazy__array.html#acf03ee7d575d1178b9ce1d6d34cf5374',1,'libcuckoo_lazy_array']]]
+  ['begin',['begin',['../classcuckoohash__map_1_1locked__table.html#a384dcbc1133ca15a7c77b24f490681ff',1,'cuckoohash_map::locked_table']]],
+  ['bucket_5fcount',['bucket_count',['../classcuckoohash__map.html#a5dde573b90abee20ed0efce7fd81bc10',1,'cuckoohash_map']]]
 ];
