@@ -4,11 +4,9 @@ target_include_directories(test_util INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
 
-# Add pcg if we're doing stress tests, specific benchmarks, or universal
-# benchmark
+# Add pcg if we're doing stress tests or universal benchmark
 if (BUILD_TESTS OR
     BUILD_STRESS_TESTS OR
-    BUILD_SPECIFIC_BENCHMARKS OR
     BUILD_UNIVERSAL_BENCHMARK)
     add_subdirectory(pcg)
 endif()
@@ -21,10 +19,6 @@ endif()
 
 if (BUILD_TESTS OR BUILD_STRESS_TESTS)
     add_subdirectory(stress-tests)
-endif()
-
-if (BUILD_TESTS OR BUILD_SPECIFIC_BENCHMARKS)
-    add_subdirectory(specific-benchmarks)
 endif()
 
 if (BUILD_TESTS OR BUILD_UNIVERSAL_BENCHMARK)
