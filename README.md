@@ -42,30 +42,29 @@ We suggest you build out of source, in a separate `build` directory:
 There are numerous flags you can pass to `CMake` to set which parts of the
 repository it builds.
 
-- `-DCMAKE_INSTALL_PREFIX` will set the location where the libcuckoo
-  header files are installed
+`-DCMAKE_INSTALL_PREFIX`
+: set the location where the libcuckoo header files are installed
 
-- `-DCMAKE_BUILD_TYPE` will enable different types of build flags for different purposes
+`-DCMAKE_BUILD_TYPE`
+: enable different types of build flags for different purposes
 
-- `-DBUILD_EXAMPLES=1` will tell `CMake` to build the `examples` directory
+`-DBUILD_EXAMPLES=1`
+: tell `CMake` to build the `examples` directory
 
-- `-DBUILD_TESTS=1` will build all tests in the `tests` directory
+`-DBUILD_TESTS=1`
+: build all tests in the `tests` directory
 
-- `-DBUILD_STRESS_TESTS=1` will build all tests in the `tests/stress-tests`
-  directory.
+`-DBUILD_STRESS_TESTS=1`
+: build all tests in the `tests/stress-tests` directory
 
-- `-DBUILD_UNIT_TESTS=1` will build all tests in the `tests/unit-tests`
-  directory.
+`-DBUILD_UNIT_TESTS=1`
+: build all tests in the `tests/unit-tests` directory
 
-- `-DBUILD_SPECIFIC_BENCHMARKS=1` will build all benchmarks in the
-  `tests/specific-benchmarks` directory.
-
-- `-DBUILD_UNIVERSAL_BENCHMARK=1` will build the universal benchmark in the
-  `tests/universal-benchmark` directory. This benchmark allows you to test a
-  variety of operations in arbitrary percentages, with specific keys and
-  values. You can specify which keys and values with `-DUNIVERSAL_KEY` and
-  `-DUNIVERSAL_VALUE` respectively, and if you want to add support for a new
-  table, you can switch the table with `-DUNIVERSAL_TABLE`.
+`-DBUILD_UNIVERSAL_BENCHMARK=1`
+: build the universal benchmark in the `tests/universal-benchmark` directory.
+This benchmark allows you to test a variety of operations in arbitrary
+percentages, with specific keys and values.  Consult the `README` in the
+benchmark directory for more details.
 
 So, if, for example, we want to build all examples and all tests into a local
 installation directory, we'd run the following command from the `build`

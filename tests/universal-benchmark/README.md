@@ -1,7 +1,7 @@
-# Walkthrough
+# Universal Benchmark
 
-This walkthrough explains how the `universal_benchmark` operates and what each
-flag means.
+This walkthrough explains how the `universal_benchmark` executable operates and
+what each flag means.
 
 ## Step-by-Step Operation
 
@@ -24,6 +24,25 @@ measured, including time elapsed, throughput, and (optionally) memory usage
 samples.
 
 ## Flags
+
+These flags are passed to CMake and set various compile-time parameters for the
+benchmark:
+
+`-DUNIVERSAL_KEY`
+: sets the type of the table Key (by default, this is `uint64_t`). Support for
+new keys can be added in `universal_gen.hh`
+
+`-DUNIVERSAL_VALUE`
+: sets the type of the table Value.  Support for new values can be added in
+`universal_gen.hh`
+
+`-DUNIVERSAL_TABLE`
+: sets the type of the hashmap being benchmarked (by default, this is
+`LIBCUCKOO`).  Support for new maps can be added in
+`universal_table_wrapper.hh`
+
+`-DTRACKING_ALLOCATOR`
+: enables memory usage sampling
 
 These flags control the mixture of operations that will be run in the
 benchmark. They are interpreted as whole number percentages, and must sum to
@@ -56,15 +75,14 @@ table will be pre-sized to hold 2^25 elements
 : sets the percentage to fill the pre-sized table to before running
 the operations.
     
-These flags control a few other details of the benchmark
+These flags control a few other details of the benchmark:
     
 `--total-ops`
-: the total number of operations to run (in the timed phase), as a
-percentage of the initial table capacity. So if you specified
-`--initial-capacity 25 --total-ops 90`, means run `90%` of `2^25`, or about
-`30198988`, operations. Specifying it as a percentage makes it easy to specify
-the final table capacity without having to do too much calculation or write a
-large number.
+: the total number of operations to run (in the timed phase), as a percentage
+of the initial table capacity. So specifying `--initial-capacity 25 --total-ops
+90` means run `90%` of `2^25`, or about `30198988`, operations. Specifying it
+as a percentage makes it easy to specify the final table capacity without
+having to do too much calculation or write a large number.
 
 `--num-threads`
 : the number of threads to use in all phases of the benchmark
