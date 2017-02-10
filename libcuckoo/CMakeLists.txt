@@ -24,7 +24,7 @@ FILES
     cuckoohash_config.hh
     cuckoohash_map.hh
     cuckoohash_util.hh
-    lazy_array.hh
+    libcuckoo_lazy_array.hh
 DESTINATION
     ${CMAKE_INSTALL_PREFIX}/include/libcuckoo
 )
