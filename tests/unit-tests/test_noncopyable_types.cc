@@ -115,7 +115,7 @@ TEST_CASE("noncopyable insert lifetime") {
         Uptr key(new int(20));
         Uptr value(new int(30));
         REQUIRE_FALSE(tbl.insert(std::move(key), std::move(value)));
-        REQUIRE(!static_cast<bool>(key));
+        REQUIRE(static_cast<bool>(key));
         REQUIRE(static_cast<bool>(value));
     }
 }

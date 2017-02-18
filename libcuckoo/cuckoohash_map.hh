@@ -337,33 +337,33 @@ public:
     }
 
     /**
-     * Searches for @p key in the table. If the key is not there, it is inserted
-     * with @p val. If the key is there, then @p fn is called on the value. The
-     * key will be immediately constructed as @c key_type(std::forward<K>(key)).
-     * If the insertion succeeds, this constructed key will be moved into the
-     * table and the value constructed from the @p val parameters. If the
-     * insertion fails, the constructed key will be destroyed, and the @p val
-     * parameters will remain valid. If there is no room left in the table, it
-     * will be automatically expanded. Expansion may throw exceptions.
+     * Searches for @p key in the table. If the key is found, then @p fn is
+     * called on the existing value, and nothing happens to the passed-in key
+     * and values. If the key is not found and must be inserted, the @c
+     * value_type will be constructed by forwarding the given key and values.
+     * If there is no room left in the table, it will be automatically
+     * expanded. Expansion may throw exceptions.
      *
      * @tparam K type of the key
      * @tparam F type of the functor. It should implement the method
      * <tt>void operator()(mapped_type&)</tt>.
      * @tparam Args list of types for the value constructor arguments
      * @param key the key to insert into the table
-     * @param fn the functor to invoke if the element is found
+     * @param fn the functor to invoke if the element is found. If your @p fn
+     * needs more data that just the value being modified, consider implementing
+     * it as a lambda with captured arguments.
      * @param val a list of constructor arguments with which to create the value
      * @return true if a new key was inserted, false if the key was already in
      * the table
      */
     template <typename K, typename F, typename... Args>
     bool upsert(K&& key, F fn, Args&&... val) {
-        K k(std::forward<K>(key));
-        hash_value hv = hashed_key(k);
+        hash_value hv = hashed_key(key);
         auto b = snapshot_and_lock_two<locking_active>(hv);
-        table_position pos = cuckoo_insert_loop(hv, b, k);
+        table_position pos = cuckoo_insert_loop(hv, b, key);
         if (pos.status == ok) {
-            add_to_bucket(pos.index, pos.slot, hv.partial, k,
+            add_to_bucket(pos.index, pos.slot, hv.partial,
+			  std::forward<K>(key),
                           std::forward<Args>(val)...);
         } else {
             fn(buckets_[pos.index].val(pos.slot));
@@ -432,7 +432,8 @@ public:
         }
     }
 
-    /** Returns whether or not @p key is in the table. Equivalent to @ref
+    /**
+     * Returns whether or not @p key is in the table. Equivalent to @ref
      * find_fn with a functor that does nothing.
      */
     template <typename K>
@@ -921,12 +922,12 @@ private:
 
         template <typename K, typename... Args>
         void setKV(allocator_type& allocator, size_type ind, partial_t p,
-                   K& k, Args&&... args) {
+                   K&& k, Args&&... args) {
             partials_[ind] = p;
             occupied_[ind] = true;
             allocator_traits_::construct(
                 allocator, &storage_kvpair(ind), std::piecewise_construct,
-                std::forward_as_tuple(std::move(k)),
+                std::forward_as_tuple(std::forward<K>(k)),
                 std::forward_as_tuple(std::forward<Args>(args)...));
         }
 
@@ -952,7 +953,7 @@ private:
             assert(!b2.occupied(slot2));
             storage_value_type& tomove = b1.storage_kvpair(slot1);
             b2.setKV(allocator, slot2, b1.partial(slot1),
-                     tomove.first, std::move(tomove.second));
+                     std::move(tomove.first), std::move(tomove.second));
             b1.eraseKV(allocator, slot1);
         }
 
@@ -1112,8 +1113,7 @@ private:
      * load factor of the table is below the threshold
      */
     template <typename K, typename LOCK_T>
-    table_position cuckoo_insert_loop(hash_value hv, TwoBuckets<LOCK_T>& b,
-                                      K& key) {
+    table_position cuckoo_insert_loop(hash_value hv, TwoBuckets<LOCK_T>& b, K& key) {
         table_position pos;
         while (true) {
             assert(b.is_active());
@@ -1154,8 +1154,7 @@ private:
     // failure_table_full -- Failed to find an empty slot for the table. Locks
     // are released. No meaningful position is returned.
     template <typename K, typename LOCK_T>
-    table_position cuckoo_insert(const hash_value hv, TwoBuckets<LOCK_T>& b,
-                                 K& key) {
+    table_position cuckoo_insert(const hash_value hv, TwoBuckets<LOCK_T>& b, K& key) {
         int res1, res2;
         Bucket& b1 = buckets_[b.first()];
         if (!try_find_insert_bucket(b1, res1, hv.partial, key)) {
@@ -1214,11 +1213,11 @@ private:
     // for use afterwards.
     template <typename K, typename... Args>
     void add_to_bucket(const size_type bucket_ind, const size_type slot,
-                       const partial_t partial, K& key, Args&&... val) {
+                       const partial_t partial, K&& key, Args&&... val) {
         Bucket& b = buckets_[bucket_ind];
         assert(!b.occupied(slot));
         b.setKV(allocator_, slot, partial,
-                key, std::forward<Args>(val)...);
+                std::forward<K>(key), std::forward<Args>(val)...);
         ++locks_[lock_ind(bucket_ind)].elem_counter();
     }
 
@@ -1767,7 +1766,7 @@ private:
                             if (buckets_[i].occupied(j)) {
                                 storage_value_type& kvpair = (
                                     buckets_[i].storage_kvpair(j));
-                                new_map.insert(kvpair.first,
+                                new_map.insert(std::move(kvpair.first),
                                                std::move(kvpair.second));
                             }
                         }
@@ -2314,20 +2313,18 @@ public:
         }
 
         /**
-         * This behaves like the @c unordered_map::try_emplace method, but with
-         * the same argument lifetime properties as @ref cuckoohash_map::insert.
-         * It will always invalidate all iterators, due to the possibilities of
-         * cuckoo hashing and expansion.
+	 * This behaves like the @c unordered_map::try_emplace method.  It will
+	 * always invalidate all iterators, due to the possibilities of cuckoo
+	 * hashing and expansion.
          */
         template <typename K, typename... Args>
         std::pair<iterator, bool> insert(K&& key, Args&&... val) {
-            K k(std::forward<K>(key));
-            hash_value hv = map_.get().hashed_key(k);
+            hash_value hv = map_.get().hashed_key(key);
             auto b = map_.get().template snapshot_and_lock_two<locking_inactive>(hv);
-            table_position pos = map_.get().cuckoo_insert_loop(hv, b, k);
+            table_position pos = map_.get().cuckoo_insert_loop(hv, b, key);
             if (pos.status == ok) {
                 map_.get().add_to_bucket(
-                    pos.index, pos.slot, hv.partial, k,
+                    pos.index, pos.slot, hv.partial, std::forward<K>(key),
                     std::forward<Args>(val)...);
             } else {
                 assert(pos.status == failure_key_duplicated);

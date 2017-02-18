@@ -167,7 +167,7 @@ TEST_CASE("locked_table insert lifetime", "[locked_table]") {
         REQUIRE(*result.first->first == 20);
         REQUIRE(*result.first->second == 20);
         REQUIRE(!result.second);
-        REQUIRE(!static_cast<bool>(key));
+        REQUIRE(static_cast<bool>(key));
         REQUIRE(static_cast<bool>(value));
     }
 }
