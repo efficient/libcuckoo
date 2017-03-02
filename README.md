@@ -70,7 +70,7 @@ So, if, for example, we want to build all examples and all tests into a local
 installation directory, we'd run the following command from the `build`
 directory.
 
-    $ cmake -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_EXAMPLES=1 -DCMAKE_BUILD_TESTS=1 ..
+    $ cmake -DCMAKE_INSTALL_PREFIX=../install -DBUILD_EXAMPLES=1 -DBUILD_TESTS=1 ..
     $ make all
     $ make install
 
