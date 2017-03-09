@@ -97,6 +97,39 @@ TEST_CASE("heterogeneous compare", "[heterogeneous compare]") {
         REQUIRE(int_hashes == 0);
     }
 
+    SECTION("insert_or_assign") {
+	    {
+		    foo_map map;
+		    map.insert_or_assign(0, true);
+		    map.insert_or_assign(0, false);
+		    REQUIRE_FALSE(map.find(0));
+	    }
+	    REQUIRE(int_constructions == 1);
+	    REQUIRE(copy_constructions == 0);
+	    REQUIRE(destructions == 1);
+	    REQUIRE(foo_comparisons == 0);
+	    REQUIRE(int_comparisons == 2);
+	    REQUIRE(foo_hashes == 0);
+	    REQUIRE(int_hashes == 3);
+    }
+
+    SECTION("foo insert_or_assign") {
+	    {
+		    foo_map map;
+		    map.insert_or_assign(Foo(0), true);
+		    map.insert_or_assign(Foo(0), false);
+		    REQUIRE_FALSE(map.find(Foo(0)));
+	    }
+	    REQUIRE(int_constructions == 3);
+	    REQUIRE(copy_constructions == 1);
+	    // Three destructions of Foo arguments, and one in table destruction
+	    REQUIRE(destructions == 4);
+	    REQUIRE(foo_comparisons == 2);
+	    REQUIRE(int_comparisons == 0);
+	    REQUIRE(foo_hashes == 3);
+	    REQUIRE(int_hashes == 0);
+    }
+
     SECTION("find") {
         {
             foo_map map;

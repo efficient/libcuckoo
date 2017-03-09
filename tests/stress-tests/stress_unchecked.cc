@@ -100,9 +100,10 @@ void stress_insert_thread(AllEnvironment<KType> *env, size_t thread_seed) {
     while (!env->finished.load()) {
         // Insert a random key into the table
         KType k = generateKey<KType>(ind_dist(gen));
-        ValType v = val_dist(gen);
-        env->table.insert(k, v);
+        env->table.insert(k, val_dist(gen));
         env->table2.insert(k, val_dist2(gen));
+        env->table.insert_or_assign(k, val_dist(gen));
+        env->table2.insert_or_assign(k, val_dist2(gen));
     }
 }
 

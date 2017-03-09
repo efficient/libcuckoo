@@ -442,9 +442,10 @@ public:
     }
 
     /**
-     * Updates the value associated with @p key to @p val. Equivalent to calling
-     * @ref update_fn with a functor that copies @p val into the associated
-     * value. @c mapped_type must be @c MoveAssignable or @c CopyAssignable.
+     * Updates the value associated with @p key to @p val. Equivalent to
+     * calling @ref update_fn with a functor that assigns the existing mapped
+     * value to @p val. @c mapped_type must be @c MoveAssignable or @c
+     * CopyAssignable.
      */
     template <typename K, typename V>
     bool update(const K& key, V&& val) {
@@ -461,6 +462,19 @@ public:
     bool insert(K&& key, Args&&... val) {
         return upsert(std::forward<K>(key), [](mapped_type&) {},
                       std::forward<Args>(val)...);
+    }
+
+    /**
+     * Inserts the key-value pair into the table. If the key is already in the
+     * table, assigns the existing mapped value to @p val. Equivalent to
+     * calling @ref upsert with a functor that assigns the mapped value to @p
+     * val.
+     */
+    template <typename K, typename V>
+    bool insert_or_assign(K&& key, V&& val) {
+        return upsert(std::forward<K>(key),
+		      [&val](mapped_type& m) { m = val; },
+                      std::forward<V>(val));
     }
 
     /**
