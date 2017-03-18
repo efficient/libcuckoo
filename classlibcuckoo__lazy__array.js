@@ -1,8 +1,8 @@
 var classlibcuckoo__lazy__array =
 [
     [ "allocator_type", "classlibcuckoo__lazy__array.html#a33e6f7411f39ebf7d02e7152f00508e8", null ],
-    [ "const_reference", "classlibcuckoo__lazy__array.html#a5b47552c3065c96bc9ae946331c547e4", null ],
-    [ "reference", "classlibcuckoo__lazy__array.html#ac6ddc07cb6594ee32c93e44d6eca66f0", null ],
+    [ "const_reference", "classlibcuckoo__lazy__array.html#a847207cf89b964a71dc746bf701de99c", null ],
+    [ "reference", "classlibcuckoo__lazy__array.html#a42973bb9e297ffd87f78ddf35b98fc9f", null ],
     [ "size_type", "classlibcuckoo__lazy__array.html#a2fbac4702fccabc13559128997d7d157", null ],
     [ "value_type", "classlibcuckoo__lazy__array.html#a94c60fa2d30157bf321edb88922ef2b6", null ],
     [ "libcuckoo_lazy_array", "classlibcuckoo__lazy__array.html#a7fc97ab670024eba5618a27c42a520b0", null ],

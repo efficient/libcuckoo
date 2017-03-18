@@ -163,6 +163,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a264768587f551549e96076bd6451de29"><td class="memTemplParams" colspan="2">template&lt;typename K , typename... Args&gt; </td></tr>
 <tr class="memitem:a264768587f551549e96076bd6451de29"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a264768587f551549e96076bd6451de29">insert</a> (K &amp;&amp;key, Args &amp;&amp;... val)</td></tr>
 <tr class="separator:a264768587f551549e96076bd6451de29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad5263f3394e6c47a0e2751ea85c89f97"><td class="memTemplParams" colspan="2">template&lt;typename K , typename V &gt; </td></tr>
+<tr class="memitem:ad5263f3394e6c47a0e2751ea85c89f97"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#ad5263f3394e6c47a0e2751ea85c89f97">insert_or_assign</a> (K &amp;&amp;key, V &amp;&amp;val)</td></tr>
+<tr class="separator:ad5263f3394e6c47a0e2751ea85c89f97"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6e38f36159dbe074548a49cf9afbfc62"><td class="memTemplParams" colspan="2">template&lt;typename K &gt; </td></tr>
 <tr class="memitem:a6e38f36159dbe074548a49cf9afbfc62"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a6e38f36159dbe074548a49cf9afbfc62">erase</a> (const K &amp;key)</td></tr>
 <tr class="separator:a6e38f36159dbe074548a49cf9afbfc62"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -213,12 +216,12 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>key_equal</b> = Pred
 <tr class="memitem:a7323a13dcc0da69b206043fb064d9be4"><td class="memItemLeft" align="right" valign="top"><a id="a7323a13dcc0da69b206043fb064d9be4"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b> = Alloc</td></tr>
 <tr class="separator:a7323a13dcc0da69b206043fb064d9be4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac737392a31a47659d80f410c9e38e24e"><td class="memItemLeft" align="right" valign="top"><a id="ac737392a31a47659d80f410c9e38e24e"></a>
+<tr class="memitem:a0914d15245675b63fb95236895795f4c"><td class="memItemLeft" align="right" valign="top"><a id="a0914d15245675b63fb95236895795f4c"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b> = value_type &amp;</td></tr>
-<tr class="separator:ac737392a31a47659d80f410c9e38e24e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4801e798a0e84e162586e53110d79c39"><td class="memItemLeft" align="right" valign="top"><a id="a4801e798a0e84e162586e53110d79c39"></a>
+<tr class="separator:a0914d15245675b63fb95236895795f4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06fd0638c12237ae09993a83d91ab130"><td class="memItemLeft" align="right" valign="top"><a id="a06fd0638c12237ae09993a83d91ab130"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b> = const value_type &amp;</td></tr>
-<tr class="separator:a4801e798a0e84e162586e53110d79c39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a06fd0638c12237ae09993a83d91ab130"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa0ffd1564d63f7e7940470c1605e8f94"><td class="memItemLeft" align="right" valign="top"><a id="aa0ffd1564d63f7e7940470c1605e8f94"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b> = typename allocator_traits_::pointer</td></tr>
 <tr class="separator:aa0ffd1564d63f7e7940470c1605e8f94"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -242,7 +245,7 @@ class cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</h3>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00044">44</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00041">41</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a2ab0fe2a7cce81646cab22d9c0fa944a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2ab0fe2a7cce81646cab22d9c0fa944a">&#9670;&nbsp;</a></span>cuckoohash_map()</h2>
@@ -302,7 +305,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00093">93</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00088">88</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -332,7 +335,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </div><div class="memdoc">
 <p>Destroys the table. The destructors of all elements stored in the table are destroyed, and then the table storage is deallocated. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00111">111</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00102">102</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -364,7 +367,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the number of buckets in the table.</p>
 <dl class="section return"><dt>Returns</dt><dd>the bucket count </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00169">169</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00152">152</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -395,7 +398,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the current capacity of the table, that is, <a class="el" href="classcuckoohash__map.html#a5dde573b90abee20ed0efce7fd81bc10">bucket_count()</a> &times; <a class="el" href="classcuckoohash__map.html#ac3b07003caef9f1fe6b461fdbce0b11d">slot_per_bucket()</a>.</p>
 <dl class="section return"><dt>Returns</dt><dd>capacity of table </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00205">205</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00186">186</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -425,7 +428,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </div><div class="memdoc">
 <p>Removes all elements in the table, calling their destructors. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00504">504</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00476">476</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -458,7 +461,7 @@ template&lt;typename K &gt; </div>
 </div><div class="memdoc">
 <p>Returns whether or not <code>key</code> is in the table. Equivalent to <a class="el" href="classcuckoohash__map.html#ade540fdd50c635f4911b9d60f206e74e">find_fn</a> with a functor that does nothing. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00440">440</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00409">409</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -489,7 +492,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns whether the table is empty or not.</p>
 <dl class="section return"><dt>Returns</dt><dd>true if the table is empty, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00178">178</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00159">159</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -522,7 +525,7 @@ template&lt;typename K &gt; </div>
 </div><div class="memdoc">
 <p>Erases the key from the table. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a7c454c5fcdf11a59a576c0602be1a6b4">erase_fn</a> with a functor that just returns true. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00471">471</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00447">447</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -580,7 +583,7 @@ template&lt;typename K , typename F &gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if <code>key</code> was found and <code>fn</code> invoked, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00387">387</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00361">361</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -623,7 +626,7 @@ template&lt;typename K &gt; </div>
 </div><div class="memdoc">
 <p>Copies the value associated with <code>key</code> into <code>val</code>. Equivalent to calling <a class="el" href="classcuckoohash__map.html#ade540fdd50c635f4911b9d60f206e74e">find_fn</a> with a functor that copies the value into <code>val</code>. <code>mapped_type</code> must be <code>CopyAssignable</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00408">408</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00381">381</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -675,7 +678,7 @@ template&lt;typename K &gt; </div>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00423">423</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00393">393</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -733,7 +736,7 @@ template&lt;typename K , typename F &gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the key was found and functor invoked, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00301">301</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00278">278</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -764,7 +767,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the allocator associated with the container</p>
 <dl class="section return"><dt>Returns</dt><dd>the associated allocator </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00150">150</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00135">135</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -795,7 +798,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the function that hashes the keys</p>
 <dl class="section return"><dt>Returns</dt><dd>the hash function </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00132">132</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00121">121</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -826,7 +829,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the hashpower of the table, which is log<sub>2</sub>(<a class="el" href="classcuckoohash__map.html#a5dde573b90abee20ed0efce7fd81bc10">bucket_count()</a>).</p>
 <dl class="section return"><dt>Returns</dt><dd>the hashpower </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00160">160</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00143">143</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -869,7 +872,50 @@ template&lt;typename K , typename... Args&gt; </div>
 </div><div class="memdoc">
 <p>Inserts the key-value pair into the table. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a9c0a81208d5484ca657458116586a274">upsert</a> with a functor that does nothing. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00461">461</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00427">427</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="ad5263f3394e6c47a0e2751ea85c89f97"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad5263f3394e6c47a0e2751ea85c89f97">&#9670;&nbsp;</a></span>insert_or_assign()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K , typename V &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::insert_or_assign </td>
+          <td>(</td>
+          <td class="paramtype">K &amp;&amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">V &amp;&amp;&#160;</td>
+          <td class="paramname"><em>val</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Inserts the key-value pair into the table. If the key is already in the table, assigns the existing mapped value to <code>val</code>. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a9c0a81208d5484ca657458116586a274">upsert</a> with a functor that assigns the mapped value to <code>val</code>. </p>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00438">438</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -900,7 +946,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the function that compares keys for equality</p>
 <dl class="section return"><dt>Returns</dt><dd>the key comparison function </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00141">141</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00128">128</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -931,7 +977,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the percentage the table is filled, that is, <a class="el" href="classcuckoohash__map.html#a31b5b0f54ba4a4104103c23bc9c9e2eb">size()</a> &divide; <a class="el" href="classcuckoohash__map.html#a6b388b417ab5c6e1930b0da1bf25f196">capacity()</a>.</p>
 <dl class="section return"><dt>Returns</dt><dd>load factor of the table </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00215">215</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00194">194</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -962,7 +1008,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Construct a <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> object that owns all the locks in the table.</p>
 <dl class="section return"><dt>Returns</dt><dd>a <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> instance </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00515">515</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00487">487</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1005,7 +1051,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00260">260</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00239">239</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1036,7 +1082,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the maximum hashpower of the table</p>
 <dl class="section return"><dt>Returns</dt><dd>the maximum hashpower </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00275">275</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00253">253</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1079,7 +1125,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00229">229</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00208">208</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1110,7 +1156,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the minimum load factor of the table</p>
 <dl class="section return"><dt>Returns</dt><dd>the minimum load factor </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00247">247</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00226">226</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1148,7 +1194,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the table changed size, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00484">484</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00460">460</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1186,7 +1232,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the size of the table changed, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00497">497</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00471">471</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1217,7 +1263,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the number of elements in the table.</p>
 <dl class="section return"><dt>Returns</dt><dd>number of elements in the table </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00192">192</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00173">173</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1247,7 +1293,7 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </div><div class="memdoc">
 <p>The number of slots per hash bucket </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00076">76</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00073">73</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1288,9 +1334,9 @@ template&lt;typename K , typename V &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Updates the value associated with <code>key</code> to <code>val</code>. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a674616d77377e248f5dea8cffdce27ea">update_fn</a> with a functor that copies <code>val</code> into the associated value. <code>mapped_type</code> must be <code>MoveAssignable</code> or <code>CopyAssignable</code>. </p>
+<p>Updates the value associated with <code>key</code> to <code>val</code>. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a674616d77377e248f5dea8cffdce27ea">update_fn</a> with a functor that assigns the existing mapped value to <code>val</code>. <code>mapped_type</code> must be <code>MoveAssignable</code> or <code>CopyAssignable</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00450">450</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00419">419</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1348,7 +1394,7 @@ template&lt;typename K , typename F &gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the key was found and functor invoked, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00326">326</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00302">302</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1414,7 +1460,7 @@ template&lt;typename K , typename F , typename... Args&gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if a new key was inserted, false if the key was already in the table </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00360">360</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00336">336</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
@@ -1427,7 +1473,7 @@ template&lt;typename K , typename F , typename... Args&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a></li>
-    <li class="footer">Generated on Fri Feb 17 2017 16:56:54 for libcuckoo by
+    <li class="footer">Generated on Sat Mar 18 2017 14:50:30 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
