@@ -1,3 +1,6 @@
+add_library(int_int_table STATIC int_int_table.h int_int_table.cc)
+target_link_libraries(int_int_table PUBLIC libcuckoo-c)
+
 add_executable(unit_tests
     test_constructor.cc
     test_hash_properties.cc
@@ -10,6 +13,7 @@ add_executable(unit_tests
     test_runner.cc
     test_user_exceptions.cc
     test_locked_table.cc
+    test_c_interface.cc
     unit_test_util.cc
     unit_test_util.hh
 )
@@ -17,6 +21,7 @@ add_executable(unit_tests
 target_link_libraries(unit_tests
     PRIVATE catch
     PRIVATE libcuckoo
+    PRIVATE int_int_table
 )
 
 add_test(NAME unit_tests COMMAND unit_tests)

@@ -1105,8 +1105,10 @@ private:
       // to try again by returning failure_under_expansion.
       return table_position{0, 0, failure_under_expansion};
     } else if (st == ok) {
-      assert(!locks_[lock_ind(b.first())].try_lock(LOCK_T()));
-      assert(!locks_[lock_ind(b.second())].try_lock(LOCK_T()));
+      assert(LOCK_T() == locking_inactive() ||
+             !locks_[lock_ind(b.first())].try_lock(LOCK_T()));
+      assert(LOCK_T() == locking_inactive() ||
+             !locks_[lock_ind(b.second())].try_lock(LOCK_T()));
       assert(!buckets_[insert_bucket].occupied(insert_slot));
       assert(insert_bucket == index_hash(hashpower(), hv.hash) ||
              insert_bucket == alt_index(hashpower(), hv.partial,
@@ -1228,8 +1230,10 @@ private:
           insert_bucket = cuckoo_path[0].bucket;
           insert_slot = cuckoo_path[0].slot;
           assert(insert_bucket == b.first() || insert_bucket == b.second());
-          assert(!locks_[lock_ind(b.first())].try_lock(LOCK_T()));
-          assert(!locks_[lock_ind(b.second())].try_lock(LOCK_T()));
+          assert(LOCK_T() == locking_inactive() ||
+                 !locks_[lock_ind(b.first())].try_lock(LOCK_T()));
+          assert(LOCK_T() == locking_inactive() ||
+                 !locks_[lock_ind(b.second())].try_lock(LOCK_T()));
           assert(!buckets_[insert_bucket].occupied(insert_slot));
           done = true;
           break;
