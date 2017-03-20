@@ -31,9 +31,9 @@
 #define PASTE(a, b) PASTE2(a, b)
 #define CUCKOO(a) PASTE(CUCKOO_TABLE_NAME, a)
 
-#include <cstdbool>
-#include <cstddef>
-#include <cstdio>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
 
 // Abstract type of the cuckoo table
 struct CUCKOO_TABLE_NAME;
