@@ -1,5 +1,6 @@
 #include <catch.hpp>
-#include <errno.h>
+#include <cerrno>
+#include <cstdio>
 
 extern "C" {
 #include "int_int_table.h"
@@ -141,6 +142,23 @@ TEST_CASE("c interface", "[c interface]") {
   SECTION("clear") {
     int_int_table_clear(tbl);
     REQUIRE(int_int_table_empty(tbl));
+  }
+
+  SECTION("read/write") {
+    FILE *fp = tmpfile();
+    int_int_table_locked_table *ltbl = int_int_table_lock_table(tbl);
+    REQUIRE(int_int_table_locked_table_write(ltbl, fp));
+    rewind(fp);
+    int_int_table *tbl2 = int_int_table_read(fp);
+    REQUIRE(int_int_table_size(tbl2) == 10);
+    for (int i = 0; i < 10; ++i) {
+      int value;
+      REQUIRE(int_int_table_find(tbl2, &i, &value));
+      REQUIRE(i == value);
+    }
+    int_int_table_free(tbl2);
+    int_int_table_locked_table_free(ltbl);
+    fclose(fp);
   }
 
   int_int_table_free(tbl);

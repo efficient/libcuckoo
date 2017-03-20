@@ -7,7 +7,8 @@
 //
 // Then include this template file
 
-#include <errno.h>
+#include <cerrno>
+#include <cstdio>
 #include <memory>
 #include <utility>
 
@@ -36,14 +37,49 @@ typedef CUCKOO_KEY_TYPE CUCKOO_KEY_ALIAS;
 typedef CUCKOO_MAPPED_TYPE CUCKOO_MAPPED_ALIAS;
 
 CUCKOO_TABLE_NAME *CUCKOO(_init)(size_t n) {
+  CUCKOO_TABLE_NAME *tbl;
   try {
-    CUCKOO_TABLE_NAME *tbl = new CUCKOO_TABLE_NAME(n);
+    tbl = new CUCKOO_TABLE_NAME(n);
   } catch (std::bad_alloc &) {
     errno = ENOMEM;
     return NULL;
   }
   tbl->t.minimum_load_factor(0);
   tbl->t.maximum_hashpower(LIBCUCKOO_NO_MAXIMUM_HASHPOWER);
+  return tbl;
+}
+
+CUCKOO_TABLE_NAME *CUCKOO(_read)(FILE *fp) {
+  size_t tbl_size;
+  if (!fread(&tbl_size, sizeof(size_t), 1, fp)) {
+    return NULL;
+  }
+  CUCKOO_TABLE_NAME *tbl = NULL;
+  try {
+    tbl = new CUCKOO_TABLE_NAME(tbl_size);
+  } catch (std::bad_alloc &) {
+    errno = ENOMEM;
+    return NULL;
+  }
+  CUCKOO_KEY_ALIAS key;
+  CUCKOO_MAPPED_ALIAS mapped;
+  for (size_t i = 0; i < tbl_size; ++i) {
+    if (!fread(&key, sizeof(CUCKOO_KEY_ALIAS), 1, fp)) {
+      delete tbl;
+      return NULL;
+    }
+    if (!fread(&mapped, sizeof(CUCKOO_MAPPED_ALIAS), 1, fp)) {
+      delete tbl;
+      return NULL;
+    }
+    try {
+      tbl->t.insert(key, mapped);
+    } catch (std::bad_alloc &) {
+      delete tbl;
+      errno = ENOMEM;
+      return NULL;
+    }
+  }
   return tbl;
 }
 
@@ -373,6 +409,24 @@ void CUCKOO_LT(_reserve)(CUCKOO_LOCKED_TABLE *ltbl, size_t n) {
   } catch (std::bad_alloc &) {
     errno = ENOMEM;
   }
+}
+
+// locked_table::write
+bool CUCKOO_LT(_write)(const CUCKOO_LOCKED_TABLE *ltbl, FILE *fp) {
+  size_t tbl_size = ltbl->lt.size();
+  if (!fwrite(&tbl_size, sizeof(size_t), 1, fp)) {
+    return false;
+  }
+  for (const auto &pair : ltbl->lt) {
+    if (!fwrite(std::addressof(pair.first), sizeof(CUCKOO_KEY_ALIAS), 1, fp)) {
+      return false;
+    }
+    if (!fwrite(std::addressof(pair.second), sizeof(CUCKOO_MAPPED_ALIAS), 1,
+                fp)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // iterator::copy assignment

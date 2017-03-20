@@ -31,8 +31,9 @@
 #define PASTE(a, b) PASTE2(a, b)
 #define CUCKOO(a) PASTE(CUCKOO_TABLE_NAME, a)
 
-#include <stdbool.h>
-#include <stddef.h>
+#include <cstdbool>
+#include <cstddef>
+#include <cstdio>
 
 // Abstract type of the cuckoo table
 struct CUCKOO_TABLE_NAME;
@@ -44,10 +45,16 @@ typedef CUCKOO_KEY_TYPE CUCKOO_KEY_ALIAS;
 #define CUCKOO_MAPPED_ALIAS CUCKOO(_mapped_type)
 typedef CUCKOO_MAPPED_TYPE CUCKOO_MAPPED_ALIAS;
 
-// Constructs a new table allocated to store at least `n` elements.  Uses a
+// Constructs a new table allocated to store at least `n` elements. Uses a
 // default hash function, equality function, and allocator. There is no minimum
 // load factor or maximum hashpower.
 CUCKOO_TABLE_NAME *CUCKOO(_init)(size_t n);
+
+// Reads in a table serialized in the file `fp` and constructs a new table.
+// Uses a default hash function, equality function, and allocator. There is no
+// minimum load factor or maximum hashpower. This will only work if the table
+// types are POD, which should always be the case in a C program.
+CUCKOO_TABLE_NAME *CUCKOO(_read)(FILE *fp);
 
 // Destroys the given table
 void CUCKOO(_free)(CUCKOO_TABLE_NAME *tbl);
@@ -222,6 +229,11 @@ void CUCKOO_LT(_rehash)(CUCKOO_LOCKED_TABLE *ltbl, size_t n);
 
 // locked_table::reserve
 void CUCKOO_LT(_reserve)(CUCKOO_LOCKED_TABLE *ltbl, size_t n);
+
+// locked_table::write will serialize the table to the file `fp`. This will
+// only work if the table types are POD, which should always be the case in a C
+// program.
+bool CUCKOO_LT(_write)(const CUCKOO_LOCKED_TABLE *ltbl, FILE *fp);
 
 // iterator::copy assignment
 void CUCKOO_IT(_set)(CUCKOO_ITERATOR *dst, CUCKOO_ITERATOR *src);
