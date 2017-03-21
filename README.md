@@ -90,6 +90,11 @@ it (either from your own repository or the included one, which uses autotools),
 and then include `<libcuckoo/city_hasher.hh>`, which is a wrapper for CityHash
 compatible with the `std::hash` type.
 
+There is also a C wrapper around the table that can be leveraged to use
+`libcuckoo` in a C program. The interface consists of a template header and
+implementation file that can be used to generate instances of the hashtable for
+different key-value types.
+
 See the `examples` directory for a demonstration of all of these features.
 
 Tests

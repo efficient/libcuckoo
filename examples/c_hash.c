@@ -1,3 +1,6 @@
+// This is a C program which uses some basic features of the C wrapper around
+// libcuckoo.  The C wrapper includes nearly all the features of the C++
+// version, and most of the C functions have direct equivalents to C++ methods.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
