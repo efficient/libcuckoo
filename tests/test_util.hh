@@ -11,7 +11,6 @@
 #include <mutex>
 #include <random>
 
-#include <libcuckoo/cuckoohash_map.hh>
 #include <pcg/pcg_random.hpp>
 
 std::mutex print_lock;
