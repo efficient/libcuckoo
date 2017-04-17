@@ -104,7 +104,7 @@ using UniquePtrTable = cuckoohash_map<
 // This class is a friend of the table, so it can access those.
 class UnitTestInternalAccess {
 public:
-  static const size_t IntIntBucketSize = sizeof(IntIntTable::Bucket);
+  static const size_t IntIntBucketSize = sizeof(IntIntTable::bucket);
 
   template <class CuckoohashMap>
   static size_t old_table_info_size(const CuckoohashMap &table) {

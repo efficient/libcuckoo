@@ -23,6 +23,7 @@
 
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
+#include "libcuckoo_bucket_container.hh"
 #include "libcuckoo_lazy_array.hh"
 
 /**
@@ -31,7 +32,7 @@
  * @tparam Key type of keys in the table
  * @tparam T type of values in the table
  * @tparam Pred type of equality comparison functor
- * @tparam Alloc type of key-value pair allocator
+ * @tparam Alloc type of allocator
  * @tparam SLOT_PER_BUCKET number of slots for each bucket in the table
  */
 template <class Key, class T, class Hash = std::hash<Key>,
@@ -39,27 +40,30 @@ template <class Key, class T, class Hash = std::hash<Key>,
           class Alloc = std::allocator<std::pair<const Key, T>>,
           std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET>
 class cuckoohash_map {
+private:
+  // Type of the partial key
+  using partial_t = uint8_t;
+
+  // The type of the buckets container
+  using buckets_t =
+      libcuckoo_bucket_container<Key, T, Alloc, partial_t, SLOT_PER_BUCKET>;
+
 public:
   /** @name Type Declarations */
   /**@{*/
 
-  using key_type = Key;
-  using mapped_type = T;
-  using value_type = std::pair<const Key, T>;
-  using size_type = std::size_t;
+  using key_type = typename buckets_t::key_type;
+  using mapped_type = typename buckets_t::mapped_type;
+  using value_type = typename buckets_t::value_type;
+  using size_type = typename buckets_t::size_type;
   using difference_type = std::ptrdiff_t;
   using hasher = Hash;
   using key_equal = Pred;
-  using allocator_type = Alloc;
-
-private:
-  using allocator_traits_ = std::allocator_traits<allocator_type>;
-
-public:
-  using reference = value_type &;
-  using const_reference = const value_type &;
-  using pointer = typename allocator_traits_::pointer;
-  using const_pointer = typename allocator_traits_::const_pointer;
+  using allocator_type = typename buckets_t::allocator_type;
+  using reference = typename buckets_t::reference;
+  using const_reference = typename buckets_t::const_reference;
+  using pointer = typename buckets_t::pointer;
+  using const_pointer = typename buckets_t::const_pointer;
   class locked_table;
 
   /**@}*/
@@ -89,17 +93,10 @@ public:
                  const hasher &hf = hasher(),
                  const key_equal &eql = key_equal(),
                  const allocator_type &alloc = allocator_type())
-      : hashpower_(reserve_calc(n)), hash_fn_(hf), eq_fn_(eql),
-        allocator_(alloc), buckets_(hashsize(hashpower()), alloc),
-        locks_(hashsize(hashpower()), alloc), expansion_lock_(),
+      : hash_fn_(hf), eq_fn_(eql), buckets_(reserve_calc(n), alloc),
+        locks_(hashpower(), buckets_.get_allocator()), expansion_lock_(),
         minimum_load_factor_(LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR),
         maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER) {}
-
-  /**
-   * Destroys the table. The destructors of all elements stored in the table
-   * are destroyed, and then the table storage is deallocated.
-   */
-  ~cuckoohash_map() { cuckoo_clear(); }
 
   /**@}*/
 
@@ -132,7 +129,7 @@ public:
    *
    * @return the associated allocator
    */
-  allocator_type get_allocator() const { return allocator_; }
+  allocator_type get_allocator() const { return buckets_.get_allocator(); }
 
   /**
    * Returns the hashpower of the table, which is log<SUB>2</SUB>(@ref
@@ -140,16 +137,14 @@ public:
    *
    * @return the hashpower
    */
-  size_type hashpower() const {
-    return hashpower_.load(std::memory_order_acquire);
-  }
+  size_type hashpower() const { return buckets_.hashpower(); }
 
   /**
    * Returns the number of buckets in the table.
    *
    * @return the bucket count
    */
-  size_type bucket_count() const { return buckets_.size(); }
+  size_type bucket_count() const { return 1UL << hashpower(); }
 
   /**
    * Returns whether the table is empty or not.
@@ -281,7 +276,7 @@ public:
     const table_position pos =
         cuckoo_find(key, hv.partial, b.first(), b.second());
     if (pos.status == ok) {
-      fn(buckets_[pos.index].val(pos.slot));
+      fn(buckets_[pos.index].mapped(pos.slot));
       return true;
     } else {
       return false;
@@ -305,7 +300,7 @@ public:
     const table_position pos =
         cuckoo_find(key, hv.partial, b.first(), b.second());
     if (pos.status == ok) {
-      fn(buckets_[pos.index].val(pos.slot));
+      fn(buckets_[pos.index].mapped(pos.slot));
       return true;
     } else {
       return false;
@@ -314,11 +309,11 @@ public:
 
   /**
    * Searches for @p key in the table. If the key is found, then @p fn is
-   * called on the existing value, and nothing happens to the passed-in key
-   * and values. If the key is not found and must be inserted, the @c
-   * value_type will be constructed by forwarding the given key and values.
-   * If there is no room left in the table, it will be automatically
-   * expanded. Expansion may throw exceptions.
+   * called on the existing value, and nothing happens to the passed-in key and
+   * values. If the key is not found and must be inserted, the pair will be
+   * constructed by forwarding the given key and values. If there is no room
+   * left in the table, it will be automatically expanded. Expansion may throw
+   * exceptions.
    *
    * @tparam K type of the key
    * @tparam F type of the functor. It should implement the method
@@ -341,7 +336,7 @@ public:
       add_to_bucket(pos.index, pos.slot, hv.partial, std::forward<K>(key),
                     std::forward<Args>(val)...);
     } else {
-      fn(buckets_[pos.index].val(pos.slot));
+      fn(buckets_[pos.index].mapped(pos.slot));
     }
     return pos.status == ok;
   }
@@ -364,8 +359,8 @@ public:
     const table_position pos =
         cuckoo_find(key, hv.partial, b.first(), b.second());
     if (pos.status == ok) {
-      if (fn(buckets_[pos.index].val(pos.slot))) {
-        del_from_bucket(buckets_[pos.index], pos.index, pos.slot);
+      if (fn(buckets_[pos.index].mapped(pos.slot))) {
+        del_from_bucket(pos.index, pos.slot);
       }
       return true;
     } else {
@@ -396,7 +391,7 @@ public:
     const table_position pos =
         cuckoo_find(key, hv.partial, b.first(), b.second());
     if (pos.status == ok) {
-      return buckets_[pos.index].val(pos.slot);
+      return buckets_[pos.index].mapped(pos.slot);
     } else {
       throw std::out_of_range("key not found in table");
     }
@@ -490,9 +485,6 @@ public:
 
 private:
   // Hashing types and functions
-
-  // Type of the partial key
-  using partial_t = uint8_t;
 
   // true if the key is small and simple, which means using partial keys for
   // lookup would probably slow us down
@@ -596,6 +588,10 @@ private:
     std::atomic_flag lock_;
     size_type elem_counter_;
   };
+
+  // Traits for the allocator, used solely for re-binding the
+  // allocator type
+  using allocator_traits_ = std::allocator_traits<allocator_type>;
 
   // The type of the locks container
   static_assert(LIBCUCKOO_LOCK_ARRAY_GRANULARITY >= 0 &&
@@ -728,7 +724,7 @@ private:
     return TwoBuckets<LOCK_T>(&locks_, i1, i2);
   }
 
-  // lock_two_one locks the three bucket indexes in numerical order, returning
+  // lock_three locks the three bucket indexes in numerical order, returning
   // the containers as a two (i1 and i2) and a one (i3). The one will not be
   // active if i3 shares a lock index with i1 or i2.
   //
@@ -785,8 +781,8 @@ private:
 
   // snapshot_and_lock_all takes all the locks, and returns a deleter object
   // that releases the locks upon destruction. Note that after taking all the
-  // locks, it is okay to change the buckets_ vector and the hashpower_, since
-  // no other threads should be accessing the buckets.
+  // locks, it is okay to resize the buckets_ container, since no other threads
+  // should be accessing the buckets.
   template <typename LOCK_T> AllBuckets<LOCK_T> snapshot_and_lock_all() const {
     for (size_type i = 0; i < locks_.size(); ++i) {
       locks_[i].lock(LOCK_T());
@@ -801,166 +797,8 @@ private:
 
   // Data storage types and functions
 
-  // Value type without const Key, used for storage
-  using storage_value_type = std::pair<key_type, mapped_type>;
-
-  // The Bucket type holds slot_per_bucket() partial keys, key-value pairs,
-  // and a occupied bitset, which indicates whether the slot at the given bit
-  // index is in the table or not. It uses aligned_storage arrays to store the
-  // keys and values to allow constructing and destroying key-value pairs in
-  // place. Internally, the values are stored without the const qualifier in
-  // the key, to enable modifying bucket memory.
-  class Bucket {
-  public:
-    Bucket() noexcept {}
-    // The destructor does nothing to the key-value pairs, since we'd need
-    // an allocator to properly destroy the elements.
-    ~Bucket() noexcept {}
-
-    // No move or copy constructors, since we'd need an
-    // instance of the allocator to do any constructions or destructions
-    Bucket(const Bucket &) = delete;
-    Bucket(Bucket &&) = delete;
-    Bucket &operator=(const Bucket &) = delete;
-    Bucket &operator=(Bucket &&) = delete;
-
-    partial_t partial(size_type ind) const { return partials_[ind]; }
-
-    const value_type &kvpair(size_type ind) const {
-      return *static_cast<const value_type *>(
-          static_cast<const void *>(std::addressof(kvpairs_[ind])));
-    }
-
-    value_type &kvpair(size_type ind) {
-      return *static_cast<value_type *>(
-          static_cast<void *>(std::addressof(kvpairs_[ind])));
-    }
-
-    storage_value_type &storage_kvpair(size_type ind) {
-      return *static_cast<storage_value_type *>(
-          static_cast<void *>(std::addressof(kvpairs_[ind])));
-    }
-
-    bool occupied(size_type ind) const { return occupied_[ind]; }
-
-    const key_type &key(size_type ind) const { return kvpair(ind).first; }
-
-    const mapped_type &val(size_type ind) const { return kvpair(ind).second; }
-
-    mapped_type &val(size_type ind) { return kvpair(ind).second; }
-
-    template <typename K, typename... Args>
-    void setKV(allocator_type &allocator, size_type ind, partial_t p, K &&k,
-               Args &&... args) {
-      partials_[ind] = p;
-      occupied_[ind] = true;
-      allocator_traits_::construct(
-          allocator, &storage_kvpair(ind), std::piecewise_construct,
-          std::forward_as_tuple(std::forward<K>(k)),
-          std::forward_as_tuple(std::forward<Args>(args)...));
-    }
-
-    void eraseKV(allocator_type &allocator, size_type ind) {
-      occupied_[ind] = false;
-      allocator_traits_::destroy(allocator,
-                                 std::addressof(storage_kvpair(ind)));
-    }
-
-    void clear(allocator_type &allocator) {
-      for (size_type i = 0; i < slot_per_bucket(); ++i) {
-        if (occupied(i)) {
-          eraseKV(allocator, i);
-        }
-      }
-    }
-
-    // Moves the item in b1[slot1] into b2[slot2] without copying
-    static void move_to_bucket(allocator_type &allocator, Bucket &b1,
-                               size_type slot1, Bucket &b2, size_type slot2) {
-      assert(b1.occupied(slot1));
-      assert(!b2.occupied(slot2));
-      storage_value_type &tomove = b1.storage_kvpair(slot1);
-      b2.setKV(allocator, slot2, b1.partial(slot1), std::move(tomove.first),
-               std::move(tomove.second));
-      b1.eraseKV(allocator, slot1);
-    }
-
-    // Moves the contents of b1 to b2
-    static void move_bucket(allocator_type &allocator, Bucket &b1, Bucket &b2) {
-      for (size_type i = 0; i < slot_per_bucket(); ++i) {
-        if (b1.occupied(i)) {
-          move_to_bucket(allocator, b1, i, b2, i);
-        }
-      }
-    }
-
-  private:
-    std::array<partial_t, slot_per_bucket()> partials_;
-    std::bitset<slot_per_bucket()> occupied_;
-    std::array<typename std::aligned_storage<sizeof(storage_value_type),
-                                             alignof(storage_value_type)>::type,
-               slot_per_bucket()>
-        kvpairs_;
-  };
-
-  class BucketContainer {
-    using traits_ = typename allocator_traits_::template rebind_traits<Bucket>;
-
-  public:
-    BucketContainer(size_type n, typename traits_::allocator_type alloc)
-        : buckets_(traits_::allocate(allocator_, n)), allocator_(alloc),
-          size_(n) {
-      // The Bucket default constructor is nothrow, so we don't have to
-      // worry about dealing with exceptions when constructing all the
-      // elements.
-      static_assert(
-          std::is_nothrow_constructible<Bucket>::value,
-          "BucketContainer requires Bucket to be nothrow constructible");
-      for (size_type i = 0; i < size_; ++i) {
-        traits_::construct(allocator_, &buckets_[i]);
-      }
-    }
-
-    BucketContainer(const BucketContainer &) = delete;
-    BucketContainer(BucketContainer &&) = delete;
-    BucketContainer &operator=(const BucketContainer &) = delete;
-    BucketContainer &operator=(BucketContainer &&) = delete;
-
-    ~BucketContainer() noexcept {
-      static_assert(
-          std::is_nothrow_destructible<Bucket>::value,
-          "BucketContainer requires Bucket to be nothrow destructible");
-      for (size_type i = 0; i < size_; ++i) {
-        traits_::destroy(allocator_, &buckets_[i]);
-      }
-      traits_::deallocate(allocator_, buckets_, size());
-    }
-
-    size_type size() const { return size_; }
-
-    void swap(BucketContainer &other) noexcept {
-      std::swap(buckets_, other.buckets_);
-      // If propagate_container_on_swap is false, we do nothing if the
-      // allocators are equal. If they're not equal, behavior is
-      // undefined, so we can still do nothing.
-      if (traits_::propagate_on_container_swap::value) {
-        std::swap(allocator_, other.allocator_);
-      }
-      std::swap(size_, other.size_);
-    }
-
-    Bucket &operator[](size_type i) { return buckets_[i]; }
-
-    const Bucket &operator[](size_type i) const { return buckets_[i]; }
-
-  private:
-    typename traits_::pointer buckets_;
-    typename allocator_traits_::template rebind_alloc<Bucket> allocator_;
-    size_type size_;
-  };
-
-  // The type of the buckets container
-  using buckets_t = BucketContainer;
+  // The type of the bucket
+  using bucket = typename buckets_t::bucket;
 
   // Status codes for internal functions
 
@@ -1003,7 +841,7 @@ private:
   // try_read_from_bucket will search the bucket for the given key and return
   // the index of the slot if found, or -1 if not found.
   template <typename K>
-  int try_read_from_bucket(const Bucket &b, const partial_t partial,
+  int try_read_from_bucket(const bucket &b, const partial_t partial,
                            const K &key) const {
     // Silence a warning from MSVC about partial being unused if is_simple.
     (void)partial;
@@ -1078,12 +916,12 @@ private:
   table_position cuckoo_insert(const hash_value hv, TwoBuckets<LOCK_T> &b,
                                K &key) {
     int res1, res2;
-    Bucket &b1 = buckets_[b.first()];
+    bucket &b1 = buckets_[b.first()];
     if (!try_find_insert_bucket(b1, res1, hv.partial, key)) {
       return table_position{b.first(), static_cast<size_type>(res1),
                             failure_key_duplicated};
     }
-    Bucket &b2 = buckets_[b.second()];
+    bucket &b2 = buckets_[b.second()];
     if (!try_find_insert_bucket(b2, res2, hv.partial, key)) {
       return table_position{b.second(), static_cast<size_type>(res2),
                             failure_key_duplicated};
@@ -1136,10 +974,8 @@ private:
   template <typename K, typename... Args>
   void add_to_bucket(const size_type bucket_ind, const size_type slot,
                      const partial_t partial, K &&key, Args &&... val) {
-    Bucket &b = buckets_[bucket_ind];
-    assert(!b.occupied(slot));
-    b.setKV(allocator_, slot, partial, std::forward<K>(key),
-            std::forward<Args>(val)...);
+    buckets_.setKV(bucket_ind, slot, partial, std::forward<K>(key),
+                   std::forward<Args>(val)...);
     ++locks_[lock_ind(bucket_ind)].elem_counter();
   }
 
@@ -1149,7 +985,7 @@ private:
   // in `slot` and return true. If no duplicate key is found and no empty slot
   // is found, we store -1 in `slot` and return true.
   template <typename K>
-  bool try_find_insert_bucket(const Bucket &b, int &slot,
+  bool try_find_insert_bucket(const bucket &b, int &slot,
                               const partial_t partial, const K &key) const {
     // Silence a warning from MSVC about partial being unused if is_simple.
     (void)partial;
@@ -1282,7 +1118,7 @@ private:
     }
     {
       const auto ob = lock_one<LOCK_T>(hp, first.bucket);
-      const Bucket &b = buckets_[first.bucket];
+      const bucket &b = buckets_[first.bucket];
       if (!b.occupied(first.slot)) {
         // We can terminate here
         return 0;
@@ -1299,7 +1135,7 @@ private:
       // index of the previous bucket
       curr.bucket = alt_index(hp, prev.hv.partial, prev.bucket);
       const auto ob = lock_one<LOCK_T>(hp, curr.bucket);
-      const Bucket &b = buckets_[curr.bucket];
+      const bucket &b = buckets_[curr.bucket];
       if (!b.occupied(curr.slot)) {
         // We can terminate here
         return i;
@@ -1358,8 +1194,8 @@ private:
         twob = lock_two<LOCK_T>(hp, from.bucket, to.bucket);
       }
 
-      Bucket &fb = buckets_[from.bucket];
-      Bucket &tb = buckets_[to.bucket];
+      bucket &fb = buckets_[from.bucket];
+      bucket &tb = buckets_[to.bucket];
 
       // We plan to kick out fs, but let's check if it is still there;
       // there's a small chance we've gotten scooped by a later cuckoo. If
@@ -1374,7 +1210,7 @@ private:
         return false;
       }
 
-      Bucket::move_to_bucket(allocator_, fb, fs, tb, ts);
+      buckets_.moveKV(to.bucket, ts, from.bucket, fs);
       if (depth == 1) {
         // Hold onto the locks contained in twob
         b = std::move(twob);
@@ -1485,7 +1321,7 @@ private:
       for (size_type i = 0; i < slot_per_bucket() && !q.full(); ++i) {
         size_type slot = (starting_slot + i) % slot_per_bucket();
         auto ob = lock_one<LOCK_T>(hp, x.bucket);
-        Bucket &b = buckets_[x.bucket];
+        bucket &b = buckets_[x.bucket];
         if (!b.occupied(slot)) {
           // We can terminate the search here
           x.pathcode = x.pathcode * slot_per_bucket() + slot;
@@ -1514,9 +1350,10 @@ private:
   // provides a strong exception guarantee.
   template <typename LOCK_T, typename AUTO_RESIZE>
   cuckoo_status cuckoo_fast_double(size_type current_hp) {
-    if (!std::is_nothrow_move_constructible<storage_value_type>::value) {
-      LIBCUCKOO_DBG("%s", "cannot run cuckoo_fast_double because kv-pair "
-                          "is not nothrow move constructible");
+    if (!std::is_nothrow_move_constructible<key_type>::value ||
+        !std::is_nothrow_move_constructible<mapped_type>::value) {
+      LIBCUCKOO_DBG("%s", "cannot run cuckoo_fast_double because key-value"
+                          " pair is not nothrow move constructible");
       return cuckoo_expand_simple<LOCK_T, AUTO_RESIZE>(current_hp + 1);
     }
     const size_type new_hp = current_hp + 1;
@@ -1526,19 +1363,9 @@ private:
       return st;
     }
 
-    locks_.resize(hashsize(new_hp));
+    locks_.resize(new_hp);
     auto unlocker = snapshot_and_lock_all<LOCK_T>();
-    // We can't just resize, since the Bucket is non-copyable and
-    // non-movable. Instead, we allocate a new array of buckets, and move
-    // the contents of each bucket manually.
-    {
-      buckets_t new_buckets(buckets_.size() * 2, get_allocator());
-      for (size_type i = 0; i < buckets_.size(); ++i) {
-        Bucket::move_bucket(allocator_, buckets_[i], new_buckets[i]);
-      }
-      buckets_.swap(new_buckets);
-    }
-    set_hashpower(new_hp);
+    buckets_.resize(new_hp);
 
     // We gradually unlock the new table, by processing each of the buckets
     // corresponding to each lock we took. For each slot in an old bucket,
@@ -1583,9 +1410,9 @@ private:
         // current_hp, which means anything we have to move will either
         // be at the same bucket position, or exactly
         // hashsize(current_hp) later than the current bucket
-        Bucket &old_bucket = buckets_[bucket_i];
+        bucket &old_bucket = buckets_[bucket_i];
         const size_type new_bucket_i = bucket_i + hashsize(current_hp);
-        Bucket &new_bucket = buckets_[new_bucket_i];
+        bucket &new_bucket = buckets_[new_bucket_i];
         size_type new_bucket_slot = 0;
 
         // Move each item from the old bucket that needs moving into the
@@ -1604,8 +1431,7 @@ private:
               (bucket_i == old_ahash && new_ahash == new_bucket_i)) {
             // We're moving the key from the old bucket to the new
             // one
-            Bucket::move_to_bucket(allocator_, old_bucket, slot, new_bucket,
-                                   new_bucket_slot++);
+            buckets_.moveKV(new_bucket_i, new_bucket_slot++, bucket_i, slot);
             // Also update the lock counts, in case we're moving to
             // a different lock.
             --locks_[lock_ind(bucket_i)].elem_counter();
@@ -1673,8 +1499,8 @@ private:
         for (; i < end; ++i) {
           for (size_type j = 0; j < slot_per_bucket(); ++j) {
             if (buckets_[i].occupied(j)) {
-              storage_value_type &kvpair = (buckets_[i].storage_kvpair(j));
-              new_map.insert(std::move(kvpair.first), std::move(kvpair.second));
+              new_map.insert(buckets_[i].movable_key(j),
+                             std::move(buckets_[i].mapped(j)));
             }
           }
         }
@@ -1688,8 +1514,7 @@ private:
     // reading from the buckets array. Then the old buckets array will be
     // deleted when new_map is deleted. All the locks should be released by
     // the unlocker as well.
-    buckets_.swap(new_map.buckets_);
-    set_hashpower(new_map.hashpower_);
+    std::swap(buckets_, new_map.buckets_);
     return ok;
   }
 
@@ -1728,18 +1553,15 @@ private:
 
   // Removes an item from a bucket, decrementing the associated counter as
   // well.
-  void del_from_bucket(Bucket &b, const size_type bucket_ind,
-                       const size_type slot) {
-    b.eraseKV(allocator_, slot);
+  void del_from_bucket(const size_type bucket_ind, const size_type slot) {
+    buckets_.eraseKV(bucket_ind, slot);
     --locks_[lock_ind(bucket_ind)].elem_counter();
   }
 
   // Empties the table, calling the destructors of all the elements it removes
   // from the table. It assumes the locks are taken as necessary.
   cuckoo_status cuckoo_clear() {
-    for (size_type i = 0; i < buckets_.size(); ++i) {
-      buckets_[i].clear(allocator_);
-    }
+    buckets_.clear();
     for (size_type i = 0; i < locks_.size(); ++i) {
       locks_[i].elem_counter() = 0;
     }
@@ -1767,10 +1589,6 @@ private:
 
   // Miscellaneous functions
 
-  void set_hashpower(size_type val) {
-    hashpower_.store(val, std::memory_order_release);
-  }
-
   // reserve_calc takes in a parameter specifying a certain number of slots
   // for a table and returns the smallest hashpower that will hold n elements.
   static size_type reserve_calc(const size_type n) {
@@ -1787,24 +1605,15 @@ private:
 
   // Member variables
 
-  // 2**hashpower is the number of buckets. This cannot be changed unless all
-  // the locks are taken on the table. Since it is still read and written by
-  // multiple threads not necessarily synchronized by a lock, we keep it
-  // atomic
-  std::atomic<size_type> hashpower_;
-
   // The hash function
   hasher hash_fn_;
 
   // The equality function
   key_equal eq_fn_;
 
-  // The allocator
-  allocator_type allocator_;
-
-  // vector of buckets. The size or memory location of the buckets cannot be
-  // changed unless al the locks are taken on the table. Thus, it is only safe
-  // to access the buckets_ vector when you have at least one lock held.
+  // container of buckets. The size or memory location of the buckets cannot be
+  // changed unless all the locks are taken on the table. Thus, it is only safe
+  // to access the buckets_ container when you have at least one lock held.
   buckets_t buckets_;
 
   // array of locks. marked mutable, so that const methods can take locks.
@@ -1882,9 +1691,12 @@ public:
         return !(operator==(it));
       }
 
-      reference operator*() const { return (*buckets_)[index_].kvpair(slot_); }
+      reference operator*() const {
+        fill_pair(index_, slot_);
+        return *static_cast<pointer>(static_cast<const void *>(&pair_));
+      }
 
-      pointer operator->() const { return &(*buckets_)[index_].kvpair(slot_); }
+      pointer operator->() const { return std::addressof(operator*()); }
 
       // Advance the iterator to the next item in the table, or to the end
       // of the table. Returns the iterator at its new position.
@@ -1961,6 +1773,22 @@ public:
       // implementation convenience, we let it take on negative values.
       size_type slot_;
 
+      // A placeholder value_type that we can return references to when asked.
+      // Since the value_type is a pair of references to the current
+      // bucket-slot pair, we need to construct this pair every time someone
+      // requests one. It is mutable so that we can construct the pair in const
+      // methods.
+      mutable typename std::aligned_storage<sizeof(value_type),
+                                            alignof(value_type)>::type pair_;
+
+      // Constructs the pair in-place with bucket data. This will work only if
+      // the value_type is defined as an aggregate type containing two
+      // references.
+      void fill_pair(size_type ind, size_type slot) const {
+        bucket &b = (*buckets_)[ind];
+        new (&pair_) value_type(value_type{b.key(slot), b.mapped(slot)});
+      }
+
       // Returns the position signifying the end of the table
       static std::pair<size_type, size_type> end_pos(const buckets_t &buckets) {
         return std::make_pair(buckets.size(), 0);
@@ -2002,17 +1830,14 @@ public:
         return const_iterator::operator!=(it);
       }
 
-      using const_iterator::operator*;
       reference operator*() {
-        return (*const_iterator::buckets_)[const_iterator::index_].kvpair(
-            const_iterator::slot_);
+        const_iterator::fill_pair(const_iterator::index_,
+                                  const_iterator::slot_);
+        return *static_cast<pointer>(
+            static_cast<void *>(&(const_iterator::pair_)));
       }
 
-      using const_iterator::operator->;
-      pointer operator->() {
-        return &(*const_iterator::buckets_)[const_iterator::index_].kvpair(
-            const_iterator::slot_);
-      }
+      pointer operator->() { return std::addressof(operator*()); }
 
       iterator &operator++() {
         const_iterator::operator++();
@@ -2201,14 +2026,12 @@ public:
     }
 
     iterator erase(const_iterator pos) {
-      map_.get().del_from_bucket(map_.get().buckets_[pos.index_], pos.index_,
-                                 pos.slot_);
+      map_.get().del_from_bucket(pos.index_, pos.slot_);
       return iterator(map_.get().buckets_, pos.index_, pos.slot_);
     }
 
     iterator erase(iterator pos) {
-      map_.get().del_from_bucket(map_.get().buckets_[pos.index_], pos.index_,
-                                 pos.slot_);
+      map_.get().del_from_bucket(pos.index_, pos.slot_);
       return iterator(map_.get().buckets_, pos.index_, pos.slot_);
     }
 
@@ -2219,8 +2042,7 @@ public:
       const table_position pos =
           map_.get().cuckoo_find(key, hv.partial, b.first(), b.second());
       if (pos.status == ok) {
-        map_.get().del_from_bucket(map_.get().buckets_[pos.index], pos.index,
-                                   pos.slot);
+        map_.get().del_from_bucket(pos.index, pos.slot);
         return 1;
       } else {
         return 0;
