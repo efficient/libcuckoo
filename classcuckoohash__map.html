@@ -97,16 +97,118 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr><td colspan="2"><div class="groupHeader">Type Declarations</div></td></tr>
+<tr class="memitem:a16441c28185efb8a30da15e7d5feb8fe"><td class="memItemLeft" align="right" valign="top"><a id="a16441c28185efb8a30da15e7d5feb8fe"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>key_type</b> = typename buckets_t::key_type</td></tr>
+<tr class="separator:a16441c28185efb8a30da15e7d5feb8fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22721e67fe4678d385f7d169fcf8cfed"><td class="memItemLeft" align="right" valign="top"><a id="a22721e67fe4678d385f7d169fcf8cfed"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>mapped_type</b> = typename buckets_t::mapped_type</td></tr>
+<tr class="separator:a22721e67fe4678d385f7d169fcf8cfed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e3205abe45fa7f6849e07a01b1c2b4f"><td class="memItemLeft" align="right" valign="top"><a id="a6e3205abe45fa7f6849e07a01b1c2b4f"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b> = typename buckets_t::value_type</td></tr>
+<tr class="separator:a6e3205abe45fa7f6849e07a01b1c2b4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae34f2bccbdb66a9c0936fe918e15765b"><td class="memItemLeft" align="right" valign="top"><a id="ae34f2bccbdb66a9c0936fe918e15765b"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b> = typename buckets_t::size_type</td></tr>
+<tr class="separator:ae34f2bccbdb66a9c0936fe918e15765b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fe13f80a18b03d8b3c573d07ef6f19a"><td class="memItemLeft" align="right" valign="top"><a id="a4fe13f80a18b03d8b3c573d07ef6f19a"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b> = std::ptrdiff_t</td></tr>
+<tr class="separator:a4fe13f80a18b03d8b3c573d07ef6f19a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac528a4965a882865bc59efe29a6eb70"><td class="memItemLeft" align="right" valign="top"><a id="aac528a4965a882865bc59efe29a6eb70"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>hasher</b> = Hash</td></tr>
+<tr class="separator:aac528a4965a882865bc59efe29a6eb70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bc1b1f1e8960c2e2c1490bb0f8dbc73"><td class="memItemLeft" align="right" valign="top"><a id="a8bc1b1f1e8960c2e2c1490bb0f8dbc73"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>key_equal</b> = Pred</td></tr>
+<tr class="separator:a8bc1b1f1e8960c2e2c1490bb0f8dbc73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac83691d75f2cd92ce5bbc871eff068ad"><td class="memItemLeft" align="right" valign="top"><a id="ac83691d75f2cd92ce5bbc871eff068ad"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b> = typename buckets_t::allocator_type</td></tr>
+<tr class="separator:ac83691d75f2cd92ce5bbc871eff068ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee525161b91bf0a887345e76f73306ab"><td class="memItemLeft" align="right" valign="top"><a id="aee525161b91bf0a887345e76f73306ab"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b> = typename buckets_t::reference</td></tr>
+<tr class="separator:aee525161b91bf0a887345e76f73306ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa4e578fd8819bda556b7b3a12c0c719"><td class="memItemLeft" align="right" valign="top"><a id="aaa4e578fd8819bda556b7b3a12c0c719"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b> = typename buckets_t::const_reference</td></tr>
+<tr class="separator:aaa4e578fd8819bda556b7b3a12c0c719"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50dd9801f472a25e182aff90b35b64cb"><td class="memItemLeft" align="right" valign="top"><a id="a50dd9801f472a25e182aff90b35b64cb"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b> = typename buckets_t::pointer</td></tr>
+<tr class="separator:a50dd9801f472a25e182aff90b35b64cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0e5fa323620c97cbec59ac6a7a05a3b"><td class="memItemLeft" align="right" valign="top"><a id="af0e5fa323620c97cbec59ac6a7a05a3b"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b> = typename buckets_t::const_pointer</td></tr>
+<tr class="separator:af0e5fa323620c97cbec59ac6a7a05a3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16441c28185efb8a30da15e7d5feb8fe"><td class="memItemLeft" align="right" valign="top"><a id="a16441c28185efb8a30da15e7d5feb8fe"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>key_type</b> = typename buckets_t::key_type</td></tr>
+<tr class="separator:a16441c28185efb8a30da15e7d5feb8fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22721e67fe4678d385f7d169fcf8cfed"><td class="memItemLeft" align="right" valign="top"><a id="a22721e67fe4678d385f7d169fcf8cfed"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>mapped_type</b> = typename buckets_t::mapped_type</td></tr>
+<tr class="separator:a22721e67fe4678d385f7d169fcf8cfed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e3205abe45fa7f6849e07a01b1c2b4f"><td class="memItemLeft" align="right" valign="top"><a id="a6e3205abe45fa7f6849e07a01b1c2b4f"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b> = typename buckets_t::value_type</td></tr>
+<tr class="separator:a6e3205abe45fa7f6849e07a01b1c2b4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae34f2bccbdb66a9c0936fe918e15765b"><td class="memItemLeft" align="right" valign="top"><a id="ae34f2bccbdb66a9c0936fe918e15765b"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b> = typename buckets_t::size_type</td></tr>
+<tr class="separator:ae34f2bccbdb66a9c0936fe918e15765b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fe13f80a18b03d8b3c573d07ef6f19a"><td class="memItemLeft" align="right" valign="top"><a id="a4fe13f80a18b03d8b3c573d07ef6f19a"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b> = std::ptrdiff_t</td></tr>
+<tr class="separator:a4fe13f80a18b03d8b3c573d07ef6f19a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac528a4965a882865bc59efe29a6eb70"><td class="memItemLeft" align="right" valign="top"><a id="aac528a4965a882865bc59efe29a6eb70"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>hasher</b> = Hash</td></tr>
+<tr class="separator:aac528a4965a882865bc59efe29a6eb70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bc1b1f1e8960c2e2c1490bb0f8dbc73"><td class="memItemLeft" align="right" valign="top"><a id="a8bc1b1f1e8960c2e2c1490bb0f8dbc73"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>key_equal</b> = Pred</td></tr>
+<tr class="separator:a8bc1b1f1e8960c2e2c1490bb0f8dbc73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac83691d75f2cd92ce5bbc871eff068ad"><td class="memItemLeft" align="right" valign="top"><a id="ac83691d75f2cd92ce5bbc871eff068ad"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b> = typename buckets_t::allocator_type</td></tr>
+<tr class="separator:ac83691d75f2cd92ce5bbc871eff068ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee525161b91bf0a887345e76f73306ab"><td class="memItemLeft" align="right" valign="top"><a id="aee525161b91bf0a887345e76f73306ab"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b> = typename buckets_t::reference</td></tr>
+<tr class="separator:aee525161b91bf0a887345e76f73306ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa4e578fd8819bda556b7b3a12c0c719"><td class="memItemLeft" align="right" valign="top"><a id="aaa4e578fd8819bda556b7b3a12c0c719"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b> = typename buckets_t::const_reference</td></tr>
+<tr class="separator:aaa4e578fd8819bda556b7b3a12c0c719"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50dd9801f472a25e182aff90b35b64cb"><td class="memItemLeft" align="right" valign="top"><a id="a50dd9801f472a25e182aff90b35b64cb"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b> = typename buckets_t::pointer</td></tr>
+<tr class="separator:a50dd9801f472a25e182aff90b35b64cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0e5fa323620c97cbec59ac6a7a05a3b"><td class="memItemLeft" align="right" valign="top"><a id="af0e5fa323620c97cbec59ac6a7a05a3b"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b> = typename buckets_t::const_pointer</td></tr>
+<tr class="separator:af0e5fa323620c97cbec59ac6a7a05a3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader">Constructors and Destructors</div></td></tr>
 <tr class="memitem:a2ab0fe2a7cce81646cab22d9c0fa944a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a2ab0fe2a7cce81646cab22d9c0fa944a">cuckoohash_map</a> (size_type n=<a class="el" href="cuckoohash__config_8hh.html#aaabbd9f4dd01231c68afedd0a02a135e">LIBCUCKOO_DEFAULT_SIZE</a>, const hasher &amp;hf=hasher(), const key_equal &amp;eql=key_equal(), const allocator_type &amp;alloc=allocator_type())</td></tr>
 <tr class="separator:a2ab0fe2a7cce81646cab22d9c0fa944a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a04dfcb36f7e63347cd1e66cec6f8de92"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a04dfcb36f7e63347cd1e66cec6f8de92">~cuckoohash_map</a> ()</td></tr>
-<tr class="separator:a04dfcb36f7e63347cd1e66cec6f8de92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ab0fe2a7cce81646cab22d9c0fa944a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a2ab0fe2a7cce81646cab22d9c0fa944a">cuckoohash_map</a> (size_type n=<a class="el" href="cuckoohash__config_8hh.html#aaabbd9f4dd01231c68afedd0a02a135e">LIBCUCKOO_DEFAULT_SIZE</a>, const hasher &amp;hf=hasher(), const key_equal &amp;eql=key_equal(), const allocator_type &amp;alloc=allocator_type())</td></tr>
+<tr class="separator:a2ab0fe2a7cce81646cab22d9c0fa944a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Table Details</div></td></tr>
 <tr><td colspan="2"><div class="groupText"><p>Methods for getting information about the table. Methods that query changing properties of the table are not synchronized with concurrent operations, and may return out-of-date information if the table is being concurrently modified. </p>
 </div></td></tr>
+<tr class="memitem:ac7ab26e6b6dffe554f1f517fed7b1288"><td class="memItemLeft" align="right" valign="top">hasher&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#ac7ab26e6b6dffe554f1f517fed7b1288">hash_function</a> () const</td></tr>
+<tr class="separator:ac7ab26e6b6dffe554f1f517fed7b1288"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d15ecb8e6db27639950889d4c37a9ac"><td class="memItemLeft" align="right" valign="top">key_equal&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a3d15ecb8e6db27639950889d4c37a9ac">key_eq</a> () const</td></tr>
+<tr class="separator:a3d15ecb8e6db27639950889d4c37a9ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a72bcb71d361a7ea369e11fd1a339501a"><td class="memItemLeft" align="right" valign="top">allocator_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a72bcb71d361a7ea369e11fd1a339501a">get_allocator</a> () const</td></tr>
+<tr class="separator:a72bcb71d361a7ea369e11fd1a339501a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9318be6f75f82b9ca657bfc3d1ce90d"><td class="memItemLeft" align="right" valign="top">size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#ab9318be6f75f82b9ca657bfc3d1ce90d">hashpower</a> () const</td></tr>
+<tr class="separator:ab9318be6f75f82b9ca657bfc3d1ce90d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5dde573b90abee20ed0efce7fd81bc10"><td class="memItemLeft" align="right" valign="top">size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a5dde573b90abee20ed0efce7fd81bc10">bucket_count</a> () const</td></tr>
+<tr class="separator:a5dde573b90abee20ed0efce7fd81bc10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ab068b5eb815244b010d11d7d63489d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a0ab068b5eb815244b010d11d7d63489d">empty</a> () const</td></tr>
+<tr class="separator:a0ab068b5eb815244b010d11d7d63489d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31b5b0f54ba4a4104103c23bc9c9e2eb"><td class="memItemLeft" align="right" valign="top">size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a31b5b0f54ba4a4104103c23bc9c9e2eb">size</a> () const</td></tr>
+<tr class="separator:a31b5b0f54ba4a4104103c23bc9c9e2eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b388b417ab5c6e1930b0da1bf25f196"><td class="memItemLeft" align="right" valign="top">size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a6b388b417ab5c6e1930b0da1bf25f196">capacity</a> () const</td></tr>
+<tr class="separator:a6b388b417ab5c6e1930b0da1bf25f196"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1abb4cd2fa8feecb8612a9d3a4de52c4"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a1abb4cd2fa8feecb8612a9d3a4de52c4">load_factor</a> () const</td></tr>
+<tr class="separator:a1abb4cd2fa8feecb8612a9d3a4de52c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeecfff17d1b8c0193fd64f184c0b3bd8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#aeecfff17d1b8c0193fd64f184c0b3bd8">minimum_load_factor</a> (const double mlf)</td></tr>
+<tr class="separator:aeecfff17d1b8c0193fd64f184c0b3bd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bdbe1d67874a2284c37c9f553343c11"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a2bdbe1d67874a2284c37c9f553343c11">minimum_load_factor</a> ()</td></tr>
+<tr class="separator:a2bdbe1d67874a2284c37c9f553343c11"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa578dccc88d150a8a636c02018d629f4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#aa578dccc88d150a8a636c02018d629f4">maximum_hashpower</a> (size_type mhp)</td></tr>
+<tr class="separator:aa578dccc88d150a8a636c02018d629f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24051decc4f25861eb60f03076f0828e"><td class="memItemLeft" align="right" valign="top">size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a24051decc4f25861eb60f03076f0828e">maximum_hashpower</a> ()</td></tr>
+<tr class="separator:a24051decc4f25861eb60f03076f0828e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac7ab26e6b6dffe554f1f517fed7b1288"><td class="memItemLeft" align="right" valign="top">hasher&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#ac7ab26e6b6dffe554f1f517fed7b1288">hash_function</a> () const</td></tr>
 <tr class="separator:ac7ab26e6b6dffe554f1f517fed7b1288"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d15ecb8e6db27639950889d4c37a9ac"><td class="memItemLeft" align="right" valign="top">key_equal&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a3d15ecb8e6db27639950889d4c37a9ac">key_eq</a> () const</td></tr>
@@ -177,57 +279,61 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a064323d48b43d36dc9ddd56e33a27f55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2986246d37854f3c188f382b0507d4c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a2986246d37854f3c188f382b0507d4c0">lock_table</a> ()</td></tr>
 <tr class="separator:a2986246d37854f3c188f382b0507d4c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade540fdd50c635f4911b9d60f206e74e"><td class="memTemplParams" colspan="2">template&lt;typename K , typename F &gt; </td></tr>
+<tr class="memitem:ade540fdd50c635f4911b9d60f206e74e"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#ade540fdd50c635f4911b9d60f206e74e">find_fn</a> (const K &amp;key, F fn) const</td></tr>
+<tr class="separator:ade540fdd50c635f4911b9d60f206e74e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a674616d77377e248f5dea8cffdce27ea"><td class="memTemplParams" colspan="2">template&lt;typename K , typename F &gt; </td></tr>
+<tr class="memitem:a674616d77377e248f5dea8cffdce27ea"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a674616d77377e248f5dea8cffdce27ea">update_fn</a> (const K &amp;key, F fn)</td></tr>
+<tr class="separator:a674616d77377e248f5dea8cffdce27ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c0a81208d5484ca657458116586a274"><td class="memTemplParams" colspan="2">template&lt;typename K , typename F , typename... Args&gt; </td></tr>
+<tr class="memitem:a9c0a81208d5484ca657458116586a274"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a9c0a81208d5484ca657458116586a274">upsert</a> (K &amp;&amp;key, F fn, Args &amp;&amp;... val)</td></tr>
+<tr class="separator:a9c0a81208d5484ca657458116586a274"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c454c5fcdf11a59a576c0602be1a6b4"><td class="memTemplParams" colspan="2">template&lt;typename K , typename F &gt; </td></tr>
+<tr class="memitem:a7c454c5fcdf11a59a576c0602be1a6b4"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a7c454c5fcdf11a59a576c0602be1a6b4">erase_fn</a> (const K &amp;key, F fn)</td></tr>
+<tr class="separator:a7c454c5fcdf11a59a576c0602be1a6b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4bae1efd1f5baa71c73d5fffd620bcab"><td class="memTemplParams" colspan="2">template&lt;typename K &gt; </td></tr>
+<tr class="memitem:a4bae1efd1f5baa71c73d5fffd620bcab"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a4bae1efd1f5baa71c73d5fffd620bcab">find</a> (const K &amp;key, mapped_type &amp;val) const</td></tr>
+<tr class="separator:a4bae1efd1f5baa71c73d5fffd620bcab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a699e8f3fa163b30fd4934bf64d2a4808"><td class="memTemplParams" colspan="2">template&lt;typename K &gt; </td></tr>
+<tr class="memitem:a699e8f3fa163b30fd4934bf64d2a4808"><td class="memTemplItemLeft" align="right" valign="top">mapped_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a699e8f3fa163b30fd4934bf64d2a4808">find</a> (const K &amp;key) const</td></tr>
+<tr class="separator:a699e8f3fa163b30fd4934bf64d2a4808"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4ea42526d5528df9423a33c832e0ad37"><td class="memTemplParams" colspan="2">template&lt;typename K &gt; </td></tr>
+<tr class="memitem:a4ea42526d5528df9423a33c832e0ad37"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a4ea42526d5528df9423a33c832e0ad37">contains</a> (const K &amp;key) const</td></tr>
+<tr class="separator:a4ea42526d5528df9423a33c832e0ad37"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aefa3fc2a7b5a1c21c3832d24e6bc6dc0"><td class="memTemplParams" colspan="2">template&lt;typename K , typename V &gt; </td></tr>
+<tr class="memitem:aefa3fc2a7b5a1c21c3832d24e6bc6dc0"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#aefa3fc2a7b5a1c21c3832d24e6bc6dc0">update</a> (const K &amp;key, V &amp;&amp;val)</td></tr>
+<tr class="separator:aefa3fc2a7b5a1c21c3832d24e6bc6dc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a264768587f551549e96076bd6451de29"><td class="memTemplParams" colspan="2">template&lt;typename K , typename... Args&gt; </td></tr>
+<tr class="memitem:a264768587f551549e96076bd6451de29"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a264768587f551549e96076bd6451de29">insert</a> (K &amp;&amp;key, Args &amp;&amp;... val)</td></tr>
+<tr class="separator:a264768587f551549e96076bd6451de29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad5263f3394e6c47a0e2751ea85c89f97"><td class="memTemplParams" colspan="2">template&lt;typename K , typename V &gt; </td></tr>
+<tr class="memitem:ad5263f3394e6c47a0e2751ea85c89f97"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#ad5263f3394e6c47a0e2751ea85c89f97">insert_or_assign</a> (K &amp;&amp;key, V &amp;&amp;val)</td></tr>
+<tr class="separator:ad5263f3394e6c47a0e2751ea85c89f97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e38f36159dbe074548a49cf9afbfc62"><td class="memTemplParams" colspan="2">template&lt;typename K &gt; </td></tr>
+<tr class="memitem:a6e38f36159dbe074548a49cf9afbfc62"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a6e38f36159dbe074548a49cf9afbfc62">erase</a> (const K &amp;key)</td></tr>
+<tr class="separator:a6e38f36159dbe074548a49cf9afbfc62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab928c30cb3f7f9bf841001692f8fa3ee"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#ab928c30cb3f7f9bf841001692f8fa3ee">rehash</a> (size_type n)</td></tr>
+<tr class="separator:ab928c30cb3f7f9bf841001692f8fa3ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5184a76e555ac08126db7cb47f299db0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a5184a76e555ac08126db7cb47f299db0">reserve</a> (size_type n)</td></tr>
+<tr class="separator:a5184a76e555ac08126db7cb47f299db0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a064323d48b43d36dc9ddd56e33a27f55"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a064323d48b43d36dc9ddd56e33a27f55">clear</a> ()</td></tr>
+<tr class="separator:a064323d48b43d36dc9ddd56e33a27f55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2986246d37854f3c188f382b0507d4c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#a2986246d37854f3c188f382b0507d4c0">lock_table</a> ()</td></tr>
+<tr class="separator:a2986246d37854f3c188f382b0507d4c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader">Table Parameters</div></td></tr>
 <tr class="memitem:ac3b07003caef9f1fe6b461fdbce0b11d"><td class="memItemLeft" align="right" valign="top">static constexpr size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#ac3b07003caef9f1fe6b461fdbce0b11d">slot_per_bucket</a> ()</td></tr>
 <tr class="separator:ac3b07003caef9f1fe6b461fdbce0b11d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3b07003caef9f1fe6b461fdbce0b11d"><td class="memItemLeft" align="right" valign="top">static constexpr size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html#ac3b07003caef9f1fe6b461fdbce0b11d">slot_per_bucket</a> ()</td></tr>
+<tr class="separator:ac3b07003caef9f1fe6b461fdbce0b11d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:a65105a2e2b0f12a6782164d6ed0ba579"><td class="memItemLeft" align="right" valign="top"><a id="a65105a2e2b0f12a6782164d6ed0ba579"></a>
+<tr class="memitem:aedb037258c81ec4f653fe6e69bd2571a"><td class="memItemLeft" align="right" valign="top"><a id="aedb037258c81ec4f653fe6e69bd2571a"></a>
 class&#160;</td><td class="memItemRight" valign="bottom"><b>UnitTestInternalAccess</b></td></tr>
-<tr class="separator:a65105a2e2b0f12a6782164d6ed0ba579"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
-Type Declarations</h2></td></tr>
-<tr class="memitem:a0b17a0ee6641a250ca72ecf2ebd46501"><td class="memItemLeft" align="right" valign="top"><a id="a0b17a0ee6641a250ca72ecf2ebd46501"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>key_type</b> = Key</td></tr>
-<tr class="separator:a0b17a0ee6641a250ca72ecf2ebd46501"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abcd55dbf6f00e3c7c03a835413c1419d"><td class="memItemLeft" align="right" valign="top"><a id="abcd55dbf6f00e3c7c03a835413c1419d"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>mapped_type</b> = T</td></tr>
-<tr class="separator:abcd55dbf6f00e3c7c03a835413c1419d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae859043f9f5815e8b890150553d2acd9"><td class="memItemLeft" align="right" valign="top"><a id="ae859043f9f5815e8b890150553d2acd9"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b> = std::pair&lt; const Key, T &gt;</td></tr>
-<tr class="separator:ae859043f9f5815e8b890150553d2acd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa20801f31b80e35a99c74369a476a402"><td class="memItemLeft" align="right" valign="top"><a id="aa20801f31b80e35a99c74369a476a402"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b> = std::size_t</td></tr>
-<tr class="separator:aa20801f31b80e35a99c74369a476a402"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fe13f80a18b03d8b3c573d07ef6f19a"><td class="memItemLeft" align="right" valign="top"><a id="a4fe13f80a18b03d8b3c573d07ef6f19a"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b> = std::ptrdiff_t</td></tr>
-<tr class="separator:a4fe13f80a18b03d8b3c573d07ef6f19a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac528a4965a882865bc59efe29a6eb70"><td class="memItemLeft" align="right" valign="top"><a id="aac528a4965a882865bc59efe29a6eb70"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>hasher</b> = Hash</td></tr>
-<tr class="separator:aac528a4965a882865bc59efe29a6eb70"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8bc1b1f1e8960c2e2c1490bb0f8dbc73"><td class="memItemLeft" align="right" valign="top"><a id="a8bc1b1f1e8960c2e2c1490bb0f8dbc73"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>key_equal</b> = Pred</td></tr>
-<tr class="separator:a8bc1b1f1e8960c2e2c1490bb0f8dbc73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7323a13dcc0da69b206043fb064d9be4"><td class="memItemLeft" align="right" valign="top"><a id="a7323a13dcc0da69b206043fb064d9be4"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b> = Alloc</td></tr>
-<tr class="separator:a7323a13dcc0da69b206043fb064d9be4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0914d15245675b63fb95236895795f4c"><td class="memItemLeft" align="right" valign="top"><a id="a0914d15245675b63fb95236895795f4c"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b> = value_type &amp;</td></tr>
-<tr class="separator:a0914d15245675b63fb95236895795f4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06fd0638c12237ae09993a83d91ab130"><td class="memItemLeft" align="right" valign="top"><a id="a06fd0638c12237ae09993a83d91ab130"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b> = const value_type &amp;</td></tr>
-<tr class="separator:a06fd0638c12237ae09993a83d91ab130"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa0ffd1564d63f7e7940470c1605e8f94"><td class="memItemLeft" align="right" valign="top"><a id="aa0ffd1564d63f7e7940470c1605e8f94"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b> = typename allocator_traits_::pointer</td></tr>
-<tr class="separator:aa0ffd1564d63f7e7940470c1605e8f94"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a075be06ca8889e56fd051d622ad8412c"><td class="memItemLeft" align="right" valign="top"><a id="a075be06ca8889e56fd051d622ad8412c"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b> = typename allocator_traits_::const_pointer</td></tr>
-<tr class="separator:a075be06ca8889e56fd051d622ad8412c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:aedb037258c81ec4f653fe6e69bd2571a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;class Key, class T, class Hash = std::hash&lt;Key&gt;, class Pred = std::equal_to&lt;Key&gt;, class Alloc = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt;<br />
@@ -239,16 +345,27 @@ class cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</h3>
     <tr><td class="paramname">Key</td><td>type of keys in the table </td></tr>
     <tr><td class="paramname">T</td><td>type of values in the table </td></tr>
     <tr><td class="paramname">Pred</td><td>type of equality comparison functor </td></tr>
+    <tr><td class="paramname">Alloc</td><td>type of allocator </td></tr>
+    <tr><td class="paramname">SLOT_PER_BUCKET</td><td>number of slots for each bucket in the table</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>A concurrent hash table</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Key</td><td>type of keys in the table </td></tr>
+    <tr><td class="paramname">T</td><td>type of values in the table </td></tr>
+    <tr><td class="paramname">HashCompare</td><td>type of hash/comparator functor </td></tr>
     <tr><td class="paramname">Alloc</td><td>type of key-value pair allocator </td></tr>
     <tr><td class="paramname">SLOT_PER_BUCKET</td><td>number of slots for each bucket in the table </td></tr>
   </table>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00041">41</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00042">42</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a2ab0fe2a7cce81646cab22d9c0fa944a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2ab0fe2a7cce81646cab22d9c0fa944a">&#9670;&nbsp;</a></span>cuckoohash_map()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ab0fe2a7cce81646cab22d9c0fa944a">&#9670;&nbsp;</a></span>cuckoohash_map() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -305,12 +422,12 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00088">88</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00094">94</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
-<a id="a04dfcb36f7e63347cd1e66cec6f8de92"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a04dfcb36f7e63347cd1e66cec6f8de92">&#9670;&nbsp;</a></span>~cuckoohash_map()</h2>
+<a id="a2ab0fe2a7cce81646cab22d9c0fa944a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ab0fe2a7cce81646cab22d9c0fa944a">&#9670;&nbsp;</a></span>cuckoohash_map() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -321,10 +438,33 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::~<a class="el" href="classcuckoohash__map.html">cuckoohash_map</a> </td>
+          <td class="memname"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::<a class="el" href="classcuckoohash__map.html">cuckoohash_map</a> </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">size_type&#160;</td>
+          <td class="paramname"><em>n</em> = <code><a class="el" href="cuckoohash__config_8hh.html#aaabbd9f4dd01231c68afedd0a02a135e">LIBCUCKOO_DEFAULT_SIZE</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const hasher &amp;&#160;</td>
+          <td class="paramname"><em>hf</em> = <code>hasher()</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const key_equal &amp;&#160;</td>
+          <td class="paramname"><em>eql</em> = <code>key_equal()</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const allocator_type &amp;&#160;</td>
+          <td class="paramname"><em>alloc</em> = <code>allocator_type()</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -333,15 +473,24 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Destroys the table. The destructors of all elements stored in the table are destroyed, and then the table storage is deallocated. </p>
+<p>Creates a new cuckohash_map instance</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">n</td><td>the number of elements to reserve space for initially </td></tr>
+    <tr><td class="paramname">hf</td><td>hash function instance to use </td></tr>
+    <tr><td class="paramname">eql</td><td>equality function instance to use </td></tr>
+    <tr><td class="paramname">alloc</td><td>allocator instance to use </td></tr>
+  </table>
+  </dd>
+</dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00102">102</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00096">96</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a5dde573b90abee20ed0efce7fd81bc10"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5dde573b90abee20ed0efce7fd81bc10">&#9670;&nbsp;</a></span>bucket_count()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5dde573b90abee20ed0efce7fd81bc10">&#9670;&nbsp;</a></span>bucket_count() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -367,12 +516,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the number of buckets in the table.</p>
 <dl class="section return"><dt>Returns</dt><dd>the bucket count </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00152">152</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00149">149</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a5dde573b90abee20ed0efce7fd81bc10"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5dde573b90abee20ed0efce7fd81bc10">&#9670;&nbsp;</a></span>bucket_count() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_type <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::bucket_count </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns the number of buckets in the table.</p>
+<dl class="section return"><dt>Returns</dt><dd>the bucket count </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00151">151</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a6b388b417ab5c6e1930b0da1bf25f196"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6b388b417ab5c6e1930b0da1bf25f196">&#9670;&nbsp;</a></span>capacity()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b388b417ab5c6e1930b0da1bf25f196">&#9670;&nbsp;</a></span>capacity() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -398,12 +578,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the current capacity of the table, that is, <a class="el" href="classcuckoohash__map.html#a5dde573b90abee20ed0efce7fd81bc10">bucket_count()</a> &times; <a class="el" href="classcuckoohash__map.html#ac3b07003caef9f1fe6b461fdbce0b11d">slot_per_bucket()</a>.</p>
 <dl class="section return"><dt>Returns</dt><dd>capacity of table </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00186">186</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00183">183</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a6b388b417ab5c6e1930b0da1bf25f196"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b388b417ab5c6e1930b0da1bf25f196">&#9670;&nbsp;</a></span>capacity() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_type <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::capacity </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns the current capacity of the table, that is, <a class="el" href="classcuckoohash__map.html#a5dde573b90abee20ed0efce7fd81bc10">bucket_count()</a> &times; <a class="el" href="classcuckoohash__map.html#ac3b07003caef9f1fe6b461fdbce0b11d">slot_per_bucket()</a>.</p>
+<dl class="section return"><dt>Returns</dt><dd>capacity of table </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00185">185</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a064323d48b43d36dc9ddd56e33a27f55"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a064323d48b43d36dc9ddd56e33a27f55">&#9670;&nbsp;</a></span>clear()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a064323d48b43d36dc9ddd56e33a27f55">&#9670;&nbsp;</a></span>clear() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -428,12 +639,42 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </div><div class="memdoc">
 <p>Removes all elements in the table, calling their destructors. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00476">476</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00473">473</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a064323d48b43d36dc9ddd56e33a27f55"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a064323d48b43d36dc9ddd56e33a27f55">&#9670;&nbsp;</a></span>clear() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::clear </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Removes all elements in the table, calling their destructors. </p>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00475">475</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a4ea42526d5528df9423a33c832e0ad37"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4ea42526d5528df9423a33c832e0ad37">&#9670;&nbsp;</a></span>contains()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4ea42526d5528df9423a33c832e0ad37">&#9670;&nbsp;</a></span>contains() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -461,12 +702,45 @@ template&lt;typename K &gt; </div>
 </div><div class="memdoc">
 <p>Returns whether or not <code>key</code> is in the table. Equivalent to <a class="el" href="classcuckoohash__map.html#ade540fdd50c635f4911b9d60f206e74e">find_fn</a> with a functor that does nothing. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00409">409</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00406">406</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a4ea42526d5528df9423a33c832e0ad37"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4ea42526d5528df9423a33c832e0ad37">&#9670;&nbsp;</a></span>contains() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::contains </td>
+          <td>(</td>
+          <td class="paramtype">const K &amp;&#160;</td>
+          <td class="paramname"><em>key</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns whether or not <code>key</code> is in the table. Equivalent to <a class="el" href="classcuckoohash__map.html#ade540fdd50c635f4911b9d60f206e74e">find_fn</a> with a functor that does nothing. </p>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00408">408</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a0ab068b5eb815244b010d11d7d63489d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0ab068b5eb815244b010d11d7d63489d">&#9670;&nbsp;</a></span>empty()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0ab068b5eb815244b010d11d7d63489d">&#9670;&nbsp;</a></span>empty() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -492,12 +766,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns whether the table is empty or not.</p>
 <dl class="section return"><dt>Returns</dt><dd>true if the table is empty, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00159">159</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00156">156</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a0ab068b5eb815244b010d11d7d63489d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0ab068b5eb815244b010d11d7d63489d">&#9670;&nbsp;</a></span>empty() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::empty </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns whether the table is empty or not.</p>
+<dl class="section return"><dt>Returns</dt><dd>true if the table is empty, false otherwise </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00158">158</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a6e38f36159dbe074548a49cf9afbfc62"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6e38f36159dbe074548a49cf9afbfc62">&#9670;&nbsp;</a></span>erase()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e38f36159dbe074548a49cf9afbfc62">&#9670;&nbsp;</a></span>erase() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -525,12 +830,45 @@ template&lt;typename K &gt; </div>
 </div><div class="memdoc">
 <p>Erases the key from the table. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a7c454c5fcdf11a59a576c0602be1a6b4">erase_fn</a> with a functor that just returns true. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00447">447</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00444">444</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a6e38f36159dbe074548a49cf9afbfc62"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e38f36159dbe074548a49cf9afbfc62">&#9670;&nbsp;</a></span>erase() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::erase </td>
+          <td>(</td>
+          <td class="paramtype">const K &amp;&#160;</td>
+          <td class="paramname"><em>key</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Erases the key from the table. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a7c454c5fcdf11a59a576c0602be1a6b4">erase_fn</a> with a functor that just returns true. </p>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00446">446</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a7c454c5fcdf11a59a576c0602be1a6b4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7c454c5fcdf11a59a576c0602be1a6b4">&#9670;&nbsp;</a></span>erase_fn()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c454c5fcdf11a59a576c0602be1a6b4">&#9670;&nbsp;</a></span>erase_fn() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -583,12 +921,70 @@ template&lt;typename K , typename F &gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if <code>key</code> was found and <code>fn</code> invoked, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00361">361</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00358">358</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a7c454c5fcdf11a59a576c0602be1a6b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c454c5fcdf11a59a576c0602be1a6b4">&#9670;&nbsp;</a></span>erase_fn() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K , typename F &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::erase_fn </td>
+          <td>(</td>
+          <td class="paramtype">const K &amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">F&#160;</td>
+          <td class="paramname"><em>fn</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Searches for <code>key</code> in the table, and invokes <code>fn</code> on the value if the key is found. The functor can mutate the value, and should return <code>true</code> in order to erase the element, and <code>false</code> otherwise.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">K</td><td>type of the key </td></tr>
+    <tr><td class="paramname">F</td><td>type of the functor. It should implement the method <code>bool operator()(mapped_type&amp;)</code>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">key</td><td>the key to possibly erase from the table </td></tr>
+    <tr><td class="paramname">fn</td><td>the functor to invoke if the element is found </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if <code>key</code> was found and <code>fn</code> invoked, false otherwise </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00360">360</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a4bae1efd1f5baa71c73d5fffd620bcab"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4bae1efd1f5baa71c73d5fffd620bcab">&#9670;&nbsp;</a></span>find() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4bae1efd1f5baa71c73d5fffd620bcab">&#9670;&nbsp;</a></span>find() <span class="overload">[1/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -626,12 +1022,55 @@ template&lt;typename K &gt; </div>
 </div><div class="memdoc">
 <p>Copies the value associated with <code>key</code> into <code>val</code>. Equivalent to calling <a class="el" href="classcuckoohash__map.html#ade540fdd50c635f4911b9d60f206e74e">find_fn</a> with a functor that copies the value into <code>val</code>. <code>mapped_type</code> must be <code>CopyAssignable</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00381">381</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00378">378</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a4bae1efd1f5baa71c73d5fffd620bcab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4bae1efd1f5baa71c73d5fffd620bcab">&#9670;&nbsp;</a></span>find() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::find </td>
+          <td>(</td>
+          <td class="paramtype">const K &amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">mapped_type &amp;&#160;</td>
+          <td class="paramname"><em>val</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Copies the value associated with <code>key</code> into <code>val</code>. Equivalent to calling <a class="el" href="classcuckoohash__map.html#ade540fdd50c635f4911b9d60f206e74e">find_fn</a> with a functor that copies the value into <code>val</code>. <code>mapped_type</code> must be <code>CopyAssignable</code>. </p>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00380">380</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a699e8f3fa163b30fd4934bf64d2a4808"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a699e8f3fa163b30fd4934bf64d2a4808">&#9670;&nbsp;</a></span>find() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a699e8f3fa163b30fd4934bf64d2a4808">&#9670;&nbsp;</a></span>find() <span class="overload">[3/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -678,12 +1117,64 @@ template&lt;typename K &gt; </div>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00393">393</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00390">390</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a699e8f3fa163b30fd4934bf64d2a4808"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a699e8f3fa163b30fd4934bf64d2a4808">&#9670;&nbsp;</a></span>find() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">mapped_type <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::find </td>
+          <td>(</td>
+          <td class="paramtype">const K &amp;&#160;</td>
+          <td class="paramname"><em>key</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Searches the table for <code>key</code>, and returns the associated value it finds. <code>mapped_type</code> must be <code>CopyConstructible</code>.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">K</td><td>type of the key </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">key</td><td>the key to search for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the value associated with the given key </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::out_of_range</td><td>if the key is not found </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00392">392</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="ade540fdd50c635f4911b9d60f206e74e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ade540fdd50c635f4911b9d60f206e74e">&#9670;&nbsp;</a></span>find_fn()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ade540fdd50c635f4911b9d60f206e74e">&#9670;&nbsp;</a></span>find_fn() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -736,12 +1227,70 @@ template&lt;typename K , typename F &gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the key was found and functor invoked, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00278">278</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00275">275</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="ade540fdd50c635f4911b9d60f206e74e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade540fdd50c635f4911b9d60f206e74e">&#9670;&nbsp;</a></span>find_fn() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K , typename F &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::find_fn </td>
+          <td>(</td>
+          <td class="paramtype">const K &amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">F&#160;</td>
+          <td class="paramname"><em>fn</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Searches the table for <code>key</code>, and invokes <code>fn</code> on the value. <code>fn</code> is not allowed to modify the contents of the value if found.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">K</td><td>type of the key. This can be any type comparable with <code>key_type</code> </td></tr>
+    <tr><td class="paramname">F</td><td>type of the functor. It should implement the method <code>void operator()(const mapped_type&amp;)</code>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">key</td><td>the key to search for </td></tr>
+    <tr><td class="paramname">fn</td><td>the functor to invoke if the element is found </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the key was found and functor invoked, false otherwise </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00277">277</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a72bcb71d361a7ea369e11fd1a339501a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a72bcb71d361a7ea369e11fd1a339501a">&#9670;&nbsp;</a></span>get_allocator()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a72bcb71d361a7ea369e11fd1a339501a">&#9670;&nbsp;</a></span>get_allocator() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -767,12 +1316,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the allocator associated with the container</p>
 <dl class="section return"><dt>Returns</dt><dd>the associated allocator </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00135">135</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00134">134</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a72bcb71d361a7ea369e11fd1a339501a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a72bcb71d361a7ea369e11fd1a339501a">&#9670;&nbsp;</a></span>get_allocator() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">allocator_type <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::get_allocator </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns the allocator associated with the container</p>
+<dl class="section return"><dt>Returns</dt><dd>the associated allocator </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00136">136</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="ac7ab26e6b6dffe554f1f517fed7b1288"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac7ab26e6b6dffe554f1f517fed7b1288">&#9670;&nbsp;</a></span>hash_function()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7ab26e6b6dffe554f1f517fed7b1288">&#9670;&nbsp;</a></span>hash_function() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -798,12 +1378,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the function that hashes the keys</p>
 <dl class="section return"><dt>Returns</dt><dd>the hash function </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00121">121</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00120">120</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="ac7ab26e6b6dffe554f1f517fed7b1288"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7ab26e6b6dffe554f1f517fed7b1288">&#9670;&nbsp;</a></span>hash_function() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">hasher <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::hash_function </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns the function that hashes the keys</p>
+<dl class="section return"><dt>Returns</dt><dd>the hash function </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00122">122</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="ab9318be6f75f82b9ca657bfc3d1ce90d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab9318be6f75f82b9ca657bfc3d1ce90d">&#9670;&nbsp;</a></span>hashpower()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab9318be6f75f82b9ca657bfc3d1ce90d">&#9670;&nbsp;</a></span>hashpower() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -829,12 +1440,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the hashpower of the table, which is log<sub>2</sub>(<a class="el" href="classcuckoohash__map.html#a5dde573b90abee20ed0efce7fd81bc10">bucket_count()</a>).</p>
 <dl class="section return"><dt>Returns</dt><dd>the hashpower </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00143">143</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00142">142</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="ab9318be6f75f82b9ca657bfc3d1ce90d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab9318be6f75f82b9ca657bfc3d1ce90d">&#9670;&nbsp;</a></span>hashpower() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_type <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::hashpower </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns the hashpower of the table, which is log<sub>2</sub>(<a class="el" href="classcuckoohash__map.html#a5dde573b90abee20ed0efce7fd81bc10">bucket_count()</a>).</p>
+<dl class="section return"><dt>Returns</dt><dd>the hashpower </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00144">144</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a264768587f551549e96076bd6451de29"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a264768587f551549e96076bd6451de29">&#9670;&nbsp;</a></span>insert()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a264768587f551549e96076bd6451de29">&#9670;&nbsp;</a></span>insert() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -872,12 +1514,55 @@ template&lt;typename K , typename... Args&gt; </div>
 </div><div class="memdoc">
 <p>Inserts the key-value pair into the table. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a9c0a81208d5484ca657458116586a274">upsert</a> with a functor that does nothing. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00427">427</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00424">424</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a264768587f551549e96076bd6451de29"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a264768587f551549e96076bd6451de29">&#9670;&nbsp;</a></span>insert() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K , typename... Args&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::insert </td>
+          <td>(</td>
+          <td class="paramtype">K &amp;&amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Args &amp;&amp;...&#160;</td>
+          <td class="paramname"><em>val</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Inserts the key-value pair into the table. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a9c0a81208d5484ca657458116586a274">upsert</a> with a functor that does nothing. </p>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00426">426</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="ad5263f3394e6c47a0e2751ea85c89f97"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad5263f3394e6c47a0e2751ea85c89f97">&#9670;&nbsp;</a></span>insert_or_assign()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ad5263f3394e6c47a0e2751ea85c89f97">&#9670;&nbsp;</a></span>insert_or_assign() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -915,12 +1600,55 @@ template&lt;typename K , typename V &gt; </div>
 </div><div class="memdoc">
 <p>Inserts the key-value pair into the table. If the key is already in the table, assigns the existing mapped value to <code>val</code>. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a9c0a81208d5484ca657458116586a274">upsert</a> with a functor that assigns the mapped value to <code>val</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00438">438</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00435">435</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="ad5263f3394e6c47a0e2751ea85c89f97"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad5263f3394e6c47a0e2751ea85c89f97">&#9670;&nbsp;</a></span>insert_or_assign() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K , typename V &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::insert_or_assign </td>
+          <td>(</td>
+          <td class="paramtype">K &amp;&amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">V &amp;&amp;&#160;</td>
+          <td class="paramname"><em>val</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Inserts the key-value pair into the table. If the key is already in the table, assigns the existing mapped value to <code>val</code>. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a9c0a81208d5484ca657458116586a274">upsert</a> with a functor that assigns the mapped value to <code>val</code>. </p>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00437">437</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a3d15ecb8e6db27639950889d4c37a9ac"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3d15ecb8e6db27639950889d4c37a9ac">&#9670;&nbsp;</a></span>key_eq()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a3d15ecb8e6db27639950889d4c37a9ac">&#9670;&nbsp;</a></span>key_eq() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -946,12 +1674,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the function that compares keys for equality</p>
 <dl class="section return"><dt>Returns</dt><dd>the key comparison function </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00128">128</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00127">127</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a3d15ecb8e6db27639950889d4c37a9ac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3d15ecb8e6db27639950889d4c37a9ac">&#9670;&nbsp;</a></span>key_eq() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">key_equal <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::key_eq </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns the function that compares keys for equality</p>
+<dl class="section return"><dt>Returns</dt><dd>the key comparison function </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00129">129</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a1abb4cd2fa8feecb8612a9d3a4de52c4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1abb4cd2fa8feecb8612a9d3a4de52c4">&#9670;&nbsp;</a></span>load_factor()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1abb4cd2fa8feecb8612a9d3a4de52c4">&#9670;&nbsp;</a></span>load_factor() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -977,12 +1736,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the percentage the table is filled, that is, <a class="el" href="classcuckoohash__map.html#a31b5b0f54ba4a4104103c23bc9c9e2eb">size()</a> &divide; <a class="el" href="classcuckoohash__map.html#a6b388b417ab5c6e1930b0da1bf25f196">capacity()</a>.</p>
 <dl class="section return"><dt>Returns</dt><dd>load factor of the table </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00194">194</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00191">191</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a1abb4cd2fa8feecb8612a9d3a4de52c4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1abb4cd2fa8feecb8612a9d3a4de52c4">&#9670;&nbsp;</a></span>load_factor() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::load_factor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns the percentage the table is filled, that is, <a class="el" href="classcuckoohash__map.html#a31b5b0f54ba4a4104103c23bc9c9e2eb">size()</a> &divide; <a class="el" href="classcuckoohash__map.html#a6b388b417ab5c6e1930b0da1bf25f196">capacity()</a>.</p>
+<dl class="section return"><dt>Returns</dt><dd>load factor of the table </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00193">193</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a2986246d37854f3c188f382b0507d4c0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2986246d37854f3c188f382b0507d4c0">&#9670;&nbsp;</a></span>lock_table()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2986246d37854f3c188f382b0507d4c0">&#9670;&nbsp;</a></span>lock_table() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1008,12 +1798,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Construct a <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> object that owns all the locks in the table.</p>
 <dl class="section return"><dt>Returns</dt><dd>a <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> instance </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00487">487</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00484">484</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a2986246d37854f3c188f382b0507d4c0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2986246d37854f3c188f382b0507d4c0">&#9670;&nbsp;</a></span>lock_table() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::lock_table </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Construct a <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> object that owns all the locks in the table.</p>
+<dl class="section return"><dt>Returns</dt><dd>a <a class="el" href="classcuckoohash__map_1_1locked__table.html">locked_table</a> instance </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00486">486</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="aa578dccc88d150a8a636c02018d629f4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa578dccc88d150a8a636c02018d629f4">&#9670;&nbsp;</a></span>maximum_hashpower() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aa578dccc88d150a8a636c02018d629f4">&#9670;&nbsp;</a></span>maximum_hashpower() <span class="overload">[1/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1051,12 +1872,55 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00239">239</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00236">236</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="aa578dccc88d150a8a636c02018d629f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa578dccc88d150a8a636c02018d629f4">&#9670;&nbsp;</a></span>maximum_hashpower() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::maximum_hashpower </td>
+          <td>(</td>
+          <td class="paramtype">size_type&#160;</td>
+          <td class="paramname"><em>mhp</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Sets the maximum hashpower the table can be. If set to <a class="el" href="cuckoohash__config_8hh.html#a5dda74f33a7f1a551454c8b0ace54cff">LIBCUCKOO_NO_MAXIMUM_HASHPOWER</a>, there will be no limit on the hashpower. Otherwise, the table will not be able to expand beyond the given hashpower, either by an explicit or an automatic expansion.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mhp</td><td>the hashpower to set the maximum to </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if the current hashpower exceeds the limit </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00238">238</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a24051decc4f25861eb60f03076f0828e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a24051decc4f25861eb60f03076f0828e">&#9670;&nbsp;</a></span>maximum_hashpower() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a24051decc4f25861eb60f03076f0828e">&#9670;&nbsp;</a></span>maximum_hashpower() <span class="overload">[3/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1082,12 +1946,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the maximum hashpower of the table</p>
 <dl class="section return"><dt>Returns</dt><dd>the maximum hashpower </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00253">253</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00250">250</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a24051decc4f25861eb60f03076f0828e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a24051decc4f25861eb60f03076f0828e">&#9670;&nbsp;</a></span>maximum_hashpower() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_type <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::maximum_hashpower </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns the maximum hashpower of the table</p>
+<dl class="section return"><dt>Returns</dt><dd>the maximum hashpower </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00252">252</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="aeecfff17d1b8c0193fd64f184c0b3bd8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeecfff17d1b8c0193fd64f184c0b3bd8">&#9670;&nbsp;</a></span>minimum_load_factor() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aeecfff17d1b8c0193fd64f184c0b3bd8">&#9670;&nbsp;</a></span>minimum_load_factor() <span class="overload">[1/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1125,12 +2020,55 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00208">208</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00205">205</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="aeecfff17d1b8c0193fd64f184c0b3bd8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeecfff17d1b8c0193fd64f184c0b3bd8">&#9670;&nbsp;</a></span>minimum_load_factor() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::minimum_load_factor </td>
+          <td>(</td>
+          <td class="paramtype">const double&#160;</td>
+          <td class="paramname"><em>mlf</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Sets the minimum load factor allowed for automatic expansions. If an expansion is needed when the load factor of the table is lower than this threshold, <a class="el" href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a> is thrown. It will not be thrown for an explicitly-triggered expansion.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mlf</td><td>the load factor to set the minimum to </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if the given load factor is less than 0.0 or greater than 1.0 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00207">207</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a2bdbe1d67874a2284c37c9f553343c11"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2bdbe1d67874a2284c37c9f553343c11">&#9670;&nbsp;</a></span>minimum_load_factor() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2bdbe1d67874a2284c37c9f553343c11">&#9670;&nbsp;</a></span>minimum_load_factor() <span class="overload">[3/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1156,12 +2094,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the minimum load factor of the table</p>
 <dl class="section return"><dt>Returns</dt><dd>the minimum load factor </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00226">226</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00223">223</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a2bdbe1d67874a2284c37c9f553343c11"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2bdbe1d67874a2284c37c9f553343c11">&#9670;&nbsp;</a></span>minimum_load_factor() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::minimum_load_factor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns the minimum load factor of the table</p>
+<dl class="section return"><dt>Returns</dt><dd>the minimum load factor </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00225">225</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="ab928c30cb3f7f9bf841001692f8fa3ee"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab928c30cb3f7f9bf841001692f8fa3ee">&#9670;&nbsp;</a></span>rehash()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab928c30cb3f7f9bf841001692f8fa3ee">&#9670;&nbsp;</a></span>rehash() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1194,12 +2163,50 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the table changed size, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00460">460</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00457">457</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="ab928c30cb3f7f9bf841001692f8fa3ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab928c30cb3f7f9bf841001692f8fa3ee">&#9670;&nbsp;</a></span>rehash() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::rehash </td>
+          <td>(</td>
+          <td class="paramtype">size_type&#160;</td>
+          <td class="paramname"><em>n</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Resizes the table to the given hashpower. If this hashpower is not larger than the current hashpower, then it decreases the hashpower to the maximum of the specified value and the smallest hashpower that can hold all the elements currently in the table.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">n</td><td>the hashpower to set for the table </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the table changed size, false otherwise </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00459">459</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a5184a76e555ac08126db7cb47f299db0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5184a76e555ac08126db7cb47f299db0">&#9670;&nbsp;</a></span>reserve()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5184a76e555ac08126db7cb47f299db0">&#9670;&nbsp;</a></span>reserve() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1232,12 +2239,50 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the size of the table changed, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00471">471</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00468">468</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a5184a76e555ac08126db7cb47f299db0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5184a76e555ac08126db7cb47f299db0">&#9670;&nbsp;</a></span>reserve() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::reserve </td>
+          <td>(</td>
+          <td class="paramtype">size_type&#160;</td>
+          <td class="paramname"><em>n</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Reserve enough space in the table for the given number of elements. If the table can already hold that many elements, the function will shrink the table to the smallest hashpower that can hold the maximum of the specified amount and the current table size.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">n</td><td>the number of elements to reserve space for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the size of the table changed, false otherwise </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00470">470</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a31b5b0f54ba4a4104103c23bc9c9e2eb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a31b5b0f54ba4a4104103c23bc9c9e2eb">&#9670;&nbsp;</a></span>size()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a31b5b0f54ba4a4104103c23bc9c9e2eb">&#9670;&nbsp;</a></span>size() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1263,12 +2308,43 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 <p>Returns the number of elements in the table.</p>
 <dl class="section return"><dt>Returns</dt><dd>number of elements in the table </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00173">173</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00170">170</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a31b5b0f54ba4a4104103c23bc9c9e2eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a31b5b0f54ba4a4104103c23bc9c9e2eb">&#9670;&nbsp;</a></span>size() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_type <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::size </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns the number of elements in the table.</p>
+<dl class="section return"><dt>Returns</dt><dd>number of elements in the table </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00172">172</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="ac3b07003caef9f1fe6b461fdbce0b11d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac3b07003caef9f1fe6b461fdbce0b11d">&#9670;&nbsp;</a></span>slot_per_bucket()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3b07003caef9f1fe6b461fdbce0b11d">&#9670;&nbsp;</a></span>slot_per_bucket() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1293,12 +2369,42 @@ template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred
 </div><div class="memdoc">
 <p>The number of slots per hash bucket </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00073">73</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00079">79</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="ac3b07003caef9f1fe6b461fdbce0b11d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3b07003caef9f1fe6b461fdbce0b11d">&#9670;&nbsp;</a></span>slot_per_bucket() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static constexpr size_type <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::slot_per_bucket </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The number of slots per hash bucket </p>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00081">81</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="aefa3fc2a7b5a1c21c3832d24e6bc6dc0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aefa3fc2a7b5a1c21c3832d24e6bc6dc0">&#9670;&nbsp;</a></span>update()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aefa3fc2a7b5a1c21c3832d24e6bc6dc0">&#9670;&nbsp;</a></span>update() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1336,12 +2442,55 @@ template&lt;typename K , typename V &gt; </div>
 </div><div class="memdoc">
 <p>Updates the value associated with <code>key</code> to <code>val</code>. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a674616d77377e248f5dea8cffdce27ea">update_fn</a> with a functor that assigns the existing mapped value to <code>val</code>. <code>mapped_type</code> must be <code>MoveAssignable</code> or <code>CopyAssignable</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00419">419</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00416">416</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="aefa3fc2a7b5a1c21c3832d24e6bc6dc0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aefa3fc2a7b5a1c21c3832d24e6bc6dc0">&#9670;&nbsp;</a></span>update() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K , typename V &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::update </td>
+          <td>(</td>
+          <td class="paramtype">const K &amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">V &amp;&amp;&#160;</td>
+          <td class="paramname"><em>val</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Updates the value associated with <code>key</code> to <code>val</code>. Equivalent to calling <a class="el" href="classcuckoohash__map.html#a674616d77377e248f5dea8cffdce27ea">update_fn</a> with a functor that assigns the existing mapped value to <code>val</code>. <code>mapped_type</code> must be <code>MoveAssignable</code> or <code>CopyAssignable</code>. </p>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00418">418</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a674616d77377e248f5dea8cffdce27ea"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a674616d77377e248f5dea8cffdce27ea">&#9670;&nbsp;</a></span>update_fn()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a674616d77377e248f5dea8cffdce27ea">&#9670;&nbsp;</a></span>update_fn() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1394,12 +2543,70 @@ template&lt;typename K , typename F &gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the key was found and functor invoked, false otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00302">302</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00299">299</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
+<a id="a674616d77377e248f5dea8cffdce27ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a674616d77377e248f5dea8cffdce27ea">&#9670;&nbsp;</a></span>update_fn() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K , typename F &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::update_fn </td>
+          <td>(</td>
+          <td class="paramtype">const K &amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">F&#160;</td>
+          <td class="paramname"><em>fn</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Searches the table for <code>key</code>, and invokes <code>fn</code> on the value. <code>fn</code> is allow to modify the contents of the value if found.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">K</td><td>type of the key. This can be any type comparable with <code>key_type</code> </td></tr>
+    <tr><td class="paramname">F</td><td>type of the functor. It should implement the method <code>void operator()(mapped_type&amp;)</code>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">key</td><td>the key to search for </td></tr>
+    <tr><td class="paramname">fn</td><td>the functor to invoke if the element is found </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the key was found and functor invoked, false otherwise </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00301">301</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
 
 </div>
 </div>
 <a id="a9c0a81208d5484ca657458116586a274"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9c0a81208d5484ca657458116586a274">&#9670;&nbsp;</a></span>upsert()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c0a81208d5484ca657458116586a274">&#9670;&nbsp;</a></span>upsert() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1441,7 +2648,7 @@ template&lt;typename K , typename F , typename... Args&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Searches for <code>key</code> in the table. If the key is found, then <code>fn</code> is called on the existing value, and nothing happens to the passed-in key and values. If the key is not found and must be inserted, the <code>value_type</code> will be constructed by forwarding the given key and values. If there is no room left in the table, it will be automatically expanded. Expansion may throw exceptions.</p>
+<p>Searches for <code>key</code> in the table. If the key is found, then <code>fn</code> is called on the existing value, and nothing happens to the passed-in key and values. If the key is not found and must be inserted, the pair will be constructed by forwarding the given key and values. If there is no room left in the table, it will be automatically expanded. Expansion may throw exceptions.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">K</td><td>type of the key </td></tr>
@@ -1460,12 +2667,79 @@ template&lt;typename K , typename F , typename... Args&gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if a new key was inserted, false if the key was already in the table </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00336">336</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l00333">333</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
 
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following file:<ul>
+<a id="a9c0a81208d5484ca657458116586a274"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c0a81208d5484ca657458116586a274">&#9670;&nbsp;</a></span>upsert() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash  = std::hash&lt;Key&gt;, class Pred  = std::equal_to&lt;Key&gt;, class Alloc  = std::allocator&lt;std::pair&lt;const Key, T&gt;&gt;, std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET&gt; </div>
+<div class="memtemplate">
+template&lt;typename K , typename F , typename... Args&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::upsert </td>
+          <td>(</td>
+          <td class="paramtype">K &amp;&amp;&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">F&#160;</td>
+          <td class="paramname"><em>fn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Args &amp;&amp;...&#160;</td>
+          <td class="paramname"><em>val</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Searches for <code>key</code> in the table. If the key is found, then <code>fn</code> is called on the existing value, and nothing happens to the passed-in key and values. If the key is not found and must be inserted, the pair will be constructed by forwarding the given key and values. If there is no room left in the table, it will be automatically expanded. Expansion may throw exceptions.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">K</td><td>type of the key </td></tr>
+    <tr><td class="paramname">F</td><td>type of the functor. It should implement the method <code>void operator()(mapped_type&amp;)</code>. </td></tr>
+    <tr><td class="paramname">Args</td><td>list of types for the value constructor arguments </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">key</td><td>the key to insert into the table </td></tr>
+    <tr><td class="paramname">fn</td><td>the functor to invoke if the element is found. If your <code>fn</code> needs more data that just the value being modified, consider implementing it as a lambda with captured arguments. </td></tr>
+    <tr><td class="paramname">val</td><td>a list of constructor arguments with which to create the value </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if a new key was inserted, false if the key was already in the table </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map__port_8hh_source.html#l00335">335</a> of file <a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a>.</p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following files:<ul>
 <li>/Users/manu/root/src/libcuckoo/libcuckoo/libcuckoo/<a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a></li>
+<li>/Users/manu/root/src/libcuckoo/libcuckoo/libcuckoo/<a class="el" href="cuckoohash__map__port_8hh_source.html">cuckoohash_map_port.hh</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -1473,7 +2747,7 @@ template&lt;typename K , typename F , typename... Args&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a></li>
-    <li class="footer">Generated on Sat Mar 18 2017 14:50:30 for libcuckoo by
+    <li class="footer">Generated on Sun Apr 16 2017 20:26:35 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
