@@ -26,10 +26,7 @@ class libcuckoo_bucket_container {
 public:
   using key_type = Key;
   using mapped_type = T;
-  struct value_type {
-    const key_type &first;
-    mapped_type &second;
-  };
+  using value_type = std::pair<const Key, T>;
   using allocator_type = Alloc;
   using partial_t = Partial;
   using size_type = std::size_t;
@@ -38,6 +35,7 @@ public:
   using pointer = value_type *;
   using const_pointer = const value_type *;
 
+public:
   /*
    * The bucket type holds SLOT_PER_BUCKET key-value pairs, along with their
    * partial keys and occupancy info. It uses aligned_storage arrays to store
@@ -48,24 +46,27 @@ public:
    */
   class bucket {
   public:
-    bucket() noexcept : occupied_({}) {}
+    bucket() noexcept : occupied_{} {}
+
+    const value_type &kvpair(size_type ind) const {
+      return *static_cast<const value_type *>(
+          static_cast<const void *>(&values_[ind]));
+    }
+    value_type &kvpair(size_type ind) {
+      return *static_cast<value_type *>(static_cast<void *>(&values_[ind]));
+    }
 
     const key_type &key(size_type ind) const {
-      return *static_cast<const key_type *>(
-          static_cast<const void *>(&keys_[ind]));
+      return storage_kvpair(ind).first;
     }
     key_type &&movable_key(size_type ind) {
-      return std::move(
-          *static_cast<key_type *>(static_cast<void *>(&keys_[ind])));
+      return std::move(storage_kvpair(ind).first);
     }
 
     const mapped_type &mapped(size_type ind) const {
-      return *static_cast<const mapped_type *>(
-          static_cast<const void *>(&mappeds_[ind]));
+      return storage_kvpair(ind).second;
     }
-    mapped_type &mapped(size_type ind) {
-      return *static_cast<mapped_type *>(static_cast<void *>(&mappeds_[ind]));
-    }
+    mapped_type &mapped(size_type ind) { return storage_kvpair(ind).second; }
 
     partial_t partial(size_type ind) const { return partials_[ind]; }
     partial_t &partial(size_type ind) { return partials_[ind]; }
@@ -74,30 +75,37 @@ public:
     bool &occupied(size_type ind) { return occupied_[ind]; }
 
   private:
-    std::array<typename std::aligned_storage<sizeof(key_type),
-                                             alignof(key_type)>::type,
+    friend class libcuckoo_bucket_container;
+
+    using storage_value_type = std::pair<Key, T>;
+
+    const storage_value_type &storage_kvpair(size_type ind) const {
+      return *static_cast<const storage_value_type *>(
+          static_cast<const void *>(&values_[ind]));
+    }
+    storage_value_type &storage_kvpair(size_type ind) {
+      return *static_cast<storage_value_type *>(
+          static_cast<void *>(&values_[ind]));
+    }
+
+    std::array<typename std::aligned_storage<sizeof(storage_value_type),
+                                             alignof(storage_value_type)>::type,
                SLOT_PER_BUCKET>
-        keys_;
-    std::array<typename std::aligned_storage<sizeof(mapped_type),
-                                             alignof(mapped_type)>::type,
-               SLOT_PER_BUCKET>
-        mappeds_;
+        values_;
     std::array<partial_t, SLOT_PER_BUCKET> partials_;
     std::array<bool, SLOT_PER_BUCKET> occupied_;
   };
 
 private:
   using alloc_traits_ = std::allocator_traits<allocator_type>;
-  using key_traits_ = typename alloc_traits_::template rebind_traits<key_type>;
-  using mapped_traits_ =
-      typename alloc_traits_::template rebind_traits<mapped_type>;
+  using storage_value_traits_ = typename alloc_traits_::template rebind_traits<
+      typename bucket::storage_value_type>;
   using bucket_traits_ = typename alloc_traits_::template rebind_traits<bucket>;
 
 public:
   libcuckoo_bucket_container(size_type hp, const allocator_type &allocator)
-      : allocator_(allocator), key_allocator_(allocator),
-        mapped_allocator_(allocator), bucket_allocator_(allocator),
-        hashpower_(hp),
+      : allocator_(allocator), storage_value_allocator_(allocator),
+        bucket_allocator_(allocator), hashpower_(hp),
         buckets_(bucket_traits_::allocate(bucket_allocator_, size())) {
     // The bucket default constructor is nothrow, so we don't have to
     // worry about dealing with exceptions when constructing all the
@@ -115,23 +123,34 @@ public:
   libcuckoo_bucket_container(const libcuckoo_bucket_container &bc)
       : allocator_(alloc_traits_::select_on_container_copy_construction(
             bc.allocator_)),
-        key_allocator_(key_traits_::select_on_container_copy_construction(
-            bc.key_allocator_)),
-        mapped_allocator_(mapped_traits_::select_on_container_copy_construction(
-            bc.mapped_allocator_)),
+        storage_value_allocator_(
+            storage_value_traits_::select_on_container_copy_construction(
+                bc.storage_value_allocator_)),
         bucket_allocator_(bucket_traits_::select_on_container_copy_construction(
             bc.bucket_allocator_)),
         hashpower_(bc.hashpower()),
         buckets_(transfer(bc.hashpower(), bc, std::false_type())) {}
 
+  libcuckoo_bucket_container(const libcuckoo_bucket_container &bc,
+                             const allocator_type &a = allocator_type())
+      : allocator_(a), storage_value_allocator_(a), bucket_allocator_(a),
+        hashpower_(bc.hashpower()),
+        buckets_(transfer(bc.hashpower(), bc, std::false_type())) {}
+
   libcuckoo_bucket_container(libcuckoo_bucket_container &&bc)
       : allocator_(std::move(bc.allocator_)),
+        storage_value_allocator_(std::move(bc.storage_value_allocator_)),
         bucket_allocator_(std::move(bc.bucket_allocator_)),
-        key_allocator_(std::move(bc.key_allocator_)),
-        mapped_allocator_(std::move(bc.mapped_allocator_)),
         hashpower_(bc.hashpower()), buckets_(std::move(bc.buckets_)) {
     // De-activate the other buckets container
     bc.buckets_ = nullptr;
+  }
+
+  libcuckoo_bucket_container(libcuckoo_bucket_container &&bc,
+                             const allocator_type &a = allocator_type())
+      : allocator_(a), storage_value_allocator_(a), bucket_allocator_(a),
+        hashpower_(bc.hashpower()) {
+    move_assign(bc, std::false_type());
   }
 
   libcuckoo_bucket_container &operator=(const libcuckoo_bucket_container &bc) {
@@ -139,16 +158,13 @@ public:
     copy_allocator(
         allocator_, bc.allocator_,
         typename alloc_traits_::propagate_on_container_copy_assignment());
-    copy_allocator(
-        key_allocator_, bc.key_allocator_,
-        typename key_traits_::propagate_on_container_copy_assignment());
-    copy_allocator(
-        mapped_allocator_, bc.mapped_allocator_,
-        typename mapped_traits_::propagate_on_container_copy_assignment());
+    copy_allocator(storage_value_allocator_, bc.storage_value_allocator_,
+                   typename storage_value_traits_::
+                       propagate_on_container_copy_assignment());
     copy_allocator(
         bucket_allocator_, bc.bucket_allocator_,
         typename bucket_traits_::propagate_on_container_copy_assignment());
-    hashpower_ = bc.hashpower();
+    hashpower(bc.hashpower());
     buckets_ = transfer(hashpower(), bc, std::false_type());
     return *this;
   }
@@ -158,12 +174,9 @@ public:
     move_allocator(
         allocator_, bc.allocator_,
         typename alloc_traits_::propagate_on_container_move_assignment());
-    move_allocator(
-        key_allocator_, bc.key_allocator_,
-        typename key_traits_::propagate_on_container_move_assignment());
-    move_allocator(
-        mapped_allocator_, bc.mapped_allocator_,
-        typename mapped_traits_::propagate_on_container_move_assignment());
+    move_allocator(storage_value_allocator_, bc.storage_value_allocator_,
+                   typename storage_value_traits_::
+                       propagate_on_container_move_assignment());
     hashpower(bc.hashpower());
     // When considering whether or not to move the bucket memory, we only need
     // to look at bucket_allocator_, since it is the only allocator used to
@@ -171,6 +184,18 @@ public:
     move_assign(
         bc, typename bucket_traits_::propagate_on_container_move_assignment());
     return *this;
+  }
+
+  void swap(libcuckoo_bucket_container &bc) noexcept {
+    swap_allocator(allocator_, bc.allocator_,
+                   typename alloc_traits_::propagate_on_container_swap());
+    swap_allocator(
+        storage_value_allocator_, bc.storage_value_allocator_,
+        typename storage_value_traits_::propagate_on_container_swap());
+    size_t bc_hashpower = bc.hashpower();
+    bc.hashpower(hashpower());
+    hashpower(bc_hashpower);
+    finish_swap(bc, typename bucket_traits_::propagate_on_container_swap());
   }
 
   size_type hashpower() const {
@@ -196,10 +221,10 @@ public:
     assert(!b.occupied(slot));
     b.partial(slot) = p;
     b.occupied(slot) = true;
-    key_traits_::construct(key_allocator_, std::addressof(b.key(slot)),
-                           std::forward<K>(k));
-    mapped_traits_::construct(mapped_allocator_, std::addressof(b.mapped(slot)),
-                              std::forward<Args>(args)...);
+    storage_value_traits_::construct(
+        storage_value_allocator_, std::addressof(b.storage_kvpair(slot)),
+        std::piecewise_construct, std::forward_as_tuple(std::forward<K>(k)),
+        std::forward_as_tuple(std::forward<Args>(args)...));
   }
 
   // Destroys live data in a bucket
@@ -207,8 +232,8 @@ public:
     bucket &b = buckets_[ind];
     assert(b.occupied(slot));
     b.occupied(slot) = false;
-    key_traits_::destroy(key_allocator_, std::addressof(b.key(slot)));
-    mapped_traits_::destroy(mapped_allocator_, std::addressof(b.mapped(slot)));
+    storage_value_traits_::destroy(storage_value_allocator_,
+                                   std::addressof(b.storage_kvpair(slot)));
   }
 
   // Moves data between two buckets in the container
@@ -285,6 +310,27 @@ private:
     }
   }
 
+  // true here means the allocators from `src` are propagated on swap
+  template <typename A> void swap_allocator(A &dst, A &src, std::true_type) {
+    std::swap(dst, src);
+  }
+
+  template <typename A> void swap_allocator(A &dst, A &src, std::false_type) {}
+
+  // true here means the bucket allocator should be propagated on swap
+  void finish_swap(libcuckoo_bucket_container &src, std::true_type) {
+    std::swap(bucket_allocator_, src.bucket_allocator_);
+    std::swap(buckets_, src.buckets_);
+  }
+
+  void finish_swap(libcuckoo_bucket_container &src, std::false_type) {
+    if (bucket_allocator_ == src.bucket_allocator_) {
+      std::swap(buckets_, src.buckets_);
+    } else {
+      // undefined behavior
+    }
+  }
+
   void destroy_buckets() noexcept {
     if (buckets_ == nullptr) {
       return;
@@ -338,8 +384,7 @@ private:
   }
 
   typename alloc_traits_::allocator_type allocator_;
-  typename key_traits_::allocator_type key_allocator_;
-  typename mapped_traits_::allocator_type mapped_allocator_;
+  typename storage_value_traits_::allocator_type storage_value_allocator_;
   typename bucket_traits_::allocator_type bucket_allocator_;
   // This needs to be atomic, since it can be read and written by multiple
   // threads not necessarily synchronized by a lock.

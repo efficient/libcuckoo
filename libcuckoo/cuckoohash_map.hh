@@ -1514,7 +1514,7 @@ private:
     // reading from the buckets array. Then the old buckets array will be
     // deleted when new_map is deleted. All the locks should be released by
     // the unlocker as well.
-    std::swap(buckets_, new_map.buckets_);
+    buckets_.swap(new_map.buckets_);
     return ok;
   }
 
@@ -1691,10 +1691,7 @@ public:
         return !(operator==(it));
       }
 
-      reference operator*() const {
-        fill_pair(index_, slot_);
-        return *static_cast<pointer>(static_cast<const void *>(&pair_));
-      }
+      reference operator*() const { return (*buckets_)[index_].kvpair(slot_); }
 
       pointer operator->() const { return std::addressof(operator*()); }
 
@@ -1773,22 +1770,6 @@ public:
       // implementation convenience, we let it take on negative values.
       size_type slot_;
 
-      // A placeholder value_type that we can return references to when asked.
-      // Since the value_type is a pair of references to the current
-      // bucket-slot pair, we need to construct this pair every time someone
-      // requests one. It is mutable so that we can construct the pair in const
-      // methods.
-      mutable typename std::aligned_storage<sizeof(value_type),
-                                            alignof(value_type)>::type pair_;
-
-      // Constructs the pair in-place with bucket data. This will work only if
-      // the value_type is defined as an aggregate type containing two
-      // references.
-      void fill_pair(size_type ind, size_type slot) const {
-        bucket &b = (*buckets_)[ind];
-        new (&pair_) value_type(value_type{b.key(slot), b.mapped(slot)});
-      }
-
       // Returns the position signifying the end of the table
       static std::pair<size_type, size_type> end_pos(const buckets_t &buckets) {
         return std::make_pair(buckets.size(), 0);
@@ -1831,10 +1812,8 @@ public:
       }
 
       reference operator*() {
-        const_iterator::fill_pair(const_iterator::index_,
-                                  const_iterator::slot_);
-        return *static_cast<pointer>(
-            static_cast<void *>(&(const_iterator::pair_)));
+        return (*const_iterator::buckets_)[const_iterator::index_].kvpair(
+            const_iterator::slot_);
       }
 
       pointer operator->() { return std::addressof(operator*()); }

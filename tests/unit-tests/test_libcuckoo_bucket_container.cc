@@ -8,7 +8,7 @@
 #include <libcuckoo/libcuckoo_bucket_container.hh>
 
 template <bool PROPAGATE_COPY_ASSIGNMENT = true,
-          bool PROPAGATE_MOVE_ASSIGNMENT = true>
+          bool PROPAGATE_MOVE_ASSIGNMENT = true, bool PROPAGATE_SWAP = true>
 struct allocator_wrapper {
   template <class T> class stateful_allocator {
   public:
@@ -17,6 +17,8 @@ struct allocator_wrapper {
         std::integral_constant<bool, PROPAGATE_COPY_ASSIGNMENT>;
     using propagate_on_container_move_assignment =
         std::integral_constant<bool, PROPAGATE_MOVE_ASSIGNMENT>;
+    using propagate_on_container_swap =
+        std::integral_constant<bool, PROPAGATE_SWAP>;
 
     stateful_allocator() : id(0) {}
     stateful_allocator(const size_t &id_) : id(id_) {}
@@ -212,4 +214,52 @@ TEST_CASE("bucket container move assignment no propagate unequal",
   REQUIRE(tc2[0].val(0) == 5);
   REQUIRE_FALSE(tc2[1].occupied(0));
   REQUIRE(tc2.get_allocator().id == 4);
+}
+
+TEST_CASE("bucket container swap no propagate", "[bucket container]") {
+  allocator_wrapper<true, true, false>::stateful_allocator<value_type> a(5);
+  TestingContainer<decltype(a)> tc(2, a);
+  tc.setKV(tc[0], 0, 2, std::make_shared<int>(10), 5);
+  TestingContainer<decltype(a)> tc2(2, a);
+  tc2.setKV(tc2[1], 0, 2, std::make_shared<int>(10), 5);
+
+  tc.swap(tc2);
+
+  REQUIRE(tc[1].occupied(0));
+  REQUIRE(tc[1].partial(0) == 2);
+  REQUIRE(*tc[1].key(0) == 10);
+  REQUIRE(tc[1].key(0).use_count() == 1);
+  REQUIRE(tc[1].val(0) == 5);
+  REQUIRE(tc.get_allocator().id == 5);
+
+  REQUIRE(tc2[0].occupied(0));
+  REQUIRE(tc2[0].partial(0) == 2);
+  REQUIRE(*tc2[0].key(0) == 10);
+  REQUIRE(tc2[0].key(0).use_count() == 1);
+  REQUIRE(tc2[0].val(0) == 5);
+  REQUIRE(tc2.get_allocator().id == 5);
+}
+
+TEST_CASE("bucket container swap propagate", "[bucket container]") {
+  allocator_wrapper<true, true, true>::stateful_allocator<value_type> a(5);
+  TestingContainer<decltype(a)> tc(2, a);
+  tc.setKV(tc[0], 0, 2, std::make_shared<int>(10), 5);
+  TestingContainer<decltype(a)> tc2(2, a);
+  tc2.setKV(tc2[1], 0, 2, std::make_shared<int>(10), 5);
+
+  tc.swap(tc2);
+
+  REQUIRE(tc[1].occupied(0));
+  REQUIRE(tc[1].partial(0) == 2);
+  REQUIRE(*tc[1].key(0) == 10);
+  REQUIRE(tc[1].key(0).use_count() == 1);
+  REQUIRE(tc[1].val(0) == 5);
+  REQUIRE(tc.get_allocator().id == 7);
+
+  REQUIRE(tc2[0].occupied(0));
+  REQUIRE(tc2[0].partial(0) == 2);
+  REQUIRE(*tc2[0].key(0) == 10);
+  REQUIRE(tc2[0].key(0).use_count() == 1);
+  REQUIRE(tc2[0].val(0) == 5);
+  REQUIRE(tc2.get_allocator().id == 7);
 }
