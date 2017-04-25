@@ -97,8 +97,6 @@ $(document).ready(function(){initNavTree('classlibcuckoo__bucket__container.html
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__bucket__container_1_1bucket.html">bucket</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlibcuckoo__bucket__container_1_1value__type.html">value_type</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
@@ -108,6 +106,9 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>key_type</b> = Key</
 <tr class="memitem:adf90a7eeb91a3c61b7cc492538f23f4e"><td class="memItemLeft" align="right" valign="top"><a id="adf90a7eeb91a3c61b7cc492538f23f4e"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>mapped_type</b> = T</td></tr>
 <tr class="separator:adf90a7eeb91a3c61b7cc492538f23f4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0880e0dde297fbe035a18044ef911680"><td class="memItemLeft" align="right" valign="top"><a id="a0880e0dde297fbe035a18044ef911680"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b> = std::pair&lt; const Key, T &gt;</td></tr>
+<tr class="separator:a0880e0dde297fbe035a18044ef911680"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af1e766914204068234aee12dccbd61db"><td class="memItemLeft" align="right" valign="top"><a id="af1e766914204068234aee12dccbd61db"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b> = Alloc</td></tr>
 <tr class="separator:af1e766914204068234aee12dccbd61db"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -118,16 +119,16 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>partial_t</b> = Part
 using&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b> = std::size_t</td></tr>
 <tr class="separator:a8a4afb737ea60e6f853c836a6b3d7e05"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a38287969873ccedce9acaef92d2004cb"><td class="memItemLeft" align="right" valign="top"><a id="a38287969873ccedce9acaef92d2004cb"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b> = <a class="el" href="structlibcuckoo__bucket__container_1_1value__type.html">value_type</a> &amp;</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b> = value_type &amp;</td></tr>
 <tr class="separator:a38287969873ccedce9acaef92d2004cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c4395594d661ee319f16e9e5dfa07ba"><td class="memItemLeft" align="right" valign="top"><a id="a5c4395594d661ee319f16e9e5dfa07ba"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b> = const <a class="el" href="structlibcuckoo__bucket__container_1_1value__type.html">value_type</a> &amp;</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b> = const value_type &amp;</td></tr>
 <tr class="separator:a5c4395594d661ee319f16e9e5dfa07ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a0121f5263c4d9b6497755b5a45a7d1"><td class="memItemLeft" align="right" valign="top"><a id="a2a0121f5263c4d9b6497755b5a45a7d1"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b> = <a class="el" href="structlibcuckoo__bucket__container_1_1value__type.html">value_type</a> *</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b> = value_type *</td></tr>
 <tr class="separator:a2a0121f5263c4d9b6497755b5a45a7d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0d2aa06aa48137dba0ac43bdec3256f3"><td class="memItemLeft" align="right" valign="top"><a id="a0d2aa06aa48137dba0ac43bdec3256f3"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b> = const <a class="el" href="structlibcuckoo__bucket__container_1_1value__type.html">value_type</a> *</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b> = const value_type *</td></tr>
 <tr class="separator:a0d2aa06aa48137dba0ac43bdec3256f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -138,15 +139,24 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af86eec4d0563ef981c341a59670062be"><td class="memItemLeft" align="right" valign="top"><a id="af86eec4d0563ef981c341a59670062be"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_bucket_container</b> (const <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc)</td></tr>
 <tr class="separator:af86eec4d0563ef981c341a59670062be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3548c387fa98c7aae5438ed1887e32fc"><td class="memItemLeft" align="right" valign="top"><a id="a3548c387fa98c7aae5438ed1887e32fc"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_bucket_container</b> (const <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc, const allocator_type &amp;a=allocator_type())</td></tr>
+<tr class="separator:a3548c387fa98c7aae5438ed1887e32fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a9a679003d1ba5100208014535b3494"><td class="memItemLeft" align="right" valign="top"><a id="a5a9a679003d1ba5100208014535b3494"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_bucket_container</b> (<a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;&amp;bc)</td></tr>
 <tr class="separator:a5a9a679003d1ba5100208014535b3494"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09716dd49535f6d606bbaf2fd775aaff"><td class="memItemLeft" align="right" valign="top"><a id="a09716dd49535f6d606bbaf2fd775aaff"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_bucket_container</b> (<a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;&amp;bc, const allocator_type &amp;a=allocator_type())</td></tr>
+<tr class="separator:a09716dd49535f6d606bbaf2fd775aaff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad4bcf590841c022c00de378f8e541e75"><td class="memItemLeft" align="right" valign="top"><a id="ad4bcf590841c022c00de378f8e541e75"></a>
 <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc)</td></tr>
 <tr class="separator:ad4bcf590841c022c00de378f8e541e75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a614707d82ecaca6aadfcdf4c86c12a18"><td class="memItemLeft" align="right" valign="top"><a id="a614707d82ecaca6aadfcdf4c86c12a18"></a>
 <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;&amp;bc)</td></tr>
 <tr class="separator:a614707d82ecaca6aadfcdf4c86c12a18"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1b5dd4366d828d5e1d1804c39115156"><td class="memItemLeft" align="right" valign="top"><a id="ab1b5dd4366d828d5e1d1804c39115156"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>swap</b> (<a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc) noexcept</td></tr>
+<tr class="separator:ab1b5dd4366d828d5e1d1804c39115156"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a37d6d152af3f8981cc906acbdeb7dff6"><td class="memItemLeft" align="right" valign="top"><a id="a37d6d152af3f8981cc906acbdeb7dff6"></a>
 size_type&#160;</td><td class="memItemRight" valign="bottom"><b>hashpower</b> () const</td></tr>
 <tr class="separator:a37d6d152af3f8981cc906acbdeb7dff6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -208,7 +218,7 @@ class libcuckoo_bucket_container&lt; Key, T, Alloc, Partial, SLOT_PER_BUCKET &gt
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a></li>
-    <li class="footer">Generated on Sun Apr 16 2017 20:26:35 for libcuckoo by
+    <li class="footer">Generated on Mon Apr 24 2017 23:13:46 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

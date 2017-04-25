@@ -1,7 +1,6 @@
 var classlibcuckoo__bucket__container =
 [
     [ "bucket", "classlibcuckoo__bucket__container_1_1bucket.html", "classlibcuckoo__bucket__container_1_1bucket" ],
-    [ "value_type", "structlibcuckoo__bucket__container_1_1value__type.html", "structlibcuckoo__bucket__container_1_1value__type" ],
     [ "allocator_type", "classlibcuckoo__bucket__container.html#af1e766914204068234aee12dccbd61db", null ],
     [ "const_pointer", "classlibcuckoo__bucket__container.html#a0d2aa06aa48137dba0ac43bdec3256f3", null ],
     [ "const_reference", "classlibcuckoo__bucket__container.html#a5c4395594d661ee319f16e9e5dfa07ba", null ],
@@ -11,10 +10,13 @@ var classlibcuckoo__bucket__container =
     [ "pointer", "classlibcuckoo__bucket__container.html#a2a0121f5263c4d9b6497755b5a45a7d1", null ],
     [ "reference", "classlibcuckoo__bucket__container.html#a38287969873ccedce9acaef92d2004cb", null ],
     [ "size_type", "classlibcuckoo__bucket__container.html#a8a4afb737ea60e6f853c836a6b3d7e05", null ],
+    [ "value_type", "classlibcuckoo__bucket__container.html#a0880e0dde297fbe035a18044ef911680", null ],
     [ "libcuckoo_bucket_container", "classlibcuckoo__bucket__container.html#aaddeb560e9a4559f3e3ed37eda8c3b5c", null ],
     [ "~libcuckoo_bucket_container", "classlibcuckoo__bucket__container.html#a5cb1f6a1864a6e934741ce287432ef5b", null ],
     [ "libcuckoo_bucket_container", "classlibcuckoo__bucket__container.html#af86eec4d0563ef981c341a59670062be", null ],
+    [ "libcuckoo_bucket_container", "classlibcuckoo__bucket__container.html#a3548c387fa98c7aae5438ed1887e32fc", null ],
     [ "libcuckoo_bucket_container", "classlibcuckoo__bucket__container.html#a5a9a679003d1ba5100208014535b3494", null ],
+    [ "libcuckoo_bucket_container", "classlibcuckoo__bucket__container.html#a09716dd49535f6d606bbaf2fd775aaff", null ],
     [ "clear", "classlibcuckoo__bucket__container.html#a85b146f7382a342af6ec087b421a95d6", null ],
     [ "eraseKV", "classlibcuckoo__bucket__container.html#a04396384ff9c77869c1ee49db08dad40", null ],
     [ "get_allocator", "classlibcuckoo__bucket__container.html#aa2222992c3e1c3c4b32327076d384ee1", null ],
@@ -27,5 +29,6 @@ var classlibcuckoo__bucket__container =
     [ "operator[]", "classlibcuckoo__bucket__container.html#a4e95f4c192a0906233ced782cedd939d", null ],
     [ "resize", "classlibcuckoo__bucket__container.html#a89d12bee7830422d4b8883c2628bb1b4", null ],
     [ "setKV", "classlibcuckoo__bucket__container.html#aecd32a758961ff115990cfe6887447df", null ],
-    [ "size", "classlibcuckoo__bucket__container.html#aba8731e186fd5070dcc5e8bf4ffab705", null ]
+    [ "size", "classlibcuckoo__bucket__container.html#aba8731e186fd5070dcc5e8bf4ffab705", null ],
+    [ "swap", "classlibcuckoo__bucket__container.html#ab1b5dd4366d828d5e1d1804c39115156", null ]
 ];

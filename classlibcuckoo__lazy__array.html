@@ -115,8 +115,8 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b> 
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a7fc97ab670024eba5618a27c42a520b0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__lazy__array.html#a7fc97ab670024eba5618a27c42a520b0">libcuckoo_lazy_array</a> (const allocator_type &amp;allocator=Alloc()) noexcept(noexcept(Alloc()))</td></tr>
 <tr class="separator:a7fc97ab670024eba5618a27c42a520b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a514a83692c488fab984e1d2b9f6e40c8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__lazy__array.html#a514a83692c488fab984e1d2b9f6e40c8">libcuckoo_lazy_array</a> (size_type target, const allocator_type &amp;allocator=Alloc()) noexcept(noexcept(Alloc()))</td></tr>
-<tr class="separator:a514a83692c488fab984e1d2b9f6e40c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9548d46d98f9efe6b8692932951a885c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__lazy__array.html#a9548d46d98f9efe6b8692932951a885c">libcuckoo_lazy_array</a> (size_type target_exp, const allocator_type &amp;allocator=Alloc()) noexcept(noexcept(Alloc()))</td></tr>
+<tr class="separator:a9548d46d98f9efe6b8692932951a885c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98f2f1270e831f1dcd5e34f0607558c2"><td class="memItemLeft" align="right" valign="top"><a id="a98f2f1270e831f1dcd5e34f0607558c2"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_lazy_array</b> (const <a class="el" href="classlibcuckoo__lazy__array.html">libcuckoo_lazy_array</a> &amp;)=delete</td></tr>
 <tr class="separator:a98f2f1270e831f1dcd5e34f0607558c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -135,8 +135,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a5228a9251908c48847ea51bfa595e617"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5fea31a2d9451f88dfec66a73388ec69"><td class="memItemLeft" align="right" valign="top">size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__lazy__array.html#a5fea31a2d9451f88dfec66a73388ec69">size</a> () const</td></tr>
 <tr class="separator:a5fea31a2d9451f88dfec66a73388ec69"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a787b18951a8c548603e2458335d8c1c5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__lazy__array.html#a787b18951a8c548603e2458335d8c1c5">resize</a> (size_type target)</td></tr>
-<tr class="separator:a787b18951a8c548603e2458335d8c1c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaef4acf901becaec31ffe6d2d4cca845"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlibcuckoo__lazy__array.html#aaef4acf901becaec31ffe6d2d4cca845">resize</a> (size_type target_exp)</td></tr>
+<tr class="separator:aaef4acf901becaec31ffe6d2d4cca845"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -191,8 +191,8 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
 
 </div>
 </div>
-<a id="a514a83692c488fab984e1d2b9f6e40c8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a514a83692c488fab984e1d2b9f6e40c8">&#9670;&nbsp;</a></span>libcuckoo_lazy_array() <span class="overload">[2/3]</span></h2>
+<a id="a9548d46d98f9efe6b8692932951a885c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9548d46d98f9efe6b8692932951a885c">&#9670;&nbsp;</a></span>libcuckoo_lazy_array() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -206,7 +206,7 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
           <td class="memname"><a class="el" href="classlibcuckoo__lazy__array.html">libcuckoo_lazy_array</a>&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;::<a class="el" href="classlibcuckoo__lazy__array.html">libcuckoo_lazy_array</a> </td>
           <td>(</td>
           <td class="paramtype">size_type&#160;</td>
-          <td class="paramname"><em>target</em>, </td>
+          <td class="paramname"><em>target_exp</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -226,15 +226,15 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Constructs an array with enough segments allocated to fit <code>target</code> elements. Each allocated element is default-constructed.</p>
+<p>Constructs an array with enough segments allocated to fit 2<sup><code>target_exp</sup></code> elements. Each allocated element is default-constructed.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">target</td><td>the number of elements to allocate space for </td></tr>
+    <tr><td class="paramname">target_exp</td><td>the number of elements to allocate space for, as an exponent of a power of 2 </td></tr>
   </table>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00057">57</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00058">58</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
 
 </div>
 </div>
@@ -271,7 +271,7 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00073">73</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00074">74</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
 
 </div>
 </div>
@@ -301,7 +301,7 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
 </div><div class="memdoc">
 <p>Destructor. Destroys all elements allocated in the array. </p>
 
-<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00083">83</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00084">84</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
 
 </div>
 </div>
@@ -332,7 +332,7 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
 </div><div class="memdoc">
 <p>Destroys all elements allocated in the array. </p>
 
-<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00090">90</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00091">91</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
 
 </div>
 </div>
@@ -363,7 +363,7 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
 <p>Returns the maximum number of elements the array can hold</p>
 <dl class="section return"><dt>Returns</dt><dd>maximum size of the array </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00129">129</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00130">130</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
 
 </div>
 </div>
@@ -395,7 +395,7 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
 <p>Index operator</p>
 <dl class="section return"><dt>Returns</dt><dd>a reference to the data at the given index </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00102">102</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00103">103</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
 
 </div>
 </div>
@@ -427,12 +427,12 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
 <p>Const index operator</p>
 <dl class="section return"><dt>Returns</dt><dd>a const reference to the data at the given index </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00112">112</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00113">113</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
 
 </div>
 </div>
-<a id="a787b18951a8c548603e2458335d8c1c5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a787b18951a8c548603e2458335d8c1c5">&#9670;&nbsp;</a></span>resize()</h2>
+<a id="aaef4acf901becaec31ffe6d2d4cca845"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaef4acf901becaec31ffe6d2d4cca845">&#9670;&nbsp;</a></span>resize()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -446,7 +446,7 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
           <td class="memname">void <a class="el" href="classlibcuckoo__lazy__array.html">libcuckoo_lazy_array</a>&lt; OFFSET_BITS, SEGMENT_BITS, T, Alloc &gt;::resize </td>
           <td>(</td>
           <td class="paramtype">size_type&#160;</td>
-          <td class="paramname"><em>target</em></td><td>)</td>
+          <td class="paramname"><em>target_exp</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -456,15 +456,15 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Allocate enough space for <code>target</code> elements, not exceeding the capacity of the array. Under no circumstance will the array be shrunk.</p>
+<p>Allocate enough space for 2<sup>target_exp</sup> elements, not exceeding the capacity of the array. Under no circumstance will the array be shrunk.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">target</td><td>the number of elements to ensure space is allocated for </td></tr>
+    <tr><td class="paramname">target_exp</td><td>the number of elements to ensure space is allocated for, as a power of 2 </td></tr>
   </table>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00139">139</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00141">141</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
 
 </div>
 </div>
@@ -495,7 +495,7 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
 <p>Returns the number of elements the array has allocated space for</p>
 <dl class="section return"><dt>Returns</dt><dd>current size of the array </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00122">122</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libcuckoo__lazy__array_8hh_source.html#l00123">123</a> of file <a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>.</p>
 
 </div>
 </div>
@@ -508,7 +508,7 @@ template&lt;uint8_t OFFSET_BITS, uint8_t SEGMENT_BITS, class T, class Alloc = st
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classlibcuckoo__lazy__array.html">libcuckoo_lazy_array</a></li>
-    <li class="footer">Generated on Sun Apr 16 2017 20:26:35 for libcuckoo by
+    <li class="footer">Generated on Mon Apr 24 2017 23:13:46 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
