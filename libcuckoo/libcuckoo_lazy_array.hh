@@ -49,17 +49,18 @@ public:
       : segments_{{nullptr}}, allocated_segments_(0), allocator_(allocator) {}
 
   /**
-   * Constructs an array with enough segments allocated to fit @p target
-   * elements. Each allocated element is default-constructed.
+   * Constructs an array with enough segments allocated to fit 2<SUP>@p
+   * target_exp</SUP> elements. Each allocated element is default-constructed.
    *
-   * @param target the number of elements to allocate space for
+   * @param target_exp the number of elements to allocate space for, as an
+   * exponent of a power of 2
    */
   libcuckoo_lazy_array(
-      size_type target,
+      size_type target_exp,
       const allocator_type &allocator = Alloc()) noexcept(noexcept(Alloc()))
       : libcuckoo_lazy_array(allocator) {
     segments_.fill(nullptr);
-    resize(target);
+    resize(target_exp);
   }
 
   libcuckoo_lazy_array(const libcuckoo_lazy_array &) = delete;
@@ -131,16 +132,14 @@ public:
   }
 
   /**
-   * Allocate enough space for @p target elements, not exceeding the capacity
-   * of the array. Under no circumstance will the array be shrunk.
+   * Allocate enough space for 2<SUP>target_exp</SUP> elements, not exceeding
+   * the capacity of the array. Under no circumstance will the array be shrunk.
    *
-   * @param target the number of elements to ensure space is allocated for
+   * @param target_exp the number of elements to ensure space is allocated for,
+   * as a power of 2
    */
-  void resize(size_type target) {
-    target = std::min(target, max_size());
-    if (target == 0) {
-      return;
-    }
+  void resize(size_type target_exp) {
+    size_t target = std::min(1UL << target_exp, max_size());
     const size_type last_segment = get_segment(target - 1);
     for (size_type i = allocated_segments_; i <= last_segment; ++i) {
       segments_[i] = create_array();
