@@ -358,7 +358,7 @@ private:
   void move_or_copy(size_type dst_ind, size_type dst_slot, bucket &src,
                     size_type src_slot, std::false_type) {
     setKV(dst_ind, dst_slot, src.partial(src_slot), src.key(src_slot),
-          src.val(src_slot));
+          src.mapped(src_slot));
   }
 
   template <bool B>
