@@ -1522,17 +1522,10 @@ private:
   template <typename F>
   static void parallel_exec(size_type start, size_type end, F func) {
     static const size_type num_threads =
-        (std::thread::hardware_concurrency() == 0
-             ? 1
-             : std::thread::hardware_concurrency());
+        std::max(std::thread::hardware_concurrency(), 1U);
     size_type work_per_thread = (end - start) / num_threads;
-    std::vector<std::thread,
-                typename allocator_traits_::template rebind_alloc<std::thread>>
-        threads(num_threads);
-    std::vector<
-        std::exception_ptr,
-        typename allocator_traits_::template rebind_alloc<std::exception_ptr>>
-        eptrs(num_threads, nullptr);
+    std::vector<std::thread> threads(num_threads);
+    std::vector<std::exception_ptr> eptrs(num_threads, nullptr);
     for (size_type i = 0; i < num_threads - 1; ++i) {
       threads[i] =
           std::thread(func, start, start + work_per_thread, std::ref(eptrs[i]));

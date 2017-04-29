@@ -132,7 +132,7 @@ public:
         buckets_(transfer(bc.hashpower(), bc, std::false_type())) {}
 
   libcuckoo_bucket_container(const libcuckoo_bucket_container &bc,
-                             const allocator_type &a = allocator_type())
+                             const allocator_type &a)
       : allocator_(a), storage_value_allocator_(a), bucket_allocator_(a),
         hashpower_(bc.hashpower()),
         buckets_(transfer(bc.hashpower(), bc, std::false_type())) {}
@@ -147,7 +147,7 @@ public:
   }
 
   libcuckoo_bucket_container(libcuckoo_bucket_container &&bc,
-                             const allocator_type &a = allocator_type())
+                             const allocator_type &a)
       : allocator_(a), storage_value_allocator_(a), bucket_allocator_(a),
         hashpower_(bc.hashpower()) {
     move_assign(bc, std::false_type());
