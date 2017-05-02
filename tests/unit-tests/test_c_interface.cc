@@ -17,10 +17,10 @@ TEST_CASE("c interface", "[c interface]") {
   int_int_table *tbl = int_int_table_init(0);
 
   SECTION("empty table statistics") {
-    REQUIRE(int_int_table_hashpower(tbl) == 1);
-    REQUIRE(int_int_table_bucket_count(tbl) == 2);
+    REQUIRE(int_int_table_hashpower(tbl) == 0);
+    REQUIRE(int_int_table_bucket_count(tbl) == 1);
     REQUIRE(int_int_table_empty(tbl));
-    REQUIRE(int_int_table_capacity(tbl) == 8);
+    REQUIRE(int_int_table_capacity(tbl) == 4);
     REQUIRE(int_int_table_load_factor(tbl) == 0);
   }
 
@@ -175,11 +175,11 @@ TEST_CASE("c interface locked table", "[c interface]") {
   }
 
   SECTION("statistics") {
-    REQUIRE(int_int_table_locked_table_hashpower(ltbl) == 1);
-    REQUIRE(int_int_table_locked_table_bucket_count(ltbl) == 2);
+    REQUIRE(int_int_table_locked_table_hashpower(ltbl) == 0);
+    REQUIRE(int_int_table_locked_table_bucket_count(ltbl) == 1);
     REQUIRE(int_int_table_locked_table_empty(ltbl));
     REQUIRE(int_int_table_locked_table_size(ltbl) == 0);
-    REQUIRE(int_int_table_locked_table_capacity(ltbl) == 8);
+    REQUIRE(int_int_table_locked_table_capacity(ltbl) == 4);
     REQUIRE(int_int_table_locked_table_load_factor(ltbl) == 0);
   }
 

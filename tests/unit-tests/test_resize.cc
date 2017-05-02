@@ -7,7 +7,7 @@
 
 TEST_CASE("rehash empty table", "[resize]") {
   IntIntTable table(1);
-  REQUIRE(table.hashpower() == 1);
+  REQUIRE(table.hashpower() == 0);
 
   table.rehash(20);
   REQUIRE(table.hashpower() == 20);
@@ -22,17 +22,17 @@ TEST_CASE("reserve empty table", "[resize]") {
   REQUIRE(table.hashpower() == 5);
 
   table.reserve(1);
-  REQUIRE(table.hashpower() == 1);
+  REQUIRE(table.hashpower() == 0);
 
   table.reserve(2);
-  REQUIRE(table.hashpower() == 1);
+  REQUIRE(table.hashpower() == 0);
 }
 
 TEST_CASE("reserve calc", "[resize]") {
   const size_t slot_per_bucket = IntIntTable::slot_per_bucket();
-  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(0) == 1);
+  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(0) == 0);
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              1 * slot_per_bucket) == 1);
+              1 * slot_per_bucket) == 0);
 
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
               2 * slot_per_bucket) == 1);
@@ -46,12 +46,12 @@ TEST_CASE("reserve calc", "[resize]") {
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
               (1UL << 31) * slot_per_bucket) == 31);
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-      ((1UL << 31) + 1) * slot_per_bucket == 31));
+              ((1UL << 31) + 1) * slot_per_bucket) == 32);
 
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
               (1UL << 61) * slot_per_bucket) == 61);
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-      ((1UL << 61) + 1) * slot_per_bucket == 61));
+              ((1ULL << 61) + 1) * slot_per_bucket) == 62);
 }
 
 struct my_type {
@@ -69,7 +69,7 @@ TEST_CASE("Resizing number of frees", "[resize]") {
     // Should allocate 2 buckets of 4 slots
     cuckoohash_map<int, my_type, std::hash<int>, std::equal_to<int>,
                    std::allocator<std::pair<const int, my_type>>, 4>
-        map(2);
+        map(8);
     for (int i = 0; i < 9; ++i) {
       map.insert(i, val);
     }
@@ -105,7 +105,7 @@ TEST_CASE("Resize on non-relocatable type", "[resize]") {
   cuckoohash_map<int, NonRelocatableType, std::hash<int>, std::equal_to<int>,
                  std::allocator<std::pair<const int, NonRelocatableType>>, 1>
       map(0);
-  REQUIRE(map.hashpower() == 1);
+  REQUIRE(map.hashpower() == 0);
   // Make it resize a few times to ensure the vector capacity has to actually
   // change when we resize the buckets
   const size_t num_elems = 16;

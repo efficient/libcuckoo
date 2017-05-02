@@ -8,6 +8,8 @@
 #include <memory>
 #include <utility>
 
+#include "cuckoohash_util.hh"
+
 /**
  * libcuckoo_bucket_container manages storage of key-value pairs for the table.
  * It stores the items inline in uninitialized memory, and keeps track of which
@@ -155,13 +157,14 @@ public:
 
   libcuckoo_bucket_container &operator=(const libcuckoo_bucket_container &bc) {
     destroy_buckets();
-    copy_allocator(
+    libcuckoo_copy_allocator(
         allocator_, bc.allocator_,
         typename alloc_traits_::propagate_on_container_copy_assignment());
-    copy_allocator(storage_value_allocator_, bc.storage_value_allocator_,
-                   typename storage_value_traits_::
-                       propagate_on_container_copy_assignment());
-    copy_allocator(
+    libcuckoo_copy_allocator(storage_value_allocator_,
+                             bc.storage_value_allocator_,
+                             typename storage_value_traits_::
+                                 propagate_on_container_copy_assignment());
+    libcuckoo_copy_allocator(
         bucket_allocator_, bc.bucket_allocator_,
         typename bucket_traits_::propagate_on_container_copy_assignment());
     hashpower(bc.hashpower());
@@ -171,12 +174,13 @@ public:
 
   libcuckoo_bucket_container &operator=(libcuckoo_bucket_container &&bc) {
     destroy_buckets();
-    move_allocator(
+    libcuckoo_move_allocator(
         allocator_, bc.allocator_,
         typename alloc_traits_::propagate_on_container_move_assignment());
-    move_allocator(storage_value_allocator_, bc.storage_value_allocator_,
-                   typename storage_value_traits_::
-                       propagate_on_container_move_assignment());
+    libcuckoo_move_allocator(storage_value_allocator_,
+                             bc.storage_value_allocator_,
+                             typename storage_value_traits_::
+                                 propagate_on_container_move_assignment());
     hashpower(bc.hashpower());
     // When considering whether or not to move the bucket memory, we only need
     // to look at bucket_allocator_, since it is the only allocator used to
@@ -187,9 +191,10 @@ public:
   }
 
   void swap(libcuckoo_bucket_container &bc) noexcept {
-    swap_allocator(allocator_, bc.allocator_,
-                   typename alloc_traits_::propagate_on_container_swap());
-    swap_allocator(
+    libcuckoo_swap_allocator(
+        allocator_, bc.allocator_,
+        typename alloc_traits_::propagate_on_container_swap());
+    libcuckoo_swap_allocator(
         storage_value_allocator_, bc.storage_value_allocator_,
         typename storage_value_traits_::propagate_on_container_swap());
     size_t bc_hashpower = bc.hashpower();
@@ -278,22 +283,6 @@ public:
   }
 
 private:
-  // true here means the allocators from `src` are propagated on copy
-  template <typename A>
-  void copy_allocator(A &dst, const A &src, std::true_type) {
-    dst = src;
-  }
-
-  template <typename A>
-  void copy_allocator(A &dst, const A &src, std::false_type) {}
-
-  // true here means the allocators from `src` are propagated on move
-  template <typename A> void move_allocator(A &dst, A &src, std::true_type) {
-    dst = std::move(src);
-  }
-
-  template <typename A> void move_allocator(A &dst, A &src, std::false_type) {}
-
   // true here means the bucket allocator should be propagated
   void move_assign(libcuckoo_bucket_container &src, std::true_type) {
     bucket_allocator_ = std::move(src.bucket_allocator_);
@@ -309,13 +298,6 @@ private:
       buckets_ = transfer(hashpower(), src, std::true_type());
     }
   }
-
-  // true here means the allocators from `src` are propagated on swap
-  template <typename A> void swap_allocator(A &dst, A &src, std::true_type) {
-    std::swap(dst, src);
-  }
-
-  template <typename A> void swap_allocator(A &dst, A &src, std::false_type) {}
 
   // true here means the bucket allocator should be propagated on swap
   void finish_swap(libcuckoo_bucket_container &src, std::true_type) {

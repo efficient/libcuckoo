@@ -24,7 +24,7 @@
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
 #include "libcuckoo_bucket_container.hh"
-#include "libcuckoo_lazy_array.hh"
+#include "libcuckoo_lock_array.hh"
 
 /**
  * A concurrent hash table
@@ -34,11 +34,14 @@
  * @tparam Pred type of equality comparison functor
  * @tparam Alloc type of allocator
  * @tparam SLOT_PER_BUCKET number of slots for each bucket in the table
+ * @tparam LOCK_ARRAY_GRANULARITY memory granularity of locks array
  */
 template <class Key, class T, class Hash = std::hash<Key>,
           class Pred = std::equal_to<Key>,
           class Alloc = std::allocator<std::pair<const Key, T>>,
-          std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET>
+          std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET,
+          std::size_t LOCK_ARRAY_GRANULARITY =
+              LIBCUCKOO_DEFAULT_LOCK_ARRAY_GRANULARITY>
 class cuckoohash_map {
 private:
   // Type of the partial key
@@ -47,6 +50,17 @@ private:
   // The type of the buckets container
   using buckets_t =
       libcuckoo_bucket_container<Key, T, Alloc, partial_t, SLOT_PER_BUCKET>;
+
+  // The type of the locks container
+  static_assert(
+      LOCK_ARRAY_GRANULARITY >= 0 && LOCK_ARRAY_GRANULARITY <= 16,
+      "LOCK_ARRAY_GRANULARITY constant must be between 0 and 16, inclusive");
+
+  using locks_t = libcuckoo_lock_array<16 - LOCK_ARRAY_GRANULARITY,
+                                       LOCK_ARRAY_GRANULARITY, Alloc>;
+
+  using locking_active = typename locks_t::locking_active;
+  using locking_inactive = typename locks_t::locking_inactive;
 
 public:
   /** @name Type Declarations */
@@ -76,6 +90,13 @@ public:
    */
   static constexpr size_type slot_per_bucket() { return SLOT_PER_BUCKET; }
 
+  /**
+   * The granularity of the locks array
+   */
+  static constexpr size_type lock_array_granularity() {
+    return LOCK_ARRAY_GRANULARITY;
+  }
+
   /**@}*/
 
   /** @name Constructors and Destructors */
@@ -94,7 +115,7 @@ public:
                  const key_equal &eql = key_equal(),
                  const allocator_type &alloc = allocator_type())
       : hash_fn_(hf), eq_fn_(eql), buckets_(reserve_calc(n), alloc),
-        locks_(hashpower(), buckets_.get_allocator()), expansion_lock_(),
+        locks_(bucket_count(), buckets_.get_allocator()), expansion_lock_(),
         minimum_load_factor_(LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR),
         maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER) {}
 
@@ -553,54 +574,6 @@ private:
     const size_type nonzero_tag = static_cast<size_type>(partial) + 1;
     return (index ^ (nonzero_tag * 0xc6a4a7935bd1e995)) & hashmask(hp);
   }
-
-  // Locking types and functions
-
-  using locking_active = std::integral_constant<bool, true>;
-  using locking_inactive = std::integral_constant<bool, false>;
-
-  // A fast, lightweight spinlock
-  LIBCUCKOO_SQUELCH_PADDING_WARNING
-  class LIBCUCKOO_ALIGNAS(64) spinlock {
-  public:
-    spinlock() noexcept : elem_counter_(0) { lock_.clear(); }
-
-    void lock(locking_active) {
-      while (lock_.test_and_set(std::memory_order_acq_rel))
-        ;
-    }
-
-    void lock(locking_inactive) {}
-
-    void unlock(locking_active) { lock_.clear(std::memory_order_release); }
-
-    void unlock(locking_inactive) {}
-
-    bool try_lock(locking_active) {
-      return !lock_.test_and_set(std::memory_order_acq_rel);
-    }
-
-    bool try_lock(locking_inactive) { return true; }
-
-    size_type &elem_counter() { return elem_counter_; }
-
-  private:
-    std::atomic_flag lock_;
-    size_type elem_counter_;
-  };
-
-  // Traits for the allocator, used solely for re-binding the
-  // allocator type
-  using allocator_traits_ = std::allocator_traits<allocator_type>;
-
-  // The type of the locks container
-  static_assert(LIBCUCKOO_LOCK_ARRAY_GRANULARITY >= 0 &&
-                    LIBCUCKOO_LOCK_ARRAY_GRANULARITY <= 16,
-                "LIBCUCKOO_LOCK_ARRAY_GRANULARITY constant must be between "
-                "0 and 16, inclusive");
-  using locks_t = libcuckoo_lazy_array<
-      16 - LIBCUCKOO_LOCK_ARRAY_GRANULARITY, LIBCUCKOO_LOCK_ARRAY_GRANULARITY,
-      spinlock, typename allocator_traits_::template rebind_alloc<spinlock>>;
 
   // The type of the expansion lock
   using expansion_lock_t = std::mutex;
@@ -1210,7 +1183,7 @@ private:
         return false;
       }
 
-      buckets_.moveKV(to.bucket, ts, from.bucket, fs);
+      moveKV(to.bucket, ts, from.bucket, fs);
       if (depth == 1) {
         // Hold onto the locks contained in twob
         b = std::move(twob);
@@ -1363,7 +1336,7 @@ private:
       return st;
     }
 
-    locks_.resize(new_hp);
+    locks_.resize(1UL << new_hp);
     auto unlocker = snapshot_and_lock_all<LOCK_T>();
     buckets_.resize(new_hp);
 
@@ -1431,11 +1404,7 @@ private:
               (bucket_i == old_ahash && new_ahash == new_bucket_i)) {
             // We're moving the key from the old bucket to the new
             // one
-            buckets_.moveKV(new_bucket_i, new_bucket_slot++, bucket_i, slot);
-            // Also update the lock counts, in case we're moving to
-            // a different lock.
-            --locks_[lock_ind(bucket_i)].elem_counter();
-            ++locks_[lock_ind(new_bucket_i)].elem_counter();
+            moveKV(new_bucket_i, new_bucket_slot++, bucket_i, slot);
           } else {
             // Check that we don't want to move the new key
             assert((bucket_i == old_ihash && new_ihash == old_ihash) ||
@@ -1509,12 +1478,16 @@ private:
       }
     });
 
-    // Swap the current buckets vector with new_map's and set the hashpower.
-    // This is okay, because we have all the locks, so nobody else should be
-    // reading from the buckets array. Then the old buckets array will be
-    // deleted when new_map is deleted. All the locks should be released by
-    // the unlocker as well.
+    // Swap the current buckets containers with new_map's. This is okay,
+    // because we have all the locks, so nobody else should be reading from the
+    // buckets array. Then the old buckets array will be deleted when new_map
+    // is deleted. We also need to `emulate` new_map's locks array, so we have
+    // the same size and data content. We can't swap the memory though, since
+    // other threads may still be looking at our lock memory. Regardless, we
+    // shouldn't need to swap the memory, since new_map is using the same
+    // allocator as we are.
     buckets_.swap(new_map.buckets_);
+    locks_.emulate(new_map.locks_);
     return ok;
   }
 
@@ -1548,6 +1521,7 @@ private:
   // well.
   void del_from_bucket(const size_type bucket_ind, const size_type slot) {
     buckets_.eraseKV(bucket_ind, slot);
+    assert(locks_[lock_ind(bucket_ind)].elem_counter() > 0);
     --locks_[lock_ind(bucket_ind)].elem_counter();
   }
 
@@ -1587,10 +1561,19 @@ private:
   static size_type reserve_calc(const size_type n) {
     const size_type buckets = (n + slot_per_bucket() - 1) / slot_per_bucket();
     size_type blog2;
-    for (blog2 = 1; (1UL << blog2) < buckets; ++blog2)
+    for (blog2 = 0; (1UL << blog2) < buckets; ++blog2)
       ;
-    assert(n <= hashsize(blog2) * slot_per_bucket());
+    assert(n <= buckets * slot_per_bucket() && buckets <= hashsize(blog2));
     return blog2;
+  }
+
+  // moveKV moves a key-value pair from one location to another, also updating
+  // the lock counters. Assumes locks are already taken.
+  void moveKV(size_type dst_bucket, size_type dst_slot, size_type src_bucket,
+              size_type src_slot) {
+    buckets_.moveKV(dst_bucket, dst_slot, src_bucket, src_slot);
+    --locks_[lock_ind(src_bucket)].elem_counter();
+    ++locks_[lock_ind(dst_bucket)].elem_counter();
   }
 
   // This class is a friend for unit testing
@@ -1847,6 +1830,10 @@ public:
 
     static constexpr size_type slot_per_bucket() {
       return cuckoohash_map::slot_per_bucket();
+    }
+
+    static constexpr size_type lock_array_granularity() {
+      return cuckoohash_map::lock_array_granularity();
     }
 
     /**@}*/

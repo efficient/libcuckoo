@@ -188,20 +188,21 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
       tbl.insert(i, i);
     }
     size_t original_hashpower = tbl.hashpower();
+    size_t next_hashpower = original_hashpower + 1;
     constructorThrow = true;
-    REQUIRE_THROWS_AS(tbl.rehash(2), std::runtime_error);
+    REQUIRE_THROWS_AS(tbl.rehash(next_hashpower), std::runtime_error);
     constructorThrow = false;
     REQUIRE(tbl.hashpower() == original_hashpower);
     hashThrow = true;
-    REQUIRE_THROWS_AS(tbl.rehash(2), std::runtime_error);
+    REQUIRE_THROWS_AS(tbl.rehash(next_hashpower), std::runtime_error);
     hashThrow = false;
     REQUIRE(tbl.hashpower() == original_hashpower);
     // This shouldn't throw, because the partial keys are different between
     // the different hash values, which means they shouldn't be compared for
     // actual equality.
     equalityThrow = true;
-    REQUIRE(tbl.rehash(2));
-    REQUIRE(tbl.hashpower() == 2);
+    REQUIRE(tbl.rehash(next_hashpower));
+    REQUIRE(tbl.hashpower() == next_hashpower);
     equalityThrow = false;
     checkIterTable(tbl, 10);
   }
@@ -213,27 +214,28 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
       tbl.insert(i, i);
     }
     size_t original_hashpower = tbl.hashpower();
+    size_t next_hashpower = original_hashpower + 1;
+    size_t next_reserve = (1UL << next_hashpower) * tbl.slot_per_bucket();
     constructorThrow = true;
-    REQUIRE_THROWS_AS(tbl.reserve(10), std::runtime_error);
+    REQUIRE_THROWS_AS(tbl.reserve(next_reserve), std::runtime_error);
     constructorThrow = false;
     REQUIRE(tbl.hashpower() == original_hashpower);
     hashThrow = true;
-    REQUIRE_THROWS_AS(tbl.reserve(10), std::runtime_error);
+    REQUIRE_THROWS_AS(tbl.reserve(next_reserve), std::runtime_error);
     hashThrow = false;
     REQUIRE(tbl.hashpower() == original_hashpower);
     // This shouldn't throw, because the partial keys are different between
     // the different hash values, which means they shouldn't be compared for
     // actual equality.
     equalityThrow = true;
-    REQUIRE(tbl.reserve(10));
-    REQUIRE(tbl.hashpower() ==
-            UnitTestInternalAccess::reserve_calc<exceptionTable>(10));
+    REQUIRE(tbl.reserve(next_reserve));
+    REQUIRE(tbl.hashpower() == next_hashpower);
     checkIterTable(tbl, 10);
   }
 
   // "insert resize"
   {
-    exceptionTable tbl;
+    exceptionTable tbl(1000);
     REQUIRE(tbl.rehash(1));
     // Fill up the entire table
     for (size_t i = 0; i < exceptionTable::slot_per_bucket() * 2; ++i) {

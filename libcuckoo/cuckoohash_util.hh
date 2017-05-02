@@ -134,4 +134,31 @@ private:
   const size_t hashpower_;
 };
 
+// true here means the allocators from `src` are propagated on libcuckoo_copy
+template <typename A>
+void libcuckoo_copy_allocator(A &dst, const A &src, std::true_type) {
+  dst = src;
+}
+
+template <typename A>
+void libcuckoo_copy_allocator(A &dst, const A &src, std::false_type) {}
+
+// true here means the allocators from `src` are propagated on libcuckoo_move
+template <typename A>
+void libcuckoo_move_allocator(A &dst, A &src, std::true_type) {
+  dst = std::move(src);
+}
+
+template <typename A>
+void libcuckoo_move_allocator(A &dst, A &src, std::false_type) {}
+
+// true here means the allocators from `src` are propagated on libcuckoo_swap
+template <typename A>
+void libcuckoo_swap_allocator(A &dst, A &src, std::true_type) {
+  std::swap(dst, src);
+}
+
+template <typename A>
+void libcuckoo_swap_allocator(A &dst, A &src, std::false_type) {}
+
 #endif // _CUCKOOHASH_UTIL_HH

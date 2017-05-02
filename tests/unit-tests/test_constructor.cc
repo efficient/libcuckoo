@@ -19,8 +19,8 @@ TEST_CASE("given size", "[constructor]") {
   IntIntTable tbl(1);
   REQUIRE(tbl.size() == 0);
   REQUIRE(tbl.empty());
-  REQUIRE(tbl.hashpower() == 1);
-  REQUIRE(tbl.bucket_count() == 2);
+  REQUIRE(tbl.hashpower() == 0);
+  REQUIRE(tbl.bucket_count() == 1);
   REQUIRE(tbl.load_factor() == 0);
 }
 

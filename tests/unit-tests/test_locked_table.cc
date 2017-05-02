@@ -87,6 +87,7 @@ TEST_CASE("locked_table info", "[locked_table]") {
   // cuckoohash_map instance, because they shouldn't take locks.
 
   REQUIRE(lt.slot_per_bucket() == tbl.slot_per_bucket());
+  REQUIRE(lt.lock_array_granularity() == tbl.lock_array_granularity());
   REQUIRE(lt.get_allocator() == tbl.get_allocator());
   REQUIRE(lt.hashpower() == tbl.hashpower());
   REQUIRE(lt.bucket_count() == tbl.bucket_count());
@@ -355,7 +356,7 @@ TEST_CASE("locked_table reserve", "[locked_table]") {
   auto lt = tbl.lock_table();
   REQUIRE(lt.hashpower() == 2);
   lt.reserve(1);
-  REQUIRE(lt.hashpower() == 1);
+  REQUIRE(lt.hashpower() == 0);
   lt.reserve(4096);
   REQUIRE(lt.hashpower() == 10);
 }
