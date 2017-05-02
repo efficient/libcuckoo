@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <type_traits>
 #include <utility>
 
 #include "cuckoohash_util.hh"
@@ -37,7 +38,6 @@ public:
   using pointer = value_type *;
   using const_pointer = const value_type *;
 
-public:
   /*
    * The bucket type holds SLOT_PER_BUCKET key-value pairs, along with their
    * partial keys and occupancy info. It uses aligned_storage arrays to store
@@ -80,6 +80,15 @@ public:
     friend class libcuckoo_bucket_container;
 
     using storage_value_type = std::pair<Key, T>;
+
+    static_assert(std::is_standard_layout<value_type>::value &&
+                      std::is_standard_layout<storage_value_type>::value &&
+                      offsetof(value_type, first) ==
+                          offsetof(storage_value_type, first) &&
+                      offsetof(value_type, second) ==
+                          offsetof(storage_value_type, second),
+                  "std::pair<Key, T> and std::pair<const Key, T> must have the "
+                  "same memory layout");
 
     const storage_value_type &storage_kvpair(size_type ind) const {
       return *static_cast<const storage_value_type *>(
