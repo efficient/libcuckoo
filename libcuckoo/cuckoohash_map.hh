@@ -858,7 +858,9 @@ private:
       case failure_table_full:
         // Expand the table and try again, re-grabbing the locks
         cuckoo_fast_double<LOCK_T, automatic_resize>(hp);
+#if defined(__GNUC__) && __GNUC__ >= 7
         __attribute__ ((fallthrough));
+#endif
       case failure_under_expansion:
         b = snapshot_and_lock_two<LOCK_T>(hv);
         break;
