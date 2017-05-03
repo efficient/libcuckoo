@@ -68,6 +68,11 @@ public:
 
   using key_type = typename buckets_t::key_type;
   using mapped_type = typename buckets_t::mapped_type;
+  /**
+   * This type is defined as an @c std::pair. Note that table behavior is
+   * undefined if a user-defined specialization of @c std::pair<Key, T> or @c
+   * std::pair<const Key, T> exists.
+   */
   using value_type = typename buckets_t::value_type;
   using size_type = typename buckets_t::size_type;
   using difference_type = std::ptrdiff_t;
@@ -858,7 +863,11 @@ private:
       case failure_table_full:
         // Expand the table and try again, re-grabbing the locks
         cuckoo_fast_double<LOCK_T, automatic_resize>(hp);
+        b = snapshot_and_lock_two<LOCK_T>(hv);
+        break;
       case failure_under_expansion:
+        // The table was under expansion while we were cuckooing. Re-grab the
+        // locks and try again.
         b = snapshot_and_lock_two<LOCK_T>(hv);
         break;
       default:
