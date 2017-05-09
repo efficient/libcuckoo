@@ -1394,7 +1394,6 @@ private:
         // hashsize(current_hp) later than the current bucket
         bucket &old_bucket = buckets_[bucket_i];
         const size_type new_bucket_i = bucket_i + hashsize(current_hp);
-        bucket &new_bucket = buckets_[new_bucket_i];
         size_type new_bucket_slot = 0;
 
         // Move each item from the old bucket that needs moving into the
