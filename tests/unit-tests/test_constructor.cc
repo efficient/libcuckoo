@@ -10,8 +10,12 @@ TEST_CASE("default size", "[constructor]") {
   IntIntTable tbl;
   REQUIRE(tbl.size() == 0);
   REQUIRE(tbl.empty());
-  REQUIRE(tbl.hashpower() == (size_t)log2(LIBCUCKOO_DEFAULT_SIZE / 4));
-  REQUIRE(tbl.bucket_count() == LIBCUCKOO_DEFAULT_SIZE / 4);
+  if (LIBCUCKOO_DEFAULT_SIZE < 4) {
+    REQUIRE(tbl.hashpower() == 0);
+  } else {
+    REQUIRE(tbl.hashpower() == (size_t)log2(LIBCUCKOO_DEFAULT_SIZE / 4));
+  }
+  REQUIRE(tbl.bucket_count() == 1UL << tbl.hashpower());
   REQUIRE(tbl.load_factor() == 0);
 }
 

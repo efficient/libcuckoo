@@ -225,11 +225,12 @@ public:
     bucket &b = buckets_[ind];
     assert(!b.occupied(slot));
     b.partial(slot) = p;
-    b.occupied(slot) = true;
     storage_value_traits_::construct(
         storage_value_allocator_, std::addressof(b.storage_kvpair(slot)),
         std::piecewise_construct, std::forward_as_tuple(std::forward<K>(k)),
         std::forward_as_tuple(std::forward<Args>(args)...));
+    // This must occur last, to enforce a strong exception guarantee
+    b.occupied(slot) = true;
   }
 
   // Destroys live data in a bucket
@@ -250,6 +251,8 @@ public:
     assert(!dst.occupied(dst_slot));
     setKV(dst_ind, dst_slot, src.partial(src_slot), src.movable_key(src_slot),
           std::move(src.mapped(src_slot)));
+    // If this throws an exception, we cannot enforce the strong exception
+    // guarantee, but otherwise we do
     eraseKV(src_ind, src_slot);
   }
 
@@ -295,7 +298,7 @@ private:
       buckets_ = src.buckets_;
       src.buckets_ = nullptr;
     } else {
-      buckets_ = transfer(hashpower(), src, std::true_type());
+      buckets_ = transfer(src.hashpower(), src, std::true_type());
     }
   }
 
@@ -328,6 +331,7 @@ private:
       bucket_traits_::destroy(bucket_allocator_, &buckets_[i]);
     }
     bucket_traits_::deallocate(bucket_allocator_, buckets_, size());
+    buckets_ = nullptr;
   }
 
   // `true` here refers to whether or not we should move

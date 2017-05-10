@@ -258,10 +258,9 @@ public:
    * @throw std::invalid_argument if the current hashpower exceeds the limit
    */
   void maximum_hashpower(size_type mhp) {
-    if (mhp != LIBCUCKOO_NO_MAXIMUM_HASHPOWER && hashpower() > mhp) {
+    if (hashpower() > mhp) {
       throw std::invalid_argument("maximum hashpower " + std::to_string(mhp) +
-                                  " is less than "
-                                  "current hashpower");
+                                  " is less than current hashpower");
     }
     maximum_hashpower_.store(mhp, std::memory_order_release);
   }

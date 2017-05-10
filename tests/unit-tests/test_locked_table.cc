@@ -97,6 +97,7 @@ TEST_CASE("locked_table info", "[locked_table]") {
   REQUIRE(lt.load_factor() == tbl.load_factor());
   REQUIRE_THROWS_AS(lt.minimum_load_factor(1.01), std::invalid_argument);
   lt.minimum_load_factor(lt.minimum_load_factor() * 2);
+  lt.rehash(5);
   REQUIRE_THROWS_AS(lt.maximum_hashpower(lt.hashpower() - 1),
                     std::invalid_argument);
   lt.maximum_hashpower(lt.hashpower() + 1);
@@ -203,7 +204,7 @@ TEST_CASE("locked_table erase", "[locked_table]") {
 
   SECTION("erase doesn't ruin this iterator") {
     auto lt = tbl.lock_table();
-    auto it = lt.find(0);
+    auto it = lt.begin();
     auto next = it;
     ++next;
     REQUIRE(lt.erase(it) == next);

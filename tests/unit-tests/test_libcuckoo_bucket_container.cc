@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
 #include <type_traits>
 #include <utility>
 
@@ -93,32 +94,32 @@ TEST_CASE("bucket container simple stateful allocator", "[bucket container]") {
 TEST_CASE("bucket container copy construction", "[bucket container]") {
   allocator_wrapper<>::stateful_allocator<value_type> a(5);
   TestingContainer<decltype(a)> tc(2, a);
-  tc.setKV(tc[0], 0, 2, std::make_shared<int>(10), 5);
+  tc.setKV(0, 0, 2, std::make_shared<int>(10), 5);
   TestingContainer<decltype(a)> tc2(tc);
 
   REQUIRE(tc[0].occupied(0));
   REQUIRE(tc[0].partial(0) == 2);
   REQUIRE(*tc[0].key(0) == 10);
-  REQUIRE(tc[0].val(0) == 5);
+  REQUIRE(tc[0].mapped(0) == 5);
   REQUIRE(tc.get_allocator().id == 5);
 
   REQUIRE(tc2[0].occupied(0));
   REQUIRE(tc2[0].partial(0) == 2);
   REQUIRE(*tc2[0].key(0) == 10);
-  REQUIRE(tc2[0].val(0) == 5);
+  REQUIRE(tc2[0].mapped(0) == 5);
   REQUIRE(tc2.get_allocator().id == 6);
 }
 
 TEST_CASE("bucket container move construction", "[bucket container]") {
   allocator_wrapper<>::stateful_allocator<value_type> a(5);
   TestingContainer<decltype(a)> tc(2, a);
-  tc.setKV(tc[0], 0, 2, std::make_shared<int>(10), 5);
+  tc.setKV(0, 0, 2, std::make_shared<int>(10), 5);
   TestingContainer<decltype(a)> tc2(std::move(tc));
 
   REQUIRE(tc2[0].occupied(0));
   REQUIRE(tc2[0].partial(0) == 2);
   REQUIRE(*tc2[0].key(0) == 10);
-  REQUIRE(tc2[0].val(0) == 5);
+  REQUIRE(tc2[0].mapped(0) == 5);
   REQUIRE(tc2.get_allocator().id == 5);
 }
 
@@ -126,16 +127,16 @@ TEST_CASE("bucket container copy assignment with propagate",
           "[bucket container]") {
   allocator_wrapper<true>::stateful_allocator<value_type> a(5);
   TestingContainer<decltype(a)> tc(2, a);
-  tc.setKV(tc[0], 0, 2, std::make_shared<int>(10), 5);
+  tc.setKV(0, 0, 2, std::make_shared<int>(10), 5);
   TestingContainer<decltype(a)> tc2(2, a);
-  tc2.setKV(tc2[1], 0, 2, std::make_shared<int>(10), 5);
+  tc2.setKV(1, 0, 2, std::make_shared<int>(10), 5);
 
   tc2 = tc;
   REQUIRE(tc2[0].occupied(0));
   REQUIRE(tc2[0].partial(0) == 2);
   REQUIRE(*tc2[0].key(0) == 10);
   REQUIRE(tc2[0].key(0).use_count() == 2);
-  REQUIRE(tc2[0].val(0) == 5);
+  REQUIRE(tc2[0].mapped(0) == 5);
   REQUIRE_FALSE(tc2[1].occupied(0));
 
   REQUIRE(tc.get_allocator().id == 5);
@@ -146,16 +147,16 @@ TEST_CASE("bucket container copy assignment no propagate",
           "[bucket container]") {
   allocator_wrapper<false>::stateful_allocator<value_type> a(5);
   TestingContainer<decltype(a)> tc(2, a);
-  tc.setKV(tc[0], 0, 2, std::make_shared<int>(10), 5);
+  tc.setKV(0, 0, 2, std::make_shared<int>(10), 5);
   TestingContainer<decltype(a)> tc2(2, a);
-  tc2.setKV(tc2[1], 0, 2, std::make_shared<int>(10), 5);
+  tc2.setKV(1, 0, 2, std::make_shared<int>(10), 5);
 
   tc2 = tc;
   REQUIRE(tc2[0].occupied(0));
   REQUIRE(tc2[0].partial(0) == 2);
   REQUIRE(*tc2[0].key(0) == 10);
   REQUIRE(tc2[0].key(0).use_count() == 2);
-  REQUIRE(tc2[0].val(0) == 5);
+  REQUIRE(tc2[0].mapped(0) == 5);
   REQUIRE_FALSE(tc2[1].occupied(0));
 
   REQUIRE(tc.get_allocator().id == 5);
@@ -166,15 +167,15 @@ TEST_CASE("bucket container move assignment with propagate",
           "[bucket container]") {
   allocator_wrapper<>::stateful_allocator<value_type> a(5);
   TestingContainer<decltype(a)> tc(2, a);
-  tc.setKV(tc[0], 0, 2, std::make_shared<int>(10), 5);
+  tc.setKV(0, 0, 2, std::make_shared<int>(10), 5);
   TestingContainer<decltype(a)> tc2(2, a);
-  tc2.setKV(tc2[1], 0, 2, std::make_shared<int>(10), 5);
+  tc2.setKV(1, 0, 2, std::make_shared<int>(10), 5);
 
   tc2 = std::move(tc);
   REQUIRE(tc2[0].occupied(0));
   REQUIRE(tc2[0].partial(0) == 2);
   REQUIRE(*tc2[0].key(0) == 10);
-  REQUIRE(tc2[0].val(0) == 5);
+  REQUIRE(tc2[0].mapped(0) == 5);
   REQUIRE_FALSE(tc2[1].occupied(0));
   REQUIRE(tc2.get_allocator().id == 7);
 }
@@ -183,16 +184,16 @@ TEST_CASE("bucket container move assignment no propagate equal",
           "[bucket container]") {
   allocator_wrapper<true, false>::stateful_allocator<value_type> a(5);
   TestingContainer<decltype(a)> tc(2, a);
-  tc.setKV(tc[0], 0, 2, std::make_shared<int>(10), 5);
+  tc.setKV(0, 0, 2, std::make_shared<int>(10), 5);
   TestingContainer<decltype(a)> tc2(2, a);
-  tc2.setKV(tc2[1], 0, 2, std::make_shared<int>(10), 5);
+  tc2.setKV(1, 0, 2, std::make_shared<int>(10), 5);
 
   tc2 = std::move(tc);
   REQUIRE(tc2[0].occupied(0));
   REQUIRE(tc2[0].partial(0) == 2);
   REQUIRE(*tc2[0].key(0) == 10);
   REQUIRE(tc2[0].key(0).use_count() == 1);
-  REQUIRE(tc2[0].val(0) == 5);
+  REQUIRE(tc2[0].mapped(0) == 5);
   REQUIRE_FALSE(tc2[1].occupied(0));
   REQUIRE(tc2.get_allocator().id == 5);
 }
@@ -201,17 +202,17 @@ TEST_CASE("bucket container move assignment no propagate unequal",
           "[bucket container]") {
   allocator_wrapper<true, false>::stateful_allocator<value_type> a(5);
   TestingContainer<decltype(a)> tc(2, a);
-  tc.setKV(tc[0], 0, 2, std::make_shared<int>(10), 5);
+  tc.setKV(0, 0, 2, std::make_shared<int>(10), 5);
   allocator_wrapper<true, false>::stateful_allocator<value_type> a2(4);
   TestingContainer<decltype(a)> tc2(2, a2);
-  tc2.setKV(tc2[1], 0, 2, std::make_shared<int>(10), 5);
+  tc2.setKV(1, 0, 2, std::make_shared<int>(10), 5);
 
   tc2 = std::move(tc);
   REQUIRE(tc2[0].occupied(0));
   REQUIRE(tc2[0].partial(0) == 2);
   REQUIRE(*tc2[0].key(0) == 10);
   REQUIRE(tc2[0].key(0).use_count() == 1);
-  REQUIRE(tc2[0].val(0) == 5);
+  REQUIRE(tc2[0].mapped(0) == 5);
   REQUIRE_FALSE(tc2[1].occupied(0));
   REQUIRE(tc2.get_allocator().id == 4);
 }
@@ -219,9 +220,9 @@ TEST_CASE("bucket container move assignment no propagate unequal",
 TEST_CASE("bucket container swap no propagate", "[bucket container]") {
   allocator_wrapper<true, true, false>::stateful_allocator<value_type> a(5);
   TestingContainer<decltype(a)> tc(2, a);
-  tc.setKV(tc[0], 0, 2, std::make_shared<int>(10), 5);
+  tc.setKV(0, 0, 2, std::make_shared<int>(10), 5);
   TestingContainer<decltype(a)> tc2(2, a);
-  tc2.setKV(tc2[1], 0, 2, std::make_shared<int>(10), 5);
+  tc2.setKV(1, 0, 2, std::make_shared<int>(10), 5);
 
   tc.swap(tc2);
 
@@ -229,23 +230,23 @@ TEST_CASE("bucket container swap no propagate", "[bucket container]") {
   REQUIRE(tc[1].partial(0) == 2);
   REQUIRE(*tc[1].key(0) == 10);
   REQUIRE(tc[1].key(0).use_count() == 1);
-  REQUIRE(tc[1].val(0) == 5);
+  REQUIRE(tc[1].mapped(0) == 5);
   REQUIRE(tc.get_allocator().id == 5);
 
   REQUIRE(tc2[0].occupied(0));
   REQUIRE(tc2[0].partial(0) == 2);
   REQUIRE(*tc2[0].key(0) == 10);
   REQUIRE(tc2[0].key(0).use_count() == 1);
-  REQUIRE(tc2[0].val(0) == 5);
+  REQUIRE(tc2[0].mapped(0) == 5);
   REQUIRE(tc2.get_allocator().id == 5);
 }
 
 TEST_CASE("bucket container swap propagate", "[bucket container]") {
   allocator_wrapper<true, true, true>::stateful_allocator<value_type> a(5);
   TestingContainer<decltype(a)> tc(2, a);
-  tc.setKV(tc[0], 0, 2, std::make_shared<int>(10), 5);
+  tc.setKV(0, 0, 2, std::make_shared<int>(10), 5);
   TestingContainer<decltype(a)> tc2(2, a);
-  tc2.setKV(tc2[1], 0, 2, std::make_shared<int>(10), 5);
+  tc2.setKV(1, 0, 2, std::make_shared<int>(10), 5);
 
   tc.swap(tc2);
 
@@ -253,13 +254,71 @@ TEST_CASE("bucket container swap propagate", "[bucket container]") {
   REQUIRE(tc[1].partial(0) == 2);
   REQUIRE(*tc[1].key(0) == 10);
   REQUIRE(tc[1].key(0).use_count() == 1);
-  REQUIRE(tc[1].val(0) == 5);
+  REQUIRE(tc[1].mapped(0) == 5);
   REQUIRE(tc.get_allocator().id == 7);
 
   REQUIRE(tc2[0].occupied(0));
   REQUIRE(tc2[0].partial(0) == 2);
   REQUIRE(*tc2[0].key(0) == 10);
   REQUIRE(tc2[0].key(0).use_count() == 1);
-  REQUIRE(tc2[0].val(0) == 5);
+  REQUIRE(tc2[0].mapped(0) == 5);
   REQUIRE(tc2.get_allocator().id == 7);
+}
+
+struct ExceptionInt {
+  int x;
+  static bool do_throw;
+
+  ExceptionInt(int x_) : x(x_) { maybeThrow(); }
+
+  ExceptionInt(const ExceptionInt &other) : x(other.x) { maybeThrow(); }
+
+  ExceptionInt &operator=(const ExceptionInt &other) {
+    x = other.x;
+    maybeThrow();
+    return *this;
+  }
+
+  ~ExceptionInt() { maybeThrow(); }
+
+private:
+  void maybeThrow() {
+    if (do_throw) {
+      throw std::runtime_error("thrown");
+    }
+  }
+};
+
+bool ExceptionInt::do_throw = false;
+
+using ExceptionContainer =
+    libcuckoo_bucket_container<ExceptionInt, int,
+                               std::allocator<std::pair<ExceptionInt, int>>,
+                               uint8_t, SLOT_PER_BUCKET>;
+
+TEST_CASE("setKV with throwing type maintains strong guarantee",
+          "[bucket container]") {
+  ExceptionContainer container(0, ExceptionContainer::allocator_type());
+  container.setKV(0, 0, 0, ExceptionInt(10), 20);
+
+  ExceptionInt::do_throw = true;
+  REQUIRE_THROWS_AS(container.setKV(0, 1, 0, 0, 0), std::runtime_error);
+  ExceptionInt::do_throw = false;
+
+  REQUIRE(container[0].occupied(0));
+  REQUIRE(container[0].key(0).x == 10);
+  REQUIRE(container[0].mapped(0) == 20);
+
+  REQUIRE_FALSE(container[0].occupied(1));
+}
+
+TEST_CASE("copy assignment with throwing type is destroyed properly",
+          "[bucket container]") {
+  ExceptionContainer container(0, ExceptionContainer::allocator_type());
+  container.setKV(0, 0, 0, ExceptionInt(10), 20);
+  ExceptionContainer other(0, ExceptionContainer::allocator_type());
+
+  ExceptionInt::do_throw = true;
+  REQUIRE_THROWS_AS(other = container, std::runtime_error);
+  ExceptionInt::do_throw = false;
 }
