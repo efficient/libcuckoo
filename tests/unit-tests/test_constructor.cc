@@ -62,11 +62,30 @@ TEST_CASE("custom equality", "[constructor]") {
   }
 }
 
-template <typename T> class StatefulAllocator : public std::allocator<T> {
-public:
+template <typename T> struct StatefulAllocator {
+  using value_type = T;
   StatefulAllocator() : state(0) {}
+  template <typename U>
+  StatefulAllocator(const StatefulAllocator<U> &other) : state(other.state) {}
+
+  T *allocate(size_t n) { return std::allocator<T>().allocate(n); }
+
+  void deallocate(T *p, size_t n) { std::allocator<T>().deallocate(p, n); }
+
   int state;
 };
+
+template <typename T, typename U>
+bool operator==(const StatefulAllocator<T> &a1,
+                const StatefulAllocator<U> &a2) {
+  return a1.state == a2.state;
+}
+
+template <typename T, typename U>
+bool operator!=(const StatefulAllocator<T> &a1,
+                const StatefulAllocator<U> &a2) {
+  return a1.state != a2.state;
+}
 
 TEST_CASE("custom allocator", "[constructor]") {
   typedef std::pair<const int, int> value_type;

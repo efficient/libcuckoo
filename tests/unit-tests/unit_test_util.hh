@@ -22,40 +22,42 @@ std::atomic<int64_t> &get_unfreed_bytes();
 // unfreed, and the allocator will fail if asked to allocate above that bound
 // (note that behavior with this bound with concurrent allocations will be hard
 // to deal with). A bound below 0 is inactive (the default is -1).
-template <class T, int64_t BOUND = -1> class TrackingAllocator {
-private:
-  using traits_ = std::allocator_traits<std::allocator<T>>;
-
-public:
+template <class T, int64_t BOUND = -1> struct TrackingAllocator {
   using value_type = T;
-  template <typename U> struct rebind {
-    using other = TrackingAllocator<U, BOUND>;
-  };
-
   TrackingAllocator() {}
-
   template <typename U>
-  TrackingAllocator(const TrackingAllocator<U, BOUND> &alloc)
-      : allocator_(alloc.allocator_) {}
+  TrackingAllocator(const TrackingAllocator<U, BOUND> &) {}
 
-  typename traits_::pointer
-  allocate(typename traits_::size_type n,
-           typename traits_::const_void_pointer hint = nullptr) {
+  T *allocate(size_t n) {
     const size_t bytes_to_allocate = sizeof(T) * n;
     if (BOUND >= 0 && get_unfreed_bytes() + bytes_to_allocate > BOUND) {
       throw std::bad_alloc();
     }
     get_unfreed_bytes() += bytes_to_allocate;
-    return traits_::allocate(allocator_, n, hint);
+    return std::allocator<T>().allocate(n);
   }
 
-  void deallocate(typename traits_::pointer p, typename traits_::size_type n) {
+  void deallocate(T *p, size_t n) {
     get_unfreed_bytes() -= (sizeof(T) * n);
-    traits_::deallocate(allocator_, p, n);
+    std::allocator<T>().deallocate(p, n);
   }
 
-  std::allocator<T> allocator_;
+  template <typename U> struct rebind {
+    using other = TrackingAllocator<U, BOUND>;
+  };
 };
+
+template <typename T, typename U, int64_t BOUND>
+bool operator==(const TrackingAllocator<T, BOUND> &a1,
+                const TrackingAllocator<U, BOUND> &a2) {
+  return true;
+}
+
+template <typename T, typename U, int64_t BOUND>
+bool operator!=(const TrackingAllocator<T, BOUND> &a1,
+                const TrackingAllocator<U, BOUND> &a2) {
+  return false;
+}
 
 using IntIntTable =
     cuckoohash_map<int, int, std::hash<int>, std::equal_to<int>,

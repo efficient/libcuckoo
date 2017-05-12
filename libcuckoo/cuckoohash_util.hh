@@ -143,15 +143,6 @@ void libcuckoo_copy_allocator(A &dst, const A &src, std::true_type) {
 template <typename A>
 void libcuckoo_copy_allocator(A &dst, const A &src, std::false_type) {}
 
-// true here means the allocators from `src` are propagated on libcuckoo_move
-template <typename A>
-void libcuckoo_move_allocator(A &dst, A &src, std::true_type) {
-  dst = std::move(src);
-}
-
-template <typename A>
-void libcuckoo_move_allocator(A &dst, A &src, std::false_type) {}
-
 // true here means the allocators from `src` are propagated on libcuckoo_swap
 template <typename A>
 void libcuckoo_swap_allocator(A &dst, A &src, std::true_type) {
