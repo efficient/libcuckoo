@@ -121,7 +121,6 @@ public:
                  const allocator_type &alloc = allocator_type())
       : hash_fn_(hf), eq_fn_(eql), buckets_(reserve_calc(n), alloc),
         locks_(bucket_count(), buckets_.get_allocator()), expansion_lock_(),
-        size_counters_(kNumSizeCounters, 0, buckets_.get_allocator()),
         minimum_load_factor_(LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR),
         maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER) {}
 
@@ -186,9 +185,9 @@ public:
    * @return number of elements in the table
    */
   size_type size() const {
-    typename cacheint::value_type s = 0;
-    for (const auto &size_counter : size_counters_) {
-      s += size_counter;
+    typename locks_t::counter_type s = 0;
+    for (size_t i = 0; i < locks_.size(); ++i) {
+      s += locks_[i].elem_counter();
     }
     assert(s >= 0);
     return s;
@@ -952,7 +951,7 @@ private:
                      const partial_t partial, K &&key, Args &&... val) {
     buckets_.setKV(bucket_ind, slot, partial, std::forward<K>(key),
                    std::forward<Args>(val)...);
-    ++get_size_counter(bucket_ind);
+    ++locks_[lock_ind(bucket_ind)].elem_counter();
   }
 
   // try_find_insert_bucket will search the bucket for the given key, and for
@@ -1523,15 +1522,15 @@ private:
   // well.
   void del_from_bucket(const size_type bucket_ind, const size_type slot) {
     buckets_.eraseKV(bucket_ind, slot);
-    --get_size_counter(bucket_ind);
+    --locks_[lock_ind(bucket_ind)].elem_counter();
   }
 
   // Empties the table, calling the destructors of all the elements it removes
   // from the table. It assumes the locks are taken as necessary.
   cuckoo_status cuckoo_clear() {
     buckets_.clear();
-    for (auto &size_counter : size_counters_) {
-      size_counter = 0;
+    for (size_t i = 0; i < locks_.size(); ++i) {
+      locks_[i].elem_counter() = 0;
     }
     return ok;
   }
@@ -1571,51 +1570,6 @@ private:
   // This class is a friend for unit testing
   friend class UnitTestInternalAccess;
 
-  // This integer type is padded to 64 bytes to separate items on different
-  // cache lines
-  LIBCUCKOO_SQUELCH_PADDING_WARNING
-  class LIBCUCKOO_ALIGNAS(64) cacheint {
-  public:
-    using value_type = int64_t;
-    cacheint() : x_(0) {}
-    cacheint(value_type x) : x_(x) {}
-    cacheint(const cacheint &other) : x_((size_t)other.x_) {}
-
-    cacheint &operator=(const cacheint &other) {
-      x_ = other.x_;
-      return *this;
-    }
-
-    cacheint &operator=(value_type x) {
-      x_.store(x, std::memory_order_relaxed);
-      return *this;
-    }
-
-    cacheint &operator++() {
-      x_.fetch_add(1, std::memory_order_relaxed);
-      return *this;
-    }
-
-    cacheint &operator--() {
-      x_.fetch_sub(1, std::memory_order_relaxed);
-      return *this;
-    }
-
-    operator value_type() const { return x_.load(std::memory_order_relaxed); }
-
-  private:
-    std::atomic<value_type> x_;
-  };
-
-  static constexpr size_t kNumSizeCounters = 1UL << 4;
-
-  // Gets a size counter based on the current thread id
-  cacheint &get_size_counter(size_type ind) {
-    static std::hash<std::thread::id> hasher;
-    return size_counters_[hasher(std::this_thread::get_id()) &
-                          (kNumSizeCounters - 1)];
-  }
-
   // Member variables
 
   // The hash function
@@ -1636,12 +1590,6 @@ private:
 
   // a lock to synchronize expansions
   expansion_lock_t expansion_lock_;
-
-  // A set of counters for keeping track of the container size in a smaller
-  // memory space than all the buckets
-  mutable std::vector<cacheint, typename std::allocator_traits<allocator_type>::
-                                    template rebind_alloc<cacheint>>
-      size_counters_;
 
   // stores the minimum load factor allowed for automatic expansions. Whenever
   // an automatic expansion is triggered (during an insertion where cuckoo

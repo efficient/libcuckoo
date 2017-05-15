@@ -29,6 +29,9 @@ public:
   using locking_active = std::integral_constant<bool, true>;
   using locking_inactive = std::integral_constant<bool, false>;
 
+  // Counter type
+  using counter_type = int64_t;
+
   // A fast, lightweight spinlock
   LIBCUCKOO_SQUELCH_PADDING_WARNING
   class LIBCUCKOO_ALIGNAS(64) spinlock {
@@ -52,13 +55,13 @@ public:
 
     bool try_lock(locking_inactive) noexcept { return true; }
 
-    size_t &elem_counter() noexcept { return elem_counter_; }
+    counter_type &elem_counter() noexcept { return elem_counter_; }
 
-    size_t elem_counter() const noexcept { return elem_counter_; }
+    counter_type elem_counter() const noexcept { return elem_counter_; }
 
   private:
     std::atomic_flag lock_;
-    size_t elem_counter_;
+    counter_type elem_counter_;
   };
 
 private:
