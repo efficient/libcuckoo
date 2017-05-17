@@ -13,6 +13,7 @@
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <list>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
@@ -99,9 +100,13 @@ public:
                  const key_equal &eql = key_equal(),
                  const allocator_type &alloc = allocator_type())
       : hash_fn_(hf), eq_fn_(eql), buckets_(reserve_calc(n), alloc),
-        locks_(kNumLocks, spinlock(), get_allocator()), expansion_lock_(),
+        all_locks_(get_allocator()), current_locks_(nullptr), expansion_lock_(),
         minimum_load_factor_(LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR),
-        maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER) {}
+        maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER) {
+    all_locks_.emplace_back(size_type(kMaxNumLocks), spinlock(),
+                            get_allocator());
+    set_current_locks(all_locks_.back());
+  }
 
   /**@}*/
 
@@ -165,8 +170,8 @@ public:
    */
   size_type size() const {
     counter_type s = 0;
-    for (size_t i = 0; i < locks_.size(); ++i) {
-      s += locks_[i].elem_counter();
+    for (spinlock &lock : get_current_locks()) {
+      s += lock.elem_counter();
     }
     assert(s >= 0);
     return s;
@@ -686,7 +691,8 @@ private:
   template <typename LOCK_T>
   inline OneBucket<LOCK_T> lock_one(const size_type hp,
                                     const size_type i) const {
-    spinlock &lock = locks_[lock_ind(i)];
+    locks_t &locks = get_current_locks();
+    spinlock &lock = locks[lock_ind(i)];
     lock.lock(LOCK_T());
     check_hashpower<LOCK_T>(hp, lock);
     return OneBucket<LOCK_T>(&lock);
@@ -704,12 +710,13 @@ private:
     if (l2 < l1) {
       std::swap(l1, l2);
     }
-    locks_[l1].lock(LOCK_T());
-    check_hashpower<LOCK_T>(hp, locks_[l1]);
+    locks_t &locks = get_current_locks();
+    locks[l1].lock(LOCK_T());
+    check_hashpower<LOCK_T>(hp, locks[l1]);
     if (l2 != l1) {
-      locks_[l2].lock(LOCK_T());
+      locks[l2].lock(LOCK_T());
     }
-    return TwoBuckets<LOCK_T>(locks_, i1, i2);
+    return TwoBuckets<LOCK_T>(locks, i1, i2);
   }
 
   // lock_three locks the three bucket indexes in numerical order, returning
@@ -729,19 +736,20 @@ private:
       std::swap(l[2], l[0]);
     if (l[1] < l[0])
       std::swap(l[1], l[0]);
-    locks_[l[0]].lock(LOCK_T());
-    check_hashpower<LOCK_T>(hp, locks_[l[0]]);
+    locks_t &locks = get_current_locks();
+    locks[l[0]].lock(LOCK_T());
+    check_hashpower<LOCK_T>(hp, locks[l[0]]);
     if (l[1] != l[0]) {
-      locks_[l[1]].lock(LOCK_T());
+      locks[l[1]].lock(LOCK_T());
     }
     if (l[2] != l[1]) {
-      locks_[l[2]].lock(LOCK_T());
+      locks[l[2]].lock(LOCK_T());
     }
-    return std::make_pair(TwoBuckets<LOCK_T>(locks_, i1, i2),
+    return std::make_pair(TwoBuckets<LOCK_T>(locks, i1, i2),
                           OneBucket<LOCK_T>((lock_ind(i3) == lock_ind(i1) ||
                                              lock_ind(i3) == lock_ind(i2))
                                                 ? nullptr
-                                                : &locks_[lock_ind(i3)]));
+                                                : &locks[lock_ind(i3)]));
   }
 
   // snapshot_and_lock_two loads locks the buckets associated with the given
@@ -771,15 +779,16 @@ private:
   // locks, it is okay to resize the buckets_ container, since no other threads
   // should be accessing the buckets.
   template <typename LOCK_T> AllBuckets<LOCK_T> snapshot_and_lock_all() const {
-    for (size_type i = 0; i < locks_.size(); ++i) {
-      locks_[i].lock(LOCK_T());
+    locks_t &locks = get_current_locks();
+    for (spinlock &lock : locks) {
+      lock.lock(LOCK_T());
     }
-    return AllBuckets<LOCK_T>(locks_);
+    return AllBuckets<LOCK_T>(locks);
   }
 
   // lock_ind converts an index into buckets to an index into locks.
   static inline size_type lock_ind(const size_type bucket_ind) {
-    return bucket_ind & (kNumLocks - 1);
+    return bucket_ind & (kMaxNumLocks - 1);
   }
 
   // Data storage types and functions
@@ -935,9 +944,9 @@ private:
       return table_position{0, 0, failure_under_expansion};
     } else if (st == ok) {
       assert(LOCK_T() == locking_inactive() ||
-             !locks_[lock_ind(b.i1)].try_lock(LOCK_T()));
+             !get_current_locks()[lock_ind(b.i1)].try_lock(LOCK_T()));
       assert(LOCK_T() == locking_inactive() ||
-             !locks_[lock_ind(b.i2)].try_lock(LOCK_T()));
+             !get_current_locks()[lock_ind(b.i2)].try_lock(LOCK_T()));
       assert(!buckets_[insert_bucket].occupied(insert_slot));
       assert(insert_bucket == index_hash(hashpower(), hv.hash) ||
              insert_bucket == alt_index(hashpower(), hv.partial,
@@ -967,7 +976,7 @@ private:
                      const partial_t partial, K &&key, Args &&... val) {
     buckets_.setKV(bucket_ind, slot, partial, std::forward<K>(key),
                    std::forward<Args>(val)...);
-    ++locks_[lock_ind(bucket_ind)].elem_counter();
+    ++get_current_locks()[lock_ind(bucket_ind)].elem_counter();
   }
 
   // try_find_insert_bucket will search the bucket for the given key, and for
@@ -1058,9 +1067,9 @@ private:
           insert_slot = cuckoo_path[0].slot;
           assert(insert_bucket == b.i1 || insert_bucket == b.i2);
           assert(LOCK_T() == locking_inactive() ||
-                 !locks_[lock_ind(b.i1)].try_lock(LOCK_T()));
+                 !get_current_locks()[lock_ind(b.i1)].try_lock(LOCK_T()));
           assert(LOCK_T() == locking_inactive() ||
-                 !locks_[lock_ind(b.i2)].try_lock(LOCK_T()));
+                 !get_current_locks()[lock_ind(b.i2)].try_lock(LOCK_T()));
           assert(!buckets_[insert_bucket].occupied(insert_slot));
           done = true;
           break;
@@ -1519,15 +1528,15 @@ private:
   // well.
   void del_from_bucket(const size_type bucket_ind, const size_type slot) {
     buckets_.eraseKV(bucket_ind, slot);
-    --locks_[lock_ind(bucket_ind)].elem_counter();
+    --get_current_locks()[lock_ind(bucket_ind)].elem_counter();
   }
 
   // Empties the table, calling the destructors of all the elements it removes
   // from the table. It assumes the locks are taken as necessary.
   cuckoo_status cuckoo_clear() {
     buckets_.clear();
-    for (size_t i = 0; i < locks_.size(); ++i) {
-      locks_[i].elem_counter() = 0;
+    for (spinlock &lock : get_current_locks()) {
+      lock.elem_counter() = 0;
     }
     return ok;
   }
@@ -1567,7 +1576,15 @@ private:
   // This class is a friend for unit testing
   friend class UnitTestInternalAccess;
 
-  static constexpr size_type kNumLocks = 1UL << 16;
+  static constexpr size_type kMaxNumLocks = 1UL << 16;
+
+  locks_t &get_current_locks() const {
+    return *current_locks_.load(std::memory_order_acquire);
+  }
+
+  void set_current_locks(locks_t &new_locks) {
+    current_locks_.store(&new_locks, std::memory_order_acquire);
+  }
 
   // Member variables
 
@@ -1582,8 +1599,21 @@ private:
   // to access the buckets_ container when you have at least one lock held.
   buckets_t buckets_;
 
-  // container of locks. marked mutable, so that const methods can take locks.
-  mutable locks_t locks_;
+  // A linked list of all lock containers. We never discard lock containers,
+  // since there is currently no mechanism for detecting when all threads are
+  // done looking at the memory. Exactly one lock container out of this list is
+  // designated the "current" container, and this is used by all operations
+  // taking locks.
+  std::list<locks_t, rebind_alloc<locks_t>> all_locks_;
+
+  // An atomic pointer to the locks container marked "current". This can only
+  // be modified if either there is currently no current container (which
+  // should only occur during construction), or if the modifying thread has
+  // taken all the locks on the existing "current" container. In the latter
+  // case, a modification can only take place after a modification to the
+  // hashpower, so that other threads can detect the change and adjust
+  // appropriately.
+  std::atomic<locks_t *> current_locks_;
 
   // a lock to synchronize expansions
   expansion_lock_t expansion_lock_;
