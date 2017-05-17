@@ -1503,18 +1503,21 @@ private:
 
   // Executes the function over the given range split over num_threads threads
   template <typename F>
-  static void parallel_exec(size_type start, size_type end, F func) {
+  void parallel_exec(size_type start, size_type end, F func) {
     static const size_type num_threads =
         std::max(std::thread::hardware_concurrency(), 1U);
     size_type work_per_thread = (end - start) / num_threads;
-    std::vector<std::thread> threads(num_threads);
-    std::vector<std::exception_ptr> eptrs(num_threads, nullptr);
+    std::vector<std::thread, rebind_alloc<std::thread>> threads(
+        get_allocator());
+    threads.reserve(num_threads);
+    std::vector<std::exception_ptr, rebind_alloc<std::exception_ptr>> eptrs(
+        num_threads, nullptr, get_allocator());
     for (size_type i = 0; i < num_threads - 1; ++i) {
-      threads[i] =
-          std::thread(func, start, start + work_per_thread, std::ref(eptrs[i]));
+      threads.emplace_back(func, start, start + work_per_thread,
+                           std::ref(eptrs[i]));
       start += work_per_thread;
     }
-    threads.back() = std::thread(func, start, end, std::ref(eptrs.back()));
+    threads.emplace_back(func, start, end, std::ref(eptrs.back()));
     for (std::thread &t : threads) {
       t.join();
     }
