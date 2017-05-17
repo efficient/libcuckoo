@@ -100,12 +100,11 @@ public:
                  const key_equal &eql = key_equal(),
                  const allocator_type &alloc = allocator_type())
       : hash_fn_(hf), eq_fn_(eql), buckets_(reserve_calc(n), alloc),
-        all_locks_(get_allocator()), current_locks_(nullptr),
+        all_locks_(get_allocator()),
         minimum_load_factor_(LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR),
         maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER) {
     all_locks_.emplace_back(std::min(bucket_count(), size_type(kMaxNumLocks)),
                             spinlock(), get_allocator());
-    set_current_locks(all_locks_.back());
   }
 
   /**@}*/
@@ -1471,14 +1470,15 @@ private:
       return AllBuckets<locking_active>();
     }
 
-    all_locks_.emplace_back(std::min(size_type(kMaxNumLocks), new_bucket_count),
-                            spinlock(), get_allocator());
-    locks_t &new_locks = all_locks_.back();
+    locks_t new_locks(std::min(size_type(kMaxNumLocks), new_bucket_count),
+                      spinlock(), get_allocator());
+    for (spinlock &lock : new_locks) {
+      lock.lock(locking_active());
+    }
     assert(new_locks.size() > current_locks.size());
     std::copy(current_locks.begin(), current_locks.end(), new_locks.begin());
-    auto new_unlocker = snapshot_and_lock_all<locking_active>(new_locks);
-    set_current_locks(new_locks);
-    return new_unlocker;
+    all_locks_.emplace_back(std::move(new_locks));
+    return AllBuckets<locking_active>(all_locks_.back());
   }
 
   // cuckoo_expand_simple will resize the table to at least the given
@@ -1609,13 +1609,7 @@ private:
 
   static constexpr size_type kMaxNumLocks = 1UL << 16;
 
-  locks_t &get_current_locks() const {
-    return *current_locks_.load(std::memory_order_acquire);
-  }
-
-  void set_current_locks(locks_t &new_locks) {
-    current_locks_.store(&new_locks, std::memory_order_acquire);
-  }
+  locks_t &get_current_locks() const { return all_locks_.back(); }
 
   // Member variables
 
@@ -1632,19 +1626,15 @@ private:
 
   // A linked list of all lock containers. We never discard lock containers,
   // since there is currently no mechanism for detecting when all threads are
-  // done looking at the memory. Exactly one lock container out of this list is
-  // designated the "current" container, and this is used by all operations
-  // taking locks.
-  std::list<locks_t, rebind_alloc<locks_t>> all_locks_;
-
-  // An atomic pointer to the locks container marked "current". This can only
-  // be modified if either there is currently no current container (which
-  // should only occur during construction), or if the modifying thread has
-  // taken all the locks on the existing "current" container. In the latter
-  // case, a modification can only take place after a modification to the
-  // hashpower, so that other threads can detect the change and adjust
-  // appropriately.
-  std::atomic<locks_t *> current_locks_;
+  // done looking at the memory. The back lock container in this list is
+  // designated the "current" one, and is used by all operations taking locks.
+  // This container can be modified if either it is empty (which should only
+  // occur during construction), or if the modifying thread has taken all the
+  // locks on the existing "current" container. In the latter case, a
+  // modification must take place before a modification to the hashpower, so
+  // that other threads can detect the change and adjust appropriately. Marked
+  // mutable so that const methods can access and take locks.
+  mutable std::list<locks_t, rebind_alloc<locks_t>> all_locks_;
 
   // stores the minimum load factor allowed for automatic expansions. Whenever
   // an automatic expansion is triggered (during an insertion where cuckoo
