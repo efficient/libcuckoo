@@ -255,7 +255,6 @@ public:
     destroy_buckets();
     buckets_ = new_buckets;
     hashpower(new_hp);
-    hashpower_ = new_hp;
   }
 
 private:

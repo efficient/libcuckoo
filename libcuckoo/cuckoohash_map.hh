@@ -100,11 +100,11 @@ public:
                  const key_equal &eql = key_equal(),
                  const allocator_type &alloc = allocator_type())
       : hash_fn_(hf), eq_fn_(eql), buckets_(reserve_calc(n), alloc),
-        all_locks_(get_allocator()), current_locks_(nullptr), expansion_lock_(),
+        all_locks_(get_allocator()), current_locks_(nullptr),
         minimum_load_factor_(LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR),
         maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER) {
-    all_locks_.emplace_back(size_type(kMaxNumLocks), spinlock(),
-                            get_allocator());
+    all_locks_.emplace_back(std::min(bucket_count(), size_type(kMaxNumLocks)),
+                            spinlock(), get_allocator());
     set_current_locks(all_locks_.back());
   }
 
@@ -468,7 +468,7 @@ public:
    * Removes all elements in the table, calling their destructors.
    */
   void clear() {
-    auto unlocker = snapshot_and_lock_all<locking_active>();
+    auto unlocker = snapshot_and_lock_all<locking_active>(get_current_locks());
     cuckoo_clear();
   }
 
@@ -552,9 +552,6 @@ private:
     const size_type nonzero_tag = static_cast<size_type>(partial) + 1;
     return (index ^ (nonzero_tag * 0xc6a4a7935bd1e995)) & hashmask(hp);
   }
-
-  // The type of the expansion lock
-  using expansion_lock_t = std::mutex;
 
   // Locking types
 
@@ -648,6 +645,7 @@ private:
 
   template <typename LOCK_T> class AllBuckets {
   public:
+    AllBuckets() : locks_(nullptr) {}
     AllBuckets(locks_t &locks) : locks_(&locks) {}
 
     bool is_active() const { return static_cast<bool>(locks_); }
@@ -761,7 +759,7 @@ private:
   template <typename LOCK_T>
   TwoBuckets<LOCK_T> snapshot_and_lock_two(const hash_value &hv) const {
     while (true) {
-      // Store the current hashpower we're using to compute the buckets
+      // Keep the current hashpower and locks we're using to compute the buckets
       const size_type hp = hashpower();
       const size_type i1 = index_hash(hp, hv.hash);
       const size_type i2 = alt_index(hp, hv.partial, i1);
@@ -778,8 +776,8 @@ private:
   // that releases the locks upon destruction. Note that after taking all the
   // locks, it is okay to resize the buckets_ container, since no other threads
   // should be accessing the buckets.
-  template <typename LOCK_T> AllBuckets<LOCK_T> snapshot_and_lock_all() const {
-    locks_t &locks = get_current_locks();
+  template <typename LOCK_T>
+  AllBuckets<LOCK_T> snapshot_and_lock_all(locks_t &locks) const {
     for (spinlock &lock : locks) {
       lock.lock(LOCK_T());
     }
@@ -1356,13 +1354,13 @@ private:
       return cuckoo_expand_simple<LOCK_T, AUTO_RESIZE>(current_hp + 1);
     }
     const size_type new_hp = current_hp + 1;
-    std::lock_guard<expansion_lock_t> l(expansion_lock_);
+    auto unlocker = snapshot_and_lock_all<LOCK_T>(get_current_locks());
     cuckoo_status st = check_resize_validity<AUTO_RESIZE>(current_hp, new_hp);
     if (st != ok) {
       return st;
     }
-
-    auto unlocker = snapshot_and_lock_all<LOCK_T>();
+    // Resize the locks array if necessary
+    auto new_unlocker = maybe_resize_locks(1UL << new_hp);
     buckets_.resize(new_hp);
 
     // We must re-hash the table, moving items in each bucket to a different
@@ -1397,6 +1395,9 @@ private:
       // hashsize(current_hp) later than the current bucket
       bucket &old_bucket = buckets_[old_bucket_ind];
       const size_type new_bucket_ind = old_bucket_ind + hashsize(current_hp);
+      for (size_type slot = 0; slot < slot_per_bucket(); ++slot) {
+        assert(!buckets_[new_bucket_ind].occupied(slot));
+      }
       size_type new_bucket_slot = 0;
 
       // Move each item from the old bucket that needs moving into the
@@ -1451,6 +1452,35 @@ private:
     return ok;
   }
 
+  // When we expand the contanier, we may need to expand the locks array, if
+  // the current locks array is smaller than the maximum size and also smaller
+  // than the number of buckets in the upcoming buckets container. In this
+  // case, we grow the locks array to the smaller of the maximum lock array
+  // size and the bucket count. This is done by allocating an entirely new lock
+  // container, putting it into the list of all containers, copying over the
+  // counters, and then atomically setting the "current" container to the
+  // newest one. Since the new container will be unlocked, this must be the
+  // final operation in a resize, since other threads can now pick up
+  // immediately. It is the responsibility of the caller to unlock the old
+  // locks container, so that old threads can resume and find out they need to
+  // re-start.
+  AllBuckets<locking_active> maybe_resize_locks(size_type new_bucket_count) {
+    locks_t &current_locks = get_current_locks();
+    if (!(current_locks.size() < kMaxNumLocks &&
+          current_locks.size() < new_bucket_count)) {
+      return AllBuckets<locking_active>();
+    }
+
+    all_locks_.emplace_back(std::min(size_type(kMaxNumLocks), new_bucket_count),
+                            spinlock(), get_allocator());
+    locks_t &new_locks = all_locks_.back();
+    assert(new_locks.size() > current_locks.size());
+    std::copy(current_locks.begin(), current_locks.end(), new_locks.begin());
+    auto new_unlocker = snapshot_and_lock_all<locking_active>(new_locks);
+    set_current_locks(new_locks);
+    return new_unlocker;
+  }
+
   // cuckoo_expand_simple will resize the table to at least the given
   // new_hashpower. When we're shrinking the table, if the current table
   // contains more elements than can be held by new_hashpower, the resulting
@@ -1460,7 +1490,7 @@ private:
   // beyond the maximum hashpower, and we have an actual limit.
   template <typename LOCK_T, typename AUTO_RESIZE>
   cuckoo_status cuckoo_expand_simple(size_type new_hp) {
-    const auto unlocker = snapshot_and_lock_all<LOCK_T>();
+    const auto unlocker = snapshot_and_lock_all<LOCK_T>(get_current_locks());
     const size_type hp = hashpower();
     cuckoo_status st = check_resize_validity<AUTO_RESIZE>(hp, new_hp);
     if (st != ok) {
@@ -1490,7 +1520,8 @@ private:
     // Swap the current buckets containers with new_map's. This is okay,
     // because we have all the locks, so nobody else should be reading from the
     // buckets array. Then the old buckets array will be deleted when new_map
-    // is deleted.
+    // is deleted. We also resize the locks array if necessary.
+    auto new_unlocker = maybe_resize_locks(new_map.bucket_count());
     buckets_.swap(new_map.buckets_);
     return ok;
   }
@@ -1614,9 +1645,6 @@ private:
   // hashpower, so that other threads can detect the change and adjust
   // appropriately.
   std::atomic<locks_t *> current_locks_;
-
-  // a lock to synchronize expansions
-  expansion_lock_t expansion_lock_;
 
   // stores the minimum load factor allowed for automatic expansions. Whenever
   // an automatic expansion is triggered (during an insertion where cuckoo
@@ -2170,10 +2198,15 @@ public:
     // The constructor locks the entire table. We keep this constructor
     // private (but expose it to the cuckoohash_map class), since we don't
     // want users calling it.
-    locked_table(cuckoohash_map &map) noexcept
-        : map_(map),
-          unlocker_(
-              map_.get().template snapshot_and_lock_all<locking_active>()) {}
+    locked_table(cuckoohash_map &map) noexcept : map_(map), unlocker_() {
+      locks_t *locks = nullptr;
+      do {
+        unlocker_.unlock();
+        locks = &map_.get().get_current_locks();
+        unlocker_ =
+            map_.get().template snapshot_and_lock_all<locking_active>(*locks);
+      } while (locks != &map_.get().get_current_locks());
+    }
 
     // A reference to the map owned by the table
     std::reference_wrapper<cuckoohash_map> map_;
