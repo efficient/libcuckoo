@@ -24,6 +24,17 @@ std::atomic<int64_t> &get_unfreed_bytes();
 // to deal with). A bound below 0 is inactive (the default is -1).
 template <class T, int64_t BOUND = -1> struct TrackingAllocator {
   using value_type = T;
+  using pointer = T*;
+  using const_pointer = const T*;
+  using reference = T&;
+  using const_reference = const T&;
+  using size_type = size_t;
+  using difference_type = ptrdiff_t;
+
+  template <typename U> struct rebind {
+    using other = TrackingAllocator<U, BOUND>;
+  };
+
   TrackingAllocator() {}
   template <typename U>
   TrackingAllocator(const TrackingAllocator<U, BOUND> &) {}
@@ -42,9 +53,15 @@ template <class T, int64_t BOUND = -1> struct TrackingAllocator {
     std::allocator<T>().deallocate(p, n);
   }
 
-  template <typename U> struct rebind {
-    using other = TrackingAllocator<U, BOUND>;
-  };
+  template <typename U, class... Args>
+  void construct(U *p, Args&&... args) {
+    new((void*)p) U(std::forward<Args>(args)...);
+  }
+
+  template <typename U>
+  void destroy(U *p) {
+    p->~U();
+  }
 };
 
 template <typename T, typename U, int64_t BOUND>

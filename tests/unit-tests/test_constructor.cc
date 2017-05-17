@@ -64,6 +64,18 @@ TEST_CASE("custom equality", "[constructor]") {
 
 template <typename T> struct StatefulAllocator {
   using value_type = T;
+  using pointer = T*;
+  using const_pointer = const T*;
+  using reference = T&;
+  using const_reference = const T&;
+  using size_type = size_t;
+  using difference_type = ptrdiff_t;
+
+  template <typename U> struct rebind {
+    using other = StatefulAllocator<U>;
+  };
+
+
   StatefulAllocator() : state(0) {}
   template <typename U>
   StatefulAllocator(const StatefulAllocator<U> &other) : state(other.state) {}
@@ -71,6 +83,16 @@ template <typename T> struct StatefulAllocator {
   T *allocate(size_t n) { return std::allocator<T>().allocate(n); }
 
   void deallocate(T *p, size_t n) { std::allocator<T>().deallocate(p, n); }
+
+  template <typename U, class... Args>
+  void construct(U *p, Args&&... args) {
+    new((void*)p) U(std::forward<Args>(args)...);
+  }
+
+  template <typename U>
+  void destroy(U *p) {
+    p->~U();
+  }
 
   int state;
 };
