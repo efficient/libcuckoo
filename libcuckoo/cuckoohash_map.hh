@@ -1356,18 +1356,15 @@ private:
     auto unlocker = snapshot_and_lock_all<LOCK_T>();
     buckets_.resize(new_hp);
 
-    // We gradually unlock the new table, by processing each of the buckets
-    // corresponding to each lock we took. For each slot in an old bucket,
-    // we either leave it in the old bucket, or move it to the corresponding
-    // new bucket. After we're done with the bucket, we release the lock on
-    // it and the new bucket, letting other threads using the new map
-    // gradually. We only unlock the locks being used by the old table,
-    // because unlocking new locks would enable operations on the table
-    // before we want them. We also re-evaluate the partial key stored at
-    // each slot, since it depends on the hashpower.
-    const size_type locks_to_move =
-        std::min(locks_.size(), hashsize(current_hp));
-    parallel_exec(0, locks_to_move,
+    // We must re-hash the table, moving items in each bucket to a different
+    // one. The hash functions are carefully designed so that doubling the
+    // table size will add exactly one bit to the `index_hash` and `alt_index`,
+    // on the top. This means, for each element in a specific bucket, its new
+    // hash will either be the same (a 0 was added to the top), or will be
+    // exactly 2^current_hp buckets down. This means that we can move
+    // individual buckets in parallel, since all their keys can be moved to
+    // exactly one of the new buckets we allocated.
+    parallel_exec(0, hashsize(current_hp),
                   [this, current_hp, new_hp](size_type start, size_type end,
                                              std::exception_ptr &eptr) {
                     try {
@@ -1376,60 +1373,48 @@ private:
                       eptr = std::current_exception();
                     }
                   });
-    parallel_exec(locks_to_move, locks_.size(),
-                  [this](size_type i, size_type end, std::exception_ptr &) {
-                    for (; i < end; ++i) {
-                      locks_[i].unlock(LOCK_T());
-                    }
-                  });
-    // Since we've unlocked the buckets ourselves, we don't need the
-    // unlocker to do it for us.
-    unlocker.release();
     return ok;
   }
 
   template <typename LOCK_T>
-  void move_buckets(size_type current_hp, size_type new_hp,
-                    size_type start_lock_ind, size_type end_lock_ind) {
-    for (; start_lock_ind < end_lock_ind; ++start_lock_ind) {
-      for (size_type bucket_i = start_lock_ind; bucket_i < hashsize(current_hp);
-           bucket_i += kNumLocks) {
-        // By doubling the table size, the index_hash and alt_index of
-        // each key got one bit added to the top, at position
-        // current_hp, which means anything we have to move will either
-        // be at the same bucket position, or exactly
-        // hashsize(current_hp) later than the current bucket
-        bucket &old_bucket = buckets_[bucket_i];
-        const size_type new_bucket_i = bucket_i + hashsize(current_hp);
-        size_type new_bucket_slot = 0;
+  void move_buckets(size_type current_hp, size_type new_hp, size_type start_ind,
+                    size_type end_ind) {
+    for (size_type old_bucket_ind = start_ind; old_bucket_ind < end_ind;
+         ++old_bucket_ind) {
+      // By doubling the table size, the index_hash and alt_index of
+      // each key got one bit added to the top, at position
+      // current_hp, which means anything we have to move will either
+      // be at the same bucket position, or exactly
+      // hashsize(current_hp) later than the current bucket
+      bucket &old_bucket = buckets_[old_bucket_ind];
+      const size_type new_bucket_ind = old_bucket_ind + hashsize(current_hp);
+      size_type new_bucket_slot = 0;
 
-        // Move each item from the old bucket that needs moving into the
-        // new bucket
-        for (size_type slot = 0; slot < slot_per_bucket(); ++slot) {
-          if (!old_bucket.occupied(slot)) {
-            continue;
-          }
-          const hash_value hv = hashed_key(old_bucket.key(slot));
-          const size_type old_ihash = index_hash(current_hp, hv.hash);
-          const size_type old_ahash =
-              alt_index(current_hp, hv.partial, old_ihash);
-          const size_type new_ihash = index_hash(new_hp, hv.hash);
-          const size_type new_ahash = alt_index(new_hp, hv.partial, new_ihash);
-          if ((bucket_i == old_ihash && new_ihash == new_bucket_i) ||
-              (bucket_i == old_ahash && new_ahash == new_bucket_i)) {
-            // We're moving the key from the old bucket to the new
-            // one
-            buckets_.moveKV(new_bucket_i, new_bucket_slot++, bucket_i, slot);
-          } else {
-            // Check that we don't want to move the new key
-            assert((bucket_i == old_ihash && new_ihash == old_ihash) ||
-                   (bucket_i == old_ahash && new_ahash == old_ahash));
-          }
+      // Move each item from the old bucket that needs moving into the
+      // new bucket
+      for (size_type old_bucket_slot = 0; old_bucket_slot < slot_per_bucket();
+           ++old_bucket_slot) {
+        if (!old_bucket.occupied(old_bucket_slot)) {
+          continue;
+        }
+        const hash_value hv = hashed_key(old_bucket.key(old_bucket_slot));
+        const size_type old_ihash = index_hash(current_hp, hv.hash);
+        const size_type old_ahash =
+            alt_index(current_hp, hv.partial, old_ihash);
+        const size_type new_ihash = index_hash(new_hp, hv.hash);
+        const size_type new_ahash = alt_index(new_hp, hv.partial, new_ihash);
+        if ((old_bucket_ind == old_ihash && new_ihash == new_bucket_ind) ||
+            (old_bucket_ind == old_ahash && new_ahash == new_bucket_ind)) {
+          // We're moving the key from the old bucket to the new
+          // one
+          buckets_.moveKV(new_bucket_ind, new_bucket_slot++, old_bucket_ind,
+                          old_bucket_slot);
+        } else {
+          // Check that we don't want to move the new key
+          assert((old_bucket_ind == old_ihash && new_ihash == old_ihash) ||
+                 (old_bucket_ind == old_ahash && new_ahash == old_ahash));
         }
       }
-      // Now we can unlock the lock, because all the buckets corresponding
-      // to it have been unlocked
-      locks_[start_lock_ind].unlock(LOCK_T());
     }
   }
 
