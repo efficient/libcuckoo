@@ -61,16 +61,16 @@ bool operator!=(const TrackingAllocator<T, BOUND> &a1,
 
 using IntIntTable =
     cuckoohash_map<int, int, std::hash<int>, std::equal_to<int>,
-                   std::allocator<std::pair<const int, int>>, 4, 16>;
+                   std::allocator<std::pair<const int, int>>, 4>;
 
 template <class Alloc>
 using IntIntTableWithAlloc =
-    cuckoohash_map<int, int, std::hash<int>, std::equal_to<int>, Alloc, 4, 16>;
+    cuckoohash_map<int, int, std::hash<int>, std::equal_to<int>, Alloc, 4>;
 
 using StringIntTable =
     cuckoohash_map<std::string, int, std::hash<std::string>,
                    std::equal_to<std::string>,
-                   std::allocator<std::pair<const std::string, int>>, 4, 16>;
+                   std::allocator<std::pair<const std::string, int>>, 4>;
 
 namespace std {
 template <typename T> struct hash<unique_ptr<T>> {

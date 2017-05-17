@@ -205,7 +205,6 @@ template <class KType> void misc_thread(AllEnvironment<KType> *env) {
   pcg64_fast gen(g_seed);
   while (!env->finished.load()) {
     env->table.slot_per_bucket();
-    env->table.lock_array_granularity();
     env->table.size();
     env->table.empty();
     env->table.bucket_count();
