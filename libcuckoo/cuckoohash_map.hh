@@ -672,9 +672,9 @@ private:
   // lock was taken. If it isn't unlock the bucket and throw a
   // hashpower_changed exception.
   template <typename LOCK_T>
-  inline void check_hashpower(const size_type hp, const size_type lock) const {
+  inline void check_hashpower(const size_type hp, spinlock &lock) const {
     if (hashpower() != hp) {
-      locks_[lock].unlock(LOCK_T());
+      lock.unlock(LOCK_T());
       LIBCUCKOO_DBG("%s", "hashpower changed\n");
       throw hashpower_changed();
     }
@@ -686,10 +686,10 @@ private:
   template <typename LOCK_T>
   inline OneBucket<LOCK_T> lock_one(const size_type hp,
                                     const size_type i) const {
-    const size_type l = lock_ind(i);
-    locks_[l].lock(LOCK_T());
-    check_hashpower<LOCK_T>(hp, l);
-    return OneBucket<LOCK_T>(&locks_[l]);
+    spinlock &lock = locks_[lock_ind(i)];
+    lock.lock(LOCK_T());
+    check_hashpower<LOCK_T>(hp, lock);
+    return OneBucket<LOCK_T>(&lock);
   }
 
   // locks the two bucket indexes, always locking the earlier index first to
@@ -705,7 +705,7 @@ private:
       std::swap(l1, l2);
     }
     locks_[l1].lock(LOCK_T());
-    check_hashpower<LOCK_T>(hp, l1);
+    check_hashpower<LOCK_T>(hp, locks_[l1]);
     if (l2 != l1) {
       locks_[l2].lock(LOCK_T());
     }
@@ -730,7 +730,7 @@ private:
     if (l[1] < l[0])
       std::swap(l[1], l[0]);
     locks_[l[0]].lock(LOCK_T());
-    check_hashpower<LOCK_T>(hp, l[0]);
+    check_hashpower<LOCK_T>(hp, locks_[l[0]]);
     if (l[1] != l[0]) {
       locks_[l[1]].lock(LOCK_T());
     }
