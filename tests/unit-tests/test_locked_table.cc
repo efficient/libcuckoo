@@ -399,3 +399,26 @@ TEST_CASE("locked_table equality", "[locked_table]") {
   REQUIRE_FALSE(lt3 == lt4);
   REQUIRE_FALSE(lt4 == lt3);
 }
+
+template <typename Table> void check_all_locks_taken(Table &tbl) {
+  auto &locks = UnitTestInternalAccess::get_current_locks(tbl);
+  for (auto &lock : locks) {
+    REQUIRE_FALSE(lock.try_lock());
+  }
+}
+
+TEST_CASE("locked table holds locks after resize", "[locked table]") {
+  IntIntTable tbl(4);
+  auto lt = tbl.lock_table();
+  check_all_locks_taken(tbl);
+
+  // After a cuckoo_fast_double, all locks are still taken
+  for (int i = 0; i < 5; ++i) {
+    lt.insert(i, i);
+  }
+  check_all_locks_taken(tbl);
+
+  // After a cuckoo_simple_expand, all locks are still taken
+  lt.rehash(10);
+  check_all_locks_taken(tbl);
+}

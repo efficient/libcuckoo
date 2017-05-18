@@ -24,10 +24,10 @@ std::atomic<int64_t> &get_unfreed_bytes();
 // to deal with). A bound below 0 is inactive (the default is -1).
 template <class T, int64_t BOUND = -1> struct TrackingAllocator {
   using value_type = T;
-  using pointer = T*;
-  using const_pointer = const T*;
-  using reference = T&;
-  using const_reference = const T&;
+  using pointer = T *;
+  using const_pointer = const T *;
+  using reference = T &;
+  using const_reference = const T &;
   using size_type = size_t;
   using difference_type = ptrdiff_t;
 
@@ -53,15 +53,11 @@ template <class T, int64_t BOUND = -1> struct TrackingAllocator {
     std::allocator<T>().deallocate(p, n);
   }
 
-  template <typename U, class... Args>
-  void construct(U *p, Args&&... args) {
-    new((void*)p) U(std::forward<Args>(args)...);
+  template <typename U, class... Args> void construct(U *p, Args &&... args) {
+    new ((void *)p) U(std::forward<Args>(args)...);
   }
 
-  template <typename U>
-  void destroy(U *p) {
-    p->~U();
-  }
+  template <typename U> void destroy(U *p) { p->~U(); }
 };
 
 template <typename T, typename U, int64_t BOUND>
@@ -132,12 +128,6 @@ public:
   }
 
   template <class CuckoohashMap>
-  static typename CuckoohashMap::SnapshotNoLockResults
-  snapshot_table_nolock(const CuckoohashMap &table) {
-    return table.snapshot_table_nolock();
-  }
-
-  template <class CuckoohashMap>
   static typename CuckoohashMap::partial_t partial_key(const size_t hv) {
     return CuckoohashMap::partial_key(hv);
   }
@@ -156,6 +146,12 @@ public:
 
   template <class CuckoohashMap> static size_t reserve_calc(size_t n) {
     return CuckoohashMap::reserve_calc(n);
+  }
+
+  template <class CuckoohashMap>
+  static typename CuckoohashMap::locks_t &
+  get_current_locks(const CuckoohashMap &table) {
+    return table.get_current_locks();
   }
 };
 
