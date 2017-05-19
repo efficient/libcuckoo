@@ -1214,7 +1214,9 @@ private:
         return false;
       }
 
-      buckets_.moveKV(to.bucket, ts, from.bucket, fs);
+      buckets_.setKV(to.bucket, ts, fb.partial(fs), fb.movable_key(fs),
+                     std::move(fb.mapped(fs)));
+      buckets_.eraseKV(from.bucket, fs);
       if (depth == 1) {
         // Hold onto the locks contained in twob
         b = std::move(twob);
@@ -1364,32 +1366,37 @@ private:
     if (st != ok) {
       return st;
     }
-    // Resize the locks array if necessary
-    maybe_resize_locks(1UL << new_hp);
-    buckets_.resize(new_hp);
 
     // We must re-hash the table, moving items in each bucket to a different
-    // one. The hash functions are carefully designed so that doubling the
-    // table size will add exactly one bit to the `index_hash` and `alt_index`,
-    // on the top. This means, for each element in a specific bucket, its new
-    // hash will either be the same (a 0 was added to the top), or will be
-    // exactly 2^current_hp buckets down. This means that we can move
-    // individual buckets in parallel, since all their keys can be moved to
-    // exactly one of the new buckets we allocated.
-    parallel_exec(0, hashsize(current_hp),
-                  [this, current_hp, new_hp](size_type start, size_type end,
-                                             std::exception_ptr &eptr) {
-                    try {
-                      move_buckets(current_hp, new_hp, start, end);
-                    } catch (...) {
-                      eptr = std::current_exception();
-                    }
-                  });
+    // one. The hash functions are carefully designed so that when doubling the
+    // number of buckets, each element either stays in its existing bucket or
+    // goes to exactly one new bucket. This means we can re-hash each bucket in
+    // parallel. We create a new empty buckets container and move all the
+    // elements from the old container to the new one.
+    buckets_t new_buckets(new_hp, get_allocator());
+    parallel_exec(
+        0, hashsize(current_hp),
+        [this, &new_buckets, current_hp, new_hp](size_type start, size_type end,
+                                                 std::exception_ptr &eptr) {
+          try {
+            move_buckets(new_buckets, current_hp, new_hp, start, end);
+          } catch (...) {
+            eptr = std::current_exception();
+          }
+        });
+
+    // Resize the locks array if necessary. This is done before we update the
+    // hashpower so that other threads don't grab the new hashpower and the old
+    // locks
+    maybe_resize_locks(1UL << new_hp);
+    // Swap the old and new buckets. The old bucket data will be destroyed when
+    // the function exits
+    buckets_.swap(new_buckets);
     return ok;
   }
 
-  void move_buckets(size_type current_hp, size_type new_hp, size_type start_ind,
-                    size_type end_ind) {
+  void move_buckets(buckets_t &new_buckets, size_type current_hp,
+                    size_type new_hp, size_type start_ind, size_type end_ind) {
     for (size_type old_bucket_ind = start_ind; old_bucket_ind < end_ind;
          ++old_bucket_ind) {
       // By doubling the table size, the index_hash and alt_index of
@@ -1399,13 +1406,11 @@ private:
       // hashsize(current_hp) later than the current bucket
       bucket &old_bucket = buckets_[old_bucket_ind];
       const size_type new_bucket_ind = old_bucket_ind + hashsize(current_hp);
-      for (size_type slot = 0; slot < slot_per_bucket(); ++slot) {
-        assert(!buckets_[new_bucket_ind].occupied(slot));
-      }
       size_type new_bucket_slot = 0;
 
-      // Move each item from the old bucket that needs moving into the
-      // new bucket
+      // For each occupied slot, either move it into its same position in the
+      // new buckets container, or to the first available spot in the new
+      // bucket in the new buckets container.
       for (size_type old_bucket_slot = 0; old_bucket_slot < slot_per_bucket();
            ++old_bucket_slot) {
         if (!old_bucket.occupied(old_bucket_slot)) {
@@ -1417,17 +1422,23 @@ private:
             alt_index(current_hp, hv.partial, old_ihash);
         const size_type new_ihash = index_hash(new_hp, hv.hash);
         const size_type new_ahash = alt_index(new_hp, hv.partial, new_ihash);
+        size_type dst_bucket_ind, dst_bucket_slot;
         if ((old_bucket_ind == old_ihash && new_ihash == new_bucket_ind) ||
             (old_bucket_ind == old_ahash && new_ahash == new_bucket_ind)) {
-          // We're moving the key from the old bucket to the new
-          // one
-          buckets_.moveKV(new_bucket_ind, new_bucket_slot++, old_bucket_ind,
-                          old_bucket_slot);
+          // We're moving the key to the new bucket
+          dst_bucket_ind = new_bucket_ind;
+          dst_bucket_slot = new_bucket_slot++;
         } else {
-          // Check that we don't want to move the new key
+          // We're moving the key to the old bucket
           assert((old_bucket_ind == old_ihash && new_ihash == old_ihash) ||
                  (old_bucket_ind == old_ahash && new_ahash == old_ahash));
+          dst_bucket_ind = old_bucket_ind;
+          dst_bucket_slot = old_bucket_slot;
         }
+        new_buckets.setKV(dst_bucket_ind, dst_bucket_slot++,
+                          old_bucket.partial(old_bucket_slot),
+                          old_bucket.movable_key(old_bucket_slot),
+                          std::move(old_bucket.mapped(old_bucket_slot)));
       }
     }
   }

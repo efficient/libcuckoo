@@ -216,20 +216,6 @@ public:
     traits_::destroy(allocator_, std::addressof(b.storage_kvpair(slot)));
   }
 
-  // Moves data between two buckets in the container
-  void moveKV(size_type dst_ind, size_type dst_slot, size_type src_ind,
-              size_type src_slot) {
-    bucket &dst = buckets_[dst_ind];
-    bucket &src = buckets_[src_ind];
-    assert(src.occupied(src_slot));
-    assert(!dst.occupied(dst_slot));
-    setKV(dst_ind, dst_slot, src.partial(src_slot), src.movable_key(src_slot),
-          std::move(src.mapped(src_slot)));
-    // If this throws an exception, we cannot enforce the strong exception
-    // guarantee, but otherwise we do
-    eraseKV(src_ind, src_slot);
-  }
-
   // Destroys all the live data in the buckets
   void clear() noexcept {
     static_assert(
@@ -245,16 +231,6 @@ public:
         }
       }
     }
-  }
-
-  // Creates a new container of hashpower `new_hp`, transfers the old data into
-  // it, and destroys the old container. Will not shrink the container.
-  void resize(size_type new_hp) {
-    assert(new_hp >= hashpower());
-    bucket *new_buckets = transfer(new_hp, *this, std::true_type());
-    destroy_buckets();
-    buckets_ = new_buckets;
-    hashpower(new_hp);
   }
 
 private:
