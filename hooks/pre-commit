@@ -6,7 +6,7 @@
 #
 # This script does not handle file names that contain spaces.
 
-cfiles=$(git diff --name-only HEAD | grep '\.\(cc\|hh\|c\|h\)$')
+cfiles=$(git diff --name-only HEAD --diff-filter=d | grep '\.\(cc\|hh\|c\|h\)$')
 numerrors=0
 for f in $cfiles; do
 	diffoutput=$(clang-format $f | diff $f -)
