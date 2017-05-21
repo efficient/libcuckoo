@@ -16,6 +16,7 @@
 #include <list>
 #include <memory>
 #include <mutex>
+#include <scoped_allocator>
 #include <stdexcept>
 #include <thread>
 #include <type_traits>
@@ -103,7 +104,7 @@ public:
         minimum_load_factor_(LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR),
         maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER) {
     all_locks_.emplace_back(std::min(bucket_count(), size_type(kMaxNumLocks)),
-                            spinlock(), get_allocator());
+                            spinlock());
   }
 
   /**@}*/
@@ -596,7 +597,8 @@ private:
       typename std::allocator_traits<allocator_type>::template rebind_alloc<U>;
 
   using locks_t = std::vector<spinlock, rebind_alloc<spinlock>>;
-  using all_locks_t = std::list<locks_t, rebind_alloc<locks_t>>;
+  using all_locks_t =
+      std::list<locks_t, std::scoped_allocator_adaptor<rebind_alloc<locks_t>>>;
 
   // Classes for managing locked buckets. By storing and moving around sets of
   // locked buckets in these classes, we can ensure that they are unlocked
