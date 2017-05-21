@@ -147,9 +147,8 @@ public:
 
   libcuckoo_bucket_container &operator=(const libcuckoo_bucket_container &bc) {
     destroy_buckets();
-    libcuckoo_copy_allocator(
-        allocator_, bc.allocator_,
-        typename traits_::propagate_on_container_copy_assignment());
+    copy_allocator(allocator_, bc.allocator_,
+                   typename traits_::propagate_on_container_copy_assignment());
     bucket_allocator_ = allocator_;
     hashpower(bc.hashpower());
     buckets_ = transfer(bc.hashpower(), bc, std::false_type());
@@ -163,8 +162,8 @@ public:
   }
 
   void swap(libcuckoo_bucket_container &bc) noexcept {
-    libcuckoo_swap_allocator(allocator_, bc.allocator_,
-                             typename traits_::propagate_on_container_swap());
+    swap_allocator(allocator_, bc.allocator_,
+                   typename traits_::propagate_on_container_swap());
     bucket_allocator_ = allocator_;
     // Regardless of whether we actually swapped the allocators or not, it will
     // always be okay to do the remainder of the swap. This is because if the
@@ -234,6 +233,22 @@ public:
   }
 
 private:
+  // true here means the allocators from `src` are propagated on libcuckoo_copy
+  template <typename A>
+  void copy_allocator(A &dst, const A &src, std::true_type) {
+    dst = src;
+  }
+
+  template <typename A>
+  void copy_allocator(A &dst, const A &src, std::false_type) {}
+
+  // true here means the allocators from `src` are propagated on libcuckoo_swap
+  template <typename A> void swap_allocator(A &dst, A &src, std::true_type) {
+    std::swap(dst, src);
+  }
+
+  template <typename A> void swap_allocator(A &dst, A &src, std::false_type) {}
+
   // true here means the bucket allocator should be propagated
   void move_assign(libcuckoo_bucket_container &src, std::true_type) {
     allocator_ = std::move(src.allocator_);

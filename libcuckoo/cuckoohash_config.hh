@@ -13,12 +13,6 @@ constexpr size_t LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET = 4;
 constexpr size_t LIBCUCKOO_DEFAULT_SIZE =
     (1U << 16) * LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET;
 
-//! The default memory granularity of the locks array, on a scale of 0 to 16. 0
-//! is the least granular, meaning the array is a contiguous array and thus
-//! offers the best performance but the greatest memory overhead. 16 is the most
-//! granular, offering the least memory overhead but worse performance.
-constexpr size_t LIBCUCKOO_DEFAULT_LOCK_ARRAY_GRANULARITY = 0;
-
 //! The default minimum load factor that the table allows for automatic
 //! expansion. It must be a number between 0.0 and 1.0. The table will throw
 //! libcuckoo_load_factor_too_low if the load factor falls below this value

@@ -47,31 +47,6 @@
 #endif
 
 /**
- * thread_local requires GCC >= 4.8 and is not supported in some clang versions,
- * so we use __thread if thread_local is not supported
- */
-#define LIBCUCKOO_THREAD_LOCAL thread_local
-#if defined(__clang__)
-#if !__has_feature(cxx_thread_local)
-#undef LIBCUCKOO_THREAD_LOCAL
-#define LIBCUCKOO_THREAD_LOCAL __thread
-#endif
-#elif defined(__GNUC__)
-#if __GNUC__ == 4 && __GNUC_MINOR__ < 8
-#undef LIBCUCKOO_THREAD_LOCAL
-#define LIBCUCKOO_THREAD_LOCAL __thread
-#endif
-#endif
-
-//! For enabling certain methods based on a condition. Here's an example.
-//! LIBCUCKOO_ENABLE_IF(sizeof(int) == 4, int) method() {
-//!     ...
-//! }
-#define LIBCUCKOO_ENABLE_IF(condition, return_type)                            \
-  template <class Bogus = void *>                                              \
-  typename std::enable_if<sizeof(Bogus) && condition, return_type>::type
-
-/**
  * Thrown when an automatic expansion is triggered, but the load factor of the
  * table is below a minimum threshold, which can be set by the \ref
  * cuckoohash_map::minimum_load_factor method. This can happen if the hash
@@ -133,23 +108,5 @@ public:
 private:
   const size_t hashpower_;
 };
-
-// true here means the allocators from `src` are propagated on libcuckoo_copy
-template <typename A>
-void libcuckoo_copy_allocator(A &dst, const A &src, std::true_type) {
-  dst = src;
-}
-
-template <typename A>
-void libcuckoo_copy_allocator(A &dst, const A &src, std::false_type) {}
-
-// true here means the allocators from `src` are propagated on libcuckoo_swap
-template <typename A>
-void libcuckoo_swap_allocator(A &dst, A &src, std::true_type) {
-  std::swap(dst, src);
-}
-
-template <typename A>
-void libcuckoo_swap_allocator(A &dst, A &src, std::false_type) {}
 
 #endif // _CUCKOOHASH_UTIL_HH
