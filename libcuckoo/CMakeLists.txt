@@ -20,7 +20,6 @@ target_link_libraries(libcuckoo INTERFACE Threads::Threads)
 
 install(
 FILES
-    city_hasher.hh
     cuckoohash_config.hh
     cuckoohash_map.hh
     cuckoohash_util.hh
