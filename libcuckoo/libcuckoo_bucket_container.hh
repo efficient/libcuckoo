@@ -19,11 +19,11 @@
  *
  * @tparam Key type of keys in the table
  * @tparam T type of values in the table
- * @tparam Alloc type of key-value pair allocator
+ * @tparam Allocator type of key-value pair allocator
  * @tparam Partial type of partial keys
  * @tparam SLOT_PER_BUCKET number of slots for each bucket in the table
  */
-template <class Key, class T, class Alloc, class Partial,
+template <class Key, class T, class Allocator, class Partial,
           std::size_t SLOT_PER_BUCKET>
 class libcuckoo_bucket_container {
 public:
@@ -32,8 +32,8 @@ public:
   using value_type = std::pair<const Key, T>;
 
 private:
-  using traits_ =
-      typename std::allocator_traits<Alloc>::template rebind_traits<value_type>;
+  using traits_ = typename std::allocator_traits<
+      Allocator>::template rebind_traits<value_type>;
 
 public:
   using allocator_type = typename traits_::allocator_type;
@@ -124,13 +124,12 @@ public:
       : allocator_(
             traits_::select_on_container_copy_construction(bc.allocator_)),
         bucket_allocator_(allocator_), hashpower_(bc.hashpower()),
-        buckets_(transfer(bc.hashpower(), bc, std::false_type())) {}
+        buckets_(transfer(bc.hashpower(), bc)) {}
 
   libcuckoo_bucket_container(const libcuckoo_bucket_container &bc,
                              const allocator_type &a)
       : allocator_(a), bucket_allocator_(allocator_),
-        hashpower_(bc.hashpower()),
-        buckets_(transfer(bc.hashpower(), bc, std::false_type())) {}
+        hashpower_(bc.hashpower()), buckets_(transfer(bc.hashpower(), bc)) {}
 
   libcuckoo_bucket_container(libcuckoo_bucket_container &&bc)
       : allocator_(std::move(bc.allocator_)), bucket_allocator_(allocator_),
@@ -151,7 +150,7 @@ public:
                    typename traits_::propagate_on_container_copy_assignment());
     bucket_allocator_ = allocator_;
     hashpower(bc.hashpower());
-    buckets_ = transfer(bc.hashpower(), bc, std::false_type());
+    buckets_ = transfer(bc.hashpower(), bc);
     return *this;
   }
 
@@ -264,7 +263,7 @@ private:
       buckets_ = src.buckets_;
       src.buckets_ = nullptr;
     } else {
-      buckets_ = transfer(src.hashpower(), src, std::true_type());
+      buckets_ = transfer(src.hashpower(), src);
     }
   }
 
@@ -286,32 +285,16 @@ private:
     buckets_ = nullptr;
   }
 
-  // `true` here refers to whether or not we should move
-  void move_or_copy(size_type dst_ind, size_type dst_slot, bucket &src,
-                    size_type src_slot, std::true_type) {
-    setKV(dst_ind, dst_slot, src.partial(src_slot), src.movable_key(src_slot),
-          std::move(src.mapped(src_slot)));
-  }
-
-  void move_or_copy(size_type dst_ind, size_type dst_slot, bucket &src,
-                    size_type src_slot, std::false_type) {
-    setKV(dst_ind, dst_slot, src.partial(src_slot), src.key(src_slot),
-          src.mapped(src_slot));
-  }
-
-  template <bool B>
-  bucket *transfer(
-      size_type dst_hp,
-      typename std::conditional<B, libcuckoo_bucket_container &,
-                                const libcuckoo_bucket_container &>::type src,
-      std::integral_constant<bool, B> move) {
+  bucket *transfer(size_type dst_hp, const libcuckoo_bucket_container &src) {
     assert(dst_hp >= src.hashpower());
     libcuckoo_bucket_container dst(dst_hp, get_allocator());
-    // Move/copy all occupied slots of the source buckets
+    // Copy all occupied slots of the source buckets
     for (size_t i = 0; i < src.size(); ++i) {
+      bucket &src_bucket = src.buckets_[i];
       for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
         if (src.buckets_[i].occupied(j)) {
-          dst.move_or_copy(i, j, src.buckets_[i], j, move);
+          dst.setKV(i, j, src_bucket.partial(j), src_bucket.key(j),
+                    src_bucket.mapped(j));
         }
       }
     }

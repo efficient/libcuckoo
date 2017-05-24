@@ -31,13 +31,14 @@
  *
  * @tparam Key type of keys in the table
  * @tparam T type of values in the table
- * @tparam Pred type of equality comparison functor
- * @tparam Alloc type of allocator
+ * @tparam Hash type of hash functor
+ * @tparam KeyEqual type of equality comparison functor
+ * @tparam Allocator type of allocator
  * @tparam SLOT_PER_BUCKET number of slots for each bucket in the table
  */
 template <class Key, class T, class Hash = std::hash<Key>,
-          class Pred = std::equal_to<Key>,
-          class Alloc = std::allocator<std::pair<const Key, T>>,
+          class KeyEqual = std::equal_to<Key>,
+          class Allocator = std::allocator<std::pair<const Key, T>>,
           std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET>
 class cuckoohash_map {
 private:
@@ -46,7 +47,7 @@ private:
 
   // The type of the buckets container
   using buckets_t =
-      libcuckoo_bucket_container<Key, T, Alloc, partial_t, SLOT_PER_BUCKET>;
+      libcuckoo_bucket_container<Key, T, Allocator, partial_t, SLOT_PER_BUCKET>;
 
 public:
   /** @name Type Declarations */
@@ -63,7 +64,7 @@ public:
   using size_type = typename buckets_t::size_type;
   using difference_type = std::ptrdiff_t;
   using hasher = Hash;
-  using key_equal = Pred;
+  using key_equal = KeyEqual;
   using allocator_type = typename buckets_t::allocator_type;
   using reference = typename buckets_t::reference;
   using const_reference = typename buckets_t::const_reference;
@@ -83,7 +84,7 @@ public:
 
   /**@}*/
 
-  /** @name Constructors and Destructors */
+  /** @name Constructors, Destructors, and Assignment */
   /**@{*/
 
   /**
@@ -91,19 +92,182 @@ public:
    *
    * @param n the number of elements to reserve space for initially
    * @param hf hash function instance to use
-   * @param eql equality function instance to use
+   * @param equal equality function instance to use
    * @param alloc allocator instance to use
    */
-  cuckoohash_map(size_type n = LIBCUCKOO_DEFAULT_SIZE,
-                 const hasher &hf = hasher(),
-                 const key_equal &eql = key_equal(),
-                 const allocator_type &alloc = allocator_type())
-      : hash_fn_(hf), eq_fn_(eql), buckets_(reserve_calc(n), alloc),
+  cuckoohash_map(size_type n = LIBCUCKOO_DEFAULT_SIZE, const Hash &hf = Hash(),
+                 const KeyEqual &equal = KeyEqual(),
+                 const Allocator &alloc = Allocator())
+      : hash_fn_(hf), eq_fn_(equal), buckets_(reserve_calc(n), alloc),
         all_locks_(get_allocator()),
         minimum_load_factor_(LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR),
         maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER) {
     all_locks_.emplace_back(std::min(bucket_count(), size_type(kMaxNumLocks)),
                             spinlock(), get_allocator());
+  }
+
+  /**
+   * Constructs the map with the contents of the range @c [first, last].  If
+   * multiple elements in the range have equivalent keys, it is unspecified
+   * which element is inserted.
+   *
+   * @param first the beginning of the range to copy from
+   * @param last the end of the range to copy from
+   * @param n the number of elements to reserve space for initially
+   * @param hf hash function instance to use
+   * @param equal equality function instance to use
+   * @param alloc allocator instance to use
+   */
+  template <typename InputIt>
+  cuckoohash_map(InputIt first, InputIt last,
+                 size_type n = LIBCUCKOO_DEFAULT_SIZE, const Hash &hf = Hash(),
+                 const KeyEqual &equal = KeyEqual(),
+                 const Allocator &alloc = Allocator())
+      : cuckoohash_map(n, hf, equal, alloc) {
+    for (; first != last; ++first) {
+      insert(first->first, first->second);
+    }
+  }
+
+  /**
+   * Copy constructor. If @p other is being modified concurrently, behavior is
+   * unspecified.
+   *
+   * @param other the map being copied
+   */
+  cuckoohash_map(const cuckoohash_map &other)
+      : cuckoohash_map(other, std::allocator_traits<allocator_type>::
+                                  select_on_container_copy_construction(
+                                      other.get_allocator())) {}
+
+  /**
+   * Copy constructor with separate allocator. If @p other is being modified
+   * concurrently, behavior is unspecified.
+   *
+   * @param other the map being copied
+   * @param alloc the allocator instance to use with the map
+   */
+  cuckoohash_map(const cuckoohash_map &other, const Allocator &alloc)
+      : hash_fn_(other.hash_fn_), eq_fn_(other.eq_fn_),
+        buckets_(other.buckets_, alloc), all_locks_(alloc),
+        minimum_load_factor_(other.minimum_load_factor()),
+        maximum_hashpower_(other.maximum_hashpower()) {
+    if (other.get_allocator() == alloc) {
+      all_locks_ = other.all_locks_;
+    } else {
+      add_locks_from_other(other);
+    }
+  }
+
+  /**
+   * Move constructor. If @p other is being modified concurrently, behavior is
+   * unspecified.
+   *
+   * @param other the map being moved
+   */
+  cuckoohash_map(cuckoohash_map &&other)
+      : cuckoohash_map(std::move(other), other.get_allocator()) {}
+
+  /**
+   * Move constructor with separate allocator. If the map being moved is being
+   * modified concurrently, behavior is unspecified.
+   *
+   * @param other the map being moved
+   * @param alloc the allocator instance to use with the map
+   */
+  cuckoohash_map(cuckoohash_map &&other, const Allocator &alloc)
+      : hash_fn_(std::move(other.hash_fn_)), eq_fn_(std::move(other.eq_fn_)),
+        buckets_(std::move(other.buckets_), alloc), all_locks_(alloc),
+        minimum_load_factor_(other.minimum_load_factor()),
+        maximum_hashpower_(other.maximum_hashpower()) {
+    if (other.get_allocator() == alloc) {
+      all_locks_ = std::move(other.all_locks_);
+    } else {
+      add_locks_from_other(other);
+    }
+  }
+
+  /**
+   * Constructs the map with the contents of initializer list @c init.
+   *
+   * @param init initializer list to initialize the elements of the map with
+   * @param n the number of elements to reserve space for initially
+   * @param hf hash function instance to use
+   * @param equal equality function instance to use
+   * @param alloc allocator instance to use
+   */
+  cuckoohash_map(std::initializer_list<value_type> init,
+                 size_type n = LIBCUCKOO_DEFAULT_SIZE, const Hash &hf = Hash(),
+                 const KeyEqual &equal = KeyEqual(),
+                 const Allocator &alloc = Allocator())
+      : cuckoohash_map(init.begin(), init.end(), n, hf, equal, alloc) {}
+
+  /**
+   * Exchanges the contents of the map with those of @p other
+   *
+   * @param other the map to exchange contents with
+   */
+  void swap(cuckoohash_map &other) noexcept {
+    std::swap(hash_fn_, other.hash_fn_);
+    std::swap(eq_fn_, other.eq_fn_);
+    buckets_.swap(other.buckets_);
+    all_locks_.swap(other.all_locks_);
+    other.minimum_load_factor_.store(
+        minimum_load_factor_.exchange(other.minimum_load_factor(),
+                                      std::memory_order_release),
+        std::memory_order_release);
+    other.maximum_hashpower_.store(
+        maximum_hashpower_.exchange(other.maximum_hashpower(),
+                                    std::memory_order_release),
+        std::memory_order_release);
+  }
+
+  /**
+   * Copy assignment operator. If @p other is being modified concurrently,
+   * behavior is unspecified.
+   *
+   * @param other the map to assign from
+   * @return @c *this
+   */
+  cuckoohash_map &operator=(const cuckoohash_map &other) {
+    hash_fn_ = other.hash_fn_;
+    eq_fn_ = other.eq_fn_;
+    buckets_ = other.buckets_;
+    all_locks_ = other.all_locks_;
+    minimum_load_factor_ = other.minimum_load_factor();
+    maximum_hashpower_ = other.maximum_hashpower();
+    return *this;
+  }
+
+  /**
+   * Move assignment operator. If @p other is being modified concurrently,
+   * behavior is unspecified.
+   *
+   * @param other the map to assign from
+   * @return @c *this
+   */
+  cuckoohash_map &operator=(cuckoohash_map &&other) {
+    hash_fn_ = std::move(other.hash_fn_);
+    eq_fn_ = std::move(other.eq_fn_);
+    buckets_ = std::move(other.buckets_);
+    all_locks_ = std::move(other.all_locks_);
+    minimum_load_factor_ = std::move(other.minimum_load_factor());
+    maximum_hashpower_ = std::move(other.maximum_hashpower());
+    return *this;
+  }
+
+  /**
+   * Initializer list assignment operator
+   *
+   * @param ilist an initializer list to assign from
+   * @return @c *this
+   */
+  cuckoohash_map &operator=(std::initializer_list<value_type> ilist) {
+    clear();
+    for (const auto &item : ilist) {
+      insert(item.first, item.second);
+    }
+    return *this;
   }
 
   /**@}*/
@@ -113,7 +277,8 @@ public:
    * Methods for getting information about the table. Methods that query
    * changing properties of the table are not synchronized with concurrent
    * operations, and may return out-of-date information if the table is being
-   * concurrently modified.
+   * concurrently modified. They will also continue to work after the container
+   * has been moved.
    *
    */
   /**@{*/
@@ -133,7 +298,7 @@ public:
   key_equal key_eq() const { return eq_fn_; }
 
   /**
-   * Returns the allocator associated with the container
+   * Returns the allocator associated with the map
    *
    * @return the associated allocator
    */
@@ -167,6 +332,9 @@ public:
    * @return number of elements in the table
    */
   size_type size() const {
+    if (all_locks_.size() == 0) {
+      return 0;
+    }
     counter_type s = 0;
     for (spinlock &lock : get_current_locks()) {
       s += lock.elem_counter();
@@ -220,7 +388,7 @@ public:
    *
    * @return the minimum load factor
    */
-  double minimum_load_factor() {
+  double minimum_load_factor() const {
     return minimum_load_factor_.load(std::memory_order_acquire);
   }
 
@@ -246,7 +414,7 @@ public:
    *
    * @return the maximum hashpower
    */
-  size_type maximum_hashpower() {
+  size_type maximum_hashpower() const {
     return maximum_hashpower_.load(std::memory_order_acquire);
   }
 
@@ -481,6 +649,15 @@ public:
   /**@}*/
 
 private:
+  // Constructor helpers
+
+  void add_locks_from_other(const cuckoohash_map &other) {
+    locks_t &other_locks = other.get_current_locks();
+    all_locks_.emplace_back(other_locks.size(), spinlock(), get_allocator());
+    std::copy(other_locks.begin(), other_locks.end(),
+              get_current_locks().begin());
+  }
+
   // Hashing types and functions
 
   // true if the key is small and simple, which means using partial keys for
@@ -2209,5 +2386,25 @@ public:
     friend class cuckoohash_map;
   };
 };
+
+namespace std {
+
+/**
+ * Specializes the @c std::swap algorithm for @c cuckoohash_map. Calls @c
+ * lhs.swap(rhs).
+ *
+ * @param lhs the map on the left side to swap
+ * @param lhs the map on the right side to swap
+ */
+template <class Key, class T, class Hash, class KeyEqual, class Allocator,
+          std::size_t SLOT_PER_BUCKET>
+void swap(
+    cuckoohash_map<Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET> &lhs,
+    cuckoohash_map<Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET>
+        &rhs) noexcept {
+  lhs.swap(rhs);
+}
+
+} // namespace std
 
 #endif // _CUCKOOHASH_MAP_HH
