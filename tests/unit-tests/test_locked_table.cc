@@ -1,4 +1,5 @@
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <type_traits>
 
@@ -421,4 +422,53 @@ TEST_CASE("locked table holds locks after resize", "[locked table]") {
   // After a cuckoo_simple_expand, all locks are still taken
   lt.rehash(10);
   check_all_locks_taken(tbl);
+}
+
+TEST_CASE("locked table IO", "[locked_table]") {
+  IntIntTable tbl(0);
+  auto lt = tbl.lock_table();
+  for (int i = 0; i < 100; ++i) {
+    lt.insert(i, i);
+  }
+
+  std::stringstream sstream;
+  sstream << lt;
+
+  IntIntTable tbl2;
+  auto lt2 = tbl2.lock_table();
+  sstream.seekg(0);
+  sstream >> lt2;
+
+  REQUIRE(100 == lt.size());
+  for (int i = 0; i < 100; ++i) {
+    REQUIRE(i == lt.at(i));
+  }
+
+  REQUIRE(100 == lt2.size());
+  for (int i = 100; i < 1000; ++i) {
+    lt2.insert(i, i);
+  }
+  for (int i = 0; i < 1000; ++i) {
+    REQUIRE(i == lt2.at(i));
+  }
+}
+
+TEST_CASE("empty locked table IO", "[locked table]") {
+  IntIntTable tbl(0);
+  auto lt = tbl.lock_table();
+  lt.minimum_load_factor(0.5);
+  lt.maximum_hashpower(10);
+
+  std::stringstream sstream;
+  sstream << lt;
+
+  IntIntTable tbl2(0);
+  auto lt2 = tbl2.lock_table();
+  sstream.seekg(0);
+  sstream >> lt2;
+
+  REQUIRE(0 == lt.size());
+  REQUIRE(0 == lt2.size());
+  REQUIRE(0.5 == lt.minimum_load_factor());
+  REQUIRE(10 == lt.maximum_hashpower());
 }

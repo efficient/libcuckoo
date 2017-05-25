@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <functional>
+#include <iostream>
 #include <iterator>
 #include <limits>
 #include <list>
@@ -317,7 +318,7 @@ public:
    *
    * @return the bucket count
    */
-  size_type bucket_count() const { return 1UL << hashpower(); }
+  size_type bucket_count() const { return buckets_.size(); }
 
   /**
    * Returns whether the table is empty or not.
@@ -2125,11 +2126,15 @@ public:
       map_.get().minimum_load_factor(mlf);
     }
 
-    double minimum_load_factor() { return map_.get().minimum_load_factor(); }
+    double minimum_load_factor() const {
+      return map_.get().minimum_load_factor();
+    }
 
     void maximum_hashpower(size_type mhp) { map_.get().maximum_hashpower(mhp); }
 
-    size_type maximum_hashpower() { return map_.get().maximum_hashpower(); }
+    size_type maximum_hashpower() const {
+      return map_.get().maximum_hashpower();
+    }
 
     /**@}*/
 
@@ -2384,6 +2389,40 @@ public:
     AllLocksManager all_locks_manager_;
 
     friend class cuckoohash_map;
+
+    friend std::ostream &operator<<(std::ostream &os, const locked_table &lt) {
+      os << lt.map_.get().buckets_;
+      size_type size = lt.size();
+      os.write(reinterpret_cast<const char *>(&size), sizeof(size_type));
+      double mlf = lt.minimum_load_factor();
+      size_type mhp = lt.maximum_hashpower();
+      os.write(reinterpret_cast<const char *>(&mlf), sizeof(double));
+      os.write(reinterpret_cast<const char *>(&mhp), sizeof(size_type));
+      return os;
+    }
+
+    friend std::istream &operator>>(std::istream &is, locked_table &lt) {
+      is >> lt.map_.get().buckets_;
+
+      // Re-size the locks, and set the size to the stored size
+      lt.map_.get().maybe_resize_locks(lt.bucket_count());
+      for (spinlock &lock : lt.map_.get().get_current_locks()) {
+        lock.elem_counter() = 0;
+      }
+      size_type size;
+      is.read(reinterpret_cast<char *>(&size), sizeof(size_type));
+      if (size > 0) {
+        lt.map_.get().get_current_locks()[0].elem_counter() = size;
+      }
+
+      double mlf;
+      size_type mhp;
+      is.read(reinterpret_cast<char *>(&mlf), sizeof(double));
+      is.read(reinterpret_cast<char *>(&mhp), sizeof(size_type));
+      lt.minimum_load_factor(mlf);
+      lt.maximum_hashpower(mhp);
+      return is;
+    }
   };
 };
 

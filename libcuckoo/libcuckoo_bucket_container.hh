@@ -5,6 +5,7 @@
 #include <atomic>
 #include <cassert>
 #include <cstddef>
+#include <iostream>
 #include <memory>
 #include <type_traits>
 #include <utility>
@@ -317,6 +318,38 @@ private:
   // These buckets are protected by striped locks (external to the
   // BucketContainer), which must be obtained before accessing a bucket.
   bucket *buckets_;
+
+  // If the key and value are trivially copyable, the bucket should also be
+  // trivially copyable. Since we already disallow user-specialized instances of
+  // std::pair, we know that the default implementation of std::pair uses a
+  // default copy constructor, so this should be okay.
+  template <typename Bogus = void *>
+  friend typename std::enable_if<sizeof(Bogus) &&
+                                     std::is_trivially_copyable<Key>::value &&
+                                     std::is_trivially_copyable<T>::value,
+                                 std::ostream &>::type
+  operator<<(std::ostream &os, const libcuckoo_bucket_container &bc) {
+    size_type hp = bc.hashpower();
+    os.write(reinterpret_cast<const char *>(&hp), sizeof(size_type));
+    os.write(reinterpret_cast<const char *>(bc.buckets_),
+             sizeof(bucket) * bc.size());
+    return os;
+  }
+
+  template <typename Bogus = void *>
+  friend typename std::enable_if<sizeof(Bogus) &&
+                                     std::is_trivially_copyable<Key>::value &&
+                                     std::is_trivially_copyable<T>::value,
+                                 std::istream &>::type
+  operator>>(std::istream &is, libcuckoo_bucket_container &bc) {
+    size_type hp;
+    is.read(reinterpret_cast<char *>(&hp), sizeof(size_type));
+    libcuckoo_bucket_container new_bc(hp, bc.get_allocator());
+    is.read(reinterpret_cast<char *>(new_bc.buckets_),
+            new_bc.size() * sizeof(bucket));
+    bc.swap(new_bc);
+    return is;
+  }
 };
 
 #endif // LIBCUCKOO_BUCKET_CONTAINER_H
