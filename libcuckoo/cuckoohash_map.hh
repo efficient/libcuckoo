@@ -2383,6 +2383,24 @@ public:
         : map_(map),
           all_locks_manager_(map.snapshot_and_lock_all(normal_mode())) {}
 
+    // Dispatchers for methods on cuckoohash_map
+
+    buckets_t& buckets() {
+   	  return map_.get().buckets_;
+    }
+
+    const buckets_t& buckets() const {
+   	  return map_.get().buckets_;
+    }
+
+ 	void maybe_resize_locks(size_type new_bucket_count) {
+	  map_.get().maybe_resize_locks(new_bucket_count);
+	}
+
+	locks_t &get_current_locks() {
+      return map_.get().get_current_locks();
+ 	}
+
     // A reference to the map owned by the table
     std::reference_wrapper<cuckoohash_map> map_;
     // A manager for all the locks we took on the table.
@@ -2391,7 +2409,7 @@ public:
     friend class cuckoohash_map;
 
     friend std::ostream &operator<<(std::ostream &os, const locked_table &lt) {
-      os << lt.map_.get().buckets_;
+      os << lt.buckets();
       size_type size = lt.size();
       os.write(reinterpret_cast<const char *>(&size), sizeof(size_type));
       double mlf = lt.minimum_load_factor();
@@ -2402,17 +2420,17 @@ public:
     }
 
     friend std::istream &operator>>(std::istream &is, locked_table &lt) {
-      is >> lt.map_.get().buckets_;
+      is >> lt.buckets();
 
       // Re-size the locks, and set the size to the stored size
-      lt.map_.get().maybe_resize_locks(lt.bucket_count());
-      for (spinlock &lock : lt.map_.get().get_current_locks()) {
+      lt.maybe_resize_locks(lt.bucket_count());
+      for (spinlock &lock : lt.get_current_locks()) {
         lock.elem_counter() = 0;
       }
       size_type size;
       is.read(reinterpret_cast<char *>(&size), sizeof(size_type));
       if (size > 0) {
-        lt.map_.get().get_current_locks()[0].elem_counter() = size;
+        lt.get_current_locks()[0].elem_counter() = size;
       }
 
       double mlf;

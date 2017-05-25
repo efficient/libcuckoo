@@ -319,14 +319,15 @@ private:
   // BucketContainer), which must be obtained before accessing a bucket.
   bucket *buckets_;
 
-  // If the key and value are trivially copyable, the bucket should also be
-  // trivially copyable. Since we already disallow user-specialized instances of
-  // std::pair, we know that the default implementation of std::pair uses a
-  // default copy constructor, so this should be okay.
+  // If the key and value are pod, the bucket be serilizable. Since we already
+  // disallow user-specialized instances of std::pair, we know that the default
+  // implementation of std::pair uses a default copy constructor, so this
+  // should be okay. We could use std::is_trivially_copyable, but this is not
+  // supported for some compilers we want to support.
   template <typename Bogus = void *>
   friend typename std::enable_if<sizeof(Bogus) &&
-                                     std::is_trivially_copyable<Key>::value &&
-                                     std::is_trivially_copyable<T>::value,
+                                     std::is_pod<Key>::value &&
+                                     std::is_pod<T>::value,
                                  std::ostream &>::type
   operator<<(std::ostream &os, const libcuckoo_bucket_container &bc) {
     size_type hp = bc.hashpower();
@@ -338,8 +339,8 @@ private:
 
   template <typename Bogus = void *>
   friend typename std::enable_if<sizeof(Bogus) &&
-                                     std::is_trivially_copyable<Key>::value &&
-                                     std::is_trivially_copyable<T>::value,
+                                     std::is_pod<Key>::value &&
+                                     std::is_pod<T>::value,
                                  std::istream &>::type
   operator>>(std::istream &is, libcuckoo_bucket_container &bc) {
     size_type hp;
