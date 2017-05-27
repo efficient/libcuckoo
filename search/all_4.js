@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['get_5fallocator',['get_allocator',['../classcuckoohash__map.html#a72bcb71d361a7ea369e11fd1a339501a',1,'cuckoohash_map']]]
+  ['get_5fallocator',['get_allocator',['../classcuckoohash__map.html#a6644b77682076f5d21fb1e5a9de5e547',1,'cuckoohash_map']]]
 ];

@@ -82,7 +82,8 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh.html','');});
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">cuckoohash_map.hh File Reference</div>  </div>
 </div><!--header-->
@@ -95,8 +96,10 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh.html','');});
 <code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;cstdlib&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
+<code>#include &lt;iostream&gt;</code><br />
 <code>#include &lt;iterator&gt;</code><br />
 <code>#include &lt;limits&gt;</code><br />
+<code>#include &lt;list&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;mutex&gt;</code><br />
 <code>#include &lt;stdexcept&gt;</code><br />
@@ -107,28 +110,82 @@ $(document).ready(function(){initNavTree('cuckoohash__map_8hh.html','');});
 <code>#include &quot;<a class="el" href="cuckoohash__config_8hh_source.html">cuckoohash_config.hh</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>&quot;</code><br />
 <code>#include &quot;libcuckoo_bucket_container.hh&quot;</code><br />
-<code>#include &quot;<a class="el" href="libcuckoo__lazy__array_8hh_source.html">libcuckoo_lazy_array.hh</a>&quot;</code><br />
 </div>
 <p><a href="cuckoohash__map_8hh_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map.html">cuckoohash_map&lt; Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table.html">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::locked_table</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table.html">cuckoohash_map&lt; Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET &gt;::locked_table</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table_1_1const__iterator.html">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::locked_table::const_iterator</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table_1_1const__iterator.html">cuckoohash_map&lt; Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET &gt;::locked_table::const_iterator</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table_1_1iterator.html">cuckoohash_map&lt; Key, T, Hash, Pred, Alloc, SLOT_PER_BUCKET &gt;::locked_table::iterator</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcuckoohash__map_1_1locked__table_1_1iterator.html">cuckoohash_map&lt; Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET &gt;::locked_table::iterator</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a913efaec7c01cffefa9574c52308b5fd"><td class="memTemplParams" colspan="2">template&lt;class Key , class T , class Hash , class KeyEqual , class Allocator , std::size_t SLOT_PER_BUCKET&gt; </td></tr>
+<tr class="memitem:a913efaec7c01cffefa9574c52308b5fd"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="cuckoohash__map_8hh.html#a913efaec7c01cffefa9574c52308b5fd">std::swap</a> (<a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET &gt; &amp;lhs, <a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET &gt; &amp;rhs) noexcept</td></tr>
+<tr class="separator:a913efaec7c01cffefa9574c52308b5fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="file_a913efaec7c01cffefa9574c52308b5fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#file_a913efaec7c01cffefa9574c52308b5fd">&#9670;&nbsp;</a></span>swap()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Hash , class KeyEqual , class Allocator , std::size_t SLOT_PER_BUCKET&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void std::swap </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET &gt; &amp;&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a>&lt; Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET &gt; &amp;&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Specializes the <code>std::swap</code> algorithm for <code><a class="el" href="classcuckoohash__map.html">cuckoohash_map</a></code>. Calls <code>lhs.swap(rhs)</code>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">lhs</td><td>the map on the left side to swap </td></tr>
+    <tr><td class="paramname">lhs</td><td>the map on the right side to swap </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="cuckoohash__map_8hh_source.html#l02471">2471</a> of file <a class="el" href="cuckoohash__map_8hh_source.html">cuckoohash_map.hh</a>.</p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_e4efb664af72a21142a7864d180da0f4.html">libcuckoo</a></li><li class="navelem"><a class="el" href="cuckoohash__map_8hh.html">cuckoohash_map.hh</a></li>
-    <li class="footer">Generated on Mon Apr 24 2017 23:13:46 for libcuckoo by
+    <li class="footer">Generated on Sat May 27 2017 13:05:08 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

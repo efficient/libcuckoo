@@ -89,6 +89,7 @@ $(document).ready(function(){initNavTree('cuckoohash__config_8hh.html','');});
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;cstddef&gt;</code><br />
+<code>#include &lt;limits&gt;</code><br />
 </div>
 <p><a href="cuckoohash__config_8hh_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -108,11 +109,9 @@ constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el
 <tr class="memitem:aaabbd9f4dd01231c68afedd0a02a135e"><td class="memItemLeft" align="right" valign="top">constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__config_8hh.html#aaabbd9f4dd01231c68afedd0a02a135e">LIBCUCKOO_DEFAULT_SIZE</a></td></tr>
 <tr class="memdesc:aaabbd9f4dd01231c68afedd0a02a135e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The default number of elements in an empty hash table.  <a href="#aaabbd9f4dd01231c68afedd0a02a135e">More...</a><br /></td></tr>
 <tr class="separator:aaabbd9f4dd01231c68afedd0a02a135e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac51398533a3c4dd62d3d30c4dc646e13"><td class="memItemLeft" align="right" valign="top">constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__config_8hh.html#ac51398533a3c4dd62d3d30c4dc646e13">LIBCUCKOO_LOCK_ARRAY_GRANULARITY</a> = 0</td></tr>
-<tr class="separator:ac51398533a3c4dd62d3d30c4dc646e13"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab48dfdf3a58bbe241c25be553ab7fac9"><td class="memItemLeft" align="right" valign="top">constexpr double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__config_8hh.html#ab48dfdf3a58bbe241c25be553ab7fac9">LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR</a> = 0.05</td></tr>
 <tr class="separator:ab48dfdf3a58bbe241c25be553ab7fac9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5dda74f33a7f1a551454c8b0ace54cff"><td class="memItemLeft" align="right" valign="top">constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__config_8hh.html#a5dda74f33a7f1a551454c8b0ace54cff">LIBCUCKOO_NO_MAXIMUM_HASHPOWER</a> = 0</td></tr>
+<tr class="memitem:a5dda74f33a7f1a551454c8b0ace54cff"><td class="memItemLeft" align="right" valign="top">constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__config_8hh.html#a5dda74f33a7f1a551454c8b0ace54cff">LIBCUCKOO_NO_MAXIMUM_HASHPOWER</a></td></tr>
 <tr class="separator:a5dda74f33a7f1a551454c8b0ace54cff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Variable Documentation</h2>
@@ -129,7 +128,7 @@ constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el
 </div><div class="memdoc">
 <p>The default minimum load factor that the table allows for automatic expansion. It must be a number between 0.0 and 1.0. The table will throw <a class="el" href="classlibcuckoo__load__factor__too__low.html">libcuckoo_load_factor_too_low</a> if the load factor falls below this value during an automatic expansion. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__config_8hh_source.html#l00025">25</a> of file <a class="el" href="cuckoohash__config_8hh_source.html">cuckoohash_config.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__config_8hh_source.html#l00020">20</a> of file <a class="el" href="cuckoohash__config_8hh_source.html">cuckoohash_config.hh</a>.</p>
 
 </div>
 </div>
@@ -144,28 +143,11 @@ constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">=</div><div class="line">    (1U &lt;&lt; 16) * <a class="code" href="cuckoohash__config_8hh.html#a7881a9fe6300a55e121f49fd1a334f17">LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET</a></div><div class="ttc" id="cuckoohash__config_8hh_html_a7881a9fe6300a55e121f49fd1a334f17"><div class="ttname"><a href="cuckoohash__config_8hh.html#a7881a9fe6300a55e121f49fd1a334f17">LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET</a></div><div class="ttdeci">constexpr size_t LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET</div><div class="ttdoc">The default maximum number of keys per bucket. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__config_8hh_source.html#l00009">cuckoohash_config.hh:9</a></div></div>
+<b>Initial value:</b><div class="fragment"><div class="line">=</div><div class="line">    (1U &lt;&lt; 16) * <a class="code" href="cuckoohash__config_8hh.html#a7881a9fe6300a55e121f49fd1a334f17">LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET</a></div><div class="ttc" id="cuckoohash__config_8hh_html_a7881a9fe6300a55e121f49fd1a334f17"><div class="ttname"><a href="cuckoohash__config_8hh.html#a7881a9fe6300a55e121f49fd1a334f17">LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET</a></div><div class="ttdeci">constexpr size_t LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET</div><div class="ttdoc">The default maximum number of keys per bucket. </div><div class="ttdef"><b>Definition:</b> <a href="cuckoohash__config_8hh_source.html#l00010">cuckoohash_config.hh:10</a></div></div>
 </div><!-- fragment -->
 <p>The default number of elements in an empty hash table. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__config_8hh_source.html#l00012">12</a> of file <a class="el" href="cuckoohash__config_8hh_source.html">cuckoohash_config.hh</a>.</p>
-
-</div>
-</div>
-<a id="ac51398533a3c4dd62d3d30c4dc646e13"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac51398533a3c4dd62d3d30c4dc646e13">&#9670;&nbsp;</a></span>LIBCUCKOO_LOCK_ARRAY_GRANULARITY</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">constexpr size_t LIBCUCKOO_LOCK_ARRAY_GRANULARITY = 0</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>On a scale of 0 to 16, the memory granularity of the locks array. 0 is the least granular, meaning the array is a contiguous array and thus offers the best performance but the greatest memory overhead. 16 is the most granular, offering the least memory overhead but worse performance. </p>
-
-<p class="definition">Definition at line <a class="el" href="cuckoohash__config_8hh_source.html#l00019">19</a> of file <a class="el" href="cuckoohash__config_8hh_source.html">cuckoohash_config.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__config_8hh_source.html#l00013">13</a> of file <a class="el" href="cuckoohash__config_8hh_source.html">cuckoohash_config.hh</a>.</p>
 
 </div>
 </div>
@@ -176,13 +158,13 @@ constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr size_t LIBCUCKOO_NO_MAXIMUM_HASHPOWER = 0</td>
+          <td class="memname">constexpr size_t LIBCUCKOO_NO_MAXIMUM_HASHPOWER</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>An alias for the value that sets no limit on the maximum hashpower. If this value is set as the maximum hashpower limit, there will be no limit. Since 0 is the only hashpower that can never occur, it should stay at 0. This is also the default initial value for the maximum hashpower in a table. </p>
+<b>Initial value:</b><div class="fragment"><div class="line">=</div><div class="line">    std::numeric_limits&lt;size_t&gt;::max()</div></div><!-- fragment --><p>An alias for the value that sets no limit on the maximum hashpower. If this value is set as the maximum hashpower limit, there will be no limit. This is also the default initial value for the maximum hashpower in a table. </p>
 
-<p class="definition">Definition at line <a class="el" href="cuckoohash__config_8hh_source.html#l00031">31</a> of file <a class="el" href="cuckoohash__config_8hh_source.html">cuckoohash_config.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cuckoohash__config_8hh_source.html#l00025">25</a> of file <a class="el" href="cuckoohash__config_8hh_source.html">cuckoohash_config.hh</a>.</p>
 
 </div>
 </div>
@@ -192,7 +174,7 @@ constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_e4efb664af72a21142a7864d180da0f4.html">libcuckoo</a></li><li class="navelem"><a class="el" href="cuckoohash__config_8hh.html">cuckoohash_config.hh</a></li>
-    <li class="footer">Generated on Mon Apr 24 2017 23:13:46 for libcuckoo by
+    <li class="footer">Generated on Sat May 27 2017 13:05:08 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

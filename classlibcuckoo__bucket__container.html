@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.13"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>libcuckoo: libcuckoo_bucket_container&lt; Key, T, Alloc, Partial, SLOT_PER_BUCKET &gt; Class Template Reference</title>
+<title>libcuckoo: libcuckoo_bucket_container&lt; Key, T, Allocator, Partial, SLOT_PER_BUCKET &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -85,9 +85,10 @@ $(document).ready(function(){initNavTree('classlibcuckoo__bucket__container.html
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classlibcuckoo__bucket__container-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">libcuckoo_bucket_container&lt; Key, T, Alloc, Partial, SLOT_PER_BUCKET &gt; Class Template Reference</div>  </div>
+<div class="title">libcuckoo_bucket_container&lt; Key, T, Allocator, Partial, SLOT_PER_BUCKET &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -100,115 +101,120 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:aa1056f5c5eb09fcba31d2d873501df52"><td class="memItemLeft" align="right" valign="top"><a id="aa1056f5c5eb09fcba31d2d873501df52"></a>
+<tr class="memitem:a3f2ea043bc75b2559a45204f8bacb541"><td class="memItemLeft" align="right" valign="top"><a id="a3f2ea043bc75b2559a45204f8bacb541"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>key_type</b> = Key</td></tr>
-<tr class="separator:aa1056f5c5eb09fcba31d2d873501df52"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf90a7eeb91a3c61b7cc492538f23f4e"><td class="memItemLeft" align="right" valign="top"><a id="adf90a7eeb91a3c61b7cc492538f23f4e"></a>
+<tr class="separator:a3f2ea043bc75b2559a45204f8bacb541"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aebccfe00b8433886e4d72e5166100b90"><td class="memItemLeft" align="right" valign="top"><a id="aebccfe00b8433886e4d72e5166100b90"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>mapped_type</b> = T</td></tr>
-<tr class="separator:adf90a7eeb91a3c61b7cc492538f23f4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0880e0dde297fbe035a18044ef911680"><td class="memItemLeft" align="right" valign="top"><a id="a0880e0dde297fbe035a18044ef911680"></a>
+<tr class="separator:aebccfe00b8433886e4d72e5166100b90"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adce93875646806fb2aed0f639a752e85"><td class="memItemLeft" align="right" valign="top"><a id="adce93875646806fb2aed0f639a752e85"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b> = std::pair&lt; const Key, T &gt;</td></tr>
-<tr class="separator:a0880e0dde297fbe035a18044ef911680"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af1e766914204068234aee12dccbd61db"><td class="memItemLeft" align="right" valign="top"><a id="af1e766914204068234aee12dccbd61db"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b> = Alloc</td></tr>
-<tr class="separator:af1e766914204068234aee12dccbd61db"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32444bd92cf8025a207f60a3dddf4caf"><td class="memItemLeft" align="right" valign="top"><a id="a32444bd92cf8025a207f60a3dddf4caf"></a>
+<tr class="separator:adce93875646806fb2aed0f639a752e85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7da97f790b419d7d2c212d78b24544c"><td class="memItemLeft" align="right" valign="top"><a id="af7da97f790b419d7d2c212d78b24544c"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b> = typename traits_::allocator_type</td></tr>
+<tr class="separator:af7da97f790b419d7d2c212d78b24544c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d4164d967379750fc6ae29a9fbaac73"><td class="memItemLeft" align="right" valign="top"><a id="a5d4164d967379750fc6ae29a9fbaac73"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>partial_t</b> = Partial</td></tr>
-<tr class="separator:a32444bd92cf8025a207f60a3dddf4caf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8a4afb737ea60e6f853c836a6b3d7e05"><td class="memItemLeft" align="right" valign="top"><a id="a8a4afb737ea60e6f853c836a6b3d7e05"></a>
+<tr class="separator:a5d4164d967379750fc6ae29a9fbaac73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c5403bd3bf40edd25468782051c6dac"><td class="memItemLeft" align="right" valign="top"><a id="a4c5403bd3bf40edd25468782051c6dac"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b> = std::size_t</td></tr>
-<tr class="separator:a8a4afb737ea60e6f853c836a6b3d7e05"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a38287969873ccedce9acaef92d2004cb"><td class="memItemLeft" align="right" valign="top"><a id="a38287969873ccedce9acaef92d2004cb"></a>
+<tr class="separator:a4c5403bd3bf40edd25468782051c6dac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae6e40821ef0ba842fef866601605e05c"><td class="memItemLeft" align="right" valign="top"><a id="ae6e40821ef0ba842fef866601605e05c"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b> = value_type &amp;</td></tr>
-<tr class="separator:a38287969873ccedce9acaef92d2004cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5c4395594d661ee319f16e9e5dfa07ba"><td class="memItemLeft" align="right" valign="top"><a id="a5c4395594d661ee319f16e9e5dfa07ba"></a>
+<tr class="separator:ae6e40821ef0ba842fef866601605e05c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ec51b0143df231e59aa92d475d42eb6"><td class="memItemLeft" align="right" valign="top"><a id="a8ec51b0143df231e59aa92d475d42eb6"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b> = const value_type &amp;</td></tr>
-<tr class="separator:a5c4395594d661ee319f16e9e5dfa07ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a0121f5263c4d9b6497755b5a45a7d1"><td class="memItemLeft" align="right" valign="top"><a id="a2a0121f5263c4d9b6497755b5a45a7d1"></a>
+<tr class="separator:a8ec51b0143df231e59aa92d475d42eb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adcdb005aefe1105b3b4beb8f3a2adf2e"><td class="memItemLeft" align="right" valign="top"><a id="adcdb005aefe1105b3b4beb8f3a2adf2e"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b> = value_type *</td></tr>
-<tr class="separator:a2a0121f5263c4d9b6497755b5a45a7d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0d2aa06aa48137dba0ac43bdec3256f3"><td class="memItemLeft" align="right" valign="top"><a id="a0d2aa06aa48137dba0ac43bdec3256f3"></a>
+<tr class="separator:adcdb005aefe1105b3b4beb8f3a2adf2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47423b0a7f9e7e4499a1a36608b436bc"><td class="memItemLeft" align="right" valign="top"><a id="a47423b0a7f9e7e4499a1a36608b436bc"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b> = const value_type *</td></tr>
-<tr class="separator:a0d2aa06aa48137dba0ac43bdec3256f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a47423b0a7f9e7e4499a1a36608b436bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aaddeb560e9a4559f3e3ed37eda8c3b5c"><td class="memItemLeft" align="right" valign="top"><a id="aaddeb560e9a4559f3e3ed37eda8c3b5c"></a>
+<tr class="memitem:a018c5280f8e1d6145ae9747fd781e731"><td class="memItemLeft" align="right" valign="top"><a id="a018c5280f8e1d6145ae9747fd781e731"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_bucket_container</b> (size_type hp, const allocator_type &amp;allocator)</td></tr>
-<tr class="separator:aaddeb560e9a4559f3e3ed37eda8c3b5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af86eec4d0563ef981c341a59670062be"><td class="memItemLeft" align="right" valign="top"><a id="af86eec4d0563ef981c341a59670062be"></a>
+<tr class="separator:a018c5280f8e1d6145ae9747fd781e731"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace1e4361b9dda798668f1fde004c5ac4"><td class="memItemLeft" align="right" valign="top"><a id="ace1e4361b9dda798668f1fde004c5ac4"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_bucket_container</b> (const <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc)</td></tr>
-<tr class="separator:af86eec4d0563ef981c341a59670062be"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3548c387fa98c7aae5438ed1887e32fc"><td class="memItemLeft" align="right" valign="top"><a id="a3548c387fa98c7aae5438ed1887e32fc"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_bucket_container</b> (const <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc, const allocator_type &amp;a=allocator_type())</td></tr>
-<tr class="separator:a3548c387fa98c7aae5438ed1887e32fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a9a679003d1ba5100208014535b3494"><td class="memItemLeft" align="right" valign="top"><a id="a5a9a679003d1ba5100208014535b3494"></a>
+<tr class="separator:ace1e4361b9dda798668f1fde004c5ac4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad9bace2b1f22f0cfe6a3324b1db2c0ef"><td class="memItemLeft" align="right" valign="top"><a id="ad9bace2b1f22f0cfe6a3324b1db2c0ef"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_bucket_container</b> (const <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc, const allocator_type &amp;a)</td></tr>
+<tr class="separator:ad9bace2b1f22f0cfe6a3324b1db2c0ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3896b038e149223b87ab5d5e6b19bfe"><td class="memItemLeft" align="right" valign="top"><a id="ac3896b038e149223b87ab5d5e6b19bfe"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_bucket_container</b> (<a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;&amp;bc)</td></tr>
-<tr class="separator:a5a9a679003d1ba5100208014535b3494"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a09716dd49535f6d606bbaf2fd775aaff"><td class="memItemLeft" align="right" valign="top"><a id="a09716dd49535f6d606bbaf2fd775aaff"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_bucket_container</b> (<a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;&amp;bc, const allocator_type &amp;a=allocator_type())</td></tr>
-<tr class="separator:a09716dd49535f6d606bbaf2fd775aaff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad4bcf590841c022c00de378f8e541e75"><td class="memItemLeft" align="right" valign="top"><a id="ad4bcf590841c022c00de378f8e541e75"></a>
+<tr class="separator:ac3896b038e149223b87ab5d5e6b19bfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2bd0626705451b35fab1bead20f963b"><td class="memItemLeft" align="right" valign="top"><a id="ae2bd0626705451b35fab1bead20f963b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>libcuckoo_bucket_container</b> (<a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;&amp;bc, const allocator_type &amp;a)</td></tr>
+<tr class="separator:ae2bd0626705451b35fab1bead20f963b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d074cf43f4fbdeb7747b2aa5d5411a2"><td class="memItemLeft" align="right" valign="top"><a id="a9d074cf43f4fbdeb7747b2aa5d5411a2"></a>
 <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc)</td></tr>
-<tr class="separator:ad4bcf590841c022c00de378f8e541e75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a614707d82ecaca6aadfcdf4c86c12a18"><td class="memItemLeft" align="right" valign="top"><a id="a614707d82ecaca6aadfcdf4c86c12a18"></a>
+<tr class="separator:a9d074cf43f4fbdeb7747b2aa5d5411a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba7ee7d132660e1134d892be28da7eb6"><td class="memItemLeft" align="right" valign="top"><a id="aba7ee7d132660e1134d892be28da7eb6"></a>
 <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;&amp;bc)</td></tr>
-<tr class="separator:a614707d82ecaca6aadfcdf4c86c12a18"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1b5dd4366d828d5e1d1804c39115156"><td class="memItemLeft" align="right" valign="top"><a id="ab1b5dd4366d828d5e1d1804c39115156"></a>
+<tr class="separator:aba7ee7d132660e1134d892be28da7eb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d8843bd3a0ba4bfa256de32aa63727b"><td class="memItemLeft" align="right" valign="top"><a id="a6d8843bd3a0ba4bfa256de32aa63727b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>swap</b> (<a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc) noexcept</td></tr>
-<tr class="separator:ab1b5dd4366d828d5e1d1804c39115156"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37d6d152af3f8981cc906acbdeb7dff6"><td class="memItemLeft" align="right" valign="top"><a id="a37d6d152af3f8981cc906acbdeb7dff6"></a>
+<tr class="separator:a6d8843bd3a0ba4bfa256de32aa63727b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d14325c39d90277d83af53a403188d4"><td class="memItemLeft" align="right" valign="top"><a id="a8d14325c39d90277d83af53a403188d4"></a>
 size_type&#160;</td><td class="memItemRight" valign="bottom"><b>hashpower</b> () const</td></tr>
-<tr class="separator:a37d6d152af3f8981cc906acbdeb7dff6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a693c8c6456f3f0bb9430cba34c88a8b1"><td class="memItemLeft" align="right" valign="top"><a id="a693c8c6456f3f0bb9430cba34c88a8b1"></a>
+<tr class="separator:a8d14325c39d90277d83af53a403188d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a810c06bc974eafed11cd53bb665f0d"><td class="memItemLeft" align="right" valign="top"><a id="a6a810c06bc974eafed11cd53bb665f0d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>hashpower</b> (size_type val)</td></tr>
-<tr class="separator:a693c8c6456f3f0bb9430cba34c88a8b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aba8731e186fd5070dcc5e8bf4ffab705"><td class="memItemLeft" align="right" valign="top"><a id="aba8731e186fd5070dcc5e8bf4ffab705"></a>
+<tr class="separator:a6a810c06bc974eafed11cd53bb665f0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55126965073ef532047243ac3991b30b"><td class="memItemLeft" align="right" valign="top"><a id="a55126965073ef532047243ac3991b30b"></a>
 size_type&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () const</td></tr>
-<tr class="separator:aba8731e186fd5070dcc5e8bf4ffab705"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa2222992c3e1c3c4b32327076d384ee1"><td class="memItemLeft" align="right" valign="top"><a id="aa2222992c3e1c3c4b32327076d384ee1"></a>
+<tr class="separator:a55126965073ef532047243ac3991b30b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3bde5fa135857f7f5bc33b3d03c0e952"><td class="memItemLeft" align="right" valign="top"><a id="a3bde5fa135857f7f5bc33b3d03c0e952"></a>
 allocator_type&#160;</td><td class="memItemRight" valign="bottom"><b>get_allocator</b> () const</td></tr>
-<tr class="separator:aa2222992c3e1c3c4b32327076d384ee1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeae1d003de6257dbeedae1a2c4c79646"><td class="memItemLeft" align="right" valign="top"><a id="aeae1d003de6257dbeedae1a2c4c79646"></a>
+<tr class="separator:a3bde5fa135857f7f5bc33b3d03c0e952"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6555c77fe00cf6f12b4185c1b4b2063"><td class="memItemLeft" align="right" valign="top"><a id="aa6555c77fe00cf6f12b4185c1b4b2063"></a>
 <a class="el" href="classlibcuckoo__bucket__container_1_1bucket.html">bucket</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (size_type i)</td></tr>
-<tr class="separator:aeae1d003de6257dbeedae1a2c4c79646"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4e95f4c192a0906233ced782cedd939d"><td class="memItemLeft" align="right" valign="top"><a id="a4e95f4c192a0906233ced782cedd939d"></a>
+<tr class="separator:aa6555c77fe00cf6f12b4185c1b4b2063"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b126a39425e01ad65395f4c27c5242b"><td class="memItemLeft" align="right" valign="top"><a id="a4b126a39425e01ad65395f4c27c5242b"></a>
 const <a class="el" href="classlibcuckoo__bucket__container_1_1bucket.html">bucket</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (size_type i) const</td></tr>
-<tr class="separator:a4e95f4c192a0906233ced782cedd939d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aecd32a758961ff115990cfe6887447df"><td class="memTemplParams" colspan="2"><a id="aecd32a758961ff115990cfe6887447df"></a>
+<tr class="separator:a4b126a39425e01ad65395f4c27c5242b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54552ddae6480bf73046dad1739474b0"><td class="memTemplParams" colspan="2"><a id="a54552ddae6480bf73046dad1739474b0"></a>
 template&lt;typename K , typename... Args&gt; </td></tr>
-<tr class="memitem:aecd32a758961ff115990cfe6887447df"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>setKV</b> (size_type ind, size_type slot, partial_t p, K &amp;&amp;k, Args &amp;&amp;... args)</td></tr>
-<tr class="separator:aecd32a758961ff115990cfe6887447df"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a04396384ff9c77869c1ee49db08dad40"><td class="memItemLeft" align="right" valign="top"><a id="a04396384ff9c77869c1ee49db08dad40"></a>
+<tr class="memitem:a54552ddae6480bf73046dad1739474b0"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>setKV</b> (size_type ind, size_type slot, partial_t p, K &amp;&amp;k, Args &amp;&amp;... args)</td></tr>
+<tr class="separator:a54552ddae6480bf73046dad1739474b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8ef36a705b1c5faf47de0cfc66a8897"><td class="memItemLeft" align="right" valign="top"><a id="ac8ef36a705b1c5faf47de0cfc66a8897"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>eraseKV</b> (size_type ind, size_type slot)</td></tr>
-<tr class="separator:a04396384ff9c77869c1ee49db08dad40"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e71b4ed5bd82c3d3940650d9f114afd"><td class="memItemLeft" align="right" valign="top"><a id="a7e71b4ed5bd82c3d3940650d9f114afd"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>moveKV</b> (size_type dst_ind, size_type dst_slot, size_type src_ind, size_type src_slot)</td></tr>
-<tr class="separator:a7e71b4ed5bd82c3d3940650d9f114afd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a85b146f7382a342af6ec087b421a95d6"><td class="memItemLeft" align="right" valign="top"><a id="a85b146f7382a342af6ec087b421a95d6"></a>
+<tr class="separator:ac8ef36a705b1c5faf47de0cfc66a8897"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab82bb087a54c7107075112bf76567cd9"><td class="memItemLeft" align="right" valign="top"><a id="ab82bb087a54c7107075112bf76567cd9"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> () noexcept</td></tr>
-<tr class="separator:a85b146f7382a342af6ec087b421a95d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a89d12bee7830422d4b8883c2628bb1b4"><td class="memItemLeft" align="right" valign="top"><a id="a89d12bee7830422d4b8883c2628bb1b4"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>resize</b> (size_type new_hp)</td></tr>
-<tr class="separator:a89d12bee7830422d4b8883c2628bb1b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:ab82bb087a54c7107075112bf76567cd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a054c322021f2ed220d676e82d85a9df8"><td class="memTemplParams" colspan="2"><a id="a054c322021f2ed220d676e82d85a9df8"></a>
+template&lt;typename Bogus  = void *&gt; </td></tr>
+<tr class="memitem:a054c322021f2ed220d676e82d85a9df8"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; sizeof(Bogus) &amp;&amp;std::is_trivial&lt; Key &gt;::value &amp;&amp;std::is_trivial&lt; T &gt;::value, std::ostream &amp; &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&lt;&lt;</b> (std::ostream &amp;os, const <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc)</td></tr>
+<tr class="separator:a054c322021f2ed220d676e82d85a9df8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac42d7dc392647f5939d21d97501d72dd"><td class="memTemplParams" colspan="2"><a id="ac42d7dc392647f5939d21d97501d72dd"></a>
+template&lt;typename Bogus  = void *&gt; </td></tr>
+<tr class="memitem:ac42d7dc392647f5939d21d97501d72dd"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; sizeof(Bogus) &amp;&amp;std::is_trivial&lt; Key &gt;::value &amp;&amp;std::is_trivial&lt; T &gt;::value, std::istream &amp; &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&gt;&gt;</b> (std::istream &amp;is, <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc)</td></tr>
+<tr class="separator:ac42d7dc392647f5939d21d97501d72dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;class Key, class T, class Alloc, class Partial, std::size_t SLOT_PER_BUCKET&gt;<br />
-class libcuckoo_bucket_container&lt; Key, T, Alloc, Partial, SLOT_PER_BUCKET &gt;</h3>
+<div class="textblock"><h3>template&lt;class Key, class T, class Allocator, class Partial, std::size_t SLOT_PER_BUCKET&gt;<br />
+class libcuckoo_bucket_container&lt; Key, T, Allocator, Partial, SLOT_PER_BUCKET &gt;</h3>
 
 <p><a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> manages storage of key-value pairs for the table. It stores the items inline in uninitialized memory, and keeps track of which slots have live data and which do not. It also stores a partial hash for each live key. It is sized by powers of two.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Key</td><td>type of keys in the table </td></tr>
     <tr><td class="paramname">T</td><td>type of values in the table </td></tr>
-    <tr><td class="paramname">Alloc</td><td>type of key-value pair allocator </td></tr>
+    <tr><td class="paramname">Allocator</td><td>type of key-value pair allocator </td></tr>
     <tr><td class="paramname">Partial</td><td>type of partial keys </td></tr>
     <tr><td class="paramname">SLOT_PER_BUCKET</td><td>number of slots for each bucket in the table </td></tr>
   </table>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="libcuckoo__bucket__container_8hh_source.html#l00025">25</a> of file <a class="el" href="libcuckoo__bucket__container_8hh_source.html">libcuckoo_bucket_container.hh</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libcuckoo__bucket__container_8hh_source.html#l00029">29</a> of file <a class="el" href="libcuckoo__bucket__container_8hh_source.html">libcuckoo_bucket_container.hh</a>.</p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
 <li>/Users/manu/root/src/libcuckoo/libcuckoo/libcuckoo/<a class="el" href="libcuckoo__bucket__container_8hh_source.html">libcuckoo_bucket_container.hh</a></li>
 </ul>
@@ -218,7 +224,7 @@ class libcuckoo_bucket_container&lt; Key, T, Alloc, Partial, SLOT_PER_BUCKET &gt
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a></li>
-    <li class="footer">Generated on Mon Apr 24 2017 23:13:46 for libcuckoo by
+    <li class="footer">Generated on Sat May 27 2017 13:05:08 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

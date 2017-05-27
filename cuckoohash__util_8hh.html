@@ -112,10 +112,6 @@ Macros</h2></td></tr>
 <tr class="separator:a8c488b9631456c8d5c3b8e26d1b3a00e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2509909e76908ee20da73adb5ae552af"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__util_8hh.html#a2509909e76908ee20da73adb5ae552af">LIBCUCKOO_SQUELCH_PADDING_WARNING</a></td></tr>
 <tr class="separator:a2509909e76908ee20da73adb5ae552af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a471ebb922d4aded0e92ba0fad585b63a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__util_8hh.html#a471ebb922d4aded0e92ba0fad585b63a">LIBCUCKOO_THREAD_LOCAL</a>&#160;&#160;&#160;thread_local</td></tr>
-<tr class="separator:a471ebb922d4aded0e92ba0fad585b63a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad78febe3818f5b310f22ea455ac9f201"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cuckoohash__util_8hh.html#ad78febe3818f5b310f22ea455ac9f201">LIBCUCKOO_ENABLE_IF</a>(condition,  return_type)</td></tr>
-<tr class="separator:ad78febe3818f5b310f22ea455ac9f201"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="a8c488b9631456c8d5c3b8e26d1b3a00e"></a>
@@ -171,37 +167,6 @@ Macros</h2></td></tr>
 
 </div>
 </div>
-<a id="ad78febe3818f5b310f22ea455ac9f201"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad78febe3818f5b310f22ea455ac9f201">&#9670;&nbsp;</a></span>LIBCUCKOO_ENABLE_IF</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define LIBCUCKOO_ENABLE_IF</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">condition, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">return_type&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> Bogus = <span class="keywordtype">void</span> *&gt;                                              \</div><div class="line">  typename std::enable_if&lt;sizeof(Bogus) &amp;&amp; condition, return_type&gt;::type</div></div><!-- fragment --><p>For enabling certain methods based on a condition. Here's an example. LIBCUCKOO_ENABLE_IF(sizeof(int) == 4, int) method() { ... } </p>
-
-<p class="definition">Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00070">70</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
-
-</div>
-</div>
 <a id="a2509909e76908ee20da73adb5ae552af"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2509909e76908ee20da73adb5ae552af">&#9670;&nbsp;</a></span>LIBCUCKOO_SQUELCH_PADDING_WARNING</h2>
 
@@ -219,30 +184,13 @@ Macros</h2></td></tr>
 
 </div>
 </div>
-<a id="a471ebb922d4aded0e92ba0fad585b63a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a471ebb922d4aded0e92ba0fad585b63a">&#9670;&nbsp;</a></span>LIBCUCKOO_THREAD_LOCAL</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define LIBCUCKOO_THREAD_LOCAL&#160;&#160;&#160;thread_local</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>thread_local requires GCC &gt;= 4.8 and is not supported in some clang versions, so we use __thread if thread_local is not supported </p>
-
-<p class="definition">Definition at line <a class="el" href="cuckoohash__util_8hh_source.html#l00053">53</a> of file <a class="el" href="cuckoohash__util_8hh_source.html">cuckoohash_util.hh</a>.</p>
-
-</div>
-</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_ac4ea4bd8ac261329328d8272b4742e6.html">libcuckoo</a></li><li class="navelem"><a class="el" href="dir_e4efb664af72a21142a7864d180da0f4.html">libcuckoo</a></li><li class="navelem"><a class="el" href="cuckoohash__util_8hh.html">cuckoohash_util.hh</a></li>
-    <li class="footer">Generated on Mon Apr 24 2017 23:13:46 for libcuckoo by
+    <li class="footer">Generated on Sat May 27 2017 13:05:08 for libcuckoo by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
