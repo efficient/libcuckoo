@@ -476,40 +476,6 @@ public:
   }
 
   /**
-   * Searches for @p key in the table. If the key is found, then @p fn is
-   * called on the existing value, and nothing happens to the passed-in key and
-   * values. If the key is not found and must be inserted, the pair will be
-   * constructed by forwarding the given key and values. If there is no room
-   * left in the table, it will be automatically expanded. Expansion may throw
-   * exceptions.
-   *
-   * @tparam K type of the key
-   * @tparam F type of the functor. It should implement the method
-   * <tt>void operator()(mapped_type&)</tt>.
-   * @tparam Args list of types for the value constructor arguments
-   * @param key the key to insert into the table
-   * @param fn the functor to invoke if the element is found. If your @p fn
-   * needs more data that just the value being modified, consider implementing
-   * it as a lambda with captured arguments.
-   * @param val a list of constructor arguments with which to create the value
-   * @return true if a new key was inserted, false if the key was already in
-   * the table
-   */
-  template <typename K, typename F, typename... Args>
-  bool upsert(K &&key, F fn, Args &&... val) {
-    hash_value hv = hashed_key(key);
-    auto b = snapshot_and_lock_two<normal_mode>(hv);
-    table_position pos = cuckoo_insert_loop<normal_mode>(hv, b, key);
-    if (pos.status == ok) {
-      add_to_bucket(pos.index, pos.slot, hv.partial, std::forward<K>(key),
-                    std::forward<Args>(val)...);
-    } else {
-      fn(buckets_[pos.index].mapped(pos.slot));
-    }
-    return pos.status == ok;
-  }
-
-  /**
    * Searches for @p key in the table, and invokes @p fn on the value if the
    * key is found. The functor can mutate the value, and should return @c true
    * in order to erase the element, and @c false otherwise.
@@ -533,6 +499,59 @@ public:
     } else {
       return false;
     }
+  }
+
+  /**
+   * Searches for @p key in the table. If the key is found, then @p fn is
+   * called on the existing value, and nothing happens to the passed-in key and
+   * values. The functor can mutate the value, and should return @c true in
+   * order to erase the element, and @c false otherwise. If the key is not
+   * found and must be inserted, the pair will be constructed by forwarding the
+   * given key and values. If there is no room left in the table, it will be
+   * automatically expanded. Expansion may throw exceptions.
+   *
+   * @tparam K type of the key
+   * @tparam F type of the functor. It should implement the method
+   * <tt>bool operator()(mapped_type&)</tt>.
+   * @tparam Args list of types for the value constructor arguments
+   * @param key the key to insert into the table
+   * @param fn the functor to invoke if the element is found. If your @p fn
+   * needs more data that just the value being modified, consider implementing
+   * it as a lambda with captured arguments.
+   * @param val a list of constructor arguments with which to create the value
+   * @return true if a new key was inserted, false if the key was already in
+   * the table
+   */
+  template <typename K, typename F, typename... Args>
+  bool uprase_fn(K &&key, F fn, Args &&... val) {
+    hash_value hv = hashed_key(key);
+    auto b = snapshot_and_lock_two<normal_mode>(hv);
+    table_position pos = cuckoo_insert_loop<normal_mode>(hv, b, key);
+    if (pos.status == ok) {
+      add_to_bucket(pos.index, pos.slot, hv.partial, std::forward<K>(key),
+                    std::forward<Args>(val)...);
+    } else {
+      if (fn(buckets_[pos.index].mapped(pos.slot))) {
+        del_from_bucket(pos.index, pos.slot);
+      }
+    }
+    return pos.status == ok;
+  }
+
+  /**
+   * Equivalent to calling @ref uprase_fn with a functor that modifies the
+   * mutates the given value and always returns false (meaning the element is
+   * not removed). The passed-in functor must implement the method <tt>void
+   * operator()(mapped_type&)</tt>.
+   */
+  template <typename K, typename F, typename... Args>
+  bool upsert(K &&key, F fn, Args &&... val) {
+    return uprase_fn(std::forward<K>(key),
+                     [&fn](mapped_type &v) {
+                       fn(v);
+                       return false;
+                     },
+                     std::forward<Args>(val)...);
   }
 
   /**
@@ -2385,21 +2404,15 @@ public:
 
     // Dispatchers for methods on cuckoohash_map
 
-    buckets_t& buckets() {
-   	  return map_.get().buckets_;
+    buckets_t &buckets() { return map_.get().buckets_; }
+
+    const buckets_t &buckets() const { return map_.get().buckets_; }
+
+    void maybe_resize_locks(size_type new_bucket_count) {
+      map_.get().maybe_resize_locks(new_bucket_count);
     }
 
-    const buckets_t& buckets() const {
-   	  return map_.get().buckets_;
-    }
-
- 	void maybe_resize_locks(size_type new_bucket_count) {
-	  map_.get().maybe_resize_locks(new_bucket_count);
-	}
-
-	locks_t &get_current_locks() {
-      return map_.get().get_current_locks();
- 	}
+    locks_t &get_current_locks() { return map_.get().get_current_locks(); }
 
     // A reference to the map owned by the table
     std::reference_wrapper<cuckoohash_map> map_;

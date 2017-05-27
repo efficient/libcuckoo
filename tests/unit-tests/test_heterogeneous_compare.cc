@@ -252,4 +252,27 @@ TEST_CASE("heterogeneous compare", "[heterogeneous compare]") {
     REQUIRE(foo_hashes == 0);
     REQUIRE(int_hashes == 5);
   }
+
+  SECTION("uprase_fn") {
+    {
+      foo_map map(0);
+      map.rehash(2);
+      auto fn = [](bool &val) {
+        val = !val;
+        return val;
+      };
+      REQUIRE(map.uprase_fn(0, fn, true));
+      REQUIRE_FALSE(map.uprase_fn(0, fn, true));
+      REQUIRE(map.contains(0));
+      REQUIRE_FALSE(map.uprase_fn(0, fn, true));
+      REQUIRE_FALSE(map.contains(0));
+    }
+    REQUIRE(int_constructions == 1);
+    REQUIRE(copy_constructions == 0);
+    REQUIRE(destructions == 1);
+    REQUIRE(foo_comparisons == 0);
+    REQUIRE(int_comparisons == 3);
+    REQUIRE(foo_hashes == 0);
+    REQUIRE(int_hashes == 5);
+  }
 }

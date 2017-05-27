@@ -133,3 +133,24 @@ TEST_CASE("noncopyable erase_fn") {
   tbl.erase_fn(k, decrement_and_erase);
   REQUIRE_FALSE(tbl.contains(k));
 }
+
+TEST_CASE("noncopyable uprase_fn") {
+  Tbl tbl;
+  auto decrement_and_erase = [](Uptr &p) {
+    --(*p);
+    return *p == 0;
+  };
+  REQUIRE(
+      tbl.uprase_fn(Uptr(new int(10)), decrement_and_erase, Uptr(new int(10))));
+  Uptr k(new int(10)), v(new int(10));
+  for (int i = 0; i < 10; ++i) {
+    REQUIRE_FALSE(
+        tbl.uprase_fn(std::move(k), decrement_and_erase, std::move(v)));
+    REQUIRE((k && v));
+    if (i < 9) {
+      REQUIRE(tbl.contains(k));
+    } else {
+      REQUIRE_FALSE(tbl.contains(k));
+    }
+  }
+}
