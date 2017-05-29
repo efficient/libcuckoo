@@ -208,19 +208,18 @@ TEST_CASE("bucket container move assignment no propagate unequal",
   tc2.setKV(1, 0, 2, std::make_shared<int>(10), 5);
 
   tc2 = std::move(tc);
+  REQUIRE(!tc2[1].occupied(0));
   REQUIRE(tc2[0].occupied(0));
   REQUIRE(tc2[0].partial(0) == 2);
   REQUIRE(*tc2[0].key(0) == 10);
-  REQUIRE(tc2[0].key(0).use_count() == 2);
+  REQUIRE(tc2[0].key(0).use_count() == 1);
   REQUIRE(tc2[0].mapped(0) == 5);
   REQUIRE_FALSE(tc2[1].occupied(0));
   REQUIRE(tc2.get_allocator().id == 4);
 
   REQUIRE(tc[0].occupied(0));
   REQUIRE(tc[0].partial(0) == 2);
-  REQUIRE(*tc[0].key(0) == 10);
-  REQUIRE(tc[0].key(0).use_count() == 2);
-  REQUIRE(tc[0].mapped(0) == 5);
+  REQUIRE_FALSE(tc[0].key(0));
 }
 
 TEST_CASE("bucket container swap no propagate", "[bucket container]") {
