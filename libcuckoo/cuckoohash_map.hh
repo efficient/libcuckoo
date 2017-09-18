@@ -863,7 +863,7 @@ private:
   // locks the given bucket index.
   //
   // throws hashpower_changed if it changed after taking the lock.
-  LockManager lock_one(size_type hp, size_type i, locked_table_mode) const {
+  LockManager lock_one(size_type, size_type, locked_table_mode) const {
     return LockManager();
   }
 
@@ -879,7 +879,7 @@ private:
   // avoid deadlock. If the two indexes are the same, it just locks one.
   //
   // throws hashpower_changed if it changed after taking the lock.
-  TwoBuckets lock_two(size_type hp, size_type i1, size_type i2,
+  TwoBuckets lock_two(size_type, size_type i1, size_type i2,
                       locked_table_mode) const {
     return TwoBuckets(i1, i2, locked_table_mode());
   }
@@ -905,8 +905,8 @@ private:
   // active if i3 shares a lock index with i1 or i2.
   //
   // throws hashpower_changed if it changed after taking the lock.
-  std::pair<TwoBuckets, LockManager> lock_three(size_type hp, size_type i1,
-                                                size_type i2, size_type i3,
+  std::pair<TwoBuckets, LockManager> lock_three(size_type, size_type i1,
+                                                size_type i2, size_type,
                                                 locked_table_mode) const {
     return std::make_pair(TwoBuckets(i1, i2, locked_table_mode()),
                           LockManager());

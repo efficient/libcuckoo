@@ -248,7 +248,7 @@ private:
     std::swap(dst, src);
   }
 
-  template <typename A> void swap_allocator(A &dst, A &src, std::false_type) {}
+  template <typename A> void swap_allocator(A &, A &, std::false_type) {}
 
   // true here means the bucket allocator should be propagated
   void move_assign(libcuckoo_bucket_container &src, std::true_type) {
