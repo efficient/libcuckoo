@@ -1571,6 +1571,10 @@ private:
     // parallel. We create a new empty buckets container and move all the
     // elements from the old container to the new one.
     buckets_t new_buckets(new_hp, get_allocator());
+    // For certain types, MSVC may decide that move_buckets() cannot throw and
+    // so the catch block below is dead code. Since that won't always be true,
+    // we just disable the warning here.
+    LIBCUCKOO_SQUELCH_DEADCODE_WARNING_BEGIN;
     parallel_exec(
         0, hashsize(current_hp),
         [this, &new_buckets, current_hp, new_hp](size_type start, size_type end,
@@ -1581,6 +1585,7 @@ private:
             eptr = std::current_exception();
           }
         });
+    LIBCUCKOO_SQUELCH_DEADCODE_WARNING_END;
 
     // Resize the locks array if necessary. This is done before we update the
     // hashpower so that other threads don't grab the new hashpower and the old
