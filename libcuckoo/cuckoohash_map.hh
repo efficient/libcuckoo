@@ -1046,7 +1046,7 @@ private:
                            const K &key) const {
     // Silence a warning from MSVC about partial being unused if is_simple.
     (void)partial;
-    for (size_type i = 0; i < slot_per_bucket(); ++i) {
+    for (int i = 0; i < static_cast<int>(slot_per_bucket()); ++i) {
       if (!b.occupied(i) || (!is_simple && partial != b.partial(i))) {
         continue;
       } else if (key_eq()(b.key(i), key)) {
@@ -1192,7 +1192,7 @@ private:
     // Silence a warning from MSVC about partial being unused if is_simple.
     (void)partial;
     slot = -1;
-    for (size_type i = 0; i < slot_per_bucket(); ++i) {
+    for (int i = 0; i < static_cast<int>(slot_per_bucket()); ++i) {
       if (b.occupied(i)) {
         if (!is_simple && partial != b.partial(i)) {
           continue;
