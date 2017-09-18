@@ -341,7 +341,7 @@ public:
       s += lock.elem_counter();
     }
     assert(s >= 0);
-    return s;
+    return static_cast<size_type>(s);
   }
 
   /** Returns the current capacity of the table, that is, @ref bucket_count()
