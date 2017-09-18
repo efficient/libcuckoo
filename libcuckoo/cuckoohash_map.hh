@@ -1590,7 +1590,7 @@ private:
     // Resize the locks array if necessary. This is done before we update the
     // hashpower so that other threads don't grab the new hashpower and the old
     // locks
-    maybe_resize_locks(1UL << new_hp);
+    maybe_resize_locks(size_type(1) << new_hp);
     // Swap the old and new buckets. The old bucket data will be destroyed when
     // the function exits
     buckets_.swap(new_buckets);
@@ -1813,7 +1813,7 @@ private:
   static size_type reserve_calc(const size_type n) {
     const size_type buckets = (n + slot_per_bucket() - 1) / slot_per_bucket();
     size_type blog2;
-    for (blog2 = 0; (1UL << blog2) < buckets; ++blog2)
+    for (blog2 = 0; (size_type(1) << blog2) < buckets; ++blog2)
       ;
     assert(n <= buckets * slot_per_bucket() && buckets <= hashsize(blog2));
     return blog2;

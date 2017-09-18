@@ -186,7 +186,7 @@ public:
     hashpower_.store(val, std::memory_order_release);
   }
 
-  size_type size() const { return 1UL << hashpower(); }
+  size_type size() const { return size_type(1) << hashpower(); }
 
   allocator_type get_allocator() const { return allocator_; }
 
