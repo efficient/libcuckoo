@@ -47,6 +47,23 @@
 #endif
 
 /**
+ * At higher warning levels, MSVC may issue a deadcode warning which depends on
+ * the template arguments given. For certain other template arguments, the code
+ * is not really "dead".
+ */
+#ifdef _MSC_VER
+#define LIBCUCKOO_SQUELCH_DEADCODE_WARNING_BEGIN                               \
+  do {                                                                         \
+    __pragma(warning(push));                                                   \
+    __pragma(warning(disable : 4702))                                          \
+  } while (0)
+#define LIBCUCKOO_SQUELCH_DEADCODE_WARNING_END __pragma(warning(pop))
+#else
+#define LIBCUCKOO_SQUELCH_DEADCODE_WARNING_BEGIN
+#define LIBCUCKOO_SQUELCH_DEADCODE_WARNING_END
+#endif
+
+/**
  * Thrown when an automatic expansion is triggered, but the load factor of the
  * table is below a minimum threshold, which can be set by the \ref
  * cuckoohash_map::minimum_load_factor method. This can happen if the hash

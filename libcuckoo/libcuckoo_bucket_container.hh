@@ -186,7 +186,7 @@ public:
     hashpower_.store(val, std::memory_order_release);
   }
 
-  size_type size() const { return 1UL << hashpower(); }
+  size_type size() const { return size_type(1) << hashpower(); }
 
   allocator_type get_allocator() const { return allocator_; }
 
@@ -248,7 +248,7 @@ private:
     std::swap(dst, src);
   }
 
-  template <typename A> void swap_allocator(A &dst, A &src, std::false_type) {}
+  template <typename A> void swap_allocator(A &, A &, std::false_type) {}
 
   // true here means the bucket allocator should be propagated
   void move_assign(libcuckoo_bucket_container &src, std::true_type) {

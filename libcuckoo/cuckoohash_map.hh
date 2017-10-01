@@ -341,7 +341,7 @@ public:
       s += lock.elem_counter();
     }
     assert(s >= 0);
-    return s;
+    return static_cast<size_type>(s);
   }
 
   /** Returns the current capacity of the table, that is, @ref bucket_count()
@@ -724,8 +724,8 @@ private:
                                  static_cast<uint32_t>(hash_64bit >> 32));
     const uint16_t hash_16bit = (static_cast<uint16_t>(hash_32bit) ^
                                  static_cast<uint16_t>(hash_32bit >> 16));
-    const uint16_t hash_8bit = (static_cast<uint8_t>(hash_16bit) ^
-                                static_cast<uint8_t>(hash_16bit >> 8));
+    const uint8_t hash_8bit = (static_cast<uint8_t>(hash_16bit) ^
+                               static_cast<uint8_t>(hash_16bit >> 8));
     return hash_8bit;
   }
 
@@ -863,7 +863,7 @@ private:
   // locks the given bucket index.
   //
   // throws hashpower_changed if it changed after taking the lock.
-  LockManager lock_one(size_type hp, size_type i, locked_table_mode) const {
+  LockManager lock_one(size_type, size_type, locked_table_mode) const {
     return LockManager();
   }
 
@@ -879,7 +879,7 @@ private:
   // avoid deadlock. If the two indexes are the same, it just locks one.
   //
   // throws hashpower_changed if it changed after taking the lock.
-  TwoBuckets lock_two(size_type hp, size_type i1, size_type i2,
+  TwoBuckets lock_two(size_type, size_type i1, size_type i2,
                       locked_table_mode) const {
     return TwoBuckets(i1, i2, locked_table_mode());
   }
@@ -905,8 +905,8 @@ private:
   // active if i3 shares a lock index with i1 or i2.
   //
   // throws hashpower_changed if it changed after taking the lock.
-  std::pair<TwoBuckets, LockManager> lock_three(size_type hp, size_type i1,
-                                                size_type i2, size_type i3,
+  std::pair<TwoBuckets, LockManager> lock_three(size_type, size_type i1,
+                                                size_type i2, size_type,
                                                 locked_table_mode) const {
     return std::make_pair(TwoBuckets(i1, i2, locked_table_mode()),
                           LockManager());
@@ -1046,7 +1046,7 @@ private:
                            const K &key) const {
     // Silence a warning from MSVC about partial being unused if is_simple.
     (void)partial;
-    for (size_type i = 0; i < slot_per_bucket(); ++i) {
+    for (int i = 0; i < static_cast<int>(slot_per_bucket()); ++i) {
       if (!b.occupied(i) || (!is_simple && partial != b.partial(i))) {
         continue;
       } else if (key_eq()(b.key(i), key)) {
@@ -1192,7 +1192,7 @@ private:
     // Silence a warning from MSVC about partial being unused if is_simple.
     (void)partial;
     slot = -1;
-    for (size_type i = 0; i < slot_per_bucket(); ++i) {
+    for (int i = 0; i < static_cast<int>(slot_per_bucket()); ++i) {
       if (b.occupied(i)) {
         if (!is_simple && partial != b.partial(i)) {
           continue;
@@ -1571,6 +1571,10 @@ private:
     // parallel. We create a new empty buckets container and move all the
     // elements from the old container to the new one.
     buckets_t new_buckets(new_hp, get_allocator());
+    // For certain types, MSVC may decide that move_buckets() cannot throw and
+    // so the catch block below is dead code. Since that won't always be true,
+    // we just disable the warning here.
+    LIBCUCKOO_SQUELCH_DEADCODE_WARNING_BEGIN;
     parallel_exec(
         0, hashsize(current_hp),
         [this, &new_buckets, current_hp, new_hp](size_type start, size_type end,
@@ -1581,11 +1585,12 @@ private:
             eptr = std::current_exception();
           }
         });
+    LIBCUCKOO_SQUELCH_DEADCODE_WARNING_END;
 
     // Resize the locks array if necessary. This is done before we update the
     // hashpower so that other threads don't grab the new hashpower and the old
     // locks
-    maybe_resize_locks(1UL << new_hp);
+    maybe_resize_locks(size_type(1) << new_hp);
     // Swap the old and new buckets. The old bucket data will be destroyed when
     // the function exits
     buckets_.swap(new_buckets);
@@ -1808,7 +1813,7 @@ private:
   static size_type reserve_calc(const size_type n) {
     const size_type buckets = (n + slot_per_bucket() - 1) / slot_per_bucket();
     size_type blog2;
-    for (blog2 = 0; (1UL << blog2) < buckets; ++blog2)
+    for (blog2 = 0; (size_type(1) << blog2) < buckets; ++blog2)
       ;
     assert(n <= buckets * slot_per_bucket() && buckets <= hashsize(blog2));
     return blog2;
@@ -1874,18 +1879,18 @@ public:
     /** @name Type Declarations */
     /**@{*/
 
-    using key_type = cuckoohash_map::key_type;
-    using mapped_type = cuckoohash_map::mapped_type;
-    using value_type = cuckoohash_map::value_type;
-    using size_type = cuckoohash_map::size_type;
-    using difference_type = cuckoohash_map::difference_type;
-    using hasher = cuckoohash_map::hasher;
-    using key_equal = cuckoohash_map::key_equal;
-    using allocator_type = cuckoohash_map::allocator_type;
-    using reference = cuckoohash_map::reference;
-    using const_reference = cuckoohash_map::const_reference;
-    using pointer = cuckoohash_map::pointer;
-    using const_pointer = cuckoohash_map::const_pointer;
+    using key_type = typename cuckoohash_map::key_type;
+    using mapped_type = typename cuckoohash_map::mapped_type;
+    using value_type = typename cuckoohash_map::value_type;
+    using size_type = typename cuckoohash_map::size_type;
+    using difference_type = typename cuckoohash_map::difference_type;
+    using hasher = typename cuckoohash_map::hasher;
+    using key_equal = typename cuckoohash_map::key_equal;
+    using allocator_type = typename cuckoohash_map::allocator_type;
+    using reference = typename cuckoohash_map::reference;
+    using const_reference = typename cuckoohash_map::const_reference;
+    using pointer = typename cuckoohash_map::pointer;
+    using const_pointer = typename cuckoohash_map::const_pointer;
 
     /**
      * A constant iterator over a @ref locked_table, which allows read-only
@@ -1894,10 +1899,10 @@ public:
      */
     class const_iterator {
     public:
-      using difference_type = locked_table::difference_type;
-      using value_type = locked_table::value_type;
-      using pointer = locked_table::const_pointer;
-      using reference = locked_table::const_reference;
+      using difference_type = typename locked_table::difference_type;
+      using value_type = typename locked_table::value_type;
+      using pointer = typename locked_table::const_pointer;
+      using reference = typename locked_table::const_reference;
       using iterator_category = std::bidirectional_iterator_tag;
 
       const_iterator() {}
@@ -2020,8 +2025,8 @@ public:
      */
     class iterator : public const_iterator {
     public:
-      using pointer = cuckoohash_map::pointer;
-      using reference = cuckoohash_map::reference;
+      using pointer = typename cuckoohash_map::pointer;
+      using reference = typename cuckoohash_map::reference;
 
       iterator() {}
 
