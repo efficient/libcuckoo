@@ -2,6 +2,16 @@
  * unstructured data, kind of like JSON. There's still the limitation that it's
  * statically typed. */
 
+/* MSVC genenrates warning C4503 if the decorated name is longer than the 
+ * compiler limit (4096).
+ * In this exmaple, C4503 is not a concern. We can simply suppress it here.
+ * for details: 
+ * https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4503
+*/
+#ifdef _MSC_VER
+#pragma warning(disable:4503)
+#endif
+
 #include <iostream>
 #include <memory>
 #include <string>
