@@ -1,3 +1,6 @@
+#ifdef _MSC_VER
+#pragma warning(disable:4503)
+#endif
 #include <catch.hpp>
 
 #include <string>
@@ -22,16 +25,16 @@ void check_key_eq(Tbl &tbl, int key, int expected_val) {
 TEST_CASE("noncopyable insert and update", "[noncopyable]") {
   Tbl tbl(TBL_INIT);
   for (size_t i = 0; i < TBL_SIZE; ++i) {
-    REQUIRE(tbl.insert(Uptr(new int(i)), Uptr(new int(i))));
+    REQUIRE(tbl.insert(Uptr(new int(static_cast<int>(i))), Uptr(new int(static_cast<int>(i)))));
   }
   for (size_t i = 0; i < TBL_SIZE; ++i) {
-    check_key_eq(tbl, i, i);
+    check_key_eq(tbl, static_cast<int>(i), static_cast<int>(i));
   }
   for (size_t i = 0; i < TBL_SIZE; ++i) {
-    tbl.update(Uptr(new int(i)), Uptr(new int(i + 1)));
+    tbl.update(Uptr(new int(static_cast<int>(i))), Uptr(new int(static_cast<int>(i) + 1)));
   }
   for (size_t i = 0; i < TBL_SIZE; ++i) {
-    check_key_eq(tbl, i, i + 1);
+    check_key_eq(tbl, static_cast<int>(i), static_cast<int>(i) + 1);
   }
 }
 
@@ -39,23 +42,23 @@ TEST_CASE("noncopyable upsert", "[noncopyable]") {
   Tbl tbl(TBL_INIT);
   auto increment = [](Uptr &ptr) { *ptr += 1; };
   for (size_t i = 0; i < TBL_SIZE; ++i) {
-    tbl.upsert(Uptr(new int(i)), increment, Uptr(new int(i)));
+    tbl.upsert(Uptr(new int(static_cast<int>(i))), increment, Uptr(new int(static_cast<int>(i))));
   }
   for (size_t i = 0; i < TBL_SIZE; ++i) {
-    check_key_eq(tbl, i, i);
+    check_key_eq(tbl, static_cast<int>(i), static_cast<int>(i));
   }
   for (size_t i = 0; i < TBL_SIZE; ++i) {
-    tbl.upsert(Uptr(new int(i)), increment, Uptr(new int(i)));
+    tbl.upsert(Uptr(new int(static_cast<int>(i))), increment, Uptr(new int(static_cast<int>(i))));
   }
   for (size_t i = 0; i < TBL_SIZE; ++i) {
-    check_key_eq(tbl, i, i + 1);
+    check_key_eq(tbl, static_cast<int>(i), static_cast<int>(i) + 1);
   }
 }
 
 TEST_CASE("noncopyable iteration", "[noncopyable]") {
   Tbl tbl(TBL_INIT);
   for (size_t i = 0; i < TBL_SIZE; ++i) {
-    tbl.insert(Uptr(new int(i)), Uptr(new int(i)));
+    tbl.insert(Uptr(new int(static_cast<int>(i))), Uptr(new int(static_cast<int>(i))));
   }
   {
     auto locked_tbl = tbl.lock_table();
