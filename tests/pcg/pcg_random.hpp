@@ -1,24 +1,22 @@
 /*
  * PCG Random Number Generation for C++
  *
- * Copyright 2014 Melissa O'Neill <oneill@pcg-random.org>
+ * Copyright 2014-2017 Melissa O'Neill <oneill@pcg-random.org>,
+ *                     and the PCG Project contributors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: (Apache-2.0 OR MIT)
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (provided in
+ * LICENSE-APACHE.txt and at http://www.apache.org/licenses/LICENSE-2.0)
+ * or under the MIT license (provided in LICENSE-MIT.txt and at
+ * http://opensource.org/licenses/MIT), at your option. This file may not
+ * be copied, modified, or distributed except according to those terms.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Distributed on an "AS IS" BASIS, WITHOUT WARRANTY OF ANY KIND, either
+ * express or implied.  See your chosen license for details.
  *
  * For additional information about the PCG random number generation scheme,
- * including its license and other licensing options, visit
- *
- *     http://www.pcg-random.org
+ * visit http://www.pcg-random.org/.
  */
 
 /*
@@ -75,6 +73,7 @@
 #ifndef PCG_RAND_HPP_INCLUDED
 #define PCG_RAND_HPP_INCLUDED 1
 
+#include <algorithm>
 #include <cinttypes>
 #include <cstddef>
 #include <cstdlib>
@@ -82,11 +81,24 @@
 #include <cassert>
 #include <limits>
 #include <iostream>
+#include <iterator>
 #include <type_traits>
 #include <utility>
 #include <locale>
 #include <new>
 #include <stdexcept>
+
+#ifdef _MSC_VER
+    #pragma warning(disable:4146)
+#endif
+
+#ifdef _MSC_VER
+    #define PCG_ALWAYS_INLINE _forceinline
+#elif __GNUC__
+    #define PCG_ALWAYS_INLINE __attribute__((always_inline))
+#else
+    #define PCG_ALWAYS_INLINE inline
+#endif
 
 /*
  * The pcg_extras namespace contains some support code that is likley to
@@ -321,7 +333,7 @@ protected:
     specific_stream() = default;
 
     specific_stream(itype specific_seq)
-        : inc_((specific_seq << 1) | itype(1U))
+        : inc_(itype(specific_seq << 1) | itype(1U))
     {
         // Nothing (else) to do.
     }
@@ -380,7 +392,7 @@ public:
 
     static constexpr result_type max()
     {
-        return ~result_type(0UL);
+        return result_type(~result_type(0UL));
     }
 
 protected:
@@ -422,7 +434,7 @@ protected:
     static itype distance(itype cur_state, itype newstate, itype cur_mult,
                           itype cur_plus, itype mask = ~itype(0U));
 
-    itype distance(itype newstate, itype mask = ~itype(0U)) const
+    itype distance(itype newstate, itype mask = itype(~itype(0U))) const
     {
         return distance(state_, newstate, multiplier(), increment(), mask);
     }
@@ -672,9 +684,10 @@ itype operator-(const engine<xtype,itype,
                                output_mixin,output_previous,
                                stream_mixin_rhs, multiplier_mixin_rhs>& rhs)
 {
-    if (lhs.multiplier() != rhs.multiplier()
-        || lhs.increment() != rhs.increment())
-        throw std::logic_error("incomparable generators");
+    static_assert(
+        std::is_same<stream_mixin_lhs, stream_mixin_rhs>::value &&
+            std::is_same<multiplier_mixin_lhs, multiplier_mixin_rhs>::value,
+        "Incomparable generators");
     return rhs.distance(lhs.state_);
 }
 
@@ -1203,7 +1216,7 @@ public:
         return baseclass::period_pow2() + table_size*extvalclass::period_pow2();
     }
 
-    __attribute__((always_inline)) result_type operator()()
+    PCG_ALWAYS_INLINE result_type operator()()
     {
         result_type rhs = get_extended_value();
         result_type lhs = this->baseclass::operator()();
@@ -1235,8 +1248,8 @@ public:
         datainit(data);
     }
 
-    extended(const result_type* data, state_type seed_)
-        : baseclass(seed_)
+    extended(const result_type* data, state_type seed)
+        : baseclass(seed)
     {
         datainit(data);
     }
@@ -1245,9 +1258,9 @@ public:
     // to use SFINAE; users don't have to worry about its template-ness.
 
     template <typename bc = baseclass>
-    extended(const result_type* data, state_type seed_,
+    extended(const result_type* data, state_type seed,
             typename bc::stream_state stream_seed)
-        : baseclass(seed_, stream_seed)
+        : baseclass(seed, stream_seed)
     {
         datainit(data);
     }
@@ -1258,8 +1271,8 @@ public:
         selfinit();
     }
 
-    extended(state_type seed_)
-        : baseclass(seed_)
+    extended(state_type seed)
+        : baseclass(seed)
     {
         selfinit();
     }
@@ -1268,8 +1281,8 @@ public:
     // to use SFINAE; users don't have to worry about its template-ness.
 
     template <typename bc = baseclass>
-    extended(state_type seed_, typename bc::stream_state stream_seed)
-        : baseclass(seed_, stream_seed)
+    extended(state_type seed, typename bc::stream_state stream_seed)
+        : baseclass(seed, stream_seed)
     {
         selfinit();
     }
@@ -1360,7 +1373,10 @@ bool operator==(const extended<table_pow2, advance_pow2,
     auto& base_lhs = static_cast<const baseclass&>(lhs);
     auto& base_rhs = static_cast<const baseclass&>(rhs);
     return base_lhs == base_rhs
-        && !memcmp((void*) lhs.data_, (void*) rhs.data_, sizeof(lhs.data_));
+        && std::equal(
+               std::begin(lhs.data_), std::end(lhs.data_),
+               std::begin(rhs.data_)
+           );
 }
 
 template <bitcount_t table_pow2, bitcount_t advance_pow2,
@@ -1370,7 +1386,7 @@ inline bool operator!=(const extended<table_pow2, advance_pow2,
                        const extended<table_pow2, advance_pow2,
                                       baseclass, extvalclass, kdd>& rhs)
 {
-    return lhs != rhs;
+    return !operator==(lhs, rhs);
 }
 
 template <typename CharT, typename Traits,
@@ -1695,8 +1711,8 @@ typedef pcg_engines::oneseq_xsl_rr_rr_128_128   pcg128_oneseq_once_insecure;
 // and can be called twice to generate 64 bits, but does not required
 // 128-bit math; on 32-bit systems, it's faster than pcg64 as well.
 
-typedef pcg_engines::ext_setseq_xsh_rr_64_32<6,16,true>     pcg32_k2;
-typedef pcg_engines::ext_oneseq_xsh_rs_64_32<6,32,true>     pcg32_k2_fast;
+typedef pcg_engines::ext_setseq_xsh_rr_64_32<1,16,true>     pcg32_k2;
+typedef pcg_engines::ext_oneseq_xsh_rs_64_32<1,32,true>     pcg32_k2_fast;
 
 // These eight extended RNGs have about as much state as arc4random
 //
@@ -1747,5 +1763,9 @@ typedef pcg_engines::ext_oneseq_xsl_rr_128_64<10,128,false> pcg64_c1024_fast;
 
 typedef pcg_engines::ext_setseq_xsh_rr_64_32<14,16,true>    pcg32_k16384;
 typedef pcg_engines::ext_oneseq_xsh_rs_64_32<14,32,true>    pcg32_k16384_fast;
+
+#ifdef _MSC_VER
+    #pragma warning(default:4146)
+#endif
 
 #endif // PCG_RAND_HPP_INCLUDED

@@ -1,24 +1,22 @@
 /*
  * PCG Random Number Generation for C++
  *
- * Copyright 2014 Melissa O'Neill <oneill@pcg-random.org>
+ * Copyright 2014-2017 Melissa O'Neill <oneill@pcg-random.org>,
+ *                     and the PCG Project contributors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: (Apache-2.0 OR MIT)
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (provided in
+ * LICENSE-APACHE.txt and at http://www.apache.org/licenses/LICENSE-2.0)
+ * or under the MIT license (provided in LICENSE-MIT.txt and at
+ * http://opensource.org/licenses/MIT), at your option. This file may not
+ * be copied, modified, or distributed except according to those terms.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Distributed on an "AS IS" BASIS, WITHOUT WARRANTY OF ANY KIND, either
+ * express or implied.  See your chosen license for details.
  *
  * For additional information about the PCG random number generation scheme,
- * including its license and other licensing options, visit
- *
- *     http://www.pcg-random.org
+ * visit http://www.pcg-random.org/.
  */
 
 /*
@@ -46,7 +44,6 @@
 #include <utility>
 #include <locale>
 #include <iterator>
-#include <utility>
 
 #ifdef __GNUC__
     #include <cxxabi.h>
@@ -135,7 +132,7 @@ operator<<(std::basic_ostream<CharT,Traits>& out, pcg128_t value)
         }
         if (highpart != 0 || desired_width > 16)
             out << highpart;
-        CharT oldfill;
+        CharT oldfill = '\0';
         if (highpart != 0) {
             out.width(16);
             oldfill = out.fill('0');
@@ -156,8 +153,8 @@ operator<<(std::basic_ostream<CharT,Traits>& out, pcg128_t value)
     constexpr auto BASE = pcg128_t(10ULL);
     do {
         auto div = value / BASE;
-        auto mod = static_cast<uint32_t>(value - (div * BASE));
-        *(--pos) = '0' + mod;
+        auto mod = uint32_t(value - (div * BASE));
+        *(--pos) = '0' + char(mod);
         value = div;
     } while(value != pcg128_t(0ULL));
     return out << pos;
@@ -393,7 +390,7 @@ SrcIter uneven_copy_impl(
     constexpr bitcount_t SCALE     = SRC_SIZE / DEST_SIZE;
 
     size_t count = 0;
-    src_t value;
+    src_t value = 0;
 
     while (dest_first != dest_last) {
         if ((count++ % SCALE) == 0)
@@ -483,10 +480,10 @@ void generate_to_impl(SeedSeq&& generator, DestIter dest,
         generator.generate(buffer, buffer+FROM_ELEMS);
         uneven_copy(buffer, dest, dest+size);
     } else {
-        uint32_t* buffer = (uint32_t*) malloc(GEN_SIZE * FROM_ELEMS);
+        uint32_t* buffer = static_cast<uint32_t*>(malloc(GEN_SIZE * FROM_ELEMS));
         generator.generate(buffer, buffer+FROM_ELEMS);
         uneven_copy(buffer, dest, dest+size);
-        free(buffer);
+        free(static_cast<void*>(buffer));
     }
 }
 
@@ -531,13 +528,14 @@ template <typename Iter, typename RandType>
 void shuffle(Iter from, Iter to, RandType&& rng)
 {
     typedef typename std::iterator_traits<Iter>::difference_type delta_t;
+    typedef typename std::remove_reference<RandType>::type::result_type result_t;
     auto count = to - from;
     while (count > 1) {
-        delta_t chosen(bounded_rand(rng, count));
+        delta_t chosen = delta_t(bounded_rand(rng, result_t(count)));
         --count;
         --to;
         using std::swap;
-        swap(*(from+chosen), *to);
+        swap(*(from + chosen), *to);
     }
 }
 
@@ -612,6 +610,8 @@ public:
 //
 // to print out my_foo_type_t (or its concrete type if it is a synonym)
 
+#if __cpp_rtti || __GXX_RTTI
+
 template <typename T>
 struct printable_typename {};
 
@@ -620,17 +620,19 @@ std::ostream& operator<<(std::ostream& out, printable_typename<T>) {
     const char *implementation_typename = typeid(T).name();
 #ifdef __GNUC__
     int status;
-    const char* pretty_name =
+    char* pretty_name =
         abi::__cxa_demangle(implementation_typename, NULL, NULL, &status);
     if (status == 0)
         out << pretty_name;
-    free((void*) pretty_name);
+    free(static_cast<void*>(pretty_name));
     if (status == 0)
         return out;
 #endif
     out << implementation_typename;
     return out;
 }
+
+#endif  // __cpp_rtti || __GXX_RTTI
 
 } // namespace pcg_extras
 
