@@ -1,0 +1,8 @@
+*.dmp
+*.exe
+**/.vscode
+**/.vs
+**/CMakeFiles
+build*
+\[local cache\]/*
+\[private symbol server\]/*
