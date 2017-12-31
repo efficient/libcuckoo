@@ -1218,7 +1218,8 @@ private:
     hash_value hv;
   } CuckooRecord;
 
-  // The maximum number of items in a cuckoo BFS path.
+  // The maximum number of items in a cuckoo BFS path. It determines the
+  // maximum number of slots we search when cuckooing.
   static constexpr uint8_t MAX_BFS_PATH_LEN = 5;
 
   // An array of CuckooRecords
@@ -1423,13 +1424,13 @@ private:
     return true;
   }
 
-  // A constexpr version of pow that we can use for static_asserts
+  // A constexpr version of pow that we can use for various compile-time
+  // constants and checks.
   static constexpr size_type const_pow(size_type a, size_type b) {
     return (b == 0) ? 1 : a * const_pow(a, b - 1);
   }
 
-// b_slot holds the information for a BFS path through the table.
-#pragma pack(push, 1)
+  // b_slot holds the information for a BFS path through the table.
   struct b_slot {
     // The bucket of the last item in the path.
     size_type bucket;
@@ -1437,14 +1438,14 @@ private:
     // the path. pathcode is sort of like a base-slot_per_bucket number, and
     // we need to hold at most MAX_BFS_PATH_LEN slots. Thus we need the
     // maximum pathcode to be at least slot_per_bucket()^(MAX_BFS_PATH_LEN).
-    size_type pathcode;
+    uint16_t pathcode;
     static_assert(const_pow(slot_per_bucket(), MAX_BFS_PATH_LEN) <
                       std::numeric_limits<decltype(pathcode)>::max(),
                   "pathcode may not be large enough to encode a cuckoo "
                   "path");
     // The 0-indexed position in the cuckoo path this slot occupies. It must
     // be less than MAX_BFS_PATH_LEN, and also able to hold negative values.
-    int_fast8_t depth;
+    int8_t depth;
     static_assert(MAX_BFS_PATH_LEN - 1 <=
                       std::numeric_limits<decltype(depth)>::max(),
                   "The depth type must able to hold a value of"
@@ -1457,7 +1458,6 @@ private:
       assert(d < MAX_BFS_PATH_LEN);
     }
   };
-#pragma pack(pop)
 
   // b_queue is the queue used to store b_slots for BFS cuckoo hashing.
   class b_queue {
@@ -1466,39 +1466,43 @@ private:
 
     void enqueue(b_slot x) {
       assert(!full());
-      slots_[last_] = x;
-      last_ = increment(last_);
+      slots_[last_++] = x;
     }
 
     b_slot dequeue() {
       assert(!empty());
-      b_slot &x = slots_[first_];
-      first_ = increment(first_);
+      assert(first_ < last_);
+      b_slot &x = slots_[first_++];
       return x;
     }
 
     bool empty() const { return first_ == last_; }
 
-    bool full() const { return increment(last_) == first_; }
+    bool full() const { return last_ == MAX_CUCKOO_COUNT; }
 
   private:
-    // The maximum size of the BFS queue. Note that unless it's less than
-    // slot_per_bucket()^MAX_BFS_PATH_LEN, it won't really mean anything.
-    static constexpr size_type MAX_CUCKOO_COUNT = 256;
-    static_assert((MAX_CUCKOO_COUNT & (MAX_CUCKOO_COUNT - 1)) == 0,
-                  "MAX_CUCKOO_COUNT should be a power of 2");
-    // A circular array of b_slots
+    // The size of the BFS queue. It holds just enough elements to fulfill a
+    // MAX_BFS_PATH_LEN search for two starting buckets, with no circular
+    // wrapping-around. For one bucket, this is the geometric sum
+    // sum_{k=0}^{MAX_BFS_PATH_LEN-1} slot_per_bucket()^k
+    // = (1 - slot_per_bucket()^MAX_BFS_PATH_LEN) / (1 - slot_per_bucket())
+    //
+    // Note that if slot_per_bucket() == 1, then this simply equals
+    // MAX_BFS_PATH_LEN.
+    static_assert(slot_per_bucket() > 0,
+                  "SLOT_PER_BUCKET must be greater than 0.");
+    static constexpr size_type MAX_CUCKOO_COUNT =
+        2 * ((slot_per_bucket() == 1)
+             ? MAX_BFS_PATH_LEN
+             : (const_pow(slot_per_bucket(), MAX_BFS_PATH_LEN) - 1) /
+               (slot_per_bucket() - 1));
+    // An array of b_slots. Since we allocate just enough space to complete a
+    // full search, we should never exceed the end of the array.
     b_slot slots_[MAX_CUCKOO_COUNT];
     // The index of the head of the queue in the array
     size_type first_;
     // One past the index of the last_ item of the queue in the array.
     size_type last_;
-
-    // returns the index in the queue after ind, wrapping around if
-    // necessary.
-    size_type increment(size_type ind) const {
-      return (ind + 1) & (MAX_CUCKOO_COUNT - 1);
-    }
   };
 
   // slot_search searches for a cuckoo path using breadth-first search. It
@@ -1515,14 +1519,14 @@ private:
     // starts on
     q.enqueue(b_slot(i1, 0, 0));
     q.enqueue(b_slot(i2, 1, 0));
-    while (!q.full() && !q.empty()) {
+    while (!q.empty()) {
       b_slot x = q.dequeue();
+      auto lock_manager = lock_one(hp, x.bucket, TABLE_MODE());
+      bucket &b = buckets_[x.bucket];
       // Picks a (sort-of) random slot to start from
       size_type starting_slot = x.pathcode % slot_per_bucket();
-      for (size_type i = 0; i < slot_per_bucket() && !q.full(); ++i) {
+      for (size_type i = 0; i < slot_per_bucket(); ++i) {
         size_type slot = (starting_slot + i) % slot_per_bucket();
-        auto lock_manager = lock_one(hp, x.bucket, TABLE_MODE());
-        bucket &b = buckets_[x.bucket];
         if (!b.occupied(slot)) {
           // We can terminate the search here
           x.pathcode = x.pathcode * slot_per_bucket() + slot;
@@ -1534,14 +1538,15 @@ private:
         // have come from if we kicked out the item at this slot.
         const partial_t partial = b.partial(slot);
         if (x.depth < MAX_BFS_PATH_LEN - 1) {
+          assert(!q.full());
           b_slot y(alt_index(hp, partial, x.bucket),
                    x.pathcode * slot_per_bucket() + slot, x.depth + 1);
           q.enqueue(y);
         }
       }
     }
-    // We didn't find a short-enough cuckoo path, so the queue ran out of
-    // space. Return a failure value.
+    // We didn't find a short-enough cuckoo path, so the search terminated.
+    // Return a failure value.
     return b_slot(0, 0, -1);
   }
 
