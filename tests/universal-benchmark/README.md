@@ -41,7 +41,7 @@ new keys can be added in `universal_gen.hh`
 `LIBCUCKOO`).  Support for new maps can be added in
 `universal_table_wrapper.hh`
 
-`-DTRACKING_ALLOCATOR`
+`-DUNIVERSAL_TRACKING_ALLOCATOR`
 : enables memory usage sampling
 
 These flags control the mixture of operations that will be run in the

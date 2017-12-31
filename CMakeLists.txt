@@ -7,7 +7,6 @@ set(libcuckoo_VERSION_PATCH 0)
 
 # put these in the cache so they show up in ccmake
 option (BUILD_EXAMPLES "build example libcuckoo programs")
-option (BUILD_TESTS "build libcuckoo test programs")
 
 # Add the libcuckoo interface target
 add_subdirectory(libcuckoo)
