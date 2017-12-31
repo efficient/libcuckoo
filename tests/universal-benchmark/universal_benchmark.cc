@@ -151,7 +151,7 @@ void mix(Table &tbl, const size_t num_ops, const std::array<Ops, 100> &op_mix,
   auto upsert_fn = [](VALUE &v) { return; };
   // Use an LCG over the keys array to iterate over the keys in a pseudorandom
   // order, for find operations
-  assert(1UL << static_cast<size_t>(floor(log2(numkeys))) == numkeys);
+  assert(static_cast<size_t>(1) << static_cast<size_t>(floor(log2(numkeys))) == numkeys);
   assert(numkeys > 4);
   size_t find_seq = 0;
   const size_t a = numkeys / 2 + 1;
@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
 
     pcg64_oneseq_once_insecure base_rng(g_seed);
 
-    const size_t initial_capacity = 1UL << g_initial_capacity;
+    const size_t initial_capacity = static_cast<size_t>(1) << g_initial_capacity;
     const size_t total_ops = initial_capacity * g_total_ops_percentage / 100;
 
     // Pre-generate an operation mix based on our percentages.
@@ -273,7 +273,7 @@ int main(int argc, char **argv) {
     // Round this quantity up to a power of 2, so that we can use an LCG to
     // cycle over the array "randomly".
     const size_t insert_keys_per_thread =
-        1UL << static_cast<size_t>(
+        static_cast<size_t>(1) << static_cast<size_t>(
             ceil(log2((insert_keys + g_threads - 1) / g_threads)));
     // Can't do this in parallel, because the random number generator is
     // single-threaded.

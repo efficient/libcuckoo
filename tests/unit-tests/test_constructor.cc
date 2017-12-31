@@ -16,7 +16,7 @@ TEST_CASE("default size", "[constructor]") {
   } else {
     REQUIRE(tbl.hashpower() == (size_t)log2(LIBCUCKOO_DEFAULT_SIZE / 4));
   }
-  REQUIRE(tbl.bucket_count() == 1UL << tbl.hashpower());
+  REQUIRE(tbl.bucket_count() == static_cast<size_t>(1) << tbl.hashpower());
   REQUIRE(tbl.load_factor() == 0);
 }
 

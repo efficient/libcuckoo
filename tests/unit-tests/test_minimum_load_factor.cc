@@ -25,10 +25,10 @@ TEST_CASE("caps automatic expansion", "[minimum load fator]") {
   tbl.minimum_load_factor(0.6);
 
   for (size_t i = 0; i < 2 * slot_per_bucket; ++i) {
-    tbl.insert(i, i);
+    tbl.insert(static_cast<int>(i), static_cast<int>(i));
   }
 
-  REQUIRE_THROWS_AS(tbl.insert(2 * slot_per_bucket, 0),
+  REQUIRE_THROWS_AS(tbl.insert(2 * static_cast<int>(slot_per_bucket), 0),
                     libcuckoo_load_factor_too_low);
 }
 

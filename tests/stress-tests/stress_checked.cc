@@ -14,7 +14,6 @@
 #include <random>
 #include <stdexcept>
 #include <thread>
-#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -73,7 +72,7 @@ public:
         ind_dist(0, g_numkeys - 1), finished(false) {
     // Sets up the random number generator
     if (g_seed == 0) {
-      g_seed = std::chrono::system_clock::now().time_since_epoch().count();
+      g_seed = static_cast<size_t>(std::chrono::system_clock::now().time_since_epoch().count());
     }
     std::cout << "seed = " << g_seed << std::endl;
     gen_seed = g_seed;
@@ -277,7 +276,7 @@ template <class KType> void StressTest(AllEnvironment<KType> *env) {
     }
   }
   // Sleeps before ending the threads
-  sleep(g_test_len);
+  std::this_thread::sleep_for(std::chrono::seconds(g_test_len));
   env->finished.store(true);
   for (size_t i = 0; i < threads.size(); i++) {
     threads[i].join();
@@ -318,7 +317,7 @@ int main(int argc, char **argv) {
               args, arg_vars, arg_help, sizeof(args) / sizeof(const char *),
               flags, flag_vars, flag_help,
               sizeof(flags) / sizeof(const char *));
-  g_numkeys = 1U << g_power;
+  g_numkeys = static_cast<size_t>(1) << g_power;
 
   if (g_use_strings) {
     auto *env = new AllEnvironment<KeyType2>;

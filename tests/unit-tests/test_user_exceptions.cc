@@ -215,7 +215,7 @@ TEST_CASE("user exceptions", "[user_exceptions]") {
     }
     size_t original_hashpower = tbl.hashpower();
     size_t next_hashpower = original_hashpower + 1;
-    size_t next_reserve = (1UL << next_hashpower) * tbl.slot_per_bucket();
+    size_t next_reserve = (static_cast<size_t>(1) << next_hashpower) * tbl.slot_per_bucket();
     constructorThrow = true;
     REQUIRE_THROWS_AS(tbl.reserve(next_reserve), std::runtime_error);
     constructorThrow = false;

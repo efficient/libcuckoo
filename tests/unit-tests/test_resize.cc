@@ -43,15 +43,31 @@ TEST_CASE("reserve calc", "[resize]") {
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
               2500000 * slot_per_bucket) == 22);
 
-  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              (1UL << 31) * slot_per_bucket) == 31);
-  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              ((1UL << 31) + 1) * slot_per_bucket) == 32);
+  //for 64+bit platform
+  if (sizeof(size_t) >= sizeof(uint64_t)) {
+	  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+		  (static_cast<uint64_t>(1) << 31) * slot_per_bucket) == 31);
+	  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+		  ((static_cast<uint64_t>(1) << 31) + 1) * slot_per_bucket) == 32);
 
-  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              (1UL << 61) * slot_per_bucket) == 61);
-  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              ((1ULL << 61) + 1) * slot_per_bucket) == 62);
+	  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+		  (static_cast<uint64_t>(1) << 61) * slot_per_bucket) == 61);
+	  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+		  ((static_cast<uint64_t>(1) << 61) + 1) * slot_per_bucket) == 62);
+  }
+  //for 32bit platform
+  else if (sizeof(size_t) == sizeof(uint32_t)) {
+	  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+		  (static_cast<uint32_t>(1) << 15) * slot_per_bucket) == 15);
+	  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+		  ((static_cast<uint32_t>(1) << 15) + 1) * slot_per_bucket) == 16);
+
+	  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+		  (static_cast<uint32_t>(1) << 29) * slot_per_bucket) == 29);
+	  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
+		  ((static_cast<uint32_t>(1) << 29) + 1) * slot_per_bucket) == 30);
+
+  }
 }
 
 struct my_type {

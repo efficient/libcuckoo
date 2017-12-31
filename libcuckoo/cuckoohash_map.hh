@@ -753,6 +753,7 @@ private:
   // Counter type
   using counter_type = int64_t;
 
+public:
   // A fast, lightweight spinlock
   LIBCUCKOO_SQUELCH_PADDING_WARNING
   class LIBCUCKOO_ALIGNAS(64) spinlock {
@@ -788,6 +789,7 @@ private:
     counter_type elem_counter_;
   };
 
+private:
   template <typename U>
   using rebind_alloc =
       typename std::allocator_traits<allocator_type>::template rebind_alloc<U>;

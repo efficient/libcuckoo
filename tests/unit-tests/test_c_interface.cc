@@ -1,3 +1,8 @@
+#ifdef _MSC_VER
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+#endif
 #include <catch.hpp>
 #include <cerrno>
 #include <cstdio>
@@ -276,7 +281,7 @@ TEST_CASE("c interface locked table", "[c interface]") {
 
     int successes = 0;
     for (int i = 0; i < 10; ++i) {
-      successes += int_int_table_locked_table_erase(ltbl, &i);
+      successes += static_cast<int>(int_int_table_locked_table_erase(ltbl, &i));
     }
     REQUIRE(successes == 8);
     REQUIRE(int_int_table_locked_table_empty(ltbl));
