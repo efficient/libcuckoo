@@ -1,8 +1,4 @@
-add_executable(universal_benchmark
-    universal_benchmark.cc
-    universal_gen.hh
-    universal_table_wrapper.hh
-)
+add_executable(universal_benchmark universal_benchmark.cc)
 
 target_link_libraries(universal_benchmark
     PRIVATE test_util

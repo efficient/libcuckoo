@@ -1,8 +1,5 @@
-add_library(int_int_table STATIC int_int_table.h int_int_table.cc)
-target_link_libraries(int_int_table
-	PUBLIC libcuckoo-c-intf
-	PRIVATE libcuckoo-c-impl
-)
+add_library(int_int_table STATIC int_int_table.cc)
+target_link_libraries(int_int_table libcuckoo)
 
 add_executable(unit_tests
     test_constructor.cc
