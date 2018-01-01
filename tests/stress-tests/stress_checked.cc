@@ -14,7 +14,6 @@
 #include <random>
 #include <stdexcept>
 #include <thread>
-#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -277,7 +276,7 @@ template <class KType> void StressTest(AllEnvironment<KType> *env) {
     }
   }
   // Sleeps before ending the threads
-  sleep(g_test_len);
+  std::this_thread::sleep_for(std::chrono::seconds(g_test_len));
   env->finished.store(true);
   for (size_t i = 0; i < threads.size(); i++) {
     threads[i].join();

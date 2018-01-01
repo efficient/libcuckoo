@@ -44,12 +44,12 @@ TEST_CASE("reserve calc", "[resize]") {
               2500000 * slot_per_bucket) == 22);
 
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              (1UL << 31) * slot_per_bucket) == 31);
+              (1ULL << 31) * slot_per_bucket) == 31);
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              ((1UL << 31) + 1) * slot_per_bucket) == 32);
+              ((1ULL << 31) + 1) * slot_per_bucket) == 32);
 
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              (1UL << 61) * slot_per_bucket) == 61);
+              (1ULL << 61) * slot_per_bucket) == 61);
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
               ((1ULL << 61) + 1) * slot_per_bucket) == 62);
 }

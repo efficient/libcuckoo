@@ -13,7 +13,6 @@
 #include <random>
 #include <stdint.h>
 #include <thread>
-#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -168,7 +167,7 @@ void resize_thread(AllEnvironment<KType> *env, size_t thread_seed) {
   pcg64_fast gen(thread_seed);
   // Resizes at a random time
   const size_t sleep_time = gen() % g_test_len;
-  sleep(sleep_time);
+  std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
   if (env->finished.load()) {
     return;
   }
@@ -188,7 +187,7 @@ void iterator_thread(AllEnvironment<KType> *env, size_t thread_seed) {
   pcg64_fast gen(thread_seed);
   // Runs an iteration operation at a random time
   const size_t sleep_time = gen() % g_test_len;
-  sleep(sleep_time);
+  std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
   if (env->finished.load()) {
     return;
   }
@@ -219,7 +218,7 @@ void clear_thread(AllEnvironment<KType> *env, size_t thread_seed) {
   pcg64_fast gen(thread_seed);
   // Runs a clear operation at a random time
   const size_t sleep_time = gen() % g_test_len;
-  sleep(sleep_time);
+  std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
   if (env->finished.load()) {
     return;
   }
@@ -256,7 +255,7 @@ template <class KType> void StressTest(AllEnvironment<KType> *env) {
     }
   }
   // Sleeps before ending the threads
-  sleep(g_test_len);
+  std::this_thread::sleep_for(std::chrono::seconds(g_test_len));
   env->finished.store(true);
   for (size_t i = 0; i < threads.size(); i++) {
     threads[i].join();

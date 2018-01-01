@@ -2447,7 +2447,7 @@ public:
 
       // Re-size the locks, and set the size to the stored size
       lt.maybe_resize_locks(lt.bucket_count());
-      for (spinlock &lock : lt.get_current_locks()) {
+      for (auto &lock : lt.get_current_locks()) {
         lock.elem_counter() = 0;
       }
       size_type size;
