@@ -219,8 +219,8 @@ public:
   // Destroys all the live data in the buckets
   void clear() noexcept {
     static_assert(
-        std::is_nothrow_destructible<key_type>::value &&
-            std::is_nothrow_destructible<mapped_type>::value,
+        is_nothrow_destructible<key_type>::value &&
+            is_nothrow_destructible<mapped_type>::value,
         "libcuckoo_bucket_container requires key and value to be nothrow "
         "destructible");
     for (size_type i = 0; i < size(); ++i) {
@@ -269,6 +269,20 @@ private:
     }
   }
 
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ == 7
+  // GCC 4.7 doesn't have std::is_nothrow_destructable.
+  // This implementation is from
+  // https://github.com/mapbox/variant/blob/24391a9ea3e4b060c7a62debf6eb4e3515b9a5e6/variant.hpp
+  template <typename U>
+  struct is_nothrow_destructible
+  {
+    static constexpr bool value = noexcept(std::declval<U*>()->~U());
+  };
+#else
+  template <typename U>
+  using is_nothrow_destructible = std::is_nothrow_destructible<U>;
+#endif
+
   void destroy_buckets() noexcept {
     if (buckets_ == nullptr) {
       return;
@@ -276,7 +290,7 @@ private:
     // The bucket default constructor is nothrow, so we don't have to
     // worry about dealing with exceptions when constructing all the
     // elements.
-    static_assert(std::is_nothrow_destructible<bucket>::value,
+    static_assert(is_nothrow_destructible<bucket>::value,
                   "libcuckoo_bucket_container requires bucket to be nothrow "
                   "destructible");
     clear();
