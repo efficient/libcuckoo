@@ -81,7 +81,7 @@ public:
   /**
    * The number of slots per hash bucket
    */
-  static constexpr size_type slot_per_bucket() { return SLOT_PER_BUCKET; }
+  static constexpr uint16_t slot_per_bucket() { return SLOT_PER_BUCKET; }
 
   /**@}*/
 
@@ -1453,7 +1453,7 @@ private:
     static_assert(-1 >= std::numeric_limits<decltype(depth)>::min(),
                   "The depth type must be able to hold a value of -1");
     b_slot() {}
-    b_slot(const size_type b, const size_type p, const decltype(depth) d)
+    b_slot(const size_type b, const uint16_t p, const decltype(depth) d)
         : bucket(b), pathcode(p), depth(d) {
       assert(d < MAX_BFS_PATH_LEN);
     }
@@ -1526,7 +1526,7 @@ private:
       // Picks a (sort-of) random slot to start from
       size_type starting_slot = x.pathcode % slot_per_bucket();
       for (size_type i = 0; i < slot_per_bucket(); ++i) {
-        size_type slot = (starting_slot + i) % slot_per_bucket();
+        uint16_t slot = (starting_slot + i) % slot_per_bucket();
         if (!b.occupied(slot)) {
           // We can terminate the search here
           x.pathcode = x.pathcode * slot_per_bucket() + slot;
