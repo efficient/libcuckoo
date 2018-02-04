@@ -23,6 +23,12 @@
 #include <utility>
 #include <vector>
 
+#include <random>
+#include <boost/interprocess/offset_ptr.hpp>
+#include <boost/interprocess/containers/vector.hpp>
+#include <boost/interprocess/containers/list.hpp>
+namespace bip = boost::interprocess;
+
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
 #include "libcuckoo_bucket_container.hh"
@@ -446,7 +452,7 @@ public:
     const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
     if (pos.status == ok) {
       fn(buckets_[pos.index].mapped(pos.slot));
-      return true;
+        return true;
     } else {
       return false;
     }
@@ -495,7 +501,7 @@ public:
       if (fn(buckets_[pos.index].mapped(pos.slot))) {
         del_from_bucket(pos.index, pos.slot);
       }
-      return true;
+        return true;
     } else {
       return false;
     }
@@ -549,7 +555,7 @@ public:
     return uprase_fn(std::forward<K>(key),
                      [&fn](mapped_type &v) {
                        fn(v);
-                       return false;
+      return false;
                      },
                      std::forward<Args>(val)...);
   }
@@ -666,6 +672,47 @@ public:
    */
   locked_table lock_table() { return locked_table(*this); }
 
+    template<typename F>
+    uint erase_random_fn(uint num_elements, F fn) {
+      static std::random_device rnd_dev;
+      static std::mt19937_64 rnd_gen(rnd_dev());
+
+      size_type buckets_size = buckets_.size();
+      if (capacity() < LIBCUCKOO_DEFAULT_SIZE)
+        return 0;
+
+      std::uniform_int_distribution<uint64_t> dist_buckets(0, buckets_size - 1);
+      const size_type start_bucket = dist_buckets(rnd_gen);
+
+      const size_type max_buckets = 2;
+      uint del_elements = 0;
+      const size_type max_bucket_num = std::min(buckets_size, start_bucket + max_buckets);
+      for (size_type cur_bucket = start_bucket; del_elements < num_elements && cur_bucket < max_bucket_num; ++cur_bucket) {
+        const auto ob = snapshot_and_lock_one<normal_mode>(cur_bucket);
+        bucket &b = buckets_[cur_bucket];
+        for (size_type slot = 0; slot < slot_per_bucket() && del_elements < num_elements; ++slot) {
+          if (b.occupied(slot) && fn(buckets_[cur_bucket].mapped(slot))) {
+            del_from_bucket(cur_bucket, slot);
+            ++del_elements;
+          }
+        }
+      }
+
+      return del_elements;
+    }
+
+    template <typename K, typename F>
+    auto exec_fn(const K &key, F fn, mapped_type* foo=nullptr) -> decltype(fn(foo)) {
+      const hash_value hv = hashed_key(key);
+      const auto b = snapshot_and_lock_two<normal_mode>(hv);
+      const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
+      if (pos.status == ok) {
+        return fn(&buckets_[pos.index].mapped(pos.slot));
+      } else {
+        return fn(nullptr);
+      }
+    }
+
   /**@}*/
 
 private:
@@ -725,7 +772,7 @@ private:
     const uint16_t hash_16bit = (static_cast<uint16_t>(hash_32bit) ^
                                  static_cast<uint16_t>(hash_32bit >> 16));
     const uint8_t hash_8bit = (static_cast<uint8_t>(hash_16bit) ^
-                               static_cast<uint8_t>(hash_16bit >> 8));
+                                static_cast<uint8_t>(hash_16bit >> 8));
     return hash_8bit;
   }
 
@@ -755,7 +802,7 @@ private:
 
   // A fast, lightweight spinlock
   LIBCUCKOO_SQUELCH_PADDING_WARNING
-  class LIBCUCKOO_ALIGNAS(64) spinlock {
+  class spinlock {
   public:
     spinlock() : elem_counter_(0) { lock_.clear(); }
 
@@ -786,14 +833,14 @@ private:
   private:
     std::atomic_flag lock_;
     counter_type elem_counter_;
-  };
+    };
 
   template <typename U>
   using rebind_alloc =
       typename std::allocator_traits<allocator_type>::template rebind_alloc<U>;
 
-  using locks_t = std::vector<spinlock, rebind_alloc<spinlock>>;
-  using all_locks_t = std::list<locks_t, rebind_alloc<locks_t>>;
+  using locks_t = bip::vector<spinlock, rebind_alloc<spinlock>>;
+  using all_locks_t = bip::list<locks_t, rebind_alloc<locks_t>>;
 
   // Classes for managing locked buckets. By storing and moving around sets of
   // locked buckets in these classes, we can ensure that they are unlocked
@@ -807,6 +854,24 @@ private:
 
   using locked_table_mode = std::integral_constant<bool, true>;
   using normal_mode = std::integral_constant<bool, false>;
+
+    class OneBucket {
+    public:
+        OneBucket() {}
+        OneBucket(size_type i1_, locked_table_mode)
+                : i1(i1_) {}
+        OneBucket(locks_t &locks, size_type i1_, normal_mode)
+                : i1(i1_), first_manager_(&locks[lock_ind(i1)]) {}
+
+        void unlock() {
+            first_manager_.reset();
+        }
+
+        size_type i1;
+
+    private:
+        LockManager first_manager_;
+    };
 
   class TwoBuckets {
   public:
@@ -829,7 +894,7 @@ private:
     LockManager first_manager_, second_manager_;
   };
 
-  struct AllUnlocker {
+    struct AllUnlocker {
     void operator()(cuckoohash_map *map) const {
       for (auto it = first_locked; it != map->all_locks_.end(); ++it) {
         locks_t &locks = *it;
@@ -934,10 +999,22 @@ private:
     }
     return std::make_pair(TwoBuckets(locks, i1, i2, normal_mode()),
                           LockManager((lock_ind(i3) == lock_ind(i1) ||
-                                       lock_ind(i3) == lock_ind(i2))
-                                          ? nullptr
+                                             lock_ind(i3) == lock_ind(i2))
+                                                ? nullptr
                                           : &locks[lock_ind(i3)]));
   }
+
+    template <typename TABLE_MODE>
+    LockManager snapshot_and_lock_one(const size_type &i) const {
+        while (true) {
+            const size_type hp = hashpower();
+            try {
+                return lock_one(hp, i, TABLE_MODE());
+            } catch (hashpower_changed &) {
+                continue;
+            }
+        }
+    }
 
   // snapshot_and_lock_two loads locks the buckets associated with the given
   // hash value, making sure the hashpower doesn't change before the locks are
@@ -970,7 +1047,7 @@ private:
   // out of locked_table mode.
   AllLocksManager snapshot_and_lock_all(locked_table_mode) {
     return AllLocksManager();
-  }
+    }
 
   AllLocksManager snapshot_and_lock_all(normal_mode) {
     // all_locks_ should never decrease in size, so if it is non-empty now, it
@@ -1430,7 +1507,7 @@ private:
     return (b == 0) ? 1 : a * const_pow(a, b - 1);
   }
 
-  // b_slot holds the information for a BFS path through the table.
+// b_slot holds the information for a BFS path through the table.
   struct b_slot {
     // The bucket of the last item in the path.
     size_type bucket;
@@ -1459,7 +1536,7 @@ private:
     }
   };
 
-  // b_queue is the queue used to store b_slots for BFS cuckoo hashing.
+// b_queue is the queue used to store b_slots for BFS cuckoo hashing.
   class b_queue {
   public:
     b_queue() noexcept : first_(0), last_(0) {}
@@ -1583,13 +1660,13 @@ private:
     parallel_exec(
         0, hashsize(current_hp),
         [this, &new_buckets, current_hp, new_hp](size_type start, size_type end,
-                                                 std::exception_ptr &eptr) {
-          try {
+                                             std::exception_ptr &eptr) {
+                    try {
             move_buckets(new_buckets, current_hp, new_hp, start, end);
-          } catch (...) {
-            eptr = std::current_exception();
-          }
-        });
+                    } catch (...) {
+                      eptr = std::current_exception();
+                    }
+                  });
     LIBCUCKOO_SQUELCH_DEADCODE_WARNING_END;
 
     // Resize the locks array if necessary. This is done before we update the
@@ -1606,14 +1683,14 @@ private:
                     size_type new_hp, size_type start_ind, size_type end_ind) {
     for (size_type old_bucket_ind = start_ind; old_bucket_ind < end_ind;
          ++old_bucket_ind) {
-      // By doubling the table size, the index_hash and alt_index of
-      // each key got one bit added to the top, at position
-      // current_hp, which means anything we have to move will either
-      // be at the same bucket position, or exactly
-      // hashsize(current_hp) later than the current bucket
+        // By doubling the table size, the index_hash and alt_index of
+        // each key got one bit added to the top, at position
+        // current_hp, which means anything we have to move will either
+        // be at the same bucket position, or exactly
+        // hashsize(current_hp) later than the current bucket
       bucket &old_bucket = buckets_[old_bucket_ind];
       const size_type new_bucket_ind = old_bucket_ind + hashsize(current_hp);
-      size_type new_bucket_slot = 0;
+        size_type new_bucket_slot = 0;
 
       // For each occupied slot, either move it into its same position in the
       // new buckets container, or to the first available spot in the new
@@ -1621,33 +1698,33 @@ private:
       for (size_type old_bucket_slot = 0; old_bucket_slot < slot_per_bucket();
            ++old_bucket_slot) {
         if (!old_bucket.occupied(old_bucket_slot)) {
-          continue;
-        }
+            continue;
+          }
         const hash_value hv = hashed_key(old_bucket.key(old_bucket_slot));
-        const size_type old_ihash = index_hash(current_hp, hv.hash);
-        const size_type old_ahash =
-            alt_index(current_hp, hv.partial, old_ihash);
-        const size_type new_ihash = index_hash(new_hp, hv.hash);
-        const size_type new_ahash = alt_index(new_hp, hv.partial, new_ihash);
+          const size_type old_ihash = index_hash(current_hp, hv.hash);
+          const size_type old_ahash =
+              alt_index(current_hp, hv.partial, old_ihash);
+          const size_type new_ihash = index_hash(new_hp, hv.hash);
+          const size_type new_ahash = alt_index(new_hp, hv.partial, new_ihash);
         size_type dst_bucket_ind, dst_bucket_slot;
         if ((old_bucket_ind == old_ihash && new_ihash == new_bucket_ind) ||
             (old_bucket_ind == old_ahash && new_ahash == new_bucket_ind)) {
           // We're moving the key to the new bucket
           dst_bucket_ind = new_bucket_ind;
           dst_bucket_slot = new_bucket_slot++;
-        } else {
+          } else {
           // We're moving the key to the old bucket
           assert((old_bucket_ind == old_ihash && new_ihash == old_ihash) ||
                  (old_bucket_ind == old_ahash && new_ahash == old_ahash));
           dst_bucket_ind = old_bucket_ind;
           dst_bucket_slot = old_bucket_slot;
-        }
+          }
         new_buckets.setKV(dst_bucket_ind, dst_bucket_slot++,
                           old_bucket.partial(old_bucket_slot),
                           old_bucket.movable_key(old_bucket_slot),
                           std::move(old_bucket.mapped(old_bucket_slot)));
+        }
       }
-    }
   }
 
   // Checks whether the resize is okay to proceed. Returns a status code, or
@@ -1992,7 +2069,7 @@ public:
       // them const so that the mutable iterator can derive from this
       // class. Also, since iterators should be default constructible,
       // copyable, and movable, we have to make this a raw pointer type.
-      buckets_t *buckets_;
+      bip::offset_ptr<buckets_t> buckets_;
 
       // The bucket index of the item being pointed to. For implementation
       // convenience, we let it take on negative values.
