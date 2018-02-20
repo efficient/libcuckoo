@@ -24,7 +24,7 @@ Requirements
 
 This library has been tested on Mac OSX >= 10.8 and Ubuntu >= 12.04.
 
-It compiles with clang++ >= 3.3 and g++ >= 4.7, however we strongly suggest
+It compiles with clang++ >= 3.3 and g++ >= 4.8, however we strongly suggest
 using the latest versions of both compilers, as they have greatly improved
 support for atomic operations. Building the library requires CMake version >=
 3.1.0. To install it on Ubuntu
