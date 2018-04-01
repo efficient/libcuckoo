@@ -540,8 +540,8 @@ public:
 
   /**
    * Equivalent to calling @ref uprase_fn with a functor that modifies the
-   * mutates the given value and always returns false (meaning the element is
-   * not removed). The passed-in functor must implement the method <tt>void
+   * given value and always returns false (meaning the element is not removed).
+   * The passed-in functor must implement the method <tt>void
    * operator()(mapped_type&)</tt>.
    */
   template <typename K, typename F, typename... Args>
