@@ -2429,7 +2429,7 @@ public:
     // A manager for all the locks we took on the table.
     AllLocksManager all_locks_manager_;
 
-    friend class cuckoohash_map;
+    friend class cuckoohash_map<Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET>;
 
     friend std::ostream &operator<<(std::ostream &os, const locked_table &lt) {
       os << lt.buckets();

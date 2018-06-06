@@ -84,7 +84,7 @@ public:
     bool &occupied(size_type ind) { return occupied_[ind]; }
 
   private:
-    friend class libcuckoo_bucket_container;
+    friend class libcuckoo_bucket_container<Key, T, Allocator, Partial, SLOT_PER_BUCKET>;
 
     using storage_value_type = std::pair<Key, T>;
 
