@@ -1366,10 +1366,10 @@ private:
       // cuckoopath_search found empty isn't empty anymore, we unlock them
       // and return false. Otherwise, the bucket is empty and insertable,
       // so we hold the locks and return true.
-      const size_type bucket = cuckoo_path[0].bucket;
-      assert(bucket == b.i1 || bucket == b.i2);
+      const size_type bucket_i = cuckoo_path[0].bucket;
+      assert(bucket_i == b.i1 || bucket_i == b.i2);
       b = lock_two(hp, b.i1, b.i2, TABLE_MODE());
-      if (!buckets_[bucket].occupied(cuckoo_path[0].slot)) {
+      if (!buckets_[bucket_i].occupied(cuckoo_path[0].slot)) {
         return true;
       } else {
         b.unlock();
