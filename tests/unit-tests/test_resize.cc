@@ -56,14 +56,24 @@ TEST_CASE("reserve calc", "[resize]") {
 
 struct my_type {
   int x;
+  my_type(int v) : x(v) {}
+  my_type(const my_type& other) {
+    x = other.x;
+  }
+  my_type(my_type&& other) {
+    x = other.x;
+    ++num_moves;
+  }
   ~my_type() { ++num_deletes; }
   static size_t num_deletes;
+  static size_t num_moves;
 };
 
 size_t my_type::num_deletes = 0;
+size_t my_type::num_moves = 0;
 
 TEST_CASE("Resizing number of frees", "[resize]") {
-  my_type val{0};
+  my_type val(0);
   size_t num_deletes_after_resize;
   {
     // Should allocate 2 buckets of 4 slots
@@ -74,12 +84,11 @@ TEST_CASE("Resizing number of frees", "[resize]") {
       map.insert(i, val);
     }
     // All of the items should be moved during resize to the new region of
-    // memory. Then up to 8 of them can be moved to their new bucket.
-    REQUIRE(my_type::num_deletes >= 8);
-    REQUIRE(my_type::num_deletes <= 16);
-    num_deletes_after_resize = my_type::num_deletes;
+    // memory. They should be deleted from the old container.
+    REQUIRE(my_type::num_deletes == 8);
+    REQUIRE(my_type::num_moves == 8);
   }
-  REQUIRE(my_type::num_deletes == num_deletes_after_resize + 9);
+  REQUIRE(my_type::num_deletes == 17);
 }
 
 // Taken from https://github.com/facebook/folly/blob/master/folly/docs/Traits.md

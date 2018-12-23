@@ -216,7 +216,8 @@ public:
     traits_::destroy(allocator_, std::addressof(b.storage_kvpair(slot)));
   }
 
-  // Destroys all the live data in the buckets
+  // Destroys all the live data in the buckets. Does not deallocate the bucket
+  // memory.
   void clear() noexcept {
     static_assert(
         std::is_nothrow_destructible<key_type>::value &&
@@ -231,6 +232,13 @@ public:
         }
       }
     }
+  }
+
+  // Destroys and deallocates all data in the buckets. After this operation,
+  // the bucket container will have no allocated data. It is still valid to
+  // swap, move or copy assign to this container.
+  void clear_and_deallocate() noexcept {
+    destroy_buckets();
   }
 
 private:
