@@ -354,11 +354,13 @@ private:
   // this should be okay. We could in theory just check if the type is
   // TriviallyCopyable but this check is not available on some compilers we
   // want to support.
-  template <typename Bogus = void *>
-  friend typename std::enable_if<sizeof(Bogus) && std::is_trivial<Key>::value &&
-                                     std::is_trivial<T>::value,
+  template <typename ThisKey, typename ThisT>
+  friend typename std::enable_if<std::is_trivial<ThisKey>::value &&
+                                     std::is_trivial<ThisT>::value,
                                  std::ostream &>::type
-  operator<<(std::ostream &os, const libcuckoo_bucket_container &bc) {
+  operator<<(std::ostream &os,
+             const libcuckoo_bucket_container<ThisKey, ThisT, Allocator,
+                                              Partial, SLOT_PER_BUCKET> &bc) {
     size_type hp = bc.hashpower();
     os.write(reinterpret_cast<const char *>(&hp), sizeof(size_type));
     os.write(reinterpret_cast<const char *>(bc.buckets_),
@@ -366,11 +368,13 @@ private:
     return os;
   }
 
-  template <typename Bogus = void *>
-  friend typename std::enable_if<sizeof(Bogus) && std::is_trivial<Key>::value &&
-                                     std::is_trivial<T>::value,
+  template <typename ThisKey, typename ThisT>
+  friend typename std::enable_if<std::is_trivial<ThisKey>::value &&
+                                     std::is_trivial<ThisT>::value,
                                  std::istream &>::type
-  operator>>(std::istream &is, libcuckoo_bucket_container &bc) {
+  operator>>(std::istream &is,
+             libcuckoo_bucket_container<ThisKey, ThisT, Allocator,
+                                        Partial, SLOT_PER_BUCKET> &bc) {
     size_type hp;
     is.read(reinterpret_cast<char *>(&hp), sizeof(size_type));
     libcuckoo_bucket_container new_bc(hp, bc.get_allocator());

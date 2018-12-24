@@ -725,13 +725,15 @@ private:
 
   // true if the key is small and simple, which means using partial keys for
   // lookup would probably slow us down
-  static constexpr bool is_simple =
-      std::is_pod<key_type>::value && sizeof(key_type) <= 8;
+  static constexpr bool is_simple() {
+    return std::is_pod<key_type>::value && sizeof(key_type) <= 8;
+  }
 
   // Whether or not the data is nothrow-move-constructible.
-  static constexpr bool is_data_nothrow_move_constructible =
-    std::is_nothrow_move_constructible<key_type>::value &&
-    std::is_nothrow_move_constructible<mapped_type>::value;
+  static constexpr bool is_data_nothrow_move_constructible() {
+    return std::is_nothrow_move_constructible<key_type>::value &&
+           std::is_nothrow_move_constructible<mapped_type>::value;
+  }
 
   // Contains a hash and partial for a given key. The partial key is used for
   // partial-key cuckoohashing, and for finding the alternate bucket of that a
@@ -955,7 +957,7 @@ private:
     spinlock &lock = locks[l];
     if (lock.is_migrated()) return;
 
-    assert(is_data_nothrow_move_constructible);
+    assert(is_data_nothrow_move_constructible());
     assert(locks.size() == kMaxNumLocks);
     assert(old_buckets_.hashpower() + 1 == buckets_.hashpower());
     assert(old_buckets_.size() >= kMaxNumLocks);
@@ -1164,7 +1166,7 @@ private:
     // Silence a warning from MSVC about partial being unused if is_simple.
     (void)partial;
     for (int i = 0; i < static_cast<int>(slot_per_bucket()); ++i) {
-      if (!b.occupied(i) || (!is_simple && partial != b.partial(i))) {
+      if (!b.occupied(i) || (!is_simple() && partial != b.partial(i))) {
         continue;
       } else if (key_eq()(b.key(i), key)) {
         return i;
@@ -1311,7 +1313,7 @@ private:
     slot = -1;
     for (int i = 0; i < static_cast<int>(slot_per_bucket()); ++i) {
       if (b.occupied(i)) {
-        if (!is_simple && partial != b.partial(i)) {
+        if (!is_simple() && partial != b.partial(i)) {
           continue;
         }
         if (key_eq()(b.key(i), key)) {
@@ -1673,7 +1675,7 @@ private:
   // provides a strong exception guarantee.
   template <typename TABLE_MODE, typename AUTO_RESIZE>
   cuckoo_status cuckoo_fast_double(size_type current_hp) {
-    if (!is_data_nothrow_move_constructible) {
+    if (!is_data_nothrow_move_constructible()) {
       LIBCUCKOO_DBG("%s", "cannot run cuckoo_fast_double because key-value"
                           " pair is not nothrow move constructible");
       return cuckoo_expand_simple<TABLE_MODE, AUTO_RESIZE>(current_hp + 1);
