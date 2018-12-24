@@ -34,6 +34,11 @@ support for atomic operations. Building the library requires CMake version >=
 Building
 ==========
 
+libcuckoo is a header-only library, so in order to get going, just add the
+`libcuckoo` subdirectory to your include path. These directions cover
+installing the library to a particular location on your system, and also
+building any the examples and tests included in the repository.
+
 We suggest you build out of source, in a separate `build` directory:
 
     $ mkdir build

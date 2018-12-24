@@ -34,7 +34,9 @@
  * @tparam T type of values in the table
  * @tparam Hash type of hash functor
  * @tparam KeyEqual type of equality comparison functor
- * @tparam Allocator type of allocator
+ * @tparam Allocator type of allocator. We suggest using an aligned allocator,
+ * because the table relies on types that are over-aligned to optimize
+ * concurrent cache usage.
  * @tparam SLOT_PER_BUCKET number of slots for each bucket in the table
  */
 template <class Key, class T, class Hash = std::hash<Key>,
