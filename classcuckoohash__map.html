@@ -243,7 +243,7 @@ class cuckoohash_map&lt; Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET &gt;
     <tr><td class="paramname">T</td><td>type of values in the table </td></tr>
     <tr><td class="paramname">Hash</td><td>type of hash functor </td></tr>
     <tr><td class="paramname">KeyEqual</td><td>type of equality comparison functor </td></tr>
-    <tr><td class="paramname">Allocator</td><td>type of allocator </td></tr>
+    <tr><td class="paramname">Allocator</td><td>type of allocator. We suggest using an aligned allocator, because the table relies on types that are over-aligned to optimize concurrent cache usage. </td></tr>
     <tr><td class="paramname">SLOT_PER_BUCKET</td><td>number of slots for each bucket in the table </td></tr>
   </table>
   </dd>

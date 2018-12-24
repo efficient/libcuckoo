@@ -93,21 +93,21 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b> =
 <tr class="memitem:a5d4164d967379750fc6ae29a9fbaac73"><td class="memItemLeft" align="right" valign="top"><a id="a5d4164d967379750fc6ae29a9fbaac73"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>partial_t</b> = Partial</td></tr>
 <tr class="separator:a5d4164d967379750fc6ae29a9fbaac73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c5403bd3bf40edd25468782051c6dac"><td class="memItemLeft" align="right" valign="top"><a id="a4c5403bd3bf40edd25468782051c6dac"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b> = std::size_t</td></tr>
-<tr class="separator:a4c5403bd3bf40edd25468782051c6dac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9748d5869c76501d55373406f7e12ac1"><td class="memItemLeft" align="right" valign="top"><a id="a9748d5869c76501d55373406f7e12ac1"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b> = typename traits_::size_type</td></tr>
+<tr class="separator:a9748d5869c76501d55373406f7e12ac1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6e40821ef0ba842fef866601605e05c"><td class="memItemLeft" align="right" valign="top"><a id="ae6e40821ef0ba842fef866601605e05c"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b> = value_type &amp;</td></tr>
 <tr class="separator:ae6e40821ef0ba842fef866601605e05c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ec51b0143df231e59aa92d475d42eb6"><td class="memItemLeft" align="right" valign="top"><a id="a8ec51b0143df231e59aa92d475d42eb6"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>const_reference</b> = const value_type &amp;</td></tr>
 <tr class="separator:a8ec51b0143df231e59aa92d475d42eb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adcdb005aefe1105b3b4beb8f3a2adf2e"><td class="memItemLeft" align="right" valign="top"><a id="adcdb005aefe1105b3b4beb8f3a2adf2e"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b> = value_type *</td></tr>
-<tr class="separator:adcdb005aefe1105b3b4beb8f3a2adf2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47423b0a7f9e7e4499a1a36608b436bc"><td class="memItemLeft" align="right" valign="top"><a id="a47423b0a7f9e7e4499a1a36608b436bc"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b> = const value_type *</td></tr>
-<tr class="separator:a47423b0a7f9e7e4499a1a36608b436bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a247a5778fbc6adb807e5c217781250d8"><td class="memItemLeft" align="right" valign="top"><a id="a247a5778fbc6adb807e5c217781250d8"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b> = typename traits_::pointer</td></tr>
+<tr class="separator:a247a5778fbc6adb807e5c217781250d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8c4c36a781c0d7fa554de4ba9fd2f027"><td class="memItemLeft" align="right" valign="top"><a id="a8c4c36a781c0d7fa554de4ba9fd2f027"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>const_pointer</b> = typename traits_::const_pointer</td></tr>
+<tr class="separator:a8c4c36a781c0d7fa554de4ba9fd2f027"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -169,14 +169,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>clear_and_deallocate<
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:a054c322021f2ed220d676e82d85a9df8"><td class="memTemplParams" colspan="2"><a id="a054c322021f2ed220d676e82d85a9df8"></a>
-template&lt;typename Bogus  = void *&gt; </td></tr>
-<tr class="memitem:a054c322021f2ed220d676e82d85a9df8"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; sizeof(Bogus) &amp;&amp;std::is_trivial&lt; Key &gt;::value &amp;&amp;std::is_trivial&lt; T &gt;::value, std::ostream &amp; &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&lt;&lt;</b> (std::ostream &amp;os, const <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc)</td></tr>
-<tr class="separator:a054c322021f2ed220d676e82d85a9df8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac42d7dc392647f5939d21d97501d72dd"><td class="memTemplParams" colspan="2"><a id="ac42d7dc392647f5939d21d97501d72dd"></a>
-template&lt;typename Bogus  = void *&gt; </td></tr>
-<tr class="memitem:ac42d7dc392647f5939d21d97501d72dd"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; sizeof(Bogus) &amp;&amp;std::is_trivial&lt; Key &gt;::value &amp;&amp;std::is_trivial&lt; T &gt;::value, std::istream &amp; &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&gt;&gt;</b> (std::istream &amp;is, <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a> &amp;bc)</td></tr>
-<tr class="separator:ac42d7dc392647f5939d21d97501d72dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29431b3ff4fea8ff817c69125c62d5dd"><td class="memTemplParams" colspan="2"><a id="a29431b3ff4fea8ff817c69125c62d5dd"></a>
+template&lt;typename ThisKey , typename ThisT &gt; </td></tr>
+<tr class="memitem:a29431b3ff4fea8ff817c69125c62d5dd"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; std::is_trivial&lt; ThisKey &gt;::value &amp;&amp;std::is_trivial&lt; ThisT &gt;::value, std::ostream &amp; &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&lt;&lt;</b> (std::ostream &amp;os, const <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a>&lt; ThisKey, ThisT, Allocator, Partial, SLOT_PER_BUCKET &gt; &amp;bc)</td></tr>
+<tr class="separator:a29431b3ff4fea8ff817c69125c62d5dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed3a039b870e03300b472a8baa822755"><td class="memTemplParams" colspan="2"><a id="aed3a039b870e03300b472a8baa822755"></a>
+template&lt;typename ThisKey , typename ThisT &gt; </td></tr>
+<tr class="memitem:aed3a039b870e03300b472a8baa822755"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; std::is_trivial&lt; ThisKey &gt;::value &amp;&amp;std::is_trivial&lt; ThisT &gt;::value, std::istream &amp; &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&gt;&gt;</b> (std::istream &amp;is, <a class="el" href="classlibcuckoo__bucket__container.html">libcuckoo_bucket_container</a>&lt; ThisKey, ThisT, Allocator, Partial, SLOT_PER_BUCKET &gt; &amp;bc)</td></tr>
+<tr class="separator:aed3a039b870e03300b472a8baa822755"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;class Key, class T, class Allocator, class Partial, std::size_t SLOT_PER_BUCKET&gt;<br />
