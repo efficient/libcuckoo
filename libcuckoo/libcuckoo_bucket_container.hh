@@ -39,11 +39,11 @@ private:
 public:
   using allocator_type = typename traits_::allocator_type;
   using partial_t = Partial;
-  using size_type = std::size_t;
+  using size_type = typename traits_::size_type;
   using reference = value_type &;
   using const_reference = const value_type &;
-  using pointer = value_type *;
-  using const_pointer = const value_type *;
+  using pointer = typename traits_::pointer;
+  using const_pointer = typename traits_::const_pointer;
 
   /*
    * The bucket type holds SLOT_PER_BUCKET key-value pairs, along with their
@@ -165,7 +165,8 @@ public:
   void swap(libcuckoo_bucket_container &bc) noexcept {
     swap_allocator(allocator_, bc.allocator_,
                    typename traits_::propagate_on_container_swap());
-    bucket_allocator_ = allocator_;
+    swap_allocator(bucket_allocator_, bc.bucket_allocator_,
+                   typename traits_::propagate_on_container_swap());
     // Regardless of whether we actually swapped the allocators or not, it will
     // always be okay to do the remainder of the swap. This is because if the
     // allocators were swapped, then the subsequent operations are okay. If the
@@ -242,6 +243,9 @@ public:
   }
 
 private:
+  using bucket_traits_ = typename traits_::template rebind_traits<bucket>;
+  using bucket_pointer = typename bucket_traits_::pointer;
+  
   // true here means the allocators from `src` are propagated on libcuckoo_copy
   template <typename A>
   void copy_allocator(A &dst, const A &src, std::true_type) {
@@ -309,7 +313,7 @@ private:
   }
 
   template <bool B>
-  bucket *transfer(
+  bucket_pointer transfer(
       size_type dst_hp,
       typename std::conditional<B, libcuckoo_bucket_container &,
                                 const libcuckoo_bucket_container &>::type src,
@@ -325,7 +329,7 @@ private:
       }
     }
     // Take away the pointer from `dst` and return it
-    bucket *dst_pointer = dst.buckets_;
+    bucket_pointer dst_pointer = dst.buckets_;
     dst.buckets_ = nullptr;
     return dst_pointer;
   }
@@ -342,7 +346,7 @@ private:
   std::atomic<size_type> hashpower_;
   // These buckets are protected by striped locks (external to the
   // BucketContainer), which must be obtained before accessing a bucket.
-  bucket *buckets_;
+  bucket_pointer buckets_;
 
   // If the key and value are Trivial, the bucket be serilizable. Since we
   // already disallow user-specialized instances of std::pair, we know that the
