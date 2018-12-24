@@ -14,7 +14,7 @@ var searchData=
   ['libcuckoo_5fno_5fmaximum_5fhashpower',['LIBCUCKOO_NO_MAXIMUM_HASHPOWER',['../cuckoohash__config_8hh.html#a5dda74f33a7f1a551454c8b0ace54cff',1,'cuckoohash_config.hh']]],
   ['libcuckoo_5fsquelch_5fdeadcode_5fwarning_5fbegin',['LIBCUCKOO_SQUELCH_DEADCODE_WARNING_BEGIN',['../cuckoohash__util_8hh.html#afddc85773bdaacbb1cce606fb343619b',1,'cuckoohash_util.hh']]],
   ['libcuckoo_5fsquelch_5fpadding_5fwarning',['LIBCUCKOO_SQUELCH_PADDING_WARNING',['../cuckoohash__util_8hh.html#a2509909e76908ee20da73adb5ae552af',1,'cuckoohash_util.hh']]],
-  ['load_5ffactor',['load_factor',['../classcuckoohash__map.html#a0eea70084a665efefcf56e650e0c4a75',1,'cuckoohash_map::load_factor()'],['../classlibcuckoo__load__factor__too__low.html#aa1377ea4d2b1bee0bf62b6844948d063',1,'libcuckoo_load_factor_too_low::load_factor()']]],
+  ['load_5ffactor',['load_factor',['../classcuckoohash__map.html#aa958a8bb36541c18e4a3aa5d6f2d9251',1,'cuckoohash_map::load_factor()'],['../classlibcuckoo__load__factor__too__low.html#a76cd9fd141fd5caaa4d1a052a1af68df',1,'libcuckoo_load_factor_too_low::load_factor()']]],
   ['lock_5ftable',['lock_table',['../classcuckoohash__map.html#a89f6c5b06f998ca22dfb129053898907',1,'cuckoohash_map']]],
   ['locked_5ftable',['locked_table',['../classcuckoohash__map_1_1locked__table.html',1,'cuckoohash_map']]]
 ];
