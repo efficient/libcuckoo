@@ -355,7 +355,7 @@ int main(int argc, char **argv) {
     "key": "%s",
     "key_size": "%zu",
     "value": "%s",
-    "value_size", "%zu",
+    "value_size": "%zu",
     "table": "%s",
     "output": {
         "total_ops": {
