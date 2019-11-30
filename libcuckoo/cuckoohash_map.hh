@@ -2022,7 +2022,7 @@ private:
   }
 
   void num_remaining_lazy_rehash_locks(size_type n) const {
-    return num_remaining_lazy_rehash_locks_.store(
+    num_remaining_lazy_rehash_locks_.store(
         n, std::memory_order_release);
     if (n == 0) {
       old_buckets_.clear_and_deallocate();
