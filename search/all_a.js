@@ -1,6 +1,8 @@
 var searchData=
 [
-  ['operator_2d_2d',['operator--',['../classcuckoohash__map_1_1locked__table_1_1const__iterator.html#a94c5a476d0f8bfbc0a3f10c0211b7c9b',1,'cuckoohash_map::locked_table::const_iterator']]],
-  ['operator_3d',['operator=',['../classcuckoohash__map.html#ab651eebfa4ff57d52e89c322f136415d',1,'cuckoohash_map::operator=(const cuckoohash_map &amp;other)'],['../classcuckoohash__map.html#ac725434840c34c9988c3a6b8d9c6d1bc',1,'cuckoohash_map::operator=(cuckoohash_map &amp;&amp;other)'],['../classcuckoohash__map.html#af00cf6a8a232d044e37d433615a0f960',1,'cuckoohash_map::operator=(std::initializer_list&lt; value_type &gt; ilist)']]],
-  ['operator_5b_5d',['operator[]',['../classcuckoohash__map_1_1locked__table.html#a36e38c0108213b836dd594c421de28a8',1,'cuckoohash_map::locked_table']]]
+  ['max_5fnum_5fworker_5fthreads',['max_num_worker_threads',['../classlibcuckoo_1_1cuckoohash__map.html#abf8f8f1151601469448ccdf7cd9c4150',1,'libcuckoo::cuckoohash_map::max_num_worker_threads(size_type extra_threads)'],['../classlibcuckoo_1_1cuckoohash__map.html#a7b7c9b373b4a6db20a4eea8e82115a78',1,'libcuckoo::cuckoohash_map::max_num_worker_threads() const ']]],
+  ['maximum_5fhashpower',['maximum_hashpower',['../classlibcuckoo_1_1cuckoohash__map.html#a347d97a4f777f08ddb0208e0d337ace3',1,'libcuckoo::cuckoohash_map::maximum_hashpower(size_type mhp)'],['../classlibcuckoo_1_1cuckoohash__map.html#a19a43bf6ec51154b22dc0692f740c9ff',1,'libcuckoo::cuckoohash_map::maximum_hashpower() const ']]],
+  ['maximum_5fhashpower_5fexceeded',['maximum_hashpower_exceeded',['../classlibcuckoo_1_1maximum__hashpower__exceeded.html#a3526bf250eda9e01d56c1b0dec28ea40',1,'libcuckoo::maximum_hashpower_exceeded']]],
+  ['maximum_5fhashpower_5fexceeded',['maximum_hashpower_exceeded',['../classlibcuckoo_1_1maximum__hashpower__exceeded.html',1,'libcuckoo']]],
+  ['minimum_5fload_5ffactor',['minimum_load_factor',['../classlibcuckoo_1_1cuckoohash__map.html#aeff0b2be71812025c605d1e2ff9e6715',1,'libcuckoo::cuckoohash_map::minimum_load_factor(const double mlf)'],['../classlibcuckoo_1_1cuckoohash__map.html#a43c00e3ec28fe4857a185e6756933b89',1,'libcuckoo::cuckoohash_map::minimum_load_factor() const ']]]
 ];

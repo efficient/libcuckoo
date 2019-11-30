@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['size',['size',['../classcuckoohash__map.html#a8d9715802d1f0f83331d441279e2d52d',1,'cuckoohash_map']]],
-  ['slot_5fper_5fbucket',['slot_per_bucket',['../classcuckoohash__map.html#aa9b739be24c23e85ee93f5c3da0bf5ab',1,'cuckoohash_map']]],
-  ['swap',['swap',['../classcuckoohash__map.html#a7e3e4ac035aba2cdc90bc2934154789f',1,'cuckoohash_map::swap()'],['../cuckoohash__map_8hh.html#a913efaec7c01cffefa9574c52308b5fd',1,'std::swap()']]]
+  ['size',['size',['../classlibcuckoo_1_1cuckoohash__map.html#a2322c453cf379c4456e94a3fdced6bd7',1,'libcuckoo::cuckoohash_map']]],
+  ['slot_5fper_5fbucket',['slot_per_bucket',['../classlibcuckoo_1_1cuckoohash__map.html#a5b93abe6d3fb9db1478ef208b84d65e4',1,'libcuckoo::cuckoohash_map']]],
+  ['swap',['swap',['../classlibcuckoo_1_1cuckoohash__map.html#aee9f05af225c08d93c965da61726ea74',1,'libcuckoo::cuckoohash_map::swap()'],['../cuckoohash__map_8hh.html#afe89c8b67b646990875fd2fe274cf516',1,'libcuckoo::swap()']]]
 ];

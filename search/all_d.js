@@ -1,8 +1,5 @@
 var searchData=
 [
-  ['unlock',['unlock',['../classcuckoohash__map_1_1locked__table.html#ac24884c62a8b1eb16c35e1537d9172f4',1,'cuckoohash_map::locked_table']]],
-  ['update',['update',['../classcuckoohash__map.html#a762791dfdc7ab3bc188f2e383c49c217',1,'cuckoohash_map']]],
-  ['update_5ffn',['update_fn',['../classcuckoohash__map.html#a1dfea64c88955108f242d0643c2c067f',1,'cuckoohash_map']]],
-  ['uprase_5ffn',['uprase_fn',['../classcuckoohash__map.html#a16313b5ca954e528233ff6949a477e4d',1,'cuckoohash_map']]],
-  ['upsert',['upsert',['../classcuckoohash__map.html#aa769fa5fc1612a1065119ee48dab6ebd',1,'cuckoohash_map']]]
+  ['rehash',['rehash',['../classlibcuckoo_1_1cuckoohash__map.html#a30b37f8d4e65f557a049ff3c495e0701',1,'libcuckoo::cuckoohash_map::rehash()'],['../classlibcuckoo_1_1cuckoohash__map_1_1locked__table.html#ad97f2c40252bc8405897ecb5ce87753b',1,'libcuckoo::cuckoohash_map::locked_table::rehash()']]],
+  ['reserve',['reserve',['../classlibcuckoo_1_1cuckoohash__map.html#a1620ba0231a77799ce5a03f43f67a441',1,'libcuckoo::cuckoohash_map::reserve()'],['../classlibcuckoo_1_1cuckoohash__map_1_1locked__table.html#a0de0e6adbf064c98de9ef847f417ac97',1,'libcuckoo::cuckoohash_map::locked_table::reserve()']]]
 ];
