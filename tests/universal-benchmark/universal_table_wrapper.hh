@@ -166,7 +166,7 @@ public:
   }
 
 private:
-  cuckoohash_map<KEY, VALUE, std::hash<KEY>, std::equal_to<KEY>,
+  libcuckoo::cuckoohash_map<KEY, VALUE, std::hash<KEY>, std::equal_to<KEY>,
                  Allocator<std::allocator, std::pair<const KEY, VALUE>>>
       tbl;
 };

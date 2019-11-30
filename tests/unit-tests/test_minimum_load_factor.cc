@@ -9,7 +9,7 @@
 TEST_CASE("minimum load factor initialized to default",
           "[minimum load factor]") {
   IntIntTable tbl;
-  REQUIRE(tbl.minimum_load_factor() == LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR);
+  REQUIRE(tbl.minimum_load_factor() == libcuckoo::DEFAULT_MINIMUM_LOAD_FACTOR);
 }
 
 class BadHashFunction {
@@ -19,7 +19,7 @@ public:
 
 TEST_CASE("caps automatic expansion", "[minimum load fator]") {
   const size_t slot_per_bucket = 4;
-  cuckoohash_map<int, int, BadHashFunction, std::equal_to<int>,
+  libcuckoo::cuckoohash_map<int, int, BadHashFunction, std::equal_to<int>,
                  std::allocator<std::pair<const int, int>>, slot_per_bucket>
       tbl(16);
   tbl.minimum_load_factor(0.6);
@@ -29,7 +29,7 @@ TEST_CASE("caps automatic expansion", "[minimum load fator]") {
   }
 
   REQUIRE_THROWS_AS(tbl.insert(2 * slot_per_bucket, 0),
-                    libcuckoo_load_factor_too_low);
+                    libcuckoo::load_factor_too_low);
 }
 
 TEST_CASE("invalid minimum load factor", "[minimum load factor]") {

@@ -4,7 +4,7 @@
 #include <libcuckoo/cuckoohash_map.hh>
 
 int main() {
-  cuckoohash_map<int, std::string> Table;
+  libcuckoo::cuckoohash_map<int, std::string> Table;
 
   for (int i = 0; i < 100; i++) {
     Table.insert(i, "hello");

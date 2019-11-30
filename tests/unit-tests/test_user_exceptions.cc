@@ -5,6 +5,8 @@
 #include "unit_test_util.hh"
 #include <libcuckoo/cuckoohash_map.hh>
 
+using libcuckoo::UnitTestInternalAccess;
+
 void maybeThrow(bool throwException) {
   if (throwException) {
     throw std::runtime_error("exception");
@@ -69,7 +71,7 @@ template <> struct equal_to<ExceptionInt> {
 };
 }
 
-typedef cuckoohash_map<ExceptionInt, size_t, std::hash<ExceptionInt>,
+typedef libcuckoo::cuckoohash_map<ExceptionInt, size_t, std::hash<ExceptionInt>,
                        std::equal_to<ExceptionInt>>
     exceptionTable;
 

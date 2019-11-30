@@ -11,10 +11,10 @@ TEST_CASE("default size", "[constructor]") {
   IntIntTable tbl;
   REQUIRE(tbl.size() == 0);
   REQUIRE(tbl.empty());
-  if (LIBCUCKOO_DEFAULT_SIZE < 4) {
+  if (libcuckoo::DEFAULT_SIZE < 4) {
     REQUIRE(tbl.hashpower() == 0);
   } else {
-    REQUIRE(tbl.hashpower() == (size_t)log2(LIBCUCKOO_DEFAULT_SIZE / 4));
+    REQUIRE(tbl.hashpower() == (size_t)log2(libcuckoo::DEFAULT_SIZE / 4));
   }
   REQUIRE(tbl.bucket_count() == 1UL << tbl.hashpower());
   REQUIRE(tbl.load_factor() == 0);
@@ -36,7 +36,7 @@ TEST_CASE("frees even with exceptions", "[constructor]") {
   REQUIRE(get_unfreed_bytes() == 0);
 
   typedef IntIntTableWithAlloc<
-      TrackingAllocator<int, UnitTestInternalAccess::IntIntBucketSize * 2>>
+      TrackingAllocator<int, libcuckoo::UnitTestInternalAccess::IntIntBucketSize * 2>>
       some_space_table;
   // Should throw when allocating things after the bucket
   REQUIRE_THROWS_AS(some_space_table(1), std::bad_alloc);
@@ -106,7 +106,7 @@ bool operator!=(const StatefulAllocator<T> &a1,
 
 using alloc_t = StatefulAllocator<std::pair<const int, int>>;
 using tbl_t =
-    cuckoohash_map<int, int, StatefulHash, StatefulKeyEqual, alloc_t, 4>;
+    libcuckoo::cuckoohash_map<int, int, StatefulHash, StatefulKeyEqual, alloc_t, 4>;
 
 TEST_CASE("stateful components", "[constructor]") {
   tbl_t map(8, StatefulHash(10), StatefulKeyEqual(20), alloc_t(30));
@@ -203,7 +203,8 @@ TEST_CASE("swap maps", "[constructor]") {
   REQUIRE(map2.key_eq().state == 20);
   REQUIRE(map2.get_allocator().state == 30);
 
-  std::swap(map, map2);
+  // Uses ADL to find the specialized swap.
+  swap(map, map2);
 
   REQUIRE(map.size() == 1);
   REQUIRE(map.hash_function().state == 10);

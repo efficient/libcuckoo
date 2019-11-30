@@ -53,7 +53,7 @@ public:
   }
 };
 
-typedef cuckoohash_map<Foo, bool, foo_hasher, foo_eq> foo_map;
+typedef libcuckoo::cuckoohash_map<Foo, bool, foo_hasher, foo_eq> foo_map;
 
 TEST_CASE("heterogeneous compare", "[heterogeneous compare]") {
   // setup code

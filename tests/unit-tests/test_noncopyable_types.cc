@@ -73,8 +73,8 @@ TEST_CASE("noncopyable iteration", "[noncopyable]") {
 }
 
 TEST_CASE("nested table", "[noncopyable]") {
-  typedef cuckoohash_map<char, std::string> inner_tbl;
-  typedef cuckoohash_map<std::string, std::unique_ptr<inner_tbl>> nested_tbl;
+  typedef libcuckoo::cuckoohash_map<char, std::string> inner_tbl;
+  typedef libcuckoo::cuckoohash_map<std::string, std::unique_ptr<inner_tbl>> nested_tbl;
   nested_tbl tbl;
   std::string keys[] = {"abc", "def"};
   for (std::string &k : keys) {

@@ -25,7 +25,9 @@
 
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
-#include "libcuckoo_bucket_container.hh"
+#include "bucket_container.hh"
+
+namespace libcuckoo {
 
 /**
  * A concurrent hash table
@@ -42,7 +44,7 @@
 template <class Key, class T, class Hash = std::hash<Key>,
           class KeyEqual = std::equal_to<Key>,
           class Allocator = std::allocator<std::pair<const Key, T>>,
-          std::size_t SLOT_PER_BUCKET = LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET>
+          std::size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET>
 class cuckoohash_map {
 private:
   // Type of the partial key
@@ -50,7 +52,7 @@ private:
 
   // The type of the buckets container
   using buckets_t =
-      libcuckoo_bucket_container<Key, T, Allocator, partial_t, SLOT_PER_BUCKET>;
+      bucket_container<Key, T, Allocator, partial_t, SLOT_PER_BUCKET>;
 
 public:
   /** @name Type Declarations */
@@ -98,7 +100,7 @@ public:
    * @param equal equality function instance to use
    * @param alloc allocator instance to use
    */
-  cuckoohash_map(size_type n = LIBCUCKOO_DEFAULT_SIZE, const Hash &hf = Hash(),
+  cuckoohash_map(size_type n = DEFAULT_SIZE, const Hash &hf = Hash(),
                  const KeyEqual &equal = KeyEqual(),
                  const Allocator &alloc = Allocator())
       : hash_fn_(hf), eq_fn_(equal),
@@ -106,8 +108,8 @@ public:
         old_buckets_(0, alloc),
         all_locks_(get_allocator()),
         num_remaining_lazy_rehash_locks_(0),
-        minimum_load_factor_(LIBCUCKOO_DEFAULT_MINIMUM_LOAD_FACTOR),
-        maximum_hashpower_(LIBCUCKOO_NO_MAXIMUM_HASHPOWER),
+        minimum_load_factor_(DEFAULT_MINIMUM_LOAD_FACTOR),
+        maximum_hashpower_(NO_MAXIMUM_HASHPOWER),
         max_num_worker_threads_(0) {
     all_locks_.emplace_back(std::min(bucket_count(), size_type(kMaxNumLocks)),
                             spinlock(), get_allocator());
@@ -127,7 +129,7 @@ public:
    */
   template <typename InputIt>
   cuckoohash_map(InputIt first, InputIt last,
-                 size_type n = LIBCUCKOO_DEFAULT_SIZE, const Hash &hf = Hash(),
+                 size_type n = DEFAULT_SIZE, const Hash &hf = Hash(),
                  const KeyEqual &equal = KeyEqual(),
                  const Allocator &alloc = Allocator())
       : cuckoohash_map(n, hf, equal, alloc) {
@@ -142,10 +144,7 @@ public:
    *
    * @param other the map being copied
    */
-  cuckoohash_map(const cuckoohash_map &other)
-      : cuckoohash_map(other, std::allocator_traits<allocator_type>::
-                                  select_on_container_copy_construction(
-                                      other.get_allocator())) {}
+  cuckoohash_map(const cuckoohash_map &other) = default;
 
   /**
    * Copy constructor with separate allocator. If @p other is being modified
@@ -157,12 +156,13 @@ public:
   cuckoohash_map(const cuckoohash_map &other, const Allocator &alloc)
       : hash_fn_(other.hash_fn_), eq_fn_(other.eq_fn_),
         buckets_(other.buckets_, alloc),
-        old_buckets_(other.old_buckets_, alloc), all_locks_(alloc),
+        old_buckets_(other.old_buckets_, alloc),
+        all_locks_(alloc),
         num_remaining_lazy_rehash_locks_(
-            other.num_remaining_lazy_rehash_locks()),
-        minimum_load_factor_(other.minimum_load_factor()),
-        maximum_hashpower_(other.maximum_hashpower()),
-        max_num_worker_threads_(other.max_num_worker_threads()) {
+            other.num_remaining_lazy_rehash_locks_),
+        minimum_load_factor_(other.minimum_load_factor_),
+        maximum_hashpower_(other.maximum_hashpower_),
+        max_num_worker_threads_(other.max_num_worker_threads_) {
     if (other.get_allocator() == alloc) {
       all_locks_ = other.all_locks_;
     } else {
@@ -176,8 +176,7 @@ public:
    *
    * @param other the map being moved
    */
-  cuckoohash_map(cuckoohash_map &&other)
-      : cuckoohash_map(std::move(other), other.get_allocator()) {}
+  cuckoohash_map(cuckoohash_map &&other) = default;
 
   /**
    * Move constructor with separate allocator. If the map being moved is being
@@ -192,10 +191,10 @@ public:
         old_buckets_(std::move(other.old_buckets_), alloc),
         all_locks_(alloc),
         num_remaining_lazy_rehash_locks_(
-            other.num_remaining_lazy_rehash_locks()),
-        minimum_load_factor_(other.minimum_load_factor()),
-        maximum_hashpower_(other.maximum_hashpower()),
-        max_num_worker_threads_(other.max_num_worker_threads()) {
+            other.num_remaining_lazy_rehash_locks_),
+        minimum_load_factor_(other.minimum_load_factor_),
+        maximum_hashpower_(other.maximum_hashpower_),
+        max_num_worker_threads_(other.max_num_worker_threads_) {
     if (other.get_allocator() == alloc) {
       all_locks_ = std::move(other.all_locks_);
     } else {
@@ -213,7 +212,7 @@ public:
    * @param alloc allocator instance to use
    */
   cuckoohash_map(std::initializer_list<value_type> init,
-                 size_type n = LIBCUCKOO_DEFAULT_SIZE, const Hash &hf = Hash(),
+                 size_type n = DEFAULT_SIZE, const Hash &hf = Hash(),
                  const KeyEqual &equal = KeyEqual(),
                  const Allocator &alloc = Allocator())
       : cuckoohash_map(init.begin(), init.end(), n, hf, equal, alloc) {}
@@ -245,18 +244,7 @@ public:
    * @param other the map to assign from
    * @return @c *this
    */
-  cuckoohash_map &operator=(const cuckoohash_map &other) {
-    hash_fn_ = other.hash_fn_;
-    eq_fn_ = other.eq_fn_;
-    buckets_ = other.buckets_;
-    old_buckets_ = other.old_buckets_;
-    all_locks_ = other.all_locks_;
-    num_remaining_lazy_rehash_locks_ = other.num_remaining_lazy_rehash_locks();
-    minimum_load_factor_ = other.minimum_load_factor();
-    maximum_hashpower_ = other.maximum_hashpower();
-    max_num_worker_threads_ = other.max_num_worker_threads();
-    return *this;
-  }
+  cuckoohash_map &operator=(const cuckoohash_map &other) = default;
 
   /**
    * Move assignment operator. If @p other is being modified concurrently,
@@ -265,19 +253,7 @@ public:
    * @param other the map to assign from
    * @return @c *this
    */
-  cuckoohash_map &operator=(cuckoohash_map &&other) {
-    hash_fn_ = std::move(other.hash_fn_);
-    eq_fn_ = std::move(other.eq_fn_);
-    buckets_ = std::move(other.buckets_);
-    old_buckets_ = std::move(other.old_buckets_);
-    all_locks_ = std::move(other.all_locks_);
-    num_remaining_lazy_rehash_locks_ = std::move(
-        other.num_remaining_lazy_rehash_locks());
-    minimum_load_factor_ = std::move(other.minimum_load_factor());
-    maximum_hashpower_ = std::move(other.maximum_hashpower());
-    max_num_worker_threads_ = std::move(other.max_num_worker_threads());
-    return *this;
-  }
+  cuckoohash_map &operator=(cuckoohash_map &&other) = default;
 
   /**
    * Initializer list assignment operator
@@ -386,7 +362,7 @@ public:
   /**
    * Sets the minimum load factor allowed for automatic expansions. If an
    * expansion is needed when the load factor of the table is lower than this
-   * threshold, @ref libcuckoo_load_factor_too_low is thrown. It will not be
+   * threshold, @ref load_factor_too_low is thrown. It will not be
    * thrown for an explicitly-triggered expansion.
    *
    * @param mlf the load factor to set the minimum to
@@ -417,7 +393,7 @@ public:
 
   /**
    * Sets the maximum hashpower the table can be. If set to @ref
-   * LIBCUCKOO_NO_MAXIMUM_HASHPOWER, there will be no limit on the hashpower.
+   * NO_MAXIMUM_HASHPOWER, there will be no limit on the hashpower.
    * Otherwise, the table will not be able to expand beyond the given
    * hashpower, either by an explicit or an automatic expansion.
    *
@@ -825,13 +801,13 @@ private:
   public:
     spinlock() : elem_counter_(0), is_migrated_(true) { lock_.clear(); }
 
-    spinlock(const spinlock &other)
+    spinlock(const spinlock &other) noexcept
         : elem_counter_(other.elem_counter()),
           is_migrated_(other.is_migrated()) {
       lock_.clear();
     }
 
-    spinlock &operator=(const spinlock &other) {
+    spinlock &operator=(const spinlock &other) noexcept {
       elem_counter() = other.elem_counter();
       is_migrated() = other.is_migrated();
       return *this;
@@ -1189,7 +1165,7 @@ private:
    * @return table_position of the location to insert the new element, or the
    * site of the duplicate element with a status code if there was a duplicate.
    * In either case, the locks will still be held after the function ends.
-   * @throw libcuckoo_load_factor_too_low if expansion is necessary, but the
+   * @throw load_factor_too_low if expansion is necessary, but the
    * load factor of the table is below the threshold
    */
   template <typename TABLE_MODE, typename K>
@@ -1811,11 +1787,11 @@ private:
   cuckoo_status check_resize_validity(const size_type orig_hp,
                                       const size_type new_hp) {
     const size_type mhp = maximum_hashpower();
-    if (mhp != LIBCUCKOO_NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
-      throw libcuckoo_maximum_hashpower_exceeded(new_hp);
+    if (mhp != NO_MAXIMUM_HASHPOWER && new_hp > mhp) {
+      throw maximum_hashpower_exceeded(new_hp);
     }
     if (AUTO_RESIZE::value && load_factor() < minimum_load_factor()) {
-      throw libcuckoo_load_factor_too_low(minimum_load_factor());
+      throw load_factor_too_low(minimum_load_factor());
     }
     if (hashpower() != orig_hp) {
       // Most likely another expansion ran before this one could grab the
@@ -1858,7 +1834,7 @@ private:
   // contains more elements than can be held by new_hashpower, the resulting
   // hashpower will be greater than `new_hp`. It needs to take all the bucket
   // locks, since no other operations can change the table during expansion.
-  // Throws libcuckoo_maximum_hashpower_exceeded if we're expanding beyond the
+  // Throws maximum_hashpower_exceeded if we're expanding beyond the
   // maximum hashpower, and we have an actual limit.
   template <typename TABLE_MODE, typename AUTO_RESIZE>
   cuckoo_status cuckoo_expand_simple(size_type new_hp) {
@@ -2097,28 +2073,44 @@ private:
   // mutable so that const methods can access and take locks.
   mutable all_locks_t all_locks_;
 
+  // A small wrapper around std::atomic to make it copyable for constructors.
+  template <typename AtomicT>
+  class CopyableAtomic : public std::atomic<AtomicT> {
+   public:
+    using std::atomic<AtomicT>::atomic;
+
+    CopyableAtomic(const CopyableAtomic& other) noexcept
+        : CopyableAtomic(other.load(std::memory_order_acquire)) {}
+
+    CopyableAtomic& operator=(const CopyableAtomic& other) noexcept {
+        this->store(other.load(std::memory_order_acquire),
+                    std::memory_order_release);
+        return *this;
+    }
+  };
+
   // We keep track of the number of remaining locks in the latest locks array,
   // that remain to be rehashed. Once this reaches 0, we can free the memory of
   // the old buckets. It should only be accessed or modified when
   // lazy-rehashing a lock, so not in the common case.
   //
   // Marked mutable so that we can modify this during rehashing.
-  mutable std::atomic<size_type> num_remaining_lazy_rehash_locks_;
+  mutable CopyableAtomic<size_t> num_remaining_lazy_rehash_locks_;
 
   // Stores the minimum load factor allowed for automatic expansions. Whenever
   // an automatic expansion is triggered (during an insertion where cuckoo
   // hashing fails, for example), we check the load factor against this
   // double, and throw an exception if it's lower than this value. It can be
   // used to signal when the hash function is bad or the input adversarial.
-  std::atomic<double> minimum_load_factor_;
+  CopyableAtomic<double> minimum_load_factor_;
 
   // stores the maximum hashpower allowed for any expansions. If set to
   // NO_MAXIMUM_HASHPOWER, this limit will be disregarded.
-  std::atomic<size_type> maximum_hashpower_;
+  CopyableAtomic<size_type> maximum_hashpower_;
 
   // Maximum number of extra threads to spawn when doing any large batch
   // operations.
-  std::atomic<size_type> max_num_worker_threads_;
+  CopyableAtomic<size_type> max_num_worker_threads_;
 
 public:
   /**
@@ -2731,8 +2723,6 @@ public:
   };
 };
 
-namespace std {
-
 /**
  * Specializes the @c std::swap algorithm for @c cuckoohash_map. Calls @c
  * lhs.swap(rhs).
@@ -2749,6 +2739,6 @@ void swap(
   lhs.swap(rhs);
 }
 
-} // namespace std
+}  // namespace libcuckoo
 
 #endif // _CUCKOOHASH_MAP_HH

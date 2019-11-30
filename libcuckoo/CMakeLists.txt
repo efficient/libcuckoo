@@ -45,7 +45,7 @@ FILES
     cuckoohash_config.hh
     cuckoohash_map.hh
     cuckoohash_util.hh
-    libcuckoo_bucket_container.hh
+    bucket_container.hh
 DESTINATION
     ${CMAKE_INSTALL_PREFIX}/include/libcuckoo
 )

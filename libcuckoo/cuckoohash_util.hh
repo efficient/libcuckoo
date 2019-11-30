@@ -9,6 +9,8 @@
 #include <utility>
 #include <vector>
 
+namespace libcuckoo {
+
 #if LIBCUCKOO_DEBUG
 //! When \ref LIBCUCKOO_DEBUG is 0, LIBCUCKOO_DBG will printing out status
 //! messages in various situations
@@ -70,14 +72,14 @@
  * function does not properly distribute keys, or for certain adversarial
  * workloads.
  */
-class libcuckoo_load_factor_too_low : public std::exception {
+class load_factor_too_low : public std::exception {
 public:
   /**
    * Constructor
    *
    * @param lf the load factor of the table when the exception was thrown
    */
-  libcuckoo_load_factor_too_low(const double lf) : load_factor_(lf) {}
+  load_factor_too_low(const double lf) noexcept : load_factor_(lf) {}
 
   /**
    * @return a descriptive error message
@@ -90,7 +92,7 @@ public:
   /**
    * @return the load factor of the table when the exception was thrown
    */
-  double load_factor() const { return load_factor_; }
+  double load_factor() const noexcept { return load_factor_; }
 
 private:
   const double load_factor_;
@@ -101,14 +103,14 @@ private:
  * than the maximum, which can be set with the \ref
  * cuckoohash_map::maximum_hashpower method.
  */
-class libcuckoo_maximum_hashpower_exceeded : public std::exception {
+class maximum_hashpower_exceeded : public std::exception {
 public:
   /**
    * Constructor
    *
    * @param hp the hash power we were trying to expand to
    */
-  libcuckoo_maximum_hashpower_exceeded(const size_t hp) : hashpower_(hp) {}
+  maximum_hashpower_exceeded(const size_t hp) noexcept : hashpower_(hp) {}
 
   /**
    * @return a descriptive error message
@@ -120,10 +122,12 @@ public:
   /**
    * @return the hashpower we were trying to expand to
    */
-  size_t hashpower() const { return hashpower_; }
+  size_t hashpower() const noexcept { return hashpower_; }
 
 private:
   const size_t hashpower_;
 };
+
+}  // namespace libcuckoo
 
 #endif // _CUCKOOHASH_UTIL_HH

@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <libcuckoo/libcuckoo_bucket_container.hh>
+#include <libcuckoo/bucket_container.hh>
 
 template <bool PROPAGATE_COPY_ASSIGNMENT = true,
           bool PROPAGATE_MOVE_ASSIGNMENT = true, bool PROPAGATE_SWAP = true>
@@ -65,7 +65,7 @@ const size_t SLOT_PER_BUCKET = 4;
 
 template <class Alloc>
 using TestingContainer =
-    libcuckoo_bucket_container<std::shared_ptr<int>, int, Alloc, uint8_t,
+    libcuckoo::bucket_container<std::shared_ptr<int>, int, Alloc, uint8_t,
                                SLOT_PER_BUCKET>;
 
 using value_type = std::pair<const std::shared_ptr<int>, int>;
@@ -297,7 +297,7 @@ private:
 bool ExceptionInt::do_throw = false;
 
 using ExceptionContainer =
-    libcuckoo_bucket_container<ExceptionInt, int,
+    libcuckoo::bucket_container<ExceptionInt, int,
                                std::allocator<std::pair<ExceptionInt, int>>,
                                uint8_t, SLOT_PER_BUCKET>;
 

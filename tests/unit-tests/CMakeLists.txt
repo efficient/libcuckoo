@@ -14,7 +14,7 @@ add_executable(unit_tests
     test_user_exceptions.cc
     test_locked_table.cc
     test_c_interface.cc
-    test_libcuckoo_bucket_container.cc
+    test_bucket_container.cc
     unit_test_util.cc
     unit_test_util.hh
 )

@@ -85,8 +85,8 @@ public:
     }
   }
 
-  cuckoohash_map<KType, ValType> table;
-  cuckoohash_map<KType, ValType2> table2;
+  libcuckoo::cuckoohash_map<KType, ValType> table;
+  libcuckoo::cuckoohash_map<KType, ValType2> table2;
   std::vector<KType> keys;
   std::vector<ValType> vals;
   std::vector<ValType2> vals2;

@@ -5,6 +5,8 @@
 #include "unit_test_util.hh"
 #include <libcuckoo/cuckoohash_map.hh>
 
+using libcuckoo::UnitTestInternalAccess;
+
 TEST_CASE("rehash empty table", "[resize]") {
   IntIntTable table(1);
   REQUIRE(table.hashpower() == 0);
@@ -77,7 +79,7 @@ TEST_CASE("Resizing number of frees", "[resize]") {
   size_t num_deletes_after_resize;
   {
     // Should allocate 2 buckets of 4 slots
-    cuckoohash_map<int, my_type, std::hash<int>, std::equal_to<int>,
+    libcuckoo::cuckoohash_map<int, my_type, std::hash<int>, std::equal_to<int>,
                    std::allocator<std::pair<const int, my_type>>, 4>
         map(8);
     for (int i = 0; i < 9; ++i) {
@@ -111,7 +113,7 @@ public:
 };
 
 TEST_CASE("Resize on non-relocatable type", "[resize]") {
-  cuckoohash_map<int, NonRelocatableType, std::hash<int>, std::equal_to<int>,
+  libcuckoo::cuckoohash_map<int, NonRelocatableType, std::hash<int>, std::equal_to<int>,
                  std::allocator<std::pair<const int, NonRelocatableType>>, 1>
       map(0);
   REQUIRE(map.hashpower() == 0);

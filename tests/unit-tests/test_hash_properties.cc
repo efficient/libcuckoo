@@ -3,6 +3,8 @@
 #include "unit_test_util.hh"
 #include <libcuckoo/cuckoohash_map.hh>
 
+using libcuckoo::UnitTestInternalAccess;
+
 // Checks that the alt index function returns a different bucket, and can
 // recover the old bucket when called with the alternate bucket as the index.
 template <class CuckoohashMap>

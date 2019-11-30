@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-typedef cuckoohash_map<CUCKOO_KEY_TYPE, CUCKOO_MAPPED_TYPE> tbl_t;
+typedef libcuckoo::cuckoohash_map<CUCKOO_KEY_TYPE, CUCKOO_MAPPED_TYPE> tbl_t;
 
 struct CUCKOO_TABLE_NAME {
   tbl_t t;
@@ -45,7 +45,7 @@ CUCKOO_TABLE_NAME *CUCKOO(_init)(size_t n) {
     return NULL;
   }
   tbl->t.minimum_load_factor(0);
-  tbl->t.maximum_hashpower(LIBCUCKOO_NO_MAXIMUM_HASHPOWER);
+  tbl->t.maximum_hashpower(libcuckoo::NO_MAXIMUM_HASHPOWER);
   return tbl;
 }
 

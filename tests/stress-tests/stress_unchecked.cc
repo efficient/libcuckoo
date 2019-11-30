@@ -79,12 +79,12 @@ public:
     // operations don't throw exceptions.
     table.minimum_load_factor(0.0);
     table2.minimum_load_factor(0.0);
-    table.maximum_hashpower(LIBCUCKOO_NO_MAXIMUM_HASHPOWER);
-    table2.maximum_hashpower(LIBCUCKOO_NO_MAXIMUM_HASHPOWER);
+    table.maximum_hashpower(libcuckoo::NO_MAXIMUM_HASHPOWER);
+    table2.maximum_hashpower(libcuckoo::NO_MAXIMUM_HASHPOWER);
   }
 
-  cuckoohash_map<KType, ValType> table;
-  cuckoohash_map<KType, ValType2> table2;
+  libcuckoo::cuckoohash_map<KType, ValType> table;
+  libcuckoo::cuckoohash_map<KType, ValType2> table2;
   size_t gen_seed;
   std::atomic<bool> finished;
 };
@@ -177,8 +177,8 @@ void resize_thread(AllEnvironment<KType> *env, size_t thread_seed) {
     env->table.rehash(hashpower / 2);
   } else {
     env->table2.reserve((1U << (hashpower + 1)) *
-                        LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET);
-    env->table2.reserve((1U << hashpower) * LIBCUCKOO_DEFAULT_SLOT_PER_BUCKET);
+                        libcuckoo::DEFAULT_SLOT_PER_BUCKET);
+    env->table2.reserve((1U << hashpower) * libcuckoo::DEFAULT_SLOT_PER_BUCKET);
   }
 }
 

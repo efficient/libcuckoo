@@ -402,7 +402,7 @@ TEST_CASE("locked_table equality", "[locked_table]") {
 }
 
 template <typename Table> void check_all_locks_taken(Table &tbl) {
-  auto &locks = UnitTestInternalAccess::get_current_locks(tbl);
+  auto &locks = libcuckoo::UnitTestInternalAccess::get_current_locks(tbl);
   for (auto &lock : locks) {
     REQUIRE_FALSE(lock.try_lock());
   }
