@@ -57,7 +57,7 @@ public:
    */
   class bucket {
   public:
-    bucket() noexcept : occupied_{} {}
+    bucket() noexcept : occupied_() {}
 
     const value_type &kvpair(size_type ind) const {
       return *static_cast<const value_type *>(
