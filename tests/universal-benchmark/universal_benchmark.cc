@@ -199,7 +199,7 @@ void mix(Table &tbl, const size_t num_ops, const std::array<Ops, 100> &op_mix,
         // Pick a number from the full distribution, but cap it to the
         // insert_seq, so we don't insert a number greater than
         // insert_seq.
-        n = std::max(find_seq, insert_seq);
+        n = std::min(find_seq, insert_seq);
         find_seq_update();
         tbl.upsert(key(n), upsert_fn, Gen<VALUE>::get(local_value));
         if (n == insert_seq) {
