@@ -794,7 +794,7 @@ private:
   // under this lock. One can compute the size of the table by summing the
   // elem_counter over all locks.
   //
-  // - is_migrated: When resizing with cuckoo_fast_doulbe, we do not
+  // - is_migrated: When resizing with cuckoo_fast_double, we do not
   // immediately rehash elements from the old buckets array to the new one.
   // Instead, we'll mark all of the locks as not migrated. So anybody trying to
   // acquire the lock must also migrate the corresponding buckets if
