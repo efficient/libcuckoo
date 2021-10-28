@@ -20,7 +20,7 @@ target_compile_features (libcuckoo INTERFACE cxx_constexpr)
 
 # Include relative to the base directory
 target_include_directories(libcuckoo INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${libcuckoo_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 
