@@ -604,6 +604,30 @@ public:
     }
   }
 
+  /** Searches the table for @p key, and returns the associated value it
+   * finds. If the key is not found, @p fn is invoked to produce it.
+   * @c mapped_type must be @c CopyConstructible.
+   *
+   * @tparam K type of the key
+   * @tparam F type of functor to produce a new value if the key was not found
+   * @param key the key to search for
+   * @param fn the functor to produce a new value if the key was not found
+   * @return the value associated with the given key
+   */
+  template <typename K, typename F>
+  mapped_type find_or_insert_fn(K &&key, F fn) {
+    hash_value hv = hashed_key(key);
+    auto b = snapshot_and_lock_two<normal_mode>(hv);
+    table_position pos = cuckoo_insert_loop<normal_mode>(hv, b, key);
+    if (pos.status == ok) {
+      auto v = fn();
+      add_to_bucket(pos.index, pos.slot, hv.partial, std::forward<K>(key), v);
+      return v;
+    } else {
+      return buckets_[pos.index].mapped(pos.slot);
+    }
+  }
+
   /**
    * Returns whether or not @p key is in the table. Equivalent to @ref
    * find_fn with a functor that does nothing.

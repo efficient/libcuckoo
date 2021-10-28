@@ -45,6 +45,9 @@ bool g_disable_updates = false;
 // Whether to disable finds or not. This can be set with the command
 // line flag --disable-finds
 bool g_disable_finds = false;
+// Whether to disable finds-or-insert or not. This can be set with the command
+// line flag --disable-finds-or-insert
+bool g_disable_finds_or_inserts = false;
 // How many seconds to run the test for. This can be set with the
 // command line flag --time
 size_t g_test_len = 10;
@@ -58,6 +61,7 @@ std::atomic<size_t> num_inserts = ATOMIC_VAR_INIT(0);
 std::atomic<size_t> num_deletes = ATOMIC_VAR_INIT(0);
 std::atomic<size_t> num_updates = ATOMIC_VAR_INIT(0);
 std::atomic<size_t> num_finds = ATOMIC_VAR_INIT(0);
+std::atomic<size_t> num_finds_or_inserts = ATOMIC_VAR_INIT(0);
 
 template <class KType> class AllEnvironment {
 public:
@@ -258,6 +262,44 @@ template <class KType> void find_thread(AllEnvironment<KType> *env) {
   }
 }
 
+template <class KType> void find_or_insert_thread(AllEnvironment<KType> *env) {
+  pcg64_fast gen(env->gen_seed);
+  while (!env->finished.load()) {
+    // Pick a random number between 0 and g_numkeys. If that slot is
+    // not in use, lock the slot. Find the key and if it does not exist,
+    // insert a random value into both tables. The inserts should only
+    // happen if the key wasn't in the table yet. If they happen, then store
+    // the values in their arrays. Verify that the returned value always matches
+    // the expected value, either new or existing.
+    // Finally set in_table to true and clear in_use
+    size_t ind = env->ind_dist(gen);
+    if (!env->in_use[ind].test_and_set()) {
+      KType k = env->keys[ind];
+
+      ValType v = env->table.find_or_insert_fn(k, [&]() {
+        EXPECT_FALSE(env->in_table[ind]);
+        ValType v = env->val_dist(gen);
+        env->vals[ind] = v;
+        return v;
+      });
+      EXPECT_EQ(env->vals[ind], v);
+
+      ValType v2 = env->table2.find_or_insert_fn(k, [&]() {
+        EXPECT_FALSE(env->in_table[ind]);
+        ValType v = env->val_dist2(gen);
+        env->vals2[ind] = v;
+        return v;
+      });
+      EXPECT_EQ(env->vals2[ind], v2);
+
+      env->in_table[ind] = true;
+
+      num_finds_or_inserts.fetch_add(2, std::memory_order_relaxed);
+      env->in_use[ind].clear();
+    }
+  }
+}
+
 // Spawns g_thread_num insert, delete, update, and find threads
 template <class KType> void StressTest(AllEnvironment<KType> *env) {
   std::vector<std::thread> threads;
@@ -273,6 +315,9 @@ template <class KType> void StressTest(AllEnvironment<KType> *env) {
     }
     if (!g_disable_finds) {
       threads.emplace_back(find_thread<KType>, env);
+    }
+    if (!g_disable_finds_or_inserts) {
+      threads.emplace_back(find_or_insert_thread<KType>, env);
     }
   }
   // Sleeps before ending the threads
@@ -294,6 +339,7 @@ template <class KType> void StressTest(AllEnvironment<KType> *env) {
   std::cout << "Number of deletes:\t" << num_deletes.load() << std::endl;
   std::cout << "Number of updates:\t" << num_updates.load() << std::endl;
   std::cout << "Number of finds:\t" << num_finds.load() << std::endl;
+  std::cout << "Number of finds or inserts:\t" << num_finds_or_inserts.load() << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -306,12 +352,14 @@ int main(int argc, char **argv) {
       "The seed for the random number generator"};
   const char *flags[] = {"--disable-inserts", "--disable-deletes",
                          "--disable-updates", "--disable-finds",
-                         "--use-strings"};
+                         "--disable-finds-or-inserts", "--use-strings"};
   bool *flag_vars[] = {&g_disable_inserts, &g_disable_deletes,
-                       &g_disable_updates, &g_disable_finds, &g_use_strings};
+                       &g_disable_updates, &g_disable_finds,
+                       &g_disable_finds_or_inserts, &g_use_strings};
   const char *flag_help[] = {
       "If set, no inserts will be run", "If set, no deletes will be run",
       "If set, no updates will be run", "If set, no finds will be run",
+      "If set, no finds-or-inserts will be run",
       "If set, the key type of the map will be std::string"};
   parse_flags(argc, argv, "Runs a stress test on inserts, deletes, and finds",
               args, arg_vars, arg_help, sizeof(args) / sizeof(const char *),
