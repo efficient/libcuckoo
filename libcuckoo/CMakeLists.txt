@@ -11,6 +11,7 @@ set (libcuckoo_VERSION "${libcuckoo_VERSION}.${libcuckoo_VERSION_PATCH}")
 
 # libcuckoo is an interface (all headers) library target
 add_library(libcuckoo INTERFACE)
+add_library(libcuckoo::libcuckoo ALIAS libcuckoo)
 
 # tag libcuckoo target with a c++11 feature so that libcuckoo users
 # will have c++11 turned on in their compile when they use this target.
@@ -19,7 +20,7 @@ target_compile_features (libcuckoo INTERFACE cxx_constexpr)
 
 # Include relative to the base directory
 target_include_directories(libcuckoo INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${libcuckoo_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 
@@ -35,6 +36,7 @@ write_basic_package_version_file(
 
 install(TARGETS libcuckoo EXPORT libcuckoo-targets)
 install(EXPORT libcuckoo-targets
+        NAMESPACE libcuckoo::
         DESTINATION ${libcuckoo_pkgloc}
         FILE "libcuckoo-targets.cmake")
 install(FILES libcuckoo-config.cmake
