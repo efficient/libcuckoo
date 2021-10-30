@@ -113,7 +113,7 @@ public:
         maximum_hashpower_(NO_MAXIMUM_HASHPOWER),
         max_num_worker_threads_(0) {
     all_locks_.emplace_back(std::min(bucket_count(), size_type(kMaxNumLocks)),
-                            spinlock(), get_allocator());
+                            get_allocator());
   }
 
   /**
@@ -695,7 +695,7 @@ private:
 
   void add_locks_from_other(const cuckoohash_map &other) {
     locks_t &other_locks = other.get_current_locks();
-    all_locks_.emplace_back(other_locks.size(), spinlock(), get_allocator());
+    all_locks_.emplace_back(other_locks.size(), get_allocator());
     std::copy(other_locks.begin(), other_locks.end(),
               get_current_locks().begin());
   }
@@ -1823,7 +1823,7 @@ private:
     }
 
     locks_t new_locks(std::min(size_type(kMaxNumLocks), new_bucket_count),
-                      spinlock(), get_allocator());
+                      get_allocator());
     assert(new_locks.size() > current_locks.size());
     std::copy(current_locks.begin(), current_locks.end(), new_locks.begin());
     for (spinlock &lock : new_locks) {
