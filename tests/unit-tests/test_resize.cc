@@ -1,4 +1,5 @@
 #include <array>
+#include <limits>
 
 #include <catch.hpp>
 
@@ -45,15 +46,27 @@ TEST_CASE("reserve calc", "[resize]") {
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
               2500000 * slot_per_bucket) == 22);
 
+  // The maximum number of elements we can ask to reserve without incurring
+  // rounding error when computing a number of buckets is
+  // SIZE_T_MAX-slot_per_bucket(), which will come out to int_div(SIZE_T_MAX -
+  // 1, slot_per_bucket()) buckets.
+  const size_t max_buckets = (
+      std::numeric_limits<size_t>::max() - 1)/slot_per_bucket;
+  // Since the table is always sized in powers of two, our maximum hashpower
+  // comes out to max_hashpower = floor(log2(max_buckets)). We compute this in
+  // a numerically-stable fashion.
+  size_t max_hashpower = 0;
+  for (; (static_cast<size_t>(1) << (max_hashpower + 1)) <= max_buckets; ++max_hashpower);
+  // Test the boundary between max_hashpower-1 and max_hashpower.
+  const size_t max_elems_before_max_hashpower = (
+      static_cast<size_t>(1) << (max_hashpower - 1)) * slot_per_bucket;
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              (1ULL << 31) * slot_per_bucket) == 31);
+              max_elems_before_max_hashpower) == (max_hashpower - 1));
   REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              ((1ULL << 31) + 1) * slot_per_bucket) == 32);
-
-  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              (1ULL << 61) * slot_per_bucket) == 61);
-  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(
-              ((1ULL << 61) + 1) * slot_per_bucket) == 62);
+              max_elems_before_max_hashpower + 1) == max_hashpower);
+  // Test the maximum number of elements.
+  const size_t max_elems = (static_cast<size_t>(1) << max_hashpower) * slot_per_bucket;
+  REQUIRE(UnitTestInternalAccess::reserve_calc<IntIntTable>(max_elems) == max_hashpower);
 }
 
 struct my_type {
