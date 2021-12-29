@@ -128,6 +128,87 @@ private:
   const size_t hashpower_;
 };
 
-}  // namespace libcuckoo
+/**
+ * This enum indicates whether an insertion took place, or whether the
+ * key-value pair was already in the table. See \ref cuckoohash_map::uprase_fn
+ * for usage details.
+ */
+enum class UpsertContext {
+  NEWLY_INSERTED,
+  ALREADY_EXISTED,
+};
+
+namespace internal {
+
+// Used to invoke the \ref uprase_fn functor with or without an \ref
+// UpsertContext enum.  Note that if we cannot pass an upsert context and the
+// desired context is <tt>UpsertContext:::NEWLY_INSERTED</tt>, then we do not
+// invoke the functor at all.
+//
+// We implement this utility using C++11-style SFINAE, for maximum
+// compatibility.
+template <typename F, typename MappedType>
+class CanInvokeWithUpsertContext {
+ private:
+  template <typename InnerF,
+            typename = decltype(std::declval<InnerF>()(
+                std::declval<MappedType&>(), std::declval<UpsertContext>()))>
+  static std::true_type test(int);
+ 
+  // Note: The argument type needs to be less-preferable than the first
+  // overload so that it is picked only if the first overload cannot be
+  // instantiated.
+  template <typename InnerF>
+  static std::false_type test(float);
+ 
+ public:
+  using type = decltype(test<F>(0));
+};
+
+template <typename F, typename MappedType>
+bool InvokeUpraseFn(F& f, MappedType& mapped, UpsertContext context,
+                    std::true_type) {
+  return f(mapped, context);
+}
+
+template <typename F, typename MappedType>
+bool InvokeUpraseFn(F& f, MappedType& mapped, UpsertContext context,
+                    std::false_type) {
+  if (context == UpsertContext::ALREADY_EXISTED) {
+    return f(mapped);
+  } else {
+    // Returning false indicates no deletion, making this a no-op.
+    return false;
+  }
+}
+
+// Upgrades an upsert functor to an uprase functor, which always returns false,
+// so that we never erase the element.
+template <typename F, typename MappedType, bool kCanInvokeWithUpsertContext>
+struct UpsertToUpraseFn;
+
+template <typename F, typename MappedType>
+struct UpsertToUpraseFn<F, MappedType, true> {
+  F& f;
+
+  bool operator()(MappedType& mapped, UpsertContext context) const {
+    f(mapped, context);
+    return false;
+  }
+};
+
+template <typename F, typename MappedType>
+struct UpsertToUpraseFn<F, MappedType, false> {
+  F& f;
+
+  bool operator()(MappedType& mapped) {
+    f(mapped);
+    return false;
+  }
+};
+
+} // namespace internal
+
+} // namespace libcuckoo
 
 #endif // _CUCKOOHASH_UTIL_HH
