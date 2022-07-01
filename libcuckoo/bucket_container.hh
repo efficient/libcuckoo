@@ -244,6 +244,14 @@ public:
     destroy_buckets();
   }
 
+  // Checks whether the bucket container owns any memory, or if has been
+  // deallocated. If true, the member-wise getter/setter operations will be
+  // valid, otherwise they cannot be called safely. Object-level members (such
+  // as hashpower and size) will remain valid after deallocation.
+  explicit operator bool() const noexcept {
+    return buckets_ != nullptr;
+  }
+
 private:
   using bucket_traits_ = typename traits_::template rebind_traits<bucket>;
   using bucket_pointer = typename bucket_traits_::pointer;
@@ -321,6 +329,7 @@ private:
                                 const bucket_container &>::type src,
       std::integral_constant<bool, B> move) {
     assert(dst_hp >= src.hashpower());
+    if (!static_cast<bool>(src)) { return nullptr; }
     bucket_container dst(dst_hp, get_allocator());
     // Move/copy all occupied slots of the source buckets
     for (size_t i = 0; i < src.size(); ++i) {
