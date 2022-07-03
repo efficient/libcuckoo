@@ -331,12 +331,12 @@ TEST_CASE("copy assignment with throwing type is destroyed properly",
 TEST_CASE("copy destroyed buckets container", "[bucket container]") {
   std::allocator<value_type> a;
   TestingContainer<decltype(a)> bc(2, a);
-  REQUIRE(static_cast<bool>(bc));
+  REQUIRE(!bc.is_deallocated());
   bc.clear_and_deallocate();
-  REQUIRE(!static_cast<bool>(bc));
+  REQUIRE(bc.is_deallocated());
   auto bc2 = bc;
-  REQUIRE(!static_cast<bool>(bc));
-  REQUIRE(!static_cast<bool>(bc2));
+  REQUIRE(bc.is_deallocated());
+  REQUIRE(bc2.is_deallocated());
   REQUIRE(bc.size() == bc2.size());
   REQUIRE(bc.get_allocator() == bc2.get_allocator());
 }

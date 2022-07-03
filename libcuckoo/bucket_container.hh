@@ -244,12 +244,12 @@ public:
     destroy_buckets();
   }
 
-  // Checks whether the bucket container owns any memory, or if has been
-  // deallocated. If true, the member-wise getter/setter operations will be
-  // valid, otherwise they cannot be called safely. Object-level members (such
-  // as hashpower and size) will remain valid after deallocation.
-  explicit operator bool() const noexcept {
-    return buckets_ != nullptr;
+  // Returns true if the bucket container memory has been deallocated, or false
+  // if it still owns any memory. If true, the member-wise getter/setter
+  // operations cannot be called safely. Object-level members (such as
+  // hashpower and size) will remain valid after deallocation.
+  bool is_deallocated() const noexcept {
+    return buckets_ == nullptr;
   }
 
 private:
@@ -292,7 +292,7 @@ private:
   }
 
   void destroy_buckets() noexcept {
-    if (buckets_ == nullptr) {
+    if (is_deallocated()) {
       return;
     }
     // The bucket default constructor is nothrow, so we don't have to
@@ -329,7 +329,9 @@ private:
                                 const bucket_container &>::type src,
       std::integral_constant<bool, B> move) {
     assert(dst_hp >= src.hashpower());
-    if (!static_cast<bool>(src)) { return nullptr; }
+    if (src.is_deallocated()) {
+      return nullptr;
+    }
     bucket_container dst(dst_hp, get_allocator());
     // Move/copy all occupied slots of the source buckets
     for (size_t i = 0; i < src.size(); ++i) {
