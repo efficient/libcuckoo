@@ -524,17 +524,24 @@ public:
   }
 
   /**
-   * Searches for @p key in the table. If the key is found, then @p fn is
-   * called on the existing value, and nothing happens to the passed-in key and
-   * values. The functor can mutate the value, and should return @c true in
-   * order to erase the element, and @c false otherwise. If the key is not
-   * found and must be inserted, the pair will be constructed by forwarding the
-   * given key and values. If there is no room left in the table, it will be
-   * automatically expanded. Expansion may throw exceptions.
+   * Searches for @p key in the table. If the key is not found and must be
+   * inserted, the pair will be constructed by forwarding the given key and
+   * values. If there is no room left in the table, it will be automatically
+   * expanded. Expansion may throw exceptions.
+   *
+   * Upon finding or inserting the key, @p fn is invoked on the value, with an
+   * additional @ref UpsertContext enum indicating whether the key was
+   * newly-inserted or already existed in the table. The functor can mutate the
+   * value, and should return @c true in order to erase the element, and @c
+   * false otherwise.
+   *
+   * Note: if @p fn is only invocable with a single <tt>mapped_type&</tt>
+   * argument, it will only be invoked if the key was already in the table.
    *
    * @tparam K type of the key
-   * @tparam F type of the functor. It should implement the method
-   * <tt>bool operator()(mapped_type&)</tt>.
+   * @tparam F type of the functor. It must implement either <tt>bool
+   * operator()(mapped_type&, UpsertContext)</tt> or <tt>bool
+   * operator()(mapped_type&)</tt>.
    * @tparam Args list of types for the value constructor arguments
    * @param key the key to insert into the table
    * @param fn the functor to invoke if the element is found. If your @p fn
@@ -549,13 +556,20 @@ public:
     hash_value hv = hashed_key(key);
     auto b = snapshot_and_lock_two<normal_mode>(hv);
     table_position pos = cuckoo_insert_loop<normal_mode>(hv, b, key);
+    UpsertContext upsert_context;
     if (pos.status == ok) {
       add_to_bucket(pos.index, pos.slot, hv.partial, std::forward<K>(key),
                     std::forward<Args>(val)...);
+      upsert_context = UpsertContext::NEWLY_INSERTED;
     } else {
-      if (fn(buckets_[pos.index].mapped(pos.slot))) {
-        del_from_bucket(pos.index, pos.slot);
-      }
+      upsert_context = UpsertContext::ALREADY_EXISTED;
+    }
+    using CanInvokeWithUpsertContextT =
+        typename internal::CanInvokeWithUpsertContext<F, mapped_type>::type;
+    if (internal::InvokeUpraseFn(fn, buckets_[pos.index].mapped(pos.slot),
+                                 upsert_context,
+                                 CanInvokeWithUpsertContextT{})) {
+      del_from_bucket(pos.index, pos.slot);
     }
     return pos.status == ok;
   }
@@ -563,17 +577,19 @@ public:
   /**
    * Equivalent to calling @ref uprase_fn with a functor that modifies the
    * given value and always returns false (meaning the element is not removed).
-   * The passed-in functor must implement the method <tt>void
+   * The passed-in functor must implement either <tt>bool
+   * operator()(mapped_type&, UpsertContext)</tt> or <tt>bool
    * operator()(mapped_type&)</tt>.
    */
   template <typename K, typename F, typename... Args>
   bool upsert(K &&key, F fn, Args &&... val) {
-    return uprase_fn(std::forward<K>(key),
-                     [&fn](mapped_type &v) {
-                       fn(v);
-                       return false;
-                     },
-                     std::forward<Args>(val)...);
+    constexpr bool kCanInvokeWithUpsertContext =
+        internal::CanInvokeWithUpsertContext<F, mapped_type>::type::value;
+    return uprase_fn(
+        std::forward<K>(key),
+        internal::UpsertToUpraseFn<F, mapped_type, kCanInvokeWithUpsertContext>{
+            fn},
+        std::forward<Args>(val)...);
   }
 
   /**

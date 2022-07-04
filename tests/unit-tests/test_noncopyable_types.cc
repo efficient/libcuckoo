@@ -50,6 +50,24 @@ TEST_CASE("noncopyable upsert", "[noncopyable]") {
   for (size_t i = 0; i < TBL_SIZE; ++i) {
     check_key_eq(tbl, i, i + 1);
   }
+
+  auto increment_if_already_existed_else_init =
+      [](Uptr& ptr, const libcuckoo::UpsertContext context) {
+    if (context == libcuckoo::UpsertContext::ALREADY_EXISTED) {
+      *ptr += 1;
+    } else {
+      ptr = Uptr(new int(-1));
+    }
+  };
+  for (size_t i = 0; i < TBL_SIZE * 2; ++i) {
+    tbl.upsert(Uptr(new int(i)), increment_if_already_existed_else_init);
+  }
+  for (size_t i = 0; i < TBL_SIZE; ++i) {
+    check_key_eq(tbl, i, i + 2);
+  }
+  for (size_t i = TBL_SIZE; i < TBL_SIZE * 2; ++i) {
+    check_key_eq(tbl, i, -1);
+  }
 }
 
 TEST_CASE("noncopyable iteration", "[noncopyable]") {
@@ -153,4 +171,15 @@ TEST_CASE("noncopyable uprase_fn") {
       REQUIRE_FALSE(tbl.contains(k));
     }
   }
+
+  auto erase_if_newly_inserted_nullptr =
+      [](Uptr& p, libcuckoo::UpsertContext context) {
+    return (p.get() == nullptr &&
+            context == libcuckoo::UpsertContext::NEWLY_INSERTED);
+  };
+  REQUIRE(tbl.uprase_fn(Uptr(new int(10)), erase_if_newly_inserted_nullptr));
+  REQUIRE_FALSE(tbl.contains(k));
+  REQUIRE(tbl.uprase_fn(Uptr(new int(10)), erase_if_newly_inserted_nullptr,
+                        Uptr(new int(10))));
+  REQUIRE(tbl.contains(k));
 }
