@@ -1,3 +1,4 @@
 <map id="libcuckoo::cuckoohash_map&lt; Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET &gt;::locked_table::iterator" name="libcuckoo::cuckoohash_map&lt; Key, T, Hash, KeyEqual, Allocator, SLOT_PER_BUCKET &gt;::locked_table::iterator">
-<area shape="rect" id="node2" href="$classlibcuckoo_1_1cuckoohash__map_1_1locked__table_1_1const__iterator.html" title="libcuckoo::cuckoohash\l_map\&lt; Key, T, Hash, KeyEqual,\l Allocator, SLOT_PER_BUCKET\l \&gt;::locked_table::const_iterator" alt="" coords="5,5,221,76"/>
+<area shape="rect" id="node1" title=" " alt="" coords="280,5,507,76"/>
+<area shape="rect" id="node2" href="$classlibcuckoo_1_1cuckoohash__map_1_1locked__table_1_1const__iterator.html" title=" " alt="" coords="5,5,232,76"/>
 </map>

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['get_5fallocator',['get_allocator',['../classlibcuckoo_1_1cuckoohash__map.html#a9c4f834a815847e6526f32268d025650',1,'libcuckoo::cuckoohash_map']]]
+  ['get_5fallocator_22',['get_allocator',['../classlibcuckoo_1_1cuckoohash__map.html#a8ae214a5956769cfd62573ebc8eff099',1,'libcuckoo::cuckoohash_map']]]
 ];
