@@ -5,6 +5,7 @@ project(libcuckoo
 
 # put these in the cache so they show up in ccmake
 option (BUILD_EXAMPLES "build example libcuckoo programs")
+option (LIBCUCKOO_USE_CXX20_FUTEX_SUPPORT "Optimize the spinlock implementation with C++20 futex support" OFF)
 
 # Add the libcuckoo interface target
 add_subdirectory(libcuckoo)

@@ -17,6 +17,10 @@ add_library(libcuckoo::libcuckoo ALIAS libcuckoo)
 # will have c++11 turned on in their compile when they use this target.
 # XXX: newer cmakes have a "cxx_std_11" feature that could be used
 target_compile_features (libcuckoo INTERFACE cxx_constexpr)
+if (LIBCUCKOO_USE_CXX20_FUTEX_SUPPORT)
+    target_compile_features(libcuckoo INTERFACE cxx_std_20) 
+    target_compile_definitions(libcuckoo INTERFACE LIBCUCKOO_USE_CXX20_FUTEX_SUPPORT=1)
+endif ()
 
 # Include relative to the base directory
 target_include_directories(libcuckoo INTERFACE
