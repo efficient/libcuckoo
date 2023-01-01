@@ -35,6 +35,22 @@ TEST_CASE("noncopyable insert and update", "[noncopyable]") {
   }
 }
 
+TEST_CASE("noncopyable insert_or_assign", "[noncopyable]") {
+  Tbl tbl(TBL_INIT);
+  for (size_t i = 0; i < TBL_SIZE / 2; ++i) {
+    REQUIRE(tbl.insert_or_assign(Uptr(new int(i)), Uptr(new int(i))));
+  }
+  for (size_t i = 0; i < TBL_SIZE / 2; ++i) {
+    check_key_eq(tbl, i, i);
+  }
+  for (size_t i = 0; i < TBL_SIZE; ++i) {
+    tbl.insert_or_assign(Uptr(new int(i)), Uptr(new int(10)));
+  }
+  for (size_t i = 0; i < TBL_SIZE; ++i) {
+    check_key_eq(tbl, i, 10);
+  }
+}
+
 TEST_CASE("noncopyable upsert", "[noncopyable]") {
   Tbl tbl(TBL_INIT);
   auto increment = [](Uptr &ptr) { *ptr += 1; };

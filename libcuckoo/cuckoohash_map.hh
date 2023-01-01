@@ -654,7 +654,8 @@ public:
    * val.
    */
   template <typename K, typename V> bool insert_or_assign(K &&key, V &&val) {
-    return upsert(std::forward<K>(key), [&val](mapped_type &m) { m = val; },
+    return upsert(std::forward<K>(key),
+                  [&val](mapped_type &m) { m = std::forward<V>(val); },
                   std::forward<V>(val));
   }
 
