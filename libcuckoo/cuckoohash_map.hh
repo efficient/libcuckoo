@@ -464,7 +464,7 @@ public:
    */
   template <typename K, typename F> bool find_fn(const K &key, F fn) const {
     const hash_value hv = hashed_key(key);
-    const auto b = snapshot_and_lock_two<normal_mode>(hv);
+    const auto b = snapshot_and_lock_two<normal_mode_shared>(hv);
     const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
     if (pos.status == ok) {
       fn(buckets_[pos.index].mapped(pos.slot));
@@ -487,7 +487,7 @@ public:
    */
   template <typename K, typename F> bool update_fn(const K &key, F fn) {
     const hash_value hv = hashed_key(key);
-    const auto b = snapshot_and_lock_two<normal_mode>(hv);
+    const auto b = snapshot_and_lock_two<normal_mode_x>(hv);
     const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
     if (pos.status == ok) {
       fn(buckets_[pos.index].mapped(pos.slot));
@@ -511,7 +511,7 @@ public:
    */
   template <typename K, typename F> bool erase_fn(const K &key, F fn) {
     const hash_value hv = hashed_key(key);
-    const auto b = snapshot_and_lock_two<normal_mode>(hv);
+    const auto b = snapshot_and_lock_two<normal_mode_x>(hv);
     const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
     if (pos.status == ok) {
       if (fn(buckets_[pos.index].mapped(pos.slot))) {
@@ -554,8 +554,8 @@ public:
   template <typename K, typename F, typename... Args>
   bool uprase_fn(K &&key, F fn, Args &&... val) {
     hash_value hv = hashed_key(key);
-    auto b = snapshot_and_lock_two<normal_mode>(hv);
-    table_position pos = cuckoo_insert_loop<normal_mode>(hv, b, key);
+    auto b = snapshot_and_lock_two<normal_mode_x>(hv);
+    table_position pos = cuckoo_insert_loop<normal_mode_x>(hv, b, key);
     UpsertContext upsert_context;
     if (pos.status == ok) {
       add_to_bucket(pos.index, pos.slot, hv.partial, std::forward<K>(key),
@@ -611,7 +611,7 @@ public:
    */
   template <typename K> mapped_type find(const K &key) const {
     const hash_value hv = hashed_key(key);
-    const auto b = snapshot_and_lock_two<normal_mode>(hv);
+    const auto b = snapshot_and_lock_two<normal_mode_shared>(hv);
     const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
     if (pos.status == ok) {
       return buckets_[pos.index].mapped(pos.slot);
@@ -676,7 +676,7 @@ public:
    * @param n the hashpower to set for the table
    * @return true if the table changed size, false otherwise
    */
-  bool rehash(size_type n) { return cuckoo_rehash<normal_mode>(n); }
+  bool rehash(size_type n) { return cuckoo_rehash<normal_mode_x>(n); }
 
   /**
    * Reserve enough space in the table for the given number of elements. If
@@ -687,13 +687,13 @@ public:
    * @param n the number of elements to reserve space for
    * @return true if the size of the table changed, false otherwise
    */
-  bool reserve(size_type n) { return cuckoo_reserve<normal_mode>(n); }
+  bool reserve(size_type n) { return cuckoo_reserve<normal_mode_x>(n); }
 
   /**
    * Removes all elements in the table, calling their destructors.
    */
   void clear() {
-    auto all_locks_manager = lock_all(normal_mode());
+    auto all_locks_manager = lock_all(normal_mode_x());
     cuckoo_clear();
   }
 
@@ -817,15 +817,27 @@ private:
   // Instead, we'll mark all of the locks as not migrated. So anybody trying to
   // acquire the lock must also migrate the corresponding buckets if
   // !is_migrated.
+  //
+  // This spin lock implementation that supports Exclusive/Shared locking 
+  // semantics to allow read-only operations to share the lock in the 
+  // absence of mutation operations that needs the lock. The lock 
+  // compatibility between 2 contending threads summarized 
+  // as the following table;
+  //  
+  // | T1 / T2   | Shared | Exclusive |
+  // |-----------|--------|-----------|
+  // | Shared    | OK     | NO        |
+  // | Exclusive | NO     | NO        |
+  //
   LIBCUCKOO_SQUELCH_PADDING_WARNING
   class LIBCUCKOO_ALIGNAS(64) spinlock {
   public:
-    spinlock() : elem_counter_(0), is_migrated_(true) { lock_.clear(); }
+    spinlock() : elem_counter_(0), is_migrated_(true), lock_(0) {  }
 
     spinlock(const spinlock &other) noexcept
         : elem_counter_(other.elem_counter()),
           is_migrated_(other.is_migrated()) {
-      lock_.clear();
+      lock_ = 0;
     }
 
     spinlock &operator=(const spinlock &other) noexcept {
@@ -834,16 +846,37 @@ private:
       return *this;
     }
 
-    void lock() noexcept {
-      while (lock_.test_and_set(std::memory_order_acq_rel))
+    // Exclusive locking
+    inline bool try_lock_x() noexcept {
+      uint64_t expected = 0; // No shared or X lock on it
+      // try to win the race
+      return lock_.compare_exchange_strong(expected, X_LOCK_MASK);
+    }
+
+    inline void lock_x() noexcept {
+      while (!try_lock_x())
         ;
     }
 
-    void unlock() noexcept { lock_.clear(std::memory_order_release); }
-
-    bool try_lock() noexcept {
-      return !lock_.test_and_set(std::memory_order_acq_rel);
+    // Shared locking
+    inline bool try_lock_shared() noexcept {
+      uint64_t status = lock_.load();
+      // return early when there is a X lock on it. 
+      if (status & X_LOCK_MASK) {
+        return false;
+      }
+      assert(status + 1 < X_LOCK_MASK);
+      // Increase the number of lock holders by 1
+      return lock_.compare_exchange_strong(status, status + 1);
     }
+
+    inline void lock_shared() noexcept {
+      while (!try_lock_shared())
+        ;
+    }
+
+    // Specific unlock APIs are private to reduce the risk of incorrect usage
+	  inline void unlock() { isXLocked() ? unlock_x() : unlock_shared(); }
 
     counter_type &elem_counter() noexcept { return elem_counter_; }
     counter_type elem_counter() const noexcept { return elem_counter_; }
@@ -852,9 +885,20 @@ private:
     bool is_migrated() const noexcept { return is_migrated_; }
 
   private:
-    std::atomic_flag lock_;
+    
+    inline void unlock_x() { lock_.store(0, std::memory_order_release); }
+
+    inline void unlock_shared() { lock_.fetch_sub(1); }
+
+    inline bool isXLocked() const { return lock_ & X_LOCK_MASK; };
+
+    // Exclusive locked when highest bit set,
+    // it is shared lock when it's not set and low 63 bits used for shared lock counter
+    std::atomic<uint64_t> lock_; 
     counter_type elem_counter_;
     bool is_migrated_;
+
+    constexpr static uint64_t X_LOCK_MASK = 0x1lu << 63;
   };
 
   template <typename U>
@@ -879,15 +923,23 @@ private:
   // already taken all locks on the buckets. We also require that all data is
   // rehashed immediately, so that the caller never has to look through any
   // locks. In normal_mode, we actually do take locks, and can rehash lazily.
-  using locked_table_mode = std::integral_constant<bool, true>;
-  using normal_mode = std::integral_constant<bool, false>;
+  using locked_table_mode_x = std::integral_constant<int, 0>;
+  using locked_table_mode_shared = std::integral_constant<int, 1>;
+  using normal_mode_x = std::integral_constant<int, 2>;
+  using normal_mode_shared = std::integral_constant<int, 3>;
 
   class TwoBuckets {
   public:
     TwoBuckets() {}
-    TwoBuckets(size_type i1_, size_type i2_, locked_table_mode)
+    TwoBuckets(size_type i1_, size_type i2_, locked_table_mode_x)
         : i1(i1_), i2(i2_) {}
-    TwoBuckets(locks_t &locks, size_type i1_, size_type i2_, normal_mode)
+    TwoBuckets(locks_t &locks, size_type i1_, size_type i2_, normal_mode_x)
+        : i1(i1_), i2(i2_), first_manager_(&locks[lock_ind(i1)]),
+          second_manager_((lock_ind(i1) != lock_ind(i2)) ? &locks[lock_ind(i2)]
+                                                         : nullptr) {}
+    TwoBuckets(size_type i1_, size_type i2_, locked_table_mode_shared)
+        : i1(i1_), i2(i2_) {}
+    TwoBuckets(locks_t &locks, size_type i1_, size_type i2_, normal_mode_shared)
         : i1(i1_), i2(i2_), first_manager_(&locks[lock_ind(i1)]),
           second_manager_((lock_ind(i1) != lock_ind(i2)) ? &locks[lock_ind(i2)]
                                                          : nullptr) {}
@@ -976,15 +1028,15 @@ private:
   // locks the given bucket index.
   //
   // throws hashpower_changed if it changed after taking the lock.
-  LockManager lock_one(size_type, size_type, locked_table_mode) const {
+  LockManager lock_one(size_type, size_type, locked_table_mode_x) const {
     return LockManager();
   }
 
-  LockManager lock_one(size_type hp, size_type i, normal_mode) const {
+  LockManager lock_one(size_type hp, size_type i, normal_mode_x) const {
     locks_t &locks = get_current_locks();
     const size_type l = lock_ind(i);
     spinlock &lock = locks[l];
-    lock.lock();
+    lock.lock_x();
     check_hashpower(hp, lock);
     rehash_lock<kIsLazy>(l);
     return LockManager(&lock);
@@ -995,26 +1047,47 @@ private:
   //
   // throws hashpower_changed if it changed after taking the lock.
   TwoBuckets lock_two(size_type, size_type i1, size_type i2,
-                      locked_table_mode) const {
-    return TwoBuckets(i1, i2, locked_table_mode());
+                      locked_table_mode_x) const {
+    return TwoBuckets(i1, i2, locked_table_mode_x());
   }
 
   TwoBuckets lock_two(size_type hp, size_type i1, size_type i2,
-                      normal_mode) const {
+                      normal_mode_x) const {
     size_type l1 = lock_ind(i1);
     size_type l2 = lock_ind(i2);
     if (l2 < l1) {
       std::swap(l1, l2);
     }
     locks_t &locks = get_current_locks();
-    locks[l1].lock();
+    locks[l1].lock_x();
     check_hashpower(hp, locks[l1]);
     if (l2 != l1) {
-      locks[l2].lock();
+      locks[l2].lock_x();
     }
     rehash_lock<kIsLazy>(l1);
     rehash_lock<kIsLazy>(l2);
-    return TwoBuckets(locks, i1, i2, normal_mode());
+    return TwoBuckets(locks, i1, i2, normal_mode_x());
+  }
+
+  TwoBuckets lock_two(size_type, size_type i1, size_type i2,
+                      locked_table_mode_shared) const {
+    return TwoBuckets(i1, i2, locked_table_mode_shared());
+  }
+
+  TwoBuckets lock_two(size_type hp, size_type i1, size_type i2,
+                      normal_mode_shared) const {
+    size_type l1 = lock_ind(i1);
+    size_type l2 = lock_ind(i2);
+    if (l2 < l1) {
+      std::swap(l1, l2);
+    }
+    locks_t &locks = get_current_locks();
+    locks[l1].lock_shared();
+    check_hashpower(hp, locks[l1]);
+    if (l2 != l1) {
+      locks[l2].lock_shared();
+    }
+    return TwoBuckets(locks, i1, i2, normal_mode_shared());
   }
 
   // lock_three locks the three bucket indexes in numerical order, returning
@@ -1024,14 +1097,14 @@ private:
   // throws hashpower_changed if it changed after taking the lock.
   std::pair<TwoBuckets, LockManager> lock_three(size_type, size_type i1,
                                                 size_type i2, size_type,
-                                                locked_table_mode) const {
-    return std::make_pair(TwoBuckets(i1, i2, locked_table_mode()),
+                                                locked_table_mode_x) const {
+    return std::make_pair(TwoBuckets(i1, i2, locked_table_mode_x()),
                           LockManager());
   }
 
   std::pair<TwoBuckets, LockManager> lock_three(size_type hp, size_type i1,
                                                 size_type i2, size_type i3,
-                                                normal_mode) const {
+                                                normal_mode_x) const {
     std::array<size_type, 3> l{{lock_ind(i1), lock_ind(i2), lock_ind(i3)}};
     // Lock in order.
     if (l[2] < l[1])
@@ -1041,18 +1114,18 @@ private:
     if (l[1] < l[0])
       std::swap(l[1], l[0]);
     locks_t &locks = get_current_locks();
-    locks[l[0]].lock();
+    locks[l[0]].lock_x();
     check_hashpower(hp, locks[l[0]]);
     if (l[1] != l[0]) {
-      locks[l[1]].lock();
+      locks[l[1]].lock_x();
     }
     if (l[2] != l[1]) {
-      locks[l[2]].lock();
+      locks[l[2]].lock_x();
     }
     rehash_lock<kIsLazy>(l[0]);
     rehash_lock<kIsLazy>(l[1]);
     rehash_lock<kIsLazy>(l[2]);
-    return std::make_pair(TwoBuckets(locks, i1, i2, normal_mode()),
+    return std::make_pair(TwoBuckets(locks, i1, i2, normal_mode_x()),
                           LockManager((lock_ind(i3) == lock_ind(i1) ||
                                        lock_ind(i3) == lock_ind(i2))
                                           ? nullptr
@@ -1087,11 +1160,11 @@ private:
   //
   // Note that after taking all the locks, it is okay to resize the buckets_
   // container, since no other threads should be accessing the buckets.
-  AllLocksManager lock_all(locked_table_mode) {
+  AllLocksManager lock_all(locked_table_mode_x) {
     return AllLocksManager();
   }
 
-  AllLocksManager lock_all(normal_mode) {
+  AllLocksManager lock_all(normal_mode_x) {
     // all_locks_ should never decrease in size, so if it is non-empty now, it
     // will remain non-empty
     assert(!all_locks_.empty());
@@ -1100,7 +1173,7 @@ private:
     while (current_locks != all_locks_.end()) {
       locks_t &locks = *current_locks;
       for (spinlock &lock : locks) {
-        lock.lock();
+        lock.lock_x();
       }
       ++current_locks;
     }
@@ -1263,10 +1336,10 @@ private:
       // to try again by returning failure_under_expansion.
       return table_position{0, 0, failure_under_expansion};
     } else if (st == ok) {
-      assert(TABLE_MODE() == locked_table_mode() ||
-             !get_current_locks()[lock_ind(b.i1)].try_lock());
-      assert(TABLE_MODE() == locked_table_mode() ||
-             !get_current_locks()[lock_ind(b.i2)].try_lock());
+      assert(TABLE_MODE() == locked_table_mode_x() ||
+             !get_current_locks()[lock_ind(b.i1)].try_lock_x());
+      assert(TABLE_MODE() == locked_table_mode_x() ||
+             !get_current_locks()[lock_ind(b.i2)].try_lock_x());
       assert(!buckets_[insert_bucket].occupied(insert_slot));
       assert(insert_bucket == index_hash(hashpower(), hv.hash) ||
              insert_bucket == alt_index(hashpower(), hv.partial,
@@ -1387,10 +1460,10 @@ private:
           insert_bucket = cuckoo_path[0].bucket;
           insert_slot = cuckoo_path[0].slot;
           assert(insert_bucket == b.i1 || insert_bucket == b.i2);
-          assert(TABLE_MODE() == locked_table_mode() ||
-                 !get_current_locks()[lock_ind(b.i1)].try_lock());
-          assert(TABLE_MODE() == locked_table_mode() ||
-                 !get_current_locks()[lock_ind(b.i2)].try_lock());
+          assert(TABLE_MODE() == locked_table_mode_x() ||
+                 !get_current_locks()[lock_ind(b.i1)].try_lock_x());
+          assert(TABLE_MODE() == locked_table_mode_x() ||
+                 !get_current_locks()[lock_ind(b.i2)].try_lock_x());
           assert(!buckets_[insert_bucket].occupied(insert_slot));
           done = true;
           break;
@@ -1746,7 +1819,7 @@ private:
         lock.is_migrated() = false;
       }
       num_remaining_lazy_rehash_locks(current_locks.size());
-      if (std::is_same<TABLE_MODE, locked_table_mode>::value) {
+      if (std::is_same<TABLE_MODE, locked_table_mode_x>::value) {
         rehash_with_workers();
       }
     }
@@ -1845,7 +1918,7 @@ private:
     assert(new_locks.size() > current_locks.size());
     std::copy(current_locks.begin(), current_locks.end(), new_locks.begin());
     for (spinlock &lock : new_locks) {
-      lock.lock();
+      lock.lock_x();
     }
     all_locks_.emplace_back(std::move(new_locks));
   }
@@ -2496,9 +2569,9 @@ public:
     template <typename K, typename... Args>
     std::pair<iterator, bool> insert(K &&key, Args &&... val) {
       hash_value hv = map_.get().hashed_key(key);
-      auto b = map_.get().template snapshot_and_lock_two<locked_table_mode>(hv);
+      auto b = map_.get().template snapshot_and_lock_two<locked_table_mode_x>(hv);
       table_position pos =
-          map_.get().template cuckoo_insert_loop<locked_table_mode>(hv, b, key);
+          map_.get().template cuckoo_insert_loop<locked_table_mode_x>(hv, b, key);
       if (pos.status == ok) {
         map_.get().add_to_bucket(pos.index, pos.slot, hv.partial,
                                  std::forward<K>(key),
@@ -2523,7 +2596,7 @@ public:
     template <typename K> size_type erase(const K &key) {
       const hash_value hv = map_.get().hashed_key(key);
       const auto b =
-          map_.get().template snapshot_and_lock_two<locked_table_mode>(hv);
+          map_.get().template snapshot_and_lock_two<locked_table_mode_x>(hv);
       const table_position pos =
           map_.get().cuckoo_find(key, hv.partial, b.i1, b.i2);
       if (pos.status == ok) {
@@ -2542,7 +2615,7 @@ public:
     template <typename K> iterator find(const K &key) {
       const hash_value hv = map_.get().hashed_key(key);
       const auto b =
-          map_.get().template snapshot_and_lock_two<locked_table_mode>(hv);
+          map_.get().template snapshot_and_lock_two<locked_table_mode_x>(hv);
       const table_position pos =
           map_.get().cuckoo_find(key, hv.partial, b.i1, b.i2);
       if (pos.status == ok) {
@@ -2555,7 +2628,7 @@ public:
     template <typename K> const_iterator find(const K &key) const {
       const hash_value hv = map_.get().hashed_key(key);
       const auto b =
-          map_.get().template snapshot_and_lock_two<locked_table_mode>(hv);
+          map_.get().template snapshot_and_lock_two<locked_table_mode_shared>(hv);
       const table_position pos =
           map_.get().cuckoo_find(key, hv.partial, b.i1, b.i2);
       if (pos.status == ok) {
@@ -2596,7 +2669,7 @@ public:
     template <typename K> size_type count(const K &key) const {
       const hash_value hv = map_.get().hashed_key(key);
       const auto b =
-          map_.get().template snapshot_and_lock_two<locked_table_mode>(hv);
+          map_.get().template snapshot_and_lock_two<locked_table_mode_shared>(hv);
       return map_.get().cuckoo_find(key, hv.partial, b.i1, b.i2).status == ok
                  ? 1
                  : 0;
@@ -2634,7 +2707,7 @@ public:
      * that we don't return anything.
      */
     void rehash(size_type n) {
-      map_.get().template cuckoo_rehash<locked_table_mode>(n);
+      map_.get().template cuckoo_rehash<locked_table_mode_x>(n);
     }
 
     /**
@@ -2642,7 +2715,7 @@ public:
      * that we don't return anything.
      */
     void reserve(size_type n) {
-      map_.get().template cuckoo_reserve<locked_table_mode>(n);
+      map_.get().template cuckoo_reserve<locked_table_mode_x>(n);
     }
 
     /**@}*/
@@ -2685,7 +2758,7 @@ public:
     // that everything is in map.buckets_.
     locked_table(cuckoohash_map &map) noexcept
         : map_(map),
-          all_locks_manager_(map.lock_all(normal_mode())) {
+          all_locks_manager_(map.lock_all(normal_mode_x())) {
       map.rehash_with_workers();
     }
 
