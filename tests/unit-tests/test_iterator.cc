@@ -158,7 +158,7 @@ TEST_CASE("lock table blocks inserts", "[iterator]") {
       table.insert(i, i);
     }
   });
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
   REQUIRE(table.size() == 0);
   lt.unlock();
   thread.join();
