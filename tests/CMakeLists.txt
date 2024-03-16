@@ -17,9 +17,7 @@ if (BUILD_TESTS OR
     add_subdirectory(pcg)
 endif()
 
-# Add catch for unit tests
 if (BUILD_TESTS OR BUILD_UNIT_TESTS)
-    add_subdirectory(Catch)
     add_subdirectory(unit-tests)
 endif()
 

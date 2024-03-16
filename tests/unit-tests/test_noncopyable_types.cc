@@ -1,4 +1,7 @@
-#include <catch.hpp>
+#include "test_noncopyable_types.h"
+
+#define TEST_NO_MAIN
+#include "acutest.h"
 
 #include <string>
 #include <utility>
@@ -13,16 +16,16 @@ const size_t TBL_INIT = 1;
 const size_t TBL_SIZE = TBL_INIT * Tbl::slot_per_bucket() * 2;
 
 void check_key_eq(Tbl &tbl, int key, int expected_val) {
-  REQUIRE(tbl.contains(Uptr(new int(key))));
+  TEST_CHECK(tbl.contains(Uptr(new int(key))));
   tbl.find_fn(Uptr(new int(key)), [expected_val](const Uptr &ptr) {
-    REQUIRE(*ptr == expected_val);
+    TEST_CHECK(*ptr == expected_val);
   });
 }
 
-TEST_CASE("noncopyable insert and update", "[noncopyable]") {
+void test_noncopyable_types_insert_and_update() {
   Tbl tbl(TBL_INIT);
   for (size_t i = 0; i < TBL_SIZE; ++i) {
-    REQUIRE(tbl.insert(Uptr(new int(i)), Uptr(new int(i))));
+    TEST_CHECK(tbl.insert(Uptr(new int(i)), Uptr(new int(i))));
   }
   for (size_t i = 0; i < TBL_SIZE; ++i) {
     check_key_eq(tbl, i, i);
@@ -35,10 +38,10 @@ TEST_CASE("noncopyable insert and update", "[noncopyable]") {
   }
 }
 
-TEST_CASE("noncopyable insert_or_assign", "[noncopyable]") {
+void test_noncopyable_types_insert_or_assign() {
   Tbl tbl(TBL_INIT);
   for (size_t i = 0; i < TBL_SIZE / 2; ++i) {
-    REQUIRE(tbl.insert_or_assign(Uptr(new int(i)), Uptr(new int(i))));
+    TEST_CHECK(tbl.insert_or_assign(Uptr(new int(i)), Uptr(new int(i))));
   }
   for (size_t i = 0; i < TBL_SIZE / 2; ++i) {
     check_key_eq(tbl, i, i);
@@ -51,7 +54,7 @@ TEST_CASE("noncopyable insert_or_assign", "[noncopyable]") {
   }
 }
 
-TEST_CASE("noncopyable upsert", "[noncopyable]") {
+void test_noncopyable_types_upsert() {
   Tbl tbl(TBL_INIT);
   auto increment = [](Uptr &ptr) { *ptr += 1; };
   for (size_t i = 0; i < TBL_SIZE; ++i) {
@@ -68,13 +71,13 @@ TEST_CASE("noncopyable upsert", "[noncopyable]") {
   }
 
   auto increment_if_already_existed_else_init =
-      [](Uptr& ptr, const libcuckoo::UpsertContext context) {
-    if (context == libcuckoo::UpsertContext::ALREADY_EXISTED) {
-      *ptr += 1;
-    } else {
-      ptr = Uptr(new int(-1));
-    }
-  };
+      [](Uptr &ptr, const libcuckoo::UpsertContext context) {
+        if (context == libcuckoo::UpsertContext::ALREADY_EXISTED) {
+          *ptr += 1;
+        } else {
+          ptr = Uptr(new int(-1));
+        }
+      };
   for (size_t i = 0; i < TBL_SIZE * 2; ++i) {
     tbl.upsert(Uptr(new int(i)), increment_if_already_existed_else_init);
   }
@@ -86,7 +89,7 @@ TEST_CASE("noncopyable upsert", "[noncopyable]") {
   }
 }
 
-TEST_CASE("noncopyable iteration", "[noncopyable]") {
+void test_noncopyable_types_iteration() {
   Tbl tbl(TBL_INIT);
   for (size_t i = 0; i < TBL_SIZE; ++i) {
     tbl.insert(Uptr(new int(i)), Uptr(new int(i)));
@@ -94,21 +97,22 @@ TEST_CASE("noncopyable iteration", "[noncopyable]") {
   {
     auto locked_tbl = tbl.lock_table();
     for (auto &kv : locked_tbl) {
-      REQUIRE(*kv.first == *kv.second);
+      TEST_CHECK(*kv.first == *kv.second);
       *kv.second += 1;
     }
   }
   {
     auto locked_tbl = tbl.lock_table();
     for (auto &kv : locked_tbl) {
-      REQUIRE(*kv.first == *kv.second - 1);
+      TEST_CHECK(*kv.first == *kv.second - 1);
     }
   }
 }
 
-TEST_CASE("nested table", "[noncopyable]") {
+void test_noncopyable_types_nested_table() {
   typedef libcuckoo::cuckoohash_map<char, std::string> inner_tbl;
-  typedef libcuckoo::cuckoohash_map<std::string, std::unique_ptr<inner_tbl>> nested_tbl;
+  typedef libcuckoo::cuckoohash_map<std::string, std::unique_ptr<inner_tbl>>
+      nested_tbl;
   nested_tbl tbl;
   std::string keys[] = {"abc", "def"};
   for (std::string &k : keys) {
@@ -120,39 +124,39 @@ TEST_CASE("nested table", "[noncopyable]") {
     });
   }
   for (std::string &k : keys) {
-    REQUIRE(tbl.contains(k));
+    TEST_CHECK(tbl.contains(k));
     tbl.update_fn(k, [&k](nested_tbl::mapped_type &t) {
       for (char c : k) {
-        REQUIRE(t->find(c) == k);
+        TEST_CHECK(t->find(c) == k);
       }
     });
   }
 }
 
-TEST_CASE("noncopyable insert lifetime") {
-  Tbl tbl;
-
+void test_noncopyable_types_insert_lifetime() {
   // Successful insert
-  SECTION("Successful insert") {
+  {
+    Tbl tbl;
     Uptr key(new int(20));
     Uptr value(new int(20));
-    REQUIRE(tbl.insert(std::move(key), std::move(value)));
-    REQUIRE(!static_cast<bool>(key));
-    REQUIRE(!static_cast<bool>(value));
+    TEST_CHECK(tbl.insert(std::move(key), std::move(value)));
+    TEST_CHECK(!static_cast<bool>(key));
+    TEST_CHECK(!static_cast<bool>(value));
   }
 
   // Unsuccessful insert
-  SECTION("Unsuccessful insert") {
+  {
+    Tbl tbl;
     tbl.insert(new int(20), new int(20));
     Uptr key(new int(20));
     Uptr value(new int(30));
-    REQUIRE_FALSE(tbl.insert(std::move(key), std::move(value)));
-    REQUIRE(static_cast<bool>(key));
-    REQUIRE(static_cast<bool>(value));
+    TEST_CHECK(!tbl.insert(std::move(key), std::move(value)));
+    TEST_CHECK(static_cast<bool>(key));
+    TEST_CHECK(static_cast<bool>(value));
   }
 }
 
-TEST_CASE("noncopyable erase_fn") {
+void test_noncopyable_types_erase_fn() {
   Tbl tbl;
   tbl.insert(new int(10), new int(10));
   auto decrement_and_erase = [](Uptr &p) {
@@ -162,40 +166,39 @@ TEST_CASE("noncopyable erase_fn") {
   Uptr k(new int(10));
   for (int i = 0; i < 9; ++i) {
     tbl.erase_fn(k, decrement_and_erase);
-    REQUIRE(tbl.contains(k));
+    TEST_CHECK(tbl.contains(k));
   }
   tbl.erase_fn(k, decrement_and_erase);
-  REQUIRE_FALSE(tbl.contains(k));
+  TEST_CHECK(!tbl.contains(k));
 }
 
-TEST_CASE("noncopyable uprase_fn") {
+void test_noncopyable_types_uprase_fn() {
   Tbl tbl;
   auto decrement_and_erase = [](Uptr &p) {
     --(*p);
     return *p == 0;
   };
-  REQUIRE(
+  TEST_CHECK(
       tbl.uprase_fn(Uptr(new int(10)), decrement_and_erase, Uptr(new int(10))));
   Uptr k(new int(10)), v(new int(10));
   for (int i = 0; i < 10; ++i) {
-    REQUIRE_FALSE(
-        tbl.uprase_fn(std::move(k), decrement_and_erase, std::move(v)));
-    REQUIRE((k && v));
+    TEST_CHECK(!tbl.uprase_fn(std::move(k), decrement_and_erase, std::move(v)));
+    TEST_CHECK((k && v));
     if (i < 9) {
-      REQUIRE(tbl.contains(k));
+      TEST_CHECK(tbl.contains(k));
     } else {
-      REQUIRE_FALSE(tbl.contains(k));
+      TEST_CHECK(!tbl.contains(k));
     }
   }
 
-  auto erase_if_newly_inserted_nullptr =
-      [](Uptr& p, libcuckoo::UpsertContext context) {
+  auto erase_if_newly_inserted_nullptr = [](Uptr &p,
+                                            libcuckoo::UpsertContext context) {
     return (p.get() == nullptr &&
             context == libcuckoo::UpsertContext::NEWLY_INSERTED);
   };
-  REQUIRE(tbl.uprase_fn(Uptr(new int(10)), erase_if_newly_inserted_nullptr));
-  REQUIRE_FALSE(tbl.contains(k));
-  REQUIRE(tbl.uprase_fn(Uptr(new int(10)), erase_if_newly_inserted_nullptr,
-                        Uptr(new int(10))));
-  REQUIRE(tbl.contains(k));
+  TEST_CHECK(tbl.uprase_fn(Uptr(new int(10)), erase_if_newly_inserted_nullptr));
+  TEST_CHECK(!tbl.contains(k));
+  TEST_CHECK(tbl.uprase_fn(Uptr(new int(10)), erase_if_newly_inserted_nullptr,
+                           Uptr(new int(10))));
+  TEST_CHECK(tbl.contains(k));
 }

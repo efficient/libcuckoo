@@ -1,4 +1,7 @@
-#include <catch.hpp>
+#include "test_iterator.h"
+
+#define TEST_NO_MAIN
+#include "acutest.h"
 
 #include <algorithm>
 #include <chrono>
@@ -11,7 +14,7 @@
 #include "unit_test_util.hh"
 #include <libcuckoo/cuckoohash_map.hh>
 
-TEST_CASE("iterator types", "[iterator]") {
+void test_iterator_types() {
   using Ltbl = IntIntTable::locked_table;
   using It = Ltbl::iterator;
   using ConstIt = Ltbl::const_iterator;
@@ -38,100 +41,118 @@ TEST_CASE("iterator types", "[iterator]") {
       std::is_same<std::bidirectional_iterator_tag,
                    ConstIt::iterator_category>::value;
 
-  REQUIRE(it_difference_type);
-  REQUIRE(it_value_type);
-  REQUIRE(it_pointer);
-  REQUIRE(it_reference);
-  REQUIRE(it_iterator_category);
+  TEST_CHECK(it_difference_type);
+  TEST_CHECK(it_value_type);
+  TEST_CHECK(it_pointer);
+  TEST_CHECK(it_reference);
+  TEST_CHECK(it_iterator_category);
 
-  REQUIRE(const_it_difference_type);
-  REQUIRE(const_it_value_type);
-  REQUIRE(const_it_pointer);
-  REQUIRE(const_it_reference);
-  REQUIRE(const_it_iterator_category);
+  TEST_CHECK(const_it_difference_type);
+  TEST_CHECK(const_it_value_type);
+  TEST_CHECK(const_it_pointer);
+  TEST_CHECK(const_it_reference);
+  TEST_CHECK(const_it_iterator_category);
 }
 
-TEST_CASE("empty table iteration", "[iterator]") {
+void test_iterator_empty_table_iteration() {
   IntIntTable table;
   {
     auto lt = table.lock_table();
-    REQUIRE(lt.begin() == lt.begin());
-    REQUIRE(lt.begin() == lt.end());
+    TEST_CHECK(lt.begin() == lt.begin());
+    TEST_CHECK(lt.begin() == lt.end());
 
-    REQUIRE(lt.cbegin() == lt.begin());
-    REQUIRE(lt.begin() == lt.end());
+    TEST_CHECK(lt.cbegin() == lt.begin());
+    TEST_CHECK(lt.begin() == lt.end());
 
-    REQUIRE(lt.cbegin() == lt.begin());
-    REQUIRE(lt.cend() == lt.end());
+    TEST_CHECK(lt.cbegin() == lt.begin());
+    TEST_CHECK(lt.cend() == lt.end());
   }
 }
 
-TEST_CASE("iterator walkthrough", "[iterator]") {
+IntIntTable walkthrough_table() {
   IntIntTable table;
   for (int i = 0; i < 10; ++i) {
     table.insert(i, i);
   }
+  return table;
+}
 
-  SECTION("forward postfix walkthrough") {
+void test_iterator_walkthrough() {
+  // forward postfix walkthrough
+  {
+    auto table = walkthrough_table();
+
     auto lt = table.lock_table();
     auto it = lt.cbegin();
     for (size_t i = 0; i < table.size(); ++i) {
-      REQUIRE((*it).first == (*it).second);
-      REQUIRE(it->first == it->second);
+      TEST_CHECK((*it).first == (*it).second);
+      TEST_CHECK(it->first == it->second);
       auto old_it = it;
-      REQUIRE(old_it == it++);
+      TEST_CHECK(old_it == it++);
     }
-    REQUIRE(it == lt.end());
+    TEST_CHECK(it == lt.end());
   }
 
-  SECTION("forward prefix walkthrough") {
+  // forward prefix walkthrough
+  {
+    auto table = walkthrough_table();
+
     auto lt = table.lock_table();
     auto it = lt.cbegin();
     for (size_t i = 0; i < table.size(); ++i) {
-      REQUIRE((*it).first == (*it).second);
-      REQUIRE(it->first == it->second);
+      TEST_CHECK((*it).first == (*it).second);
+      TEST_CHECK(it->first == it->second);
       ++it;
     }
-    REQUIRE(it == lt.end());
+    TEST_CHECK(it == lt.end());
   }
 
-  SECTION("backwards postfix walkthrough") {
+  // backwards postfix walkthrough
+  {
+    auto table = walkthrough_table();
+
     auto lt = table.lock_table();
     auto it = lt.cend();
     for (size_t i = 0; i < table.size(); ++i) {
       auto old_it = it;
-      REQUIRE(old_it == it--);
-      REQUIRE((*it).first == (*it).second);
-      REQUIRE(it->first == it->second);
+      TEST_CHECK(old_it == it--);
+      TEST_CHECK((*it).first == (*it).second);
+      TEST_CHECK(it->first == it->second);
     }
-    REQUIRE(it == lt.begin());
+    TEST_CHECK(it == lt.begin());
   }
 
-  SECTION("backwards prefix walkthrough") {
+  // backwards prefix walkthrough
+  {
+    auto table = walkthrough_table();
+
     auto lt = table.lock_table();
     auto it = lt.cend();
     for (size_t i = 0; i < table.size(); ++i) {
       --it;
-      REQUIRE((*it).first == (*it).second);
-      REQUIRE(it->first == it->second);
+      TEST_CHECK((*it).first == (*it).second);
+      TEST_CHECK(it->first == it->second);
     }
-    REQUIRE(it == lt.begin());
+    TEST_CHECK(it == lt.begin());
   }
 
-  SECTION("walkthrough works after move") {
+  // walkthrough works after move
+  {
+    auto table = walkthrough_table();
+
     auto lt = table.lock_table();
     auto it = lt.cend();
     auto lt2 = std::move(lt);
     for (size_t i = 0; i < table.size(); ++i) {
       --it;
-      REQUIRE((*it).first == (*it).second);
-      REQUIRE(it->first == it->second);
+      TEST_CHECK((*it).first == (*it).second);
+      TEST_CHECK(it->first == it->second);
     }
-    REQUIRE(it == lt2.begin());
+    TEST_CHECK(it == lt2.begin());
   }
 }
 
-TEST_CASE("iterator modification", "[iterator]") {
+void test_iterator_modification() {
   IntIntTable table;
   for (int i = 0; i < 10; ++i) {
     table.insert(i, i);
@@ -144,13 +165,13 @@ TEST_CASE("iterator modification", "[iterator]") {
 
   auto it = lt.cbegin();
   for (size_t i = 0; i < table.size(); ++i) {
-    REQUIRE(it->first == it->second - 1);
+    TEST_CHECK(it->first == it->second - 1);
     ++it;
   }
-  REQUIRE(it == lt.end());
+  TEST_CHECK(it == lt.end());
 }
 
-TEST_CASE("lock table blocks inserts", "[iterator]") {
+void test_iterator_lock_table_blocks_inserts() {
   IntIntTable table;
   auto lt = table.lock_table();
   std::thread thread([&table]() {
@@ -159,14 +180,14 @@ TEST_CASE("lock table blocks inserts", "[iterator]") {
     }
   });
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  REQUIRE(table.size() == 0);
+  TEST_CHECK(table.size() == 0);
   lt.unlock();
   thread.join();
 
-  REQUIRE(table.size() == 10);
+  TEST_CHECK(table.size() == 10);
 }
 
-TEST_CASE("Cast iterator to const iterator", "[iterator]") {
+void test_iterator_cast_iterator_to_const_iterator() {
   IntIntTable table;
   for (int i = 0; i < 10; ++i) {
     table.insert(i, i);
@@ -174,9 +195,9 @@ TEST_CASE("Cast iterator to const iterator", "[iterator]") {
   auto lt = table.lock_table();
   for (IntIntTable::locked_table::iterator it = lt.begin(); it != lt.end();
        ++it) {
-    REQUIRE(it->first == it->second);
+    TEST_CHECK(it->first == it->second);
     it->second++;
     IntIntTable::locked_table::const_iterator const_it = it;
-    REQUIRE(it->first + 1 == it->second);
+    TEST_CHECK(it->first + 1 == it->second);
   }
 }

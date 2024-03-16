@@ -1,14 +1,17 @@
+#include "test_locked_table.h"
+
+#define TEST_NO_MAIN
+#include "acutest.h"
+
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
 
-#include <catch.hpp>
-
 #include "unit_test_util.hh"
 #include <libcuckoo/cuckoohash_map.hh>
 
-TEST_CASE("locked_table typedefs", "[locked_table]") {
+void test_locked_table_typedefs() {
   using Tbl = IntIntTable;
   using Ltbl = Tbl::locked_table;
   const bool key_type = std::is_same<Tbl::key_type, Ltbl::key_type>::value;
@@ -29,193 +32,213 @@ TEST_CASE("locked_table typedefs", "[locked_table]") {
   const bool pointer = std::is_same<Tbl::pointer, Ltbl::pointer>::value;
   const bool const_pointer =
       std::is_same<Tbl::const_pointer, Ltbl::const_pointer>::value;
-  REQUIRE(key_type);
-  REQUIRE(mapped_type);
-  REQUIRE(value_type);
-  REQUIRE(size_type);
-  REQUIRE(difference_type);
-  REQUIRE(hasher);
-  REQUIRE(key_equal);
-  REQUIRE(allocator_type);
-  REQUIRE(reference);
-  REQUIRE(const_reference);
-  REQUIRE(pointer);
-  REQUIRE(const_pointer);
+  TEST_CHECK(key_type);
+  TEST_CHECK(mapped_type);
+  TEST_CHECK(value_type);
+  TEST_CHECK(size_type);
+  TEST_CHECK(difference_type);
+  TEST_CHECK(hasher);
+  TEST_CHECK(key_equal);
+  TEST_CHECK(allocator_type);
+  TEST_CHECK(reference);
+  TEST_CHECK(const_reference);
+  TEST_CHECK(pointer);
+  TEST_CHECK(const_pointer);
 }
 
-TEST_CASE("locked_table move", "[locked_table]") {
-  IntIntTable tbl;
-
-  SECTION("move constructor") {
+void test_locked_table_move() {
+  // move constructor
+  {
+    IntIntTable tbl;
     auto lt = tbl.lock_table();
     auto lt2(std::move(lt));
-    REQUIRE(!lt.is_active());
-    REQUIRE(lt2.is_active());
+    TEST_CHECK(!lt.is_active());
+    TEST_CHECK(lt2.is_active());
   }
 
-  SECTION("move assignment") {
+  // move assignment
+  {
+    IntIntTable tbl;
     auto lt = tbl.lock_table();
     auto lt2 = std::move(lt);
-    REQUIRE(!lt.is_active());
-    REQUIRE(lt2.is_active());
+    TEST_CHECK(!lt.is_active());
+    TEST_CHECK(lt2.is_active());
   }
 
-  SECTION("iterators compare after table is moved") {
+  // iterators compare after table is moved
+  {
+    IntIntTable tbl;
     auto lt1 = tbl.lock_table();
     auto it1 = lt1.begin();
     auto it2 = lt1.begin();
-    REQUIRE(it1 == it2);
+    TEST_CHECK(it1 == it2);
     auto lt2(std::move(lt1));
-    REQUIRE(it1 == it2);
+    TEST_CHECK(it1 == it2);
   }
 }
 
-TEST_CASE("locked_table unlock", "[locked_table]") {
+void test_locked_table_unlock() {
   IntIntTable tbl;
   tbl.insert(10, 10);
   auto lt = tbl.lock_table();
   lt.unlock();
-  REQUIRE(!lt.is_active());
+  TEST_CHECK(!lt.is_active());
 }
 
-TEST_CASE("locked_table info", "[locked_table]") {
+void test_locked_table_info() {
   IntIntTable tbl;
   tbl.insert(10, 10);
   auto lt = tbl.lock_table();
-  REQUIRE(lt.is_active());
+  TEST_CHECK(lt.is_active());
 
   // We should still be able to call table info operations on the
   // cuckoohash_map instance, because they shouldn't take locks.
 
-  REQUIRE(lt.slot_per_bucket() == tbl.slot_per_bucket());
-  REQUIRE(lt.get_allocator() == tbl.get_allocator());
-  REQUIRE(lt.hashpower() == tbl.hashpower());
-  REQUIRE(lt.bucket_count() == tbl.bucket_count());
-  REQUIRE(lt.empty() == tbl.empty());
-  REQUIRE(lt.size() == tbl.size());
-  REQUIRE(lt.capacity() == tbl.capacity());
-  REQUIRE(lt.load_factor() == tbl.load_factor());
-  REQUIRE_THROWS_AS(lt.minimum_load_factor(1.01), std::invalid_argument);
+  TEST_CHECK(lt.slot_per_bucket() == tbl.slot_per_bucket());
+  TEST_CHECK(lt.get_allocator() == tbl.get_allocator());
+  TEST_CHECK(lt.hashpower() == tbl.hashpower());
+  TEST_CHECK(lt.bucket_count() == tbl.bucket_count());
+  TEST_CHECK(lt.empty() == tbl.empty());
+  TEST_CHECK(lt.size() == tbl.size());
+  TEST_CHECK(lt.capacity() == tbl.capacity());
+  TEST_CHECK(lt.load_factor() == tbl.load_factor());
+  TEST_EXCEPTION(lt.minimum_load_factor(1.01), std::invalid_argument);
   lt.minimum_load_factor(lt.minimum_load_factor() * 2);
   lt.rehash(5);
-  REQUIRE_THROWS_AS(lt.maximum_hashpower(lt.hashpower() - 1),
-                    std::invalid_argument);
+  TEST_EXCEPTION(lt.maximum_hashpower(lt.hashpower() - 1),
+                 std::invalid_argument);
   lt.maximum_hashpower(lt.hashpower() + 1);
-  REQUIRE(lt.maximum_hashpower() == tbl.maximum_hashpower());
+  TEST_CHECK(lt.maximum_hashpower() == tbl.maximum_hashpower());
 }
 
-TEST_CASE("locked_table clear", "[locked_table]") {
+void test_locked_table_clear() {
   IntIntTable tbl;
   tbl.insert(10, 10);
   auto lt = tbl.lock_table();
-  REQUIRE(lt.size() == 1);
+  TEST_CHECK(lt.size() == 1);
   lt.clear();
-  REQUIRE(lt.size() == 0);
+  TEST_CHECK(lt.size() == 0);
   lt.clear();
-  REQUIRE(lt.size() == 0);
+  TEST_CHECK(lt.size() == 0);
 }
 
-TEST_CASE("locked_table insert duplicate", "[locked_table]") {
+void test_locked_table_insert_duplicate() {
   IntIntTable tbl;
   tbl.insert(10, 10);
   {
     auto lt = tbl.lock_table();
     auto result = lt.insert(10, 20);
-    REQUIRE(result.first->first == 10);
-    REQUIRE(result.first->second == 10);
-    REQUIRE_FALSE(result.second);
+    TEST_CHECK(result.first->first == 10);
+    TEST_CHECK(result.first->second == 10);
+    TEST_CHECK(!result.second);
     result.first->second = 50;
   }
-  REQUIRE(tbl.find(10) == 50);
+  TEST_CHECK(tbl.find(10) == 50);
 }
 
-TEST_CASE("locked_table insert new key", "[locked_table]") {
+void test_locked_table_insert_new_key() {
   IntIntTable tbl;
   tbl.insert(10, 10);
   {
     auto lt = tbl.lock_table();
     auto result = lt.insert(20, 20);
-    REQUIRE(result.first->first == 20);
-    REQUIRE(result.first->second == 20);
-    REQUIRE(result.second);
+    TEST_CHECK(result.first->first == 20);
+    TEST_CHECK(result.first->second == 20);
+    TEST_CHECK(result.second);
     result.first->second = 50;
   }
-  REQUIRE(tbl.find(10) == 10);
-  REQUIRE(tbl.find(20) == 50);
+  TEST_CHECK(tbl.find(10) == 10);
+  TEST_CHECK(tbl.find(20) == 50);
 }
 
-TEST_CASE("locked_table insert lifetime", "[locked_table]") {
-  UniquePtrTable<int> tbl;
-
-  SECTION("Successful insert") {
+void test_locked_table_insert_lifetime() {
+  // Successful insert
+  {
+    UniquePtrTable<int> tbl;
     auto lt = tbl.lock_table();
     std::unique_ptr<int> key(new int(20));
     std::unique_ptr<int> value(new int(20));
     auto result = lt.insert(std::move(key), std::move(value));
-    REQUIRE(*result.first->first == 20);
-    REQUIRE(*result.first->second == 20);
-    REQUIRE(result.second);
-    REQUIRE(!static_cast<bool>(key));
-    REQUIRE(!static_cast<bool>(value));
+    TEST_CHECK(*result.first->first == 20);
+    TEST_CHECK(*result.first->second == 20);
+    TEST_CHECK(result.second);
+    TEST_CHECK(!static_cast<bool>(key));
+    TEST_CHECK(!static_cast<bool>(value));
   }
 
-  SECTION("Unsuccessful insert") {
+  // Unsuccessful insert
+  {
+    UniquePtrTable<int> tbl;
     tbl.insert(new int(20), new int(20));
     auto lt = tbl.lock_table();
     std::unique_ptr<int> key(new int(20));
     std::unique_ptr<int> value(new int(30));
     auto result = lt.insert(std::move(key), std::move(value));
-    REQUIRE(*result.first->first == 20);
-    REQUIRE(*result.first->second == 20);
-    REQUIRE(!result.second);
-    REQUIRE(static_cast<bool>(key));
-    REQUIRE(static_cast<bool>(value));
+    TEST_CHECK(*result.first->first == 20);
+    TEST_CHECK(*result.first->second == 20);
+    TEST_CHECK(!result.second);
+    TEST_CHECK(static_cast<bool>(key));
+    TEST_CHECK(static_cast<bool>(value));
   }
 }
 
-TEST_CASE("locked_table erase", "[locked_table]") {
+struct EraseFixture {
+  IntIntTable tbl;
+};
+
+IntIntTable erase_table() {
   IntIntTable tbl;
   for (int i = 0; i < 5; ++i) {
     tbl.insert(i, i);
   }
+  return tbl;
+}
+
+void test_locked_table_erase() {
   using lt_t = IntIntTable::locked_table;
 
-  SECTION("simple erase") {
+  // simple erase
+  {
+    auto tbl = erase_table();
     auto lt = tbl.lock_table();
     lt_t::const_iterator const_it;
     const_it = lt.find(0);
-    REQUIRE(const_it != lt.end());
+    TEST_CHECK(const_it != lt.end());
     lt_t::const_iterator const_next = const_it;
     ++const_next;
-    REQUIRE(static_cast<lt_t::const_iterator>(lt.erase(const_it)) ==
-            const_next);
-    REQUIRE(lt.size() == 4);
+    TEST_CHECK(static_cast<lt_t::const_iterator>(lt.erase(const_it)) ==
+               const_next);
+    TEST_CHECK(lt.size() == 4);
 
     lt_t::iterator it;
     it = lt.find(1);
     lt_t::iterator next = it;
     ++next;
-    REQUIRE(lt.erase(static_cast<lt_t::const_iterator>(it)) == next);
-    REQUIRE(lt.size() == 3);
+    TEST_CHECK(lt.erase(static_cast<lt_t::const_iterator>(it)) == next);
+    TEST_CHECK(lt.size() == 3);
 
-    REQUIRE(lt.erase(2) == 1);
-    REQUIRE(lt.size() == 2);
+    TEST_CHECK(lt.erase(2) == 1);
+    TEST_CHECK(lt.size() == 2);
   }
 
-  SECTION("erase doesn't ruin this iterator") {
+  // erase doesn't ruin this iterator
+  {
+    auto tbl = erase_table();
     auto lt = tbl.lock_table();
     auto it = lt.begin();
     auto next = it;
     ++next;
-    REQUIRE(lt.erase(it) == next);
+    TEST_CHECK(lt.erase(it) == next);
     ++it;
-    REQUIRE(it->first > 0);
-    REQUIRE(it->first < 5);
-    REQUIRE(it->second > 0);
-    REQUIRE(it->second < 5);
+    TEST_CHECK(it->first > 0);
+    TEST_CHECK(it->first < 5);
+    TEST_CHECK(it->second > 0);
+    TEST_CHECK(it->second < 5);
   }
 
-  SECTION("erase doesn't ruin other iterators") {
+  // erase doesn't ruin other iterators
+  {
+    auto tbl = erase_table();
     auto lt = tbl.lock_table();
     auto it0 = lt.find(0);
     auto it1 = lt.find(1);
@@ -224,36 +247,36 @@ TEST_CASE("locked_table erase", "[locked_table]") {
     auto it4 = lt.find(4);
     auto next = it2;
     ++next;
-    REQUIRE(lt.erase(it2) == next);
-    REQUIRE(it0->first == 0);
-    REQUIRE(it0->second == 0);
-    REQUIRE(it1->first == 1);
-    REQUIRE(it1->second == 1);
-    REQUIRE(it3->first == 3);
-    REQUIRE(it3->second == 3);
-    REQUIRE(it4->first == 4);
-    REQUIRE(it4->second == 4);
+    TEST_CHECK(lt.erase(it2) == next);
+    TEST_CHECK(it0->first == 0);
+    TEST_CHECK(it0->second == 0);
+    TEST_CHECK(it1->first == 1);
+    TEST_CHECK(it1->second == 1);
+    TEST_CHECK(it3->first == 3);
+    TEST_CHECK(it3->second == 3);
+    TEST_CHECK(it4->first == 4);
+    TEST_CHECK(it4->second == 4);
   }
 }
 
-TEST_CASE("locked_table find", "[locked_table]") {
+void test_locked_table_find() {
   IntIntTable tbl;
   using lt_t = IntIntTable::locked_table;
   auto lt = tbl.lock_table();
   for (int i = 0; i < 10; ++i) {
-    REQUIRE(lt.insert(i, i).second);
+    TEST_CHECK(lt.insert(i, i).second);
   }
   bool found_begin_elem = false;
   bool found_last_elem = false;
   for (int i = 0; i < 10; ++i) {
     lt_t::iterator it = lt.find(i);
     lt_t::const_iterator const_it = lt.find(i);
-    REQUIRE(it != lt.end());
-    REQUIRE(it->first == i);
-    REQUIRE(it->second == i);
-    REQUIRE(const_it != lt.end());
-    REQUIRE(const_it->first == i);
-    REQUIRE(const_it->second == i);
+    TEST_CHECK(it != lt.end());
+    TEST_CHECK(it->first == i);
+    TEST_CHECK(it->second == i);
+    TEST_CHECK(const_it != lt.end());
+    TEST_CHECK(const_it->first == i);
+    TEST_CHECK(const_it->second == i);
     it->second++;
     if (it == lt.begin()) {
       found_begin_elem = true;
@@ -262,107 +285,107 @@ TEST_CASE("locked_table find", "[locked_table]") {
       found_last_elem = true;
     }
   }
-  REQUIRE(found_begin_elem);
-  REQUIRE(found_last_elem);
+  TEST_CHECK(found_begin_elem);
+  TEST_CHECK(found_last_elem);
   for (int i = 0; i < 10; ++i) {
     lt_t::iterator it = lt.find(i);
-    REQUIRE(it->first == i);
-    REQUIRE(it->second == i + 1);
+    TEST_CHECK(it->first == i);
+    TEST_CHECK(it->second == i + 1);
   }
 }
 
-TEST_CASE("locked_table at", "[locked_table]") {
+void test_locked_table_at() {
   IntIntTable tbl;
   auto lt = tbl.lock_table();
   for (int i = 0; i < 10; ++i) {
-    REQUIRE(lt.insert(i, i).second);
+    TEST_CHECK(lt.insert(i, i).second);
   }
   for (int i = 0; i < 10; ++i) {
     int &val = lt.at(i);
     const int &const_val =
         const_cast<const IntIntTable::locked_table &>(lt).at(i);
-    REQUIRE(val == i);
-    REQUIRE(const_val == i);
+    TEST_CHECK(val == i);
+    TEST_CHECK(const_val == i);
     ++val;
   }
   for (int i = 0; i < 10; ++i) {
-    REQUIRE(lt.at(i) == i + 1);
+    TEST_CHECK(lt.at(i) == i + 1);
   }
-  REQUIRE_THROWS_AS(lt.at(11), std::out_of_range);
+  TEST_EXCEPTION(lt.at(11), std::out_of_range);
 }
 
-TEST_CASE("locked_table operator[]", "[locked_table]") {
+void test_locked_table_operator_brackets() {
   IntIntTable tbl;
   auto lt = tbl.lock_table();
   for (int i = 0; i < 10; ++i) {
-    REQUIRE(lt.insert(i, i).second);
+    TEST_CHECK(lt.insert(i, i).second);
   }
   for (int i = 0; i < 10; ++i) {
     int &val = lt[i];
-    REQUIRE(val == i);
+    TEST_CHECK(val == i);
     ++val;
   }
   for (int i = 0; i < 10; ++i) {
-    REQUIRE(lt[i] == i + 1);
+    TEST_CHECK(lt[i] == i + 1);
   }
-  REQUIRE(lt[11] == 0);
-  REQUIRE(lt.at(11) == 0);
+  TEST_CHECK(lt[11] == 0);
+  TEST_CHECK(lt.at(11) == 0);
 }
 
-TEST_CASE("locked_table count", "[locked_table]") {
+void test_locked_table_count() {
   IntIntTable tbl;
   auto lt = tbl.lock_table();
   for (int i = 0; i < 10; ++i) {
-    REQUIRE(lt.insert(i, i).second);
+    TEST_CHECK(lt.insert(i, i).second);
   }
   for (int i = 0; i < 10; ++i) {
-    REQUIRE(lt.count(i) == 1);
+    TEST_CHECK(lt.count(i) == 1);
   }
-  REQUIRE(lt.count(11) == 0);
+  TEST_CHECK(lt.count(11) == 0);
 }
 
-TEST_CASE("locked_table equal_range", "[locked_table]") {
+void test_locked_table_equal_range() {
   IntIntTable tbl;
   using lt_t = IntIntTable::locked_table;
   auto lt = tbl.lock_table();
   for (int i = 0; i < 10; ++i) {
-    REQUIRE(lt.insert(i, i).second);
+    TEST_CHECK(lt.insert(i, i).second);
   }
   for (int i = 0; i < 10; ++i) {
     std::pair<lt_t::iterator, lt_t::iterator> it_range = lt.equal_range(i);
-    REQUIRE(it_range.first->first == i);
-    REQUIRE(++it_range.first == it_range.second);
+    TEST_CHECK(it_range.first->first == i);
+    TEST_CHECK(++it_range.first == it_range.second);
     std::pair<lt_t::const_iterator, lt_t::const_iterator> const_it_range =
         lt.equal_range(i);
-    REQUIRE(const_it_range.first->first == i);
-    REQUIRE(++const_it_range.first == const_it_range.second);
+    TEST_CHECK(const_it_range.first->first == i);
+    TEST_CHECK(++const_it_range.first == const_it_range.second);
   }
   auto it_range = lt.equal_range(11);
-  REQUIRE(it_range.first == lt.end());
-  REQUIRE(it_range.second == lt.end());
+  TEST_CHECK(it_range.first == lt.end());
+  TEST_CHECK(it_range.second == lt.end());
 }
 
-TEST_CASE("locked_table rehash", "[locked_table]") {
+void test_locked_table_rehash() {
   IntIntTable tbl(10);
   auto lt = tbl.lock_table();
-  REQUIRE(lt.hashpower() == 2);
+  TEST_CHECK(lt.hashpower() == 2);
   lt.rehash(1);
-  REQUIRE(lt.hashpower() == 1);
+  TEST_CHECK(lt.hashpower() == 1);
   lt.rehash(10);
-  REQUIRE(lt.hashpower() == 10);
+  TEST_CHECK(lt.hashpower() == 10);
 }
 
-TEST_CASE("locked_table reserve", "[locked_table]") {
+void test_locked_table_reserve() {
   IntIntTable tbl(10);
   auto lt = tbl.lock_table();
-  REQUIRE(lt.hashpower() == 2);
+  TEST_CHECK(lt.hashpower() == 2);
   lt.reserve(1);
-  REQUIRE(lt.hashpower() == 0);
+  TEST_CHECK(lt.hashpower() == 0);
   lt.reserve(4096);
-  REQUIRE(lt.hashpower() == 10);
+  TEST_CHECK(lt.hashpower() == 10);
 }
 
-TEST_CASE("locked_table equality", "[locked_table]") {
+void test_locked_table_equality() {
   IntIntTable tbl1(40);
   auto lt1 = tbl1.lock_table();
   for (int i = 0; i < 10; ++i) {
@@ -387,28 +410,28 @@ TEST_CASE("locked_table equality", "[locked_table]") {
     lt4.insert(i + 1, i);
   }
 
-  REQUIRE(lt1 == lt2);
-  REQUIRE_FALSE(lt2 != lt1);
+  TEST_CHECK(lt1 == lt2);
+  TEST_CHECK(!(lt2 != lt1));
 
-  REQUIRE(lt1 != lt3);
-  REQUIRE_FALSE(lt3 == lt1);
-  REQUIRE_FALSE(lt2 == lt3);
-  REQUIRE(lt3 != lt2);
+  TEST_CHECK(lt1 != lt3);
+  TEST_CHECK(!(lt3 == lt1));
+  TEST_CHECK(!(lt2 == lt3));
+  TEST_CHECK(lt3 != lt2);
 
-  REQUIRE(lt1 != lt4);
-  REQUIRE(lt4 != lt1);
-  REQUIRE_FALSE(lt3 == lt4);
-  REQUIRE_FALSE(lt4 == lt3);
+  TEST_CHECK(lt1 != lt4);
+  TEST_CHECK(lt4 != lt1);
+  TEST_CHECK(!(lt3 == lt4));
+  TEST_CHECK(!(lt4 == lt3));
 }
 
 template <typename Table> void check_all_locks_taken(Table &tbl) {
   auto &locks = libcuckoo::UnitTestInternalAccess::get_current_locks(tbl);
   for (auto &lock : locks) {
-    REQUIRE_FALSE(lock.try_lock());
+    TEST_CHECK(!lock.try_lock());
   }
 }
 
-TEST_CASE("locked table holds locks after resize", "[locked table]") {
+void test_locked_table_holds_locks_after_resize() {
   IntIntTable tbl(4);
   auto lt = tbl.lock_table();
   check_all_locks_taken(tbl);
@@ -424,7 +447,7 @@ TEST_CASE("locked table holds locks after resize", "[locked table]") {
   check_all_locks_taken(tbl);
 }
 
-TEST_CASE("locked table IO", "[locked_table]") {
+void test_locked_table_io() {
   IntIntTable tbl(0);
   auto lt = tbl.lock_table();
   for (int i = 0; i < 100; ++i) {
@@ -439,21 +462,21 @@ TEST_CASE("locked table IO", "[locked_table]") {
   sstream.seekg(0);
   sstream >> lt2;
 
-  REQUIRE(100 == lt.size());
+  TEST_CHECK(100 == lt.size());
   for (int i = 0; i < 100; ++i) {
-    REQUIRE(i == lt.at(i));
+    TEST_CHECK(i == lt.at(i));
   }
 
-  REQUIRE(100 == lt2.size());
+  TEST_CHECK(100 == lt2.size());
   for (int i = 100; i < 1000; ++i) {
     lt2.insert(i, i);
   }
   for (int i = 0; i < 1000; ++i) {
-    REQUIRE(i == lt2.at(i));
+    TEST_CHECK(i == lt2.at(i));
   }
 }
 
-TEST_CASE("empty locked table IO", "[locked table]") {
+void test_empty_locked_table_io() {
   IntIntTable tbl(0);
   auto lt = tbl.lock_table();
   lt.minimum_load_factor(0.5);
@@ -467,8 +490,8 @@ TEST_CASE("empty locked table IO", "[locked table]") {
   sstream.seekg(0);
   sstream >> lt2;
 
-  REQUIRE(0 == lt.size());
-  REQUIRE(0 == lt2.size());
-  REQUIRE(0.5 == lt.minimum_load_factor());
-  REQUIRE(10 == lt.maximum_hashpower());
+  TEST_CHECK(0 == lt.size());
+  TEST_CHECK(0 == lt2.size());
+  TEST_CHECK(0.5 == lt.minimum_load_factor());
+  TEST_CHECK(10 == lt.maximum_hashpower());
 }
