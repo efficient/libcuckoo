@@ -267,7 +267,7 @@ int main(int argc, char **argv) {
     // upserts to get an upper bound on how many elements we'll be
     // inserting.
     const size_t max_insert_ops =
-        (total_ops + 99) / 100 * (g_insert_percentage + g_erase_percentage);
+        (total_ops + 99) / 100 * (g_insert_percentage + g_upsert_percentage);
     const size_t insert_keys =
         std::max(initial_capacity, max_insert_ops) + prefill_elems;
     // Round this quantity up to a power of 2, so that we can use an LCG to
