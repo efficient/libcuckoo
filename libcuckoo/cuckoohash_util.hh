@@ -138,6 +138,16 @@ enum class UpsertContext {
   ALREADY_EXISTED,
 };
 
+/**
+ * The replacement of `std::aligned_storage`
+ * which has been deprecated in c++23.
+ */
+template<size_t Len, size_t Align>
+union AlignedStorageType {
+    unsigned char data_[Len];
+    alignas(Align) struct {} empty_;
+};
+
 namespace internal {
 
 // Used to invoke the \ref uprase_fn functor with or without an \ref

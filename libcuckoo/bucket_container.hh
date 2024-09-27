@@ -49,7 +49,7 @@ public:
 
   /*
    * The bucket type holds SLOT_PER_BUCKET key-value pairs, along with their
-   * partial keys and occupancy info. It uses aligned_storage arrays to store
+   * partial keys and occupancy info. It uses AlignedStorageType arrays to store
    * the keys and values to allow constructing and destroying key-value pairs
    * in place. The lifetime of bucket data should be managed by the container.
    * It is the user's responsibility to confirm whether the data they are
@@ -99,8 +99,8 @@ public:
           static_cast<void *>(&values_[ind]));
     }
 
-    std::array<typename std::aligned_storage<sizeof(storage_value_type),
-                                             alignof(storage_value_type)>::type,
+    std::array<AlignedStorageType<sizeof(storage_value_type),
+                                  alignof(storage_value_type)>,
                SLOT_PER_BUCKET>
         values_;
     std::array<partial_t, SLOT_PER_BUCKET> partials_;
