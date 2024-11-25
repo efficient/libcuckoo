@@ -22,6 +22,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <sstream>
 
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
@@ -1008,6 +1009,11 @@ private:
     locks_t &locks = get_current_locks();
     locks[l1].lock();
     check_hashpower(hp, locks[l1]);
+    if (&locks != &get_current_locks()) {
+      std::ostringstream oss;
+      oss << "OH NO!! " << "hashpower() = " << hashpower() << " hp = " << hp << " locks.size() = " << locks.size() << " get_current_locks.size() = " << get_current_locks().size();
+      throw std::runtime_error(oss.str());
+    }
     if (l2 != l1) {
       locks[l2].lock();
     }
@@ -1094,6 +1100,7 @@ private:
     // all_locks_ should never decrease in size, so if it is non-empty now, it
     // will remain non-empty
     assert(!all_locks_.empty());
+    //const auto first_locked = all_locks_.begin();
     const auto first_locked = std::prev(all_locks_.end());
     auto current_locks = first_locked;
     while (current_locks != all_locks_.end()) {
@@ -1718,6 +1725,7 @@ private:
     // old_buckets_ data will be destroyed when move-assigning to buckets_.
     old_buckets_.swap(buckets_);
     buckets_ = buckets_t(new_hp, get_allocator());
+    std::cerr << "JUST UPDATED hashpower to " << hashpower() << "\n";
 
     // If we have less than kMaxNumLocks buckets, we do a full rehash in the
     // current thread. On-demand rehashing wouldn't be very easy with less than
@@ -1841,6 +1849,7 @@ private:
 
     locks_t new_locks(std::min(size_type(kMaxNumLocks), new_bucket_count),
                       spinlock(), get_allocator());
+    std::cerr << "RESIZING LOCKS FROM " << current_locks.size() << " to " << new_locks.size() << "\n";
     assert(new_locks.size() > current_locks.size());
     std::copy(current_locks.begin(), current_locks.end(), new_locks.begin());
     for (spinlock &lock : new_locks) {

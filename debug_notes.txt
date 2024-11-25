@@ -1,0 +1,13 @@
+GOOD: 916590f3fc2e983cf122e977e6975fdbb8eb11c2
+BAD: 864c388b77281985e10c911ae9d268183a00ff13
+GOOD: 86d5ef0da4fe52ba431704f374d1a7c79df99acb
+BAD (THIS IS THE ONE): 95e558dcc3b73069ac2a7de515ab7d821ab90920
+
+NOTES:
+- Try setting the locks array to the maximum size.
+    - Seems to fix the issue.
+- Try locking all lock containers each time you acquire all the locks.
+    - Seems to fix the issue.
+- If I add a check to `lock_two` about whether the locks array changed
+  underneath me, it actually triggers. Still unsure how this can happen if the
+  hashpower hasn't changed.
