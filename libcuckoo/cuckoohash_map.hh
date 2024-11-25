@@ -2460,6 +2460,21 @@ public:
     const_iterator cbegin() const { return begin(); }
 
     /**
+     * Returns an iterator to the first element of the bucket with index @c n.
+     * If the bucket is empty, it will point past the end of the bucket.
+     *
+     * @return an iterator to the first element of the bucket.
+     */
+
+    iterator begin(size_type n) { return iterator(map_.get().buckets_, 0, 0); }
+
+    const_iterator begin(size_type n) const {
+      return const_iterator(map_.get().buckets_, 0, 0);
+    }
+
+    const_iterator cbegin(size_type n) const { return begin(n); }
+
+    /**
      * Returns an iterator past the end of the table.
      *
      * @return an iterator past the end of the table
