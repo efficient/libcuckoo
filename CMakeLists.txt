@@ -5,6 +5,7 @@ project(libcuckoo
 
 # put these in the cache so they show up in ccmake
 option (BUILD_EXAMPLES "build example libcuckoo programs")
+option (WITH_ASAN "if on, compile with address sanitization")
 
 # Add the libcuckoo interface target
 add_subdirectory(libcuckoo)

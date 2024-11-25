@@ -22,6 +22,13 @@ if(UNIVERSAL_TRACKING_ALLOCATOR)
     target_compile_options(universal_benchmark PRIVATE -DTRACKING_ALLOCATOR)
 endif()
 
+if(WITH_ASAN)
+    if (CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(universal_benchmark PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+        target_link_libraries(universal_benchmark PRIVATE -fsanitize=address)
+    endif()
+endif()
+
 add_test(NAME pure_read
          COMMAND universal_benchmark --reads 100 --prefill 75 --total-ops 500 --initial-capacity 23)
 add_test(NAME pure_insert
