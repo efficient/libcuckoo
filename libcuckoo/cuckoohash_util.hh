@@ -15,9 +15,10 @@ namespace libcuckoo {
 //! When \ref LIBCUCKOO_DEBUG is 0, LIBCUCKOO_DBG will printing out status
 //! messages in various situations
 #define LIBCUCKOO_DBG(fmt, ...)                                                \
-  fprintf(stderr, "\x1b[32m"                                                   \
-                  "[libcuckoo:%s:%d:%lu] " fmt ""                              \
-                  "\x1b[0m",                                                   \
+  fprintf(stderr,                                                              \
+          "\x1b[32m"                                                           \
+          "[libcuckoo:%s:%d:%lu] " fmt ""                                      \
+          "\x1b[0m",                                                           \
           __FILE__, __LINE__,                                                  \
           std::hash<std::thread::id>()(std::this_thread::get_id()),            \
           __VA_ARGS__)
@@ -147,32 +148,30 @@ namespace internal {
 //
 // We implement this utility using C++11-style SFINAE, for maximum
 // compatibility.
-template <typename F, typename MappedType>
-class CanInvokeWithUpsertContext {
- private:
+template <typename F, typename MappedType> class CanInvokeWithUpsertContext {
+private:
   template <typename InnerF,
             typename = decltype(std::declval<InnerF>()(
-                std::declval<MappedType&>(), std::declval<UpsertContext>()))>
+                std::declval<MappedType &>(), std::declval<UpsertContext>()))>
   static std::true_type test(int);
- 
+
   // Note: The argument type needs to be less-preferable than the first
   // overload so that it is picked only if the first overload cannot be
   // instantiated.
-  template <typename InnerF>
-  static std::false_type test(float);
- 
- public:
+  template <typename InnerF> static std::false_type test(float);
+
+public:
   using type = decltype(test<F>(0));
 };
 
 template <typename F, typename MappedType>
-bool InvokeUpraseFn(F& f, MappedType& mapped, UpsertContext context,
+bool InvokeUpraseFn(F &f, MappedType &mapped, UpsertContext context,
                     std::true_type) {
   return f(mapped, context);
 }
 
 template <typename F, typename MappedType>
-bool InvokeUpraseFn(F& f, MappedType& mapped, UpsertContext context,
+bool InvokeUpraseFn(F &f, MappedType &mapped, UpsertContext context,
                     std::false_type) {
   if (context == UpsertContext::ALREADY_EXISTED) {
     return f(mapped);
@@ -189,9 +188,9 @@ struct UpsertToUpraseFn;
 
 template <typename F, typename MappedType>
 struct UpsertToUpraseFn<F, MappedType, true> {
-  F& f;
+  F &f;
 
-  bool operator()(MappedType& mapped, UpsertContext context) const {
+  bool operator()(MappedType &mapped, UpsertContext context) const {
     f(mapped, context);
     return false;
   }
@@ -199,9 +198,9 @@ struct UpsertToUpraseFn<F, MappedType, true> {
 
 template <typename F, typename MappedType>
 struct UpsertToUpraseFn<F, MappedType, false> {
-  F& f;
+  F &f;
 
-  bool operator()(MappedType& mapped) {
+  bool operator()(MappedType &mapped) {
     f(mapped);
     return false;
   }
