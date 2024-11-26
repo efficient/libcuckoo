@@ -129,8 +129,7 @@ public:
         bucket_allocator_(allocator_), hashpower_(bc.hashpower()),
         buckets_(transfer(bc.hashpower(), bc, std::false_type())) {}
 
-  bucket_container(const bucket_container &bc,
-                             const allocator_type &a)
+  bucket_container(const bucket_container &bc, const allocator_type &a)
       : allocator_(a), bucket_allocator_(allocator_),
         hashpower_(bc.hashpower()),
         buckets_(transfer(bc.hashpower(), bc, std::false_type())) {}
@@ -142,8 +141,7 @@ public:
     bc.buckets_ = nullptr;
   }
 
-  bucket_container(bucket_container &&bc,
-                             const allocator_type &a)
+  bucket_container(bucket_container &&bc, const allocator_type &a)
       : allocator_(a), bucket_allocator_(allocator_) {
     move_assign(bc, std::false_type());
   }
@@ -199,7 +197,7 @@ public:
   // Constructs live data in a bucket
   template <typename K, typename... Args>
   void setKV(size_type ind, size_type slot, partial_t p, K &&k,
-             Args &&... args) {
+             Args &&...args) {
     bucket &b = buckets_[ind];
     assert(!b.occupied(slot));
     b.partial(slot) = p;
@@ -222,11 +220,10 @@ public:
   // Destroys all the live data in the buckets. Does not deallocate the bucket
   // memory.
   void clear() noexcept {
-    static_assert(
-        std::is_nothrow_destructible<key_type>::value &&
-            std::is_nothrow_destructible<mapped_type>::value,
-        "bucket_container requires key and value to be nothrow "
-        "destructible");
+    static_assert(std::is_nothrow_destructible<key_type>::value &&
+                      std::is_nothrow_destructible<mapped_type>::value,
+                  "bucket_container requires key and value to be nothrow "
+                  "destructible");
     for (size_type i = 0; i < size(); ++i) {
       bucket &b = buckets_[i];
       for (size_type j = 0; j < SLOT_PER_BUCKET; ++j) {
@@ -240,22 +237,18 @@ public:
   // Destroys and deallocates all data in the buckets. After this operation,
   // the bucket container will have no allocated data. It is still valid to
   // swap, move or copy assign to this container.
-  void clear_and_deallocate() noexcept {
-    destroy_buckets();
-  }
+  void clear_and_deallocate() noexcept { destroy_buckets(); }
 
   // Returns true if the bucket container memory has been deallocated, or false
   // if it still owns any memory. If true, the member-wise getter/setter
   // operations cannot be called safely. Object-level members (such as
   // hashpower and size) will remain valid after deallocation.
-  bool is_deallocated() const noexcept {
-    return buckets_ == nullptr;
-  }
+  bool is_deallocated() const noexcept { return buckets_ == nullptr; }
 
 private:
   using bucket_traits_ = typename traits_::template rebind_traits<bucket>;
   using bucket_pointer = typename bucket_traits_::pointer;
-  
+
   // true here means the allocators from `src` are propagated on libcuckoo_copy
   template <typename A>
   void copy_allocator(A &dst, const A &src, std::true_type) {
@@ -323,11 +316,11 @@ private:
   }
 
   template <bool B>
-  bucket_pointer transfer(
-      size_type dst_hp,
-      typename std::conditional<B, bucket_container &,
-                                const bucket_container &>::type src,
-      std::integral_constant<bool, B> move) {
+  bucket_pointer
+  transfer(size_type dst_hp,
+           typename std::conditional<B, bucket_container &,
+                                     const bucket_container &>::type src,
+           std::integral_constant<bool, B> move) {
     assert(dst_hp >= src.hashpower());
     if (src.is_deallocated()) {
       return nullptr;
@@ -372,8 +365,8 @@ private:
                                      std::is_trivial<ThisT>::value,
                                  std::ostream &>::type
   operator<<(std::ostream &os,
-             const bucket_container<ThisKey, ThisT, Allocator,
-                                              Partial, SLOT_PER_BUCKET> &bc) {
+             const bucket_container<ThisKey, ThisT, Allocator, Partial,
+                                    SLOT_PER_BUCKET> &bc) {
     size_type hp = bc.hashpower();
     os.write(reinterpret_cast<const char *>(&hp), sizeof(size_type));
     os.write(reinterpret_cast<const char *>(bc.buckets_),
@@ -385,9 +378,8 @@ private:
   friend typename std::enable_if<std::is_trivial<ThisKey>::value &&
                                      std::is_trivial<ThisT>::value,
                                  std::istream &>::type
-  operator>>(std::istream &is,
-             bucket_container<ThisKey, ThisT, Allocator,
-                                        Partial, SLOT_PER_BUCKET> &bc) {
+  operator>>(std::istream &is, bucket_container<ThisKey, ThisT, Allocator,
+                                                Partial, SLOT_PER_BUCKET> &bc) {
     size_type hp;
     is.read(reinterpret_cast<char *>(&hp), sizeof(size_type));
     bucket_container new_bc(hp, bc.get_allocator());
@@ -398,6 +390,6 @@ private:
   }
 };
 
-}  // namespace libcuckoo
+} // namespace libcuckoo
 
 #endif // BUCKET_CONTAINER_H
