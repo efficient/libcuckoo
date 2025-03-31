@@ -818,13 +818,11 @@ private:
   LIBCUCKOO_SQUELCH_PADDING_WARNING
   class LIBCUCKOO_ALIGNAS(64) spinlock {
   public:
-    spinlock() : elem_counter_(0), is_migrated_(true) { lock_.clear(); }
+    spinlock() : elem_counter_(0), is_migrated_(true) {}
 
     spinlock(const spinlock &other) noexcept
         : elem_counter_(other.elem_counter()),
-          is_migrated_(other.is_migrated()) {
-      lock_.clear();
-    }
+          is_migrated_(other.is_migrated()) {}
 
     spinlock &operator=(const spinlock &other) noexcept {
       elem_counter() = other.elem_counter();
@@ -833,14 +831,27 @@ private:
     }
 
     void lock() noexcept {
-      while (lock_.test_and_set(std::memory_order_acq_rel))
-        ;
+      for (;;) {
+        // Optimistically assume the lock is free on the first try
+        if (!lock_.exchange(true, std::memory_order_acquire)) {
+          return;
+        }
+        // Wait for lock to be released without generating cache misses
+        while (lock_.load(std::memory_order_relaxed)) {
+          // Issue X86 PAUSE or ARM YIELD instruction to reduce contention
+          // between hyper-threads
+          __builtin_ia32_pause();
+        }
+      }
     }
 
-    void unlock() noexcept { lock_.clear(std::memory_order_release); }
+    void unlock() noexcept { lock_.store(false, std::memory_order_release); }
 
     bool try_lock() noexcept {
-      return !lock_.test_and_set(std::memory_order_acq_rel);
+      // First do a relaxed load to check if lock is free in order to prevent
+      // unnecessary cache misses if someone does while(!try_lock())
+      return !lock_.load(std::memory_order_relaxed) &&
+             !lock_.exchange(true, std::memory_order_acquire);
     }
 
     counter_type &elem_counter() noexcept { return elem_counter_; }
@@ -850,7 +861,7 @@ private:
     bool is_migrated() const noexcept { return is_migrated_; }
 
   private:
-    std::atomic_flag lock_;
+    std::atomic<bool> lock_ = {0};
     counter_type elem_counter_;
     bool is_migrated_;
   };
