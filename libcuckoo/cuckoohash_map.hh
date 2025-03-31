@@ -818,12 +818,29 @@ private:
   LIBCUCKOO_SQUELCH_PADDING_WARNING
   class LIBCUCKOO_ALIGNAS(64) spinlock {
   public:
-    spinlock() : elem_counter_(0), is_migrated_(true) { lock_.clear(); }
+    spinlock() noexcept
+        :
+#if LIBCUCKOO_USE_CXX20_FUTEX_SUPPORT
+          lock_(),
+#endif
+          elem_counter_(0), is_migrated_(true) {
+
+#if !LIBCUCKOO_USE_CXX20_FUTEX_SUPPORT
+      lock_.clear();
+#endif
+    }
 
     spinlock(const spinlock &other) noexcept
-        : elem_counter_(other.elem_counter()),
+        :
+#if LIBCUCKOO_USE_CXX20_FUTEX_SUPPORT
+          lock_(),
+#endif
+          elem_counter_(other.elem_counter()),
           is_migrated_(other.is_migrated()) {
+
+#if !LIBCUCKOO_USE_CXX20_FUTEX_SUPPORT
       lock_.clear();
+#endif
     }
 
     spinlock &operator=(const spinlock &other) noexcept {
@@ -833,14 +850,31 @@ private:
     }
 
     void lock() noexcept {
-      while (lock_.test_and_set(std::memory_order_acq_rel))
-        ;
+      // Optimistically assume the lock is free
+      while (lock_.test_and_set(std::memory_order_acq_rel)) {
+#if LIBCUCKOO_USE_CXX20_FUTEX_SUPPORT
+        // Wait for lock to be released utilizing C++20 futex support
+        lock_.wait(true, std::memory_order::relaxed);
+#endif
+      }
     }
 
-    void unlock() noexcept { lock_.clear(std::memory_order_release); }
+    void unlock() noexcept {
+      lock_.clear(std::memory_order_release);
+#if LIBCUCKOO_USE_CXX20_FUTEX_SUPPORT
+      lock_.notify_one();
+#endif
+    }
 
     bool try_lock() noexcept {
+#if LIBCUCKOO_USE_CXX20_FUTEX_SUPPORT
+      // First do a relaxed load to check if lock is free in order to prevent
+      // unnecessary cache misses if someone does while(!try_lock())
+      return !lock_.test(std::memory_order_relaxed) &&
+             !lock_.test_and_set(std::memory_order_acq_rel);
+#else
       return !lock_.test_and_set(std::memory_order_acq_rel);
+#endif
     }
 
     counter_type &elem_counter() noexcept { return elem_counter_; }
