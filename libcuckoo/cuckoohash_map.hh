@@ -833,14 +833,14 @@ private:
     }
 
     void lock() noexcept {
-      while (lock_.test_and_set(std::memory_order_acq_rel))
+      while (lock_.test_and_set(std::memory_order_acquire))
         ;
     }
 
     void unlock() noexcept { lock_.clear(std::memory_order_release); }
 
     bool try_lock() noexcept {
-      return !lock_.test_and_set(std::memory_order_acq_rel);
+      return !lock_.test_and_set(std::memory_order_acquire);
     }
 
     counter_type &elem_counter() noexcept { return elem_counter_; }
