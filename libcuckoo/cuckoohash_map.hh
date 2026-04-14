@@ -1251,7 +1251,7 @@ private:
   // are released. No meaningful position is returned.
   template <typename TABLE_MODE, typename K>
   table_position cuckoo_insert(const hash_value hv, TwoBuckets &b, K &key) {
-    int res1, res2;
+    int res1 = -1, res2 = -1;
     bucket &b1 = buckets_[b.i1];
     if (!try_find_insert_bucket(b1, res1, hv.partial, key)) {
       return table_position{b.i1, static_cast<size_type>(res1),

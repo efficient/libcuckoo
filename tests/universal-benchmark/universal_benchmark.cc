@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cassert>
 #include <chrono>
 #include <cmath>
@@ -148,7 +149,7 @@ void mix(Table &tbl, const size_t num_ops, const std::array<Ops, 100> &op_mix,
     return Gen<KEY>::get(keys[n]);
   };
   // The upsert function is just the identity
-  auto upsert_fn = [](VALUE &v) { return; };
+  auto upsert_fn = [](VALUE &) {};
   // Use an LCG over the keys array to iterate over the keys in a pseudorandom
   // order, for find operations
   assert(1UL << static_cast<size_t>(floor(log2(numkeys))) == numkeys);
@@ -307,17 +308,27 @@ int main(int argc, char **argv) {
       t.join();
     }
 
-    // Run the operation mix, timed
+    // Run the operation mix, timed. Use a barrier so that thread creation
+    // overhead is excluded from the measurement.
     std::cerr << "Running operations\n";
     std::vector<std::thread> mix_threads(g_threads);
     std::vector<std::vector<size_t>> samples(g_threads);
     const size_t num_ops_per_thread = total_ops / g_threads;
-    auto start_time = std::chrono::high_resolution_clock::now();
+    std::atomic<size_t> threads_ready(0);
+    std::atomic<bool> go(false);
     for (size_t i = 0; i < g_threads; ++i) {
       mix_threads[i] = std::thread(
-          mix, std::ref(tbl), num_ops_per_thread, std::ref(op_mix),
-          std::ref(keys[i]), prefill_elems_per_thread, std::ref(samples[i]));
+          [&, i]() {
+            threads_ready.fetch_add(1, std::memory_order_release);
+            while (!go.load(std::memory_order_acquire)) {}
+            mix(tbl, num_ops_per_thread, op_mix,
+                keys[i], prefill_elems_per_thread, samples[i]);
+          });
     }
+    // Wait for all threads to be ready, then start timing
+    while (threads_ready.load(std::memory_order_acquire) < g_threads) {}
+    auto start_time = std::chrono::high_resolution_clock::now();
+    go.store(true, std::memory_order_release);
     for (auto &t : mix_threads) {
       t.join();
     }
