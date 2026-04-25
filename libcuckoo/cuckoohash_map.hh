@@ -101,9 +101,10 @@ public:
    * @param equal equality function instance to use
    * @param alloc allocator instance to use
    */
-  cuckoohash_map(size_type n = DEFAULT_SIZE, const Hash &hf = Hash(),
-                 const KeyEqual &equal = KeyEqual(),
-                 const Allocator &alloc = Allocator())
+  explicit cuckoohash_map(size_type n = DEFAULT_SIZE,
+                         const Hash &hf = Hash(),
+                         const KeyEqual &equal = KeyEqual(),
+                         const Allocator &alloc = Allocator())
       : hash_fn_(hf), eq_fn_(equal), buckets_(reserve_calc(n), alloc),
         old_buckets_(0, alloc), resize_counter_(0),
         all_locks_(get_allocator()),
@@ -288,21 +289,21 @@ public:
    *
    * @return the hash function
    */
-  hasher hash_function() const { return hash_fn_; }
+  [[nodiscard]] hasher hash_function() const { return hash_fn_; }
 
   /**
    * Returns the function that compares keys for equality
    *
    * @return the key comparison function
    */
-  key_equal key_eq() const { return eq_fn_; }
+  [[nodiscard]] key_equal key_eq() const { return eq_fn_; }
 
   /**
    * Returns the allocator associated with the map
    *
    * @return the associated allocator
    */
-  allocator_type get_allocator() const { return buckets_.get_allocator(); }
+  [[nodiscard]] allocator_type get_allocator() const { return buckets_.get_allocator(); }
 
   /**
    * Returns the hashpower of the table, which is log<SUB>2</SUB>(@ref
@@ -310,28 +311,28 @@ public:
    *
    * @return the hashpower
    */
-  size_type hashpower() const { return buckets_.hashpower(); }
+  [[nodiscard]] size_type hashpower() const { return buckets_.hashpower(); }
 
   /**
    * Returns the number of buckets in the table.
    *
    * @return the bucket count
    */
-  size_type bucket_count() const { return buckets_.size(); }
+  [[nodiscard]] size_type bucket_count() const { return buckets_.size(); }
 
   /**
    * Returns whether the table is empty or not.
    *
    * @return true if the table is empty, false otherwise
    */
-  bool empty() const { return size() == 0; }
+  [[nodiscard]] bool empty() const { return size() == 0; }
 
   /**
    * Returns the number of elements in the table.
    *
    * @return number of elements in the table
    */
-  size_type size() const {
+  [[nodiscard]] size_type size() const {
     if (all_locks_.size() == 0) {
       return 0;
     }
@@ -348,7 +349,7 @@ public:
    *
    * @return capacity of table
    */
-  size_type capacity() const { return bucket_count() * slot_per_bucket(); }
+  [[nodiscard]] size_type capacity() const { return bucket_count() * slot_per_bucket(); }
 
   /**
    * Returns the percentage the table is filled, that is, @ref size() &divide;
@@ -356,7 +357,7 @@ public:
    *
    * @return load factor of the table
    */
-  double load_factor() const {
+  [[nodiscard]] double load_factor() const {
     return static_cast<double>(size()) / static_cast<double>(capacity());
   }
 
@@ -623,7 +624,7 @@ public:
    * Returns whether or not @p key is in the table. Equivalent to @ref
    * find_fn with a functor that does nothing.
    */
-  template <typename K> bool contains(const K &key) const {
+  template <typename K> [[nodiscard]] bool contains(const K &key) const {
     return find_fn(key, [](const mapped_type &) {});
   }
 

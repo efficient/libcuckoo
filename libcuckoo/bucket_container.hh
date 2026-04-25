@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <iostream>
 #include <memory>
+#include <new>
 #include <type_traits>
 #include <utility>
 
@@ -60,11 +61,12 @@ public:
     bucket() noexcept : occupied_() {}
 
     const value_type &kvpair(size_type ind) const {
-      return *static_cast<const value_type *>(
-          static_cast<const void *>(&values_[ind]));
+      return *std::launder(
+          reinterpret_cast<const value_type *>(values_[ind]));
     }
     value_type &kvpair(size_type ind) {
-      return *static_cast<value_type *>(static_cast<void *>(&values_[ind]));
+      return *std::launder(
+          reinterpret_cast<value_type *>(values_[ind]));
     }
 
     const key_type &key(size_type ind) const {
@@ -90,19 +92,22 @@ public:
 
     using storage_value_type = std::pair<Key, T>;
 
+    // Access a constructed key-value pair. Only valid when occupied(ind).
     const storage_value_type &storage_kvpair(size_type ind) const {
-      return *static_cast<const storage_value_type *>(
-          static_cast<const void *>(&values_[ind]));
+      return *std::launder(
+          reinterpret_cast<const storage_value_type *>(values_[ind]));
     }
     storage_value_type &storage_kvpair(size_type ind) {
-      return *static_cast<storage_value_type *>(
-          static_cast<void *>(&values_[ind]));
+      return *std::launder(
+          reinterpret_cast<storage_value_type *>(values_[ind]));
+    }
+    // Raw pointer to uninitialized storage for construct/destroy.
+    storage_value_type *storage_ptr(size_type ind) {
+      return reinterpret_cast<storage_value_type *>(values_[ind]);
     }
 
-    std::array<typename std::aligned_storage<sizeof(storage_value_type),
-                                             alignof(storage_value_type)>::type,
-               SLOT_PER_BUCKET>
-        values_;
+    alignas(storage_value_type)
+        std::byte values_[SLOT_PER_BUCKET][sizeof(storage_value_type)];
     std::array<partial_t, SLOT_PER_BUCKET> partials_;
     std::array<bool, SLOT_PER_BUCKET> occupied_;
   };
@@ -201,7 +206,7 @@ public:
     bucket &b = buckets_[ind];
     assert(!b.occupied(slot));
     b.partial(slot) = p;
-    traits_::construct(allocator_, std::addressof(b.storage_kvpair(slot)),
+    traits_::construct(allocator_, b.storage_ptr(slot),
                        std::piecewise_construct,
                        std::forward_as_tuple(std::forward<K>(k)),
                        std::forward_as_tuple(std::forward<Args>(args)...));
@@ -214,7 +219,7 @@ public:
     bucket &b = buckets_[ind];
     assert(b.occupied(slot));
     b.occupied(slot) = false;
-    traits_::destroy(allocator_, std::addressof(b.storage_kvpair(slot)));
+    traits_::destroy(allocator_, b.storage_ptr(slot));
   }
 
   // Destroys all the live data in the buckets. Does not deallocate the bucket
