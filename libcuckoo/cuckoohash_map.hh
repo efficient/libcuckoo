@@ -105,11 +105,12 @@ public:
                  const KeyEqual &equal = KeyEqual(),
                  const Allocator &alloc = Allocator())
       : hash_fn_(hf), eq_fn_(equal), buckets_(reserve_calc(n), alloc),
-        old_buckets_(0, alloc), all_locks_(get_allocator()),
+        old_buckets_(0, alloc), resize_counter_(0),
+        all_locks_(get_allocator()),
         num_remaining_lazy_rehash_locks_(0),
         minimum_load_factor_(DEFAULT_MINIMUM_LOAD_FACTOR),
-        maximum_hashpower_(NO_MAXIMUM_HASHPOWER), max_num_worker_threads_(0),
-        resize_counter_(0) {
+        maximum_hashpower_(NO_MAXIMUM_HASHPOWER),
+        max_num_worker_threads_(0) {
     all_locks_.emplace_back(get_allocator());
     all_locks_.back().resize(std::min(bucket_count(), size_type(kMaxNumLocks)));
   }
@@ -154,13 +155,13 @@ public:
   cuckoohash_map(const cuckoohash_map &other, const Allocator &alloc)
       : hash_fn_(other.hash_fn_), eq_fn_(other.eq_fn_),
         buckets_(other.buckets_, alloc),
-        old_buckets_(other.old_buckets_, alloc), all_locks_(alloc),
+        old_buckets_(other.old_buckets_, alloc),
+        resize_counter_(other.resize_counter_), all_locks_(alloc),
         num_remaining_lazy_rehash_locks_(
             other.num_remaining_lazy_rehash_locks_),
         minimum_load_factor_(other.minimum_load_factor_),
         maximum_hashpower_(other.maximum_hashpower_),
-        max_num_worker_threads_(other.max_num_worker_threads_),
-        resize_counter_(other.resize_counter_) {
+        max_num_worker_threads_(other.max_num_worker_threads_) {
     if (other.get_allocator() == alloc) {
       all_locks_ = other.all_locks_;
     } else {
@@ -186,13 +187,13 @@ public:
   cuckoohash_map(cuckoohash_map &&other, const Allocator &alloc)
       : hash_fn_(std::move(other.hash_fn_)), eq_fn_(std::move(other.eq_fn_)),
         buckets_(std::move(other.buckets_), alloc),
-        old_buckets_(std::move(other.old_buckets_), alloc), all_locks_(alloc),
+        old_buckets_(std::move(other.old_buckets_), alloc),
+        resize_counter_(other.resize_counter_), all_locks_(alloc),
         num_remaining_lazy_rehash_locks_(
             other.num_remaining_lazy_rehash_locks_),
         minimum_load_factor_(other.minimum_load_factor_),
         maximum_hashpower_(other.maximum_hashpower_),
-        max_num_worker_threads_(other.max_num_worker_threads_),
-        resize_counter_(other.resize_counter_) {
+        max_num_worker_threads_(other.max_num_worker_threads_) {
     if (other.get_allocator() == alloc) {
       all_locks_ = std::move(other.all_locks_);
     } else {
