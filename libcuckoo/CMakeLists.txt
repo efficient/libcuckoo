@@ -13,10 +13,8 @@ set (libcuckoo_VERSION "${libcuckoo_VERSION}.${libcuckoo_VERSION_PATCH}")
 add_library(libcuckoo INTERFACE)
 add_library(libcuckoo::libcuckoo ALIAS libcuckoo)
 
-# tag libcuckoo target with a c++11 feature so that libcuckoo users
-# will have c++11 turned on in their compile when they use this target.
-# XXX: newer cmakes have a "cxx_std_11" feature that could be used
-target_compile_features (libcuckoo INTERFACE cxx_constexpr)
+# Require C++17 for std::byte, [[nodiscard]], and other modern features
+target_compile_features (libcuckoo INTERFACE cxx_std_17)
 
 # Include relative to the base directory
 target_include_directories(libcuckoo INTERFACE
