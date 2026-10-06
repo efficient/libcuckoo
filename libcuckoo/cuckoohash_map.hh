@@ -111,8 +111,9 @@ public:
         minimum_load_factor_(DEFAULT_MINIMUM_LOAD_FACTOR),
         maximum_hashpower_(NO_MAXIMUM_HASHPOWER),
         max_num_worker_threads_(0) {
-    all_locks_.emplace_back(get_allocator());
-    all_locks_.back().resize(std::min(bucket_count(), size_type(kMaxNumLocks)));
+    locks_t locks(get_allocator());
+    locks.resize(std::min(bucket_count(), size_type(kMaxNumLocks)));
+    all_locks_.push_back(std::move(locks));
   }
 
   /**
@@ -332,7 +333,7 @@ public:
    * @return number of elements in the table
    */
   size_type size() const {
-    if (all_locks_.size() == 0) {
+    if (all_locks_.empty()) {
       return 0;
     }
     counter_type s = 0;
@@ -712,10 +713,10 @@ private:
 
   void add_locks_from_other(const cuckoohash_map &other) {
     locks_t &other_locks = other.get_current_locks();
-    all_locks_.emplace_back(get_allocator());
-    all_locks_.back().resize(other_locks.size());
-    std::copy(other_locks.begin(), other_locks.end(),
-              get_current_locks().begin());
+    locks_t locks(get_allocator());
+    locks.resize(other_locks.size());
+    std::copy(other_locks.begin(), other_locks.end(), locks.begin());
+    all_locks_.push_back(std::move(locks));
   }
 
   // Hashing types and functions
@@ -861,7 +862,100 @@ private:
       typename std::allocator_traits<allocator_type>::template rebind_alloc<U>;
 
   using locks_t = std::vector<spinlock, rebind_alloc<spinlock>>;
-  using all_locks_t = std::list<locks_t, rebind_alloc<locks_t>>;
+  using locks_list_t = std::list<locks_t, rebind_alloc<locks_t>>;
+
+  // The list of all lock containers, plus an atomically published pointer to
+  // the "current" (most recently appended) container.
+  //
+  // Readers find the current container without holding any lock (they need it
+  // to pick the lock to take), while a resizer holding all the locks may append
+  // a new one concurrently. Reading the std::list's tail (back()) there is a
+  // data race: the reader can observe the newly hooked node without a
+  // happens-before edge to the node's construction, and on weakly ordered CPUs
+  // (e.g. AArch64) see a stale vector data pointer in it before it has taken
+  // any lock. Instead, a container is published with a release store only after
+  // it is fully constructed, and readers acquire-load the pointer, which orders
+  // everything the resizer wrote to the container before the reader's use.
+  class all_locks_t {
+  public:
+    using iterator = typename locks_list_t::iterator;
+
+    template <typename A>
+    explicit all_locks_t(const A &alloc) : list_(alloc), current_(nullptr) {}
+
+    all_locks_t(const all_locks_t &other)
+        : list_(other.list_), current_(nullptr) {
+      publish();
+    }
+
+    all_locks_t(all_locks_t &&other) noexcept
+        : list_(std::move(other.list_)), current_(nullptr) {
+      publish();
+      other.publish();
+    }
+
+    all_locks_t &operator=(const all_locks_t &other) {
+      list_ = other.list_;
+      publish();
+      return *this;
+    }
+
+    all_locks_t &operator=(all_locks_t &&other) noexcept(
+        std::is_nothrow_move_assignable<locks_list_t>::value) {
+      list_ = std::move(other.list_);
+      publish();
+      other.publish();
+      return *this;
+    }
+
+    void swap(all_locks_t &other) noexcept {
+      list_.swap(other.list_);
+      publish();
+      other.publish();
+    }
+
+    // Appends a fully constructed lock container and publishes it as the
+    // current one. Must only be called during construction, or by a thread
+    // holding all the locks of the current container.
+    void push_back(locks_t &&locks) {
+      list_.push_back(std::move(locks));
+      publish();
+    }
+
+    bool empty() const noexcept {
+      return current_.load(std::memory_order_acquire) == nullptr;
+    }
+
+    // The current lock container. Safe to call without holding any lock.
+    locks_t &current() const noexcept {
+      return *current_.load(std::memory_order_acquire);
+    }
+
+    // Iterator to the current lock container. Safe to call without holding any
+    // lock: the acquire load orders the construction and linking of every
+    // container up to the current one, and only links before it are traversed.
+    iterator current_iterator() noexcept {
+      locks_t *const current = current_.load(std::memory_order_acquire);
+      auto it = list_.begin();
+      while (&*it != current) {
+        ++it;
+      }
+      return it;
+    }
+
+    // Only for iterating forward from an iterator obtained while holding locks
+    // (see lock_all / AllUnlocker); end() itself reads no shared state.
+    iterator end() noexcept { return list_.end(); }
+
+  private:
+    void publish() noexcept {
+      current_.store(list_.empty() ? nullptr : &list_.back(),
+                     std::memory_order_release);
+    }
+
+    locks_list_t list_;
+    std::atomic<locks_t *> current_;
+  };
 
   // Classes for managing locked buckets. By storing and moving around sets of
   // locked buckets in these classes, we can ensure that they are unlocked
@@ -1128,7 +1222,7 @@ private:
     // all_locks_ should never decrease in size, so if it is non-empty now, it
     // will remain non-empty
     assert(!all_locks_.empty());
-    const auto first_locked = std::prev(all_locks_.end());
+    const auto first_locked = all_locks_.current_iterator();
     auto current_locks = first_locked;
     while (current_locks != all_locks_.end()) {
       locks_t &locks = *current_locks;
@@ -1892,7 +1986,8 @@ private:
     for (spinlock &lock : new_locks) {
       lock.lock();
     }
-    all_locks_.emplace_back(std::move(new_locks));
+    // Publishes the fully constructed container (see all_locks_t).
+    all_locks_.push_back(std::move(new_locks));
   }
 
   // cuckoo_expand_simple will resize the table to at least the given
@@ -2079,7 +2174,7 @@ private:
 
   static constexpr size_type kMaxNumLocks = 1UL << 16;
 
-  locks_t &get_current_locks() const { return all_locks_.back(); }
+  locks_t &get_current_locks() const { return all_locks_.current(); }
 
   // Get/set/decrement num remaining lazy rehash locks. If we reach 0 remaining
   // lazy locks, we can deallocate the memory in old_buckets_.
