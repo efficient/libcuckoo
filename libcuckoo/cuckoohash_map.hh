@@ -111,8 +111,9 @@ public:
         minimum_load_factor_(DEFAULT_MINIMUM_LOAD_FACTOR),
         maximum_hashpower_(NO_MAXIMUM_HASHPOWER),
         max_num_worker_threads_(0) {
-    all_locks_.emplace_back(get_allocator());
-    all_locks_.back().resize(std::min(bucket_count(), size_type(kMaxNumLocks)));
+    locks_t initial_locks(get_allocator());
+    initial_locks.resize(std::min(bucket_count(), size_type(kMaxNumLocks)));
+    all_locks_.push_back(std::move(initial_locks));
   }
 
   /**
@@ -332,7 +333,7 @@ public:
    * @return number of elements in the table
    */
   size_type size() const {
-    if (all_locks_.size() == 0) {
+    if (!all_locks_.current()) {
       return 0;
     }
     counter_type s = 0;
@@ -712,10 +713,10 @@ private:
 
   void add_locks_from_other(const cuckoohash_map &other) {
     locks_t &other_locks = other.get_current_locks();
-    all_locks_.emplace_back(get_allocator());
-    all_locks_.back().resize(other_locks.size());
-    std::copy(other_locks.begin(), other_locks.end(),
-              get_current_locks().begin());
+    locks_t copied_locks(get_allocator());
+    copied_locks.resize(other_locks.size());
+    std::copy(other_locks.begin(), other_locks.end(), copied_locks.begin());
+    all_locks_.push_back(std::move(copied_locks));
   }
 
   // Hashing types and functions
@@ -861,7 +862,101 @@ private:
       typename std::allocator_traits<allocator_type>::template rebind_alloc<U>;
 
   using locks_t = std::vector<spinlock, rebind_alloc<spinlock>>;
-  using all_locks_t = std::list<locks_t, rebind_alloc<locks_t>>;
+  // Entries remain owned until destruction so snapshots can safely retry.
+  struct LockEntry : locks_t {
+    explicit LockEntry(locks_t &&locks) : locks_t(std::move(locks)) {}
+    LockEntry(const LockEntry &other) : locks_t(other) {}
+    LockEntry(LockEntry &&other) noexcept(
+        std::is_nothrow_move_constructible<locks_t>::value)
+        : locks_t(std::move(other)) {}
+    LockEntry &operator=(const LockEntry &other) {
+      locks_t::operator=(other);
+      next.store(nullptr, std::memory_order_relaxed);
+      return *this;
+    }
+    LockEntry &operator=(LockEntry &&other) noexcept(
+        std::is_nothrow_move_assignable<locks_t>::value) {
+      locks_t::operator=(std::move(other));
+      next.store(nullptr, std::memory_order_relaxed);
+      return *this;
+    }
+    std::atomic<LockEntry *> next{nullptr};
+  };
+
+  class all_locks_t {
+    using list_t = std::list<LockEntry, rebind_alloc<LockEntry>>;
+
+  public:
+    explicit all_locks_t(const allocator_type &alloc) : list_(alloc) {}
+    all_locks_t(const all_locks_t &other) : list_(other.list_) { relink(); }
+    all_locks_t(all_locks_t &&other) noexcept(
+        std::is_nothrow_move_constructible<list_t>::value)
+        : list_(std::move(other.list_)) {
+      relink();
+      other.relink();
+    }
+    all_locks_t &operator=(const all_locks_t &other) {
+      if (this == &other) {
+        return *this;
+      }
+      try {
+        list_ = other.list_;
+      } catch (...) {
+        relink();
+        throw;
+      }
+      relink();
+      return *this;
+    }
+    all_locks_t &operator=(all_locks_t &&other) noexcept(
+        std::is_nothrow_move_assignable<list_t>::value) {
+      if (this == &other) {
+        return *this;
+      }
+      try {
+        list_ = std::move(other.list_);
+      } catch (...) {
+        relink();
+        other.relink();
+        throw;
+      }
+      relink();
+      other.relink();
+      return *this;
+    }
+    void swap(all_locks_t &other) noexcept {
+      list_.swap(other.list_);
+      relink();
+      other.relink();
+    }
+    void push_back(locks_t &&locks) {
+      list_.emplace_back(std::move(locks));
+      auto *published = &list_.back();
+      auto *previous = current_.load(std::memory_order_relaxed);
+      if (previous) {
+        previous->next.store(published, std::memory_order_release);
+      }
+      current_.store(published, std::memory_order_release);
+    }
+    LockEntry *current() const noexcept {
+      return current_.load(std::memory_order_acquire);
+    }
+
+  private:
+    void relink() noexcept {
+      LockEntry *previous = nullptr;
+      for (auto &entry : list_) {
+        entry.next.store(nullptr, std::memory_order_relaxed);
+        if (previous) {
+          previous->next.store(&entry, std::memory_order_relaxed);
+        }
+        previous = &entry;
+      }
+      current_.store(previous, std::memory_order_release);
+    }
+    list_t list_;
+    std::atomic<LockEntry *> current_{nullptr};
+  };
 
   // Classes for managing locked buckets. By storing and moving around sets of
   // locked buckets in these classes, we can ensure that they are unlocked
@@ -903,16 +998,18 @@ private:
   };
 
   struct AllUnlocker {
-    void operator()(cuckoohash_map *map) const {
-      for (auto it = first_locked; it != map->all_locks_.end(); ++it) {
-        locks_t &locks = *it;
-        for (spinlock &lock : locks) {
+    void operator()(cuckoohash_map *) const {
+      for (auto *entry = first_locked; entry != nullptr;) {
+        // Read the successor while its publication is excluded by our locks.
+        auto *next = entry->next.load(std::memory_order_acquire);
+        for (spinlock &lock : *entry) {
           lock.unlock();
         }
+        entry = next;
       }
     }
 
-    typename all_locks_t::iterator first_locked;
+    LockEntry *first_locked;
   };
 
   using AllLocksManager = std::unique_ptr<cuckoohash_map, AllUnlocker>;
@@ -1127,15 +1224,13 @@ private:
   AllLocksManager lock_all(normal_mode) {
     // all_locks_ should never decrease in size, so if it is non-empty now, it
     // will remain non-empty
-    assert(!all_locks_.empty());
-    const auto first_locked = std::prev(all_locks_.end());
-    auto current_locks = first_locked;
-    while (current_locks != all_locks_.end()) {
-      locks_t &locks = *current_locks;
-      for (spinlock &lock : locks) {
+    auto *first_locked = all_locks_.current();
+    assert(first_locked != nullptr);
+    for (auto *entry = first_locked; entry != nullptr;
+         entry = entry->next.load(std::memory_order_acquire)) {
+      for (spinlock &lock : *entry) {
         lock.lock();
       }
-      ++current_locks;
     }
     // Once we have taken all the locks of the "current" container, nobody
     // else can do locking operations on the table.
@@ -1892,7 +1987,7 @@ private:
     for (spinlock &lock : new_locks) {
       lock.lock();
     }
-    all_locks_.emplace_back(std::move(new_locks));
+    all_locks_.push_back(std::move(new_locks));
   }
 
   // cuckoo_expand_simple will resize the table to at least the given
@@ -2079,7 +2174,7 @@ private:
 
   static constexpr size_type kMaxNumLocks = 1UL << 16;
 
-  locks_t &get_current_locks() const { return all_locks_.back(); }
+  locks_t &get_current_locks() const { return *all_locks_.current(); }
 
   // Get/set/decrement num remaining lazy rehash locks. If we reach 0 remaining
   // lazy locks, we can deallocate the memory in old_buckets_.
