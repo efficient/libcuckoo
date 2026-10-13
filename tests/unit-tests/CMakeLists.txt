@@ -27,3 +27,8 @@ target_link_libraries(unit_tests
 )
 
 add_test(NAME unit_tests COMMAND unit_tests)
+
+add_executable(lock_publication_tests test_lock_publication.cc)
+target_link_libraries(lock_publication_tests PRIVATE libcuckoo)
+add_test(NAME lock_publication_tests COMMAND lock_publication_tests)
+set_tests_properties(lock_publication_tests PROPERTIES TIMEOUT 180)
