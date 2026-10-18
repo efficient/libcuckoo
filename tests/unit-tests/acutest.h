@@ -1803,6 +1803,10 @@ acutest_under_debugger_(void)
     return 0;
 }
 
+#ifdef __cplusplus
+    }  /* extern "C" */
+#endif
+
 int
 main(int argc, char** argv)
 {
@@ -1979,10 +1983,6 @@ main(int argc, char** argv)
     acutest_cleanup_();
     return exit_code;
 }
-
-#ifdef __cplusplus
-    }  /* extern "C" */
-#endif
 
 #endif  /* #ifndef TEST_NO_MAIN */
 

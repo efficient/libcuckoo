@@ -98,11 +98,11 @@ void test_user_exceptions() {
     tbl.insert(3, 3);
     hashThrow = true;
     TEST_EXCEPTION(tbl.find(3), std::runtime_error);
-    TEST_EXCEPTION(tbl.contains(3), std::runtime_error);
+    TEST_EXCEPTION(static_cast<void>(tbl.contains(3)), std::runtime_error);
     hashThrow = false;
     equalityThrow = true;
     TEST_EXCEPTION(tbl.find(3), std::runtime_error);
-    TEST_EXCEPTION(tbl.contains(3), std::runtime_error);
+    TEST_EXCEPTION(static_cast<void>(tbl.contains(3)), std::runtime_error);
     equalityThrow = false;
     TEST_CHECK(tbl.find(3) == 3);
     TEST_CHECK(tbl.contains(3));

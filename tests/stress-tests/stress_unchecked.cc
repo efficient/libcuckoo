@@ -201,15 +201,14 @@ void iterator_thread(AllEnvironment<KType> *env, size_t thread_seed) {
 
 template <class KType> void misc_thread(AllEnvironment<KType> *env) {
   // Runs all the misc functions
-  pcg64_fast gen(g_seed);
   while (!env->finished.load()) {
-    env->table.slot_per_bucket();
-    env->table.size();
-    env->table.empty();
-    env->table.bucket_count();
-    env->table.load_factor();
-    env->table.hash_function();
-    env->table.key_eq();
+    static_cast<void>(env->table.slot_per_bucket());
+    static_cast<void>(env->table.size());
+    static_cast<void>(env->table.empty());
+    static_cast<void>(env->table.bucket_count());
+    static_cast<void>(env->table.load_factor());
+    static_cast<void>(env->table.hash_function());
+    static_cast<void>(env->table.key_eq());
   }
 }
 
