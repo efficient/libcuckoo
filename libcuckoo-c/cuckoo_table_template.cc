@@ -128,8 +128,8 @@ bool CUCKOO(_upsert)(CUCKOO_TABLE_NAME *tbl, const CUCKOO_KEY_ALIAS *key,
                      void (*fn)(CUCKOO_MAPPED_ALIAS *),
                      const CUCKOO_MAPPED_ALIAS *value) {
   try {
-    return tbl->t.upsert(*key, [&fn](CUCKOO_MAPPED_ALIAS &v) { fn(&v); },
-                         *value);
+    return tbl->t.upsert(
+        *key, [&fn](CUCKOO_MAPPED_ALIAS &v) { fn(&v); }, *value);
   } catch (std::bad_alloc &) {
     errno = ENOMEM;
     return false;

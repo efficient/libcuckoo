@@ -24,6 +24,6 @@ template <> struct equal_to<key_blob> {
     return memcmp(lhs.blob, rhs.blob, sizeof(lhs.blob)) == 0;
   }
 };
-}
+} // namespace std
 
 #include <libcuckoo-c/cuckoo_table_template.cc>

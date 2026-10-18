@@ -141,7 +141,8 @@ void update_thread(AllEnvironment<KType> *env, size_t thread_seed) {
       break;
     case 2:
       env->table.upsert(k, updatefn, val_dist(gen));
-      env->table2.upsert(k, [](ValType2 &v) { v -= 50; }, val_dist2(gen));
+      env->table2.upsert(
+          k, [](ValType2 &v) { v -= 50; }, val_dist2(gen));
     }
   }
 }

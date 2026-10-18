@@ -70,14 +70,17 @@ size_t *arg_vars[] = {
 };
 
 const char *arg_descriptions[] = {
-    "Percentage of mix that is reads", "Percentage of mix that is inserts",
-    "Percentage of mix that is erases", "Percentage of mix that is updates",
+    "Percentage of mix that is reads",
+    "Percentage of mix that is inserts",
+    "Percentage of mix that is erases",
+    "Percentage of mix that is updates",
     "Percentage of mix that is upserts",
     "Initial capacity of table, as a power of 2",
     "Percentage of final size to pre-fill table",
     "Number of operations, as a percentage of the initial capacity. This can "
     "exceed 100",
-    "Number of threads", "Seed for random number generator",
+    "Number of threads",
+    "Seed for random number generator",
 };
 
 #define XSTR(s) STR(s)
@@ -317,16 +320,17 @@ int main(int argc, char **argv) {
     std::atomic<size_t> threads_ready(0);
     std::atomic<bool> go(false);
     for (size_t i = 0; i < g_threads; ++i) {
-      mix_threads[i] = std::thread(
-          [&, i]() {
-            threads_ready.fetch_add(1, std::memory_order_release);
-            while (!go.load(std::memory_order_acquire)) {}
-            mix(tbl, num_ops_per_thread, op_mix,
-                keys[i], prefill_elems_per_thread, samples[i]);
-          });
+      mix_threads[i] = std::thread([&, i]() {
+        threads_ready.fetch_add(1, std::memory_order_release);
+        while (!go.load(std::memory_order_acquire)) {
+        }
+        mix(tbl, num_ops_per_thread, op_mix, keys[i], prefill_elems_per_thread,
+            samples[i]);
+      });
     }
     // Wait for all threads to be ready, then start timing
-    while (threads_ready.load(std::memory_order_acquire) < g_threads) {}
+    while (threads_ready.load(std::memory_order_acquire) < g_threads) {
+    }
     auto start_time = std::chrono::high_resolution_clock::now();
     go.store(true, std::memory_order_release);
     for (auto &t : mix_threads) {

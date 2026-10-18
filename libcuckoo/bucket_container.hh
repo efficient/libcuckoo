@@ -61,12 +61,10 @@ public:
     bucket() noexcept : occupied_() {}
 
     const value_type &kvpair(size_type ind) const {
-      return *std::launder(
-          reinterpret_cast<const value_type *>(values_[ind]));
+      return *std::launder(reinterpret_cast<const value_type *>(values_[ind]));
     }
     value_type &kvpair(size_type ind) {
-      return *std::launder(
-          reinterpret_cast<value_type *>(values_[ind]));
+      return *std::launder(reinterpret_cast<value_type *>(values_[ind]));
     }
 
     const key_type &key(size_type ind) const {

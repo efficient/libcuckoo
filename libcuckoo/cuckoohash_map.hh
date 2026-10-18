@@ -101,17 +101,14 @@ public:
    * @param equal equality function instance to use
    * @param alloc allocator instance to use
    */
-  explicit cuckoohash_map(size_type n = DEFAULT_SIZE,
-                         const Hash &hf = Hash(),
-                         const KeyEqual &equal = KeyEqual(),
-                         const Allocator &alloc = Allocator())
+  explicit cuckoohash_map(size_type n = DEFAULT_SIZE, const Hash &hf = Hash(),
+                          const KeyEqual &equal = KeyEqual(),
+                          const Allocator &alloc = Allocator())
       : hash_fn_(hf), eq_fn_(equal), buckets_(reserve_calc(n), alloc),
-        old_buckets_(0, alloc), resize_counter_(0),
-        all_locks_(get_allocator()),
+        old_buckets_(0, alloc), resize_counter_(0), all_locks_(get_allocator()),
         num_remaining_lazy_rehash_locks_(0),
         minimum_load_factor_(DEFAULT_MINIMUM_LOAD_FACTOR),
-        maximum_hashpower_(NO_MAXIMUM_HASHPOWER),
-        max_num_worker_threads_(0) {
+        maximum_hashpower_(NO_MAXIMUM_HASHPOWER), max_num_worker_threads_(0) {
     all_locks_.emplace_back(get_allocator());
     all_locks_.back().resize(std::min(bucket_count(), size_type(kMaxNumLocks)));
   }
@@ -303,7 +300,9 @@ public:
    *
    * @return the associated allocator
    */
-  [[nodiscard]] allocator_type get_allocator() const { return buckets_.get_allocator(); }
+  [[nodiscard]] allocator_type get_allocator() const {
+    return buckets_.get_allocator();
+  }
 
   /**
    * Returns the hashpower of the table, which is log<SUB>2</SUB>(@ref
@@ -349,7 +348,9 @@ public:
    *
    * @return capacity of table
    */
-  [[nodiscard]] size_type capacity() const { return bucket_count() * slot_per_bucket(); }
+  [[nodiscard]] size_type capacity() const {
+    return bucket_count() * slot_per_bucket();
+  }
 
   /**
    * Returns the percentage the table is filled, that is, @ref size() &divide;
@@ -943,7 +944,8 @@ private:
   // post-resize resize counter, and then using that stale hashpower.
   //
   // Because both loads are memory_order_acquire, they cannot be re-ordered.
-  std::pair<ResizeCounter, size_type> load_resize_counter_and_hashpower() const {
+  std::pair<ResizeCounter, size_type>
+  load_resize_counter_and_hashpower() const {
     const ResizeCounter resize_counter = load_resize_counter();
     const size_type hp = hashpower();
     return std::make_pair(resize_counter, hp);
@@ -1103,7 +1105,8 @@ private:
   TwoBuckets snapshot_and_lock_two(const hash_value &hv) const {
     while (true) {
       // Keep the current hashpower and locks we're using to compute the buckets
-      const std::pair<ResizeCounter, size_t> rc_and_hp = load_resize_counter_and_hashpower();
+      const std::pair<ResizeCounter, size_t> rc_and_hp =
+          load_resize_counter_and_hashpower();
       const ResizeCounter resize_counter = rc_and_hp.first;
       const size_type hp = rc_and_hp.second;
       const size_type i1 = index_hash(hp, hv.hash);
@@ -1405,7 +1408,8 @@ private:
     // hashpower, meaning the buckets may not be valid anymore. In this
     // case, the cuckoopath functions will have thrown a resize_counter_changed
     // exception, which we catch and handle here.
-    const std::pair<ResizeCounter, size_t> rc_and_hp = load_resize_counter_and_hashpower();
+    const std::pair<ResizeCounter, size_t> rc_and_hp =
+        load_resize_counter_and_hashpower();
     const ResizeCounter resize_counter = rc_and_hp.first;
     const size_type hp = rc_and_hp.second;
     b.unlock();
