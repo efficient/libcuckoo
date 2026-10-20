@@ -79,7 +79,7 @@ public:
 
   size_type max_size() const { return traits::max_size(allocator_); }
 
-  template <typename... Args> void construct(pointer p, Args &&... args) {
+  template <typename... Args> void construct(pointer p, Args &&...args) {
     traits::construct(allocator_, p, std::forward<Args>(args)...);
   }
 
@@ -166,8 +166,9 @@ public:
   }
 
 private:
-  libcuckoo::cuckoohash_map<KEY, VALUE, std::hash<KEY>, std::equal_to<KEY>,
-                 Allocator<std::allocator, std::pair<const KEY, VALUE>>>
+  libcuckoo::cuckoohash_map<
+      KEY, VALUE, std::hash<KEY>, std::equal_to<KEY>,
+      Allocator<std::allocator, std::pair<const KEY, VALUE>>>
       tbl;
 };
 

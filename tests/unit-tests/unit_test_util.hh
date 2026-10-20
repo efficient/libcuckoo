@@ -53,7 +53,7 @@ template <class T, int64_t BOUND = -1> struct TrackingAllocator {
     std::allocator<T>().deallocate(p, n);
   }
 
-  template <typename U, class... Args> void construct(U *p, Args &&... args) {
+  template <typename U, class... Args> void construct(U *p, Args &&...args) {
     new ((void *)p) U(std::forward<Args>(args)...);
   }
 
@@ -74,16 +74,16 @@ bool operator!=(const TrackingAllocator<T, BOUND> &a1,
 
 using IntIntTable =
     libcuckoo::cuckoohash_map<int, int, std::hash<int>, std::equal_to<int>,
-                   std::allocator<std::pair<const int, int>>, 4>;
+                              std::allocator<std::pair<const int, int>>, 4>;
 
 template <class Alloc>
 using IntIntTableWithAlloc =
-    libcuckoo::cuckoohash_map<int, int, std::hash<int>, std::equal_to<int>, Alloc, 4>;
+    libcuckoo::cuckoohash_map<int, int, std::hash<int>, std::equal_to<int>,
+                              Alloc, 4>;
 
-using StringIntTable =
-    libcuckoo::cuckoohash_map<std::string, int, std::hash<std::string>,
-                   std::equal_to<std::string>,
-                   std::allocator<std::pair<const std::string, int>>, 4>;
+using StringIntTable = libcuckoo::cuckoohash_map<
+    std::string, int, std::hash<std::string>, std::equal_to<std::string>,
+    std::allocator<std::pair<const std::string, int>>, 4>;
 
 namespace std {
 template <typename T> struct hash<unique_ptr<T>> {
@@ -107,7 +107,7 @@ template <typename T> struct equal_to<unique_ptr<T>> {
     return *ptr1 == *ptr2;
   }
 };
-}
+} // namespace std
 
 template <typename T>
 using UniquePtrTable = libcuckoo::cuckoohash_map<

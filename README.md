@@ -22,12 +22,8 @@ code is now the definitive reference.
 Requirements
 ================
 
-This library has been tested on Mac OSX >= 10.8 and Ubuntu >= 12.04.
-
-It compiles with clang++ >= 3.3 and g++ >= 4.8, however we strongly suggest
-using the latest versions of both compilers, as they have greatly improved
-support for atomic operations. Building the library requires CMake version >=
-3.1.0. To install it on Ubuntu
+A C++17-capable compiler and standard library are required. Configuring the
+project requires CMake version >= 3.5.0. To install CMake on Ubuntu
 
     $ sudo apt-get update && sudo apt-get install cmake
 
@@ -82,9 +78,9 @@ directory.
 Usage
 ==========
 
-When compiling your own files with `libcuckoo`, always remember to enable C++11
-features on your compiler. On `g++`, this would be `-std=c++11`, and on
-`clang++`, this would be `-std=c++11 -stdlib=libc++`.
+When compiling your own files with `libcuckoo`, enable C++17 features on your
+compiler. For both `g++` and `clang++`, use `-std=c++17`. CMake users can link
+against the `libcuckoo::libcuckoo` target to enable the required standard.
 
 Once you have installed the header files and the install location has been added
 to your search path, you can include `<libcuckoo/cuckoohash_map.hh>`, and any of

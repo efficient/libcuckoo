@@ -9,9 +9,13 @@
 // structs, including those containing arrays. Thus, since the hashtable
 // requires that assignment is defined for key and mapped types, we wrap the
 // blobs in a struct.
-typedef struct { char blob[8]; } key_blob;
+typedef struct {
+  char blob[8];
+} key_blob;
 
-typedef struct { char blob[255]; } mapped_blob;
+typedef struct {
+  char blob[255];
+} mapped_blob;
 
 #define CUCKOO_TABLE_NAME blob_blob_table
 #define CUCKOO_KEY_TYPE key_blob
