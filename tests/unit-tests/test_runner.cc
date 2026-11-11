@@ -148,6 +148,7 @@ TEST_LIST = {
     {"test_resize_number_of_frees", test_resize_number_of_frees},
     {"test_resize_on_non_relocatable_type",
      test_resize_on_non_relocatable_type},
+    {"test_resize_lock_array_publication", test_resize_lock_array_publication},
 
     {"test_user_exceptions", test_user_exceptions},
 
