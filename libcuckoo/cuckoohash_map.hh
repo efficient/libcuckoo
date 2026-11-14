@@ -109,8 +109,9 @@ public:
         num_remaining_lazy_rehash_locks_(0),
         minimum_load_factor_(DEFAULT_MINIMUM_LOAD_FACTOR),
         maximum_hashpower_(NO_MAXIMUM_HASHPOWER), max_num_worker_threads_(0) {
-    all_locks_.emplace_back(get_allocator());
-    all_locks_.back().resize(std::min(bucket_count(), size_type(kMaxNumLocks)));
+    locks_t initial_locks(get_allocator());
+    initial_locks.resize(std::min(bucket_count(), size_type(kMaxNumLocks)));
+    all_locks_.push_back(std::move(initial_locks));
   }
 
   /**
@@ -332,7 +333,7 @@ public:
    * @return number of elements in the table
    */
   [[nodiscard]] size_type size() const {
-    if (all_locks_.size() == 0) {
+    if (all_locks_.empty()) {
       return 0;
     }
     counter_type s = 0;
@@ -714,10 +715,10 @@ private:
 
   void add_locks_from_other(const cuckoohash_map &other) {
     locks_t &other_locks = other.get_current_locks();
-    all_locks_.emplace_back(get_allocator());
-    all_locks_.back().resize(other_locks.size());
-    std::copy(other_locks.begin(), other_locks.end(),
-              get_current_locks().begin());
+    locks_t copied_locks(get_allocator());
+    copied_locks.resize(other_locks.size());
+    std::copy(other_locks.begin(), other_locks.end(), copied_locks.begin());
+    all_locks_.push_back(std::move(copied_locks));
   }
 
   // Hashing types and functions
@@ -863,7 +864,87 @@ private:
       typename std::allocator_traits<allocator_type>::template rebind_alloc<U>;
 
   using locks_t = std::vector<spinlock, rebind_alloc<spinlock>>;
-  using all_locks_t = std::list<locks_t, rebind_alloc<locks_t>>;
+  using locks_list_t = std::list<locks_t, rebind_alloc<locks_t>>;
+
+  // Retain every lock array for operations that selected it before a resize.
+  // The mutex protects list traversal and append while a full-table guard is
+  // active. Ordinary operations use only the atomically published pointer.
+  class all_locks_t {
+    // List assignment can leave either list changed when it throws. Refresh
+    // the published pointer on both the normal and exceptional paths.
+    struct PublishOnExit {
+      all_locks_t &owner;
+      ~PublishOnExit() noexcept { owner.publish(); }
+    };
+
+  public:
+    using iterator = typename locks_list_t::iterator;
+
+    explicit all_locks_t(const allocator_type &alloc) : list_(alloc) {}
+
+    all_locks_t(const all_locks_t &other) : list_(other.list_) { publish(); }
+
+    all_locks_t(all_locks_t &&other) noexcept(
+        std::is_nothrow_move_constructible<locks_list_t>::value)
+        : list_(std::move(other.list_)) {
+      publish();
+      other.publish();
+    }
+
+    all_locks_t &operator=(const all_locks_t &other) {
+      if (this != &other) {
+        PublishOnExit publish_self{*this};
+        list_ = other.list_;
+      }
+      return *this;
+    }
+
+    all_locks_t &operator=(all_locks_t &&other) noexcept(
+        std::is_nothrow_move_assignable<locks_list_t>::value) {
+      if (this != &other) {
+        PublishOnExit publish_other{other};
+        PublishOnExit publish_self{*this};
+        list_ = std::move(other.list_);
+      }
+      return *this;
+    }
+
+    void swap(all_locks_t &other) noexcept {
+      list_.swap(other.list_);
+      publish();
+      other.publish();
+    }
+
+    // Called during construction, or while the full-table guard owns mutex_.
+    void push_back(locks_t &&locks) {
+      list_.push_back(std::move(locks));
+      current_.store(&list_.back(), std::memory_order_release);
+    }
+
+    bool empty() const noexcept {
+      return current_.load(std::memory_order_acquire) == nullptr;
+    }
+
+    locks_t &current() const noexcept {
+      return *current_.load(std::memory_order_acquire);
+    }
+
+    std::unique_lock<std::mutex> lock() {
+      return std::unique_lock<std::mutex>(mutex_);
+    }
+
+    iterator end() noexcept { return list_.end(); }
+
+  private:
+    void publish() noexcept {
+      current_.store(list_.empty() ? nullptr : &list_.back(),
+                     std::memory_order_release);
+    }
+
+    locks_list_t list_;
+    std::atomic<locks_t *> current_{nullptr};
+    std::mutex mutex_;
+  };
 
   // Classes for managing locked buckets. By storing and moving around sets of
   // locked buckets in these classes, we can ensure that they are unlocked
@@ -905,16 +986,18 @@ private:
   };
 
   struct AllUnlocker {
-    void operator()(cuckoohash_map *map) const {
+    void operator()(cuckoohash_map *map) {
       for (auto it = first_locked; it != map->all_locks_.end(); ++it) {
         locks_t &locks = *it;
         for (spinlock &lock : locks) {
           lock.unlock();
         }
       }
+      list_lock.unlock();
     }
 
     typename all_locks_t::iterator first_locked;
+    std::unique_lock<std::mutex> list_lock;
   };
 
   using AllLocksManager = std::unique_ptr<cuckoohash_map, AllUnlocker>;
@@ -1129,6 +1212,7 @@ private:
   AllLocksManager lock_all(locked_table_mode) { return AllLocksManager(); }
 
   AllLocksManager lock_all(normal_mode) {
+    auto list_lock = all_locks_.lock();
     // all_locks_ should never decrease in size, so if it is non-empty now, it
     // will remain non-empty
     assert(!all_locks_.empty());
@@ -1143,7 +1227,8 @@ private:
     }
     // Once we have taken all the locks of the "current" container, nobody
     // else can do locking operations on the table.
-    return AllLocksManager(this, AllUnlocker{first_locked});
+    return AllLocksManager(this,
+                           AllUnlocker{first_locked, std::move(list_lock)});
   }
 
   // lock_ind converts an index into buckets to an index into locks.
@@ -1897,7 +1982,7 @@ private:
     for (spinlock &lock : new_locks) {
       lock.lock();
     }
-    all_locks_.emplace_back(std::move(new_locks));
+    all_locks_.push_back(std::move(new_locks));
   }
 
   // cuckoo_expand_simple will resize the table to at least the given
@@ -2084,7 +2169,7 @@ private:
 
   static constexpr size_type kMaxNumLocks = 1UL << 16;
 
-  locks_t &get_current_locks() const { return all_locks_.back(); }
+  locks_t &get_current_locks() const { return all_locks_.current(); }
 
   // Get/set/decrement num remaining lazy rehash locks. If we reach 0 remaining
   // lazy locks, we can deallocate the memory in old_buckets_.
@@ -2159,13 +2244,15 @@ private:
   // A linked list of all lock containers. We never discard lock containers,
   // since there is currently no mechanism for detecting when all threads are
   // done looking at the memory. The back lock container in this list is
-  // designated the "current" one, and is used by all operations taking locks.
+  // designated the "current" one, and is published through an atomic pointer
+  // used by all operations taking locks.
   // This container can be modified if either it is empty (which should only
-  // occur during construction), or if the modifying thread has taken all the
-  // locks on the existing "current" container. In the latter case, a
-  // modification must take place before a modification to the hashpower, so
-  // that other threads can detect the change and adjust appropriately. Marked
-  // mutable so that const methods can access and take locks.
+  // occur during construction), or if the modifying thread holds the list
+  // mutex and has taken all the locks on the existing "current" container. In
+  // the latter case, a modification must take place before a modification to
+  // the hashpower, so that other threads can detect the change and adjust
+  // appropriately. Marked mutable so that const methods can access and take
+  // locks.
   mutable all_locks_t all_locks_;
 
   // We keep track of the number of remaining locks in the latest locks array,
